@@ -1,27 +1,28 @@
-{#let name=http:param('name', 'Qute')}
+{#let name = http:param('name', 'Qute')}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Hello {name}</title>
-    <style>
-        body {
-            background-color: #000;
-            color: #fff;
-        }
-        h1 {
-            color: #4695EB;
-            font-size: 6vw;
-        }
+  <meta charset="UTF-8">
+  <title>Hello {name}</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+    }
 
-        h1 b {
-            color: #be9100;
-        }
+    h1 {
+      color: #4695EB;
+      font-size: 6vw;
+    }
 
-        p {
-            font-size: 2vw;
-        }
-    </style>
+    h1 b {
+      color: #be9100;
+    }
+
+    p {
+      font-size: 2vw;
+    }
+  </style>
 </head>
 <body>
 <h1>Hello <b>{name}</b></h1>

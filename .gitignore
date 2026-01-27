@@ -46,3 +46,5 @@ nb-configuration.xml
 
 # Web Bundler
 node_modules/
+.vfox/
+/developer-local-settings/

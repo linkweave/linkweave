@@ -2,7 +2,6 @@ package org.chainlink;
 
 import io.quarkus.qute.Template;
 import io.quarkus.qute.TemplateInstance;
-
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;

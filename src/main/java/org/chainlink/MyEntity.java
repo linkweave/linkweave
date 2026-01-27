@@ -10,16 +10,16 @@ import jakarta.persistence.Id;
  * To use it, get access to a JPA EntityManager via injection.
  *
  * {@code
- *     @Inject
- *     EntityManager em;
  *
- *     public void doSomething() {
- *         MyEntity entity1 = new MyEntity();
- *         entity1.field = "field-1";
- *         em.persist(entity1);
+ * @Inject EntityManager em;
  *
- *         List<MyEntity> entities = em.createQuery("from MyEntity", MyEntity.class).getResultList();
- *     }
+ * public void doSomething() {
+ * MyEntity entity1 = new MyEntity();
+ * entity1.field = "field-1";
+ * em.persist(entity1);
+ *
+ * List<MyEntity> entities = em.createQuery("from MyEntity", MyEntity.class).getResultList();
+ * }
  * }
  */
 @Entity

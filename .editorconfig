@@ -1,0 +1,40 @@
+# Editor configuration, see http://editorconfig.org
+root = true
+
+[*]
+indent_size = 2
+indent_style = space
+charset = utf-8
+end_of_line = lf
+max_line_length = 120
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.java]
+# Mutige können die Ausnahme für .java entfernen :)
+indent_size = 4
+indent_style = space
+
+[*.xml]
+# automatisches Umbrechen/Trimmen kann die Semantik vom Inhalt ändern
+max_line_length = off
+trim_trailing_whitespace = false
+
+# Kompatibilität zu maven-dependency-plugin/maven-release-plugin... und damit zu jgitflow
+[pom.xml]
+indent_size = 4
+indent_style = space
+
+[*.md]
+indent_size = 4
+max_line_length = off
+trim_trailing_whitespace = false
+
+[*.{bat,ps1}]
+end_of_line = crlf
+
+[api/src/test/resources/AerzteDocMergerTest/expected/*.txt]
+trim_trailing_whitespace = false
+
+[api/src/test/resources/DocMergerTest/expected/*.txt]
+trim_trailing_whitespace = false
