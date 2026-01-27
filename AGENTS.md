@@ -5,7 +5,7 @@ This document provides essential information for agentic coding agents working o
 ## Project Overview
 
 **Type**: Quarkus-based Java web application with full-stack capabilities  
-**Language**: Java 21  
+**Language**: Java 25
 **Framework**: Quarkus 3.30.8 (Supersonic Subatomic Java)  
 **Build System**: Maven 3.9.12  
 **Database**: SQLite with Hibernate ORM  
@@ -85,7 +85,7 @@ This document provides essential information for agentic coding agents working o
 
 ### JPA Entity Guidelines
 - Use `@Entity` annotation on classes
-- Use `@Id` and `@GeneratedValue` for primary keys
+- Use `@Id` and set a UUID on the server for primary keys
 - Fields can be public for simple entities (following existing pattern)
 - Document entities with Javadoc including usage examples
 
