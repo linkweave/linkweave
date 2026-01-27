@@ -139,8 +139,10 @@ src/main/resources/
 
 ### Test Framework
 - **JUnit 5**: Primary testing framework
+- **AssertJ**: Fluent assertions
 - **Maven Surefire**: Unit tests (`src/test/java`)
 - **Maven Failsafe**: Integration tests (`src/test/java`)
+- **Quarkus Test**: use `@QuarkusTest` for integration tests
 
 ### Test Naming
 - Unit tests: `ClassNameTest`
