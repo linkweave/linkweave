@@ -16,6 +16,7 @@
         <skipITs>true</skipITs>
         <lombok.version>1.18.32</lombok.version>
         <assertj.version>3.26.3</assertj.version>
+        <jspecify.version>1.0.0</jspecify.version>
         <surefire-plugin.version>3.5.4</surefire-plugin.version>
     </properties>
 
@@ -86,6 +87,21 @@
             <artifactId>assertj-core</artifactId>
             <version>${assertj.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+            <version>${jspecify.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.dvbern.oss.commons-i18n-l10n</groupId>
+            <artifactId>dvb-commons-i18n-l10n-api</artifactId>
+            <version>1.0.0</version>
+
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-openapi</artifactId>
         </dependency>
     </dependencies>
 
