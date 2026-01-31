@@ -11,7 +11,6 @@ import java.util.UUID;
 
 import org.jspecify.annotations.Nullable;
 import org.hibernate.HibernateException;
-import org.hibernate.annotations.common.reflection.java.JavaXMember;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.SqlTypes;
 import org.hibernate.usertype.DynamicParameterizedType;
@@ -28,7 +27,7 @@ public class IDType implements EnhancedUserType<ID>, DynamicParameterizedType {
     // Hibernate insists on using a HashTable :(
     @SuppressWarnings("UseOfPropertiesAsHashtable")
     public void setParameterValues(Properties parameters) {
-        var member = (JavaXMember) parameters.get(DynamicParameterizedType.XPROPERTY);
+        var member = parameters.get(DynamicParameterizedType.XPROPERTY);
 
         var pt = (ParameterType) parameters.get(DynamicParameterizedType.PARAMETER_TYPE);
 
@@ -39,10 +38,11 @@ public class IDType implements EnhancedUserType<ID>, DynamicParameterizedType {
             return;
         }
 
-        requireNonNull(member, "Hibernate did not provide the generic type parameter :(");
+        var javaType = resolveMemberJavaType(member);
+        requireNonNull(javaType, "Hibernate did not provide the generic type parameter :(");
 
         entityClass = new EntityClassNameParser(ID.class)
-            .entityClassFrom(member.getJavaType());
+            .entityClassFrom(javaType);
     }
 
     private static boolean isEnversAuditTable(ParameterType pt) {
@@ -57,6 +57,22 @@ public class IDType implements EnhancedUserType<ID>, DynamicParameterizedType {
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException("Could not load class: " + className, e);
         }
+    }
+
+    private static Class<?> resolveMemberJavaType(Object member) {
+        if (member == null) {
+            return null;
+        }
+        try {
+            var method = member.getClass().getMethod("getJavaType");
+            var result = method.invoke(member);
+            if (result instanceof Class<?> clazz) {
+                return clazz;
+            }
+        } catch (ReflectiveOperationException ignored) {
+            // Fall through to null; Hibernate should supply a compatible type.
+        }
+        return null;
     }
 
     @Override

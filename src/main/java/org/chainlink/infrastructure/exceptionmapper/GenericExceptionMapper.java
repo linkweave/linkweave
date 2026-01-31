@@ -1,10 +1,12 @@
 package org.chainlink.infrastructure.exceptionmapper;
 
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.AppFailureMessage;
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.AppValidationException;
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.AppValidationMessage;
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.json.AppFailureErrorJson;
-import ch.dvbern.dvbstarter.shared.i18n.translations.TL;
+import java.sql.SQLException;
+
+import org.chainlink.infrastructure.errorhandling.AppFailureMessage;
+import org.chainlink.infrastructure.errorhandling.AppValidationException;
+import org.chainlink.infrastructure.errorhandling.AppValidationMessage;
+import org.chainlink.infrastructure.errorhandling.json.AppFailureErrorJson;
+import ch.dvbern.dvbstarter.i18n.translations.TL;
 import io.quarkus.runtime.util.ExceptionUtil;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.core.Context;
@@ -16,9 +18,9 @@ import jakarta.ws.rs.ext.Providers;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.postgresql.util.PSQLException;
 
-import static ch.dvbern.dvbstarter.infrastructure.errorhandling.AppFailureMessage.internalError;
+
+import static org.chainlink.infrastructure.errorhandling.AppFailureMessage.internalError;
 
 @Provider
 @Slf4j
@@ -48,7 +50,7 @@ class GenericExceptionMapper implements ExceptionMapper<Exception> {
         org.hibernate.exception.ConstraintViolationException hibernateEx =
             ExceptionUtils.throwableOfType(exception, org.hibernate.exception.ConstraintViolationException.class);
         // ForeignKey Constraints
-        if (rootCause instanceof PSQLException ex && ex.getMessage().contains("violates foreign key")) {
+        if (rootCause instanceof SQLException ex && ex.getMessage().contains("violates foreign key")) {
             var appValidationException = new AppValidationException(AppValidationMessage.referencedForeignKey());
             return providers.getExceptionMapper(AppValidationException.class).toResponse(appValidationException);
         }

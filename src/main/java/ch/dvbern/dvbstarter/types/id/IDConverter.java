@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.UUID;
 
-import ch.dvbern.oss.hemed.esc.api.shared.abstractentity.AbstractEntity;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.BeanProperty;
@@ -23,6 +22,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.NotImplementedException;
+import org.chainlink.api.shared.abstractentity.AbstractEntity;
 import org.jspecify.annotations.Nullable;
 
 import static java.util.Objects.requireNonNull;

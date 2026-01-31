@@ -2,13 +2,13 @@ package org.chainlink.infrastructure.exceptionmapper;
 
 import java.util.List;
 
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.AppFailureMessage;
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.AppValidationException;
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.ExceptionId;
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.json.AppFailureErrorJson;
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.json.AppValidationErrorJson;
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.json.ViolationJson;
-import ch.dvbern.dvbstarter.shared.i18n.translations.TL;
+import org.chainlink.infrastructure.errorhandling.AppFailureMessage;
+import org.chainlink.infrastructure.errorhandling.AppValidationException;
+import org.chainlink.infrastructure.errorhandling.ExceptionId;
+import org.chainlink.infrastructure.errorhandling.json.AppFailureErrorJson;
+import org.chainlink.infrastructure.errorhandling.json.AppValidationErrorJson;
+import org.chainlink.infrastructure.errorhandling.json.ViolationJson;
+import ch.dvbern.dvbstarter.i18n.translations.TL;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.core.MediaType;
@@ -19,7 +19,7 @@ import jakarta.ws.rs.ext.Provider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import static ch.dvbern.dvbstarter.infrastructure.errorhandling.AppFailureMessage.internalError;
+import static org.chainlink.infrastructure.errorhandling.AppFailureMessage.internalError;
 
 @Provider
 @Slf4j

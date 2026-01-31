@@ -1,8 +1,8 @@
 package org.chainlink.infrastructure.exceptionmapper;
 
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.ExceptionId;
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.json.AppFailureErrorJson;
-import ch.dvbern.dvbstarter.shared.i18n.translations.TL;
+import org.chainlink.infrastructure.errorhandling.ExceptionId;
+import org.chainlink.infrastructure.errorhandling.json.AppFailureErrorJson;
+import ch.dvbern.dvbstarter.i18n.translations.TL;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import io.vertx.core.http.HttpServerRequest;

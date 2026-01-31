@@ -1,6 +1,6 @@
 package ch.dvbern.dvbstarter.types.semver;
 
-import ch.dvbern.dvbstarter.shared.openapi.OpenApiConst;
+import ch.dvbern.dvbstarter.openapi.OpenApiConst;
 import com.vdurmont.semver4j.Semver;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;

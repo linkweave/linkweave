@@ -6,11 +6,11 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.UUID;
 
-import ch.dvbern.dvbstarter.shared.openapi.OpenApiConst.Format;
-import ch.dvbern.oss.hemed.esc.api.shared.abstractentity.AbstractEntity;
+import ch.dvbern.dvbstarter.openapi.OpenApiConst.Format;
 import lombok.Getter;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.chainlink.api.shared.abstractentity.AbstractEntity;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;

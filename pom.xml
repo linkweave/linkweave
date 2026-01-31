@@ -7,16 +7,22 @@
 
     <properties>
         <compiler-plugin.version>3.14.1</compiler-plugin.version>
-        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.version>3.30.8</quarkus.platform.version>
         <skipITs>true</skipITs>
-        <lombok.version>1.18.32</lombok.version>
+        <lombok.version>1.18.42</lombok.version>
         <assertj.version>3.26.3</assertj.version>
         <jspecify.version>1.0.0</jspecify.version>
+        <commons-validator.version>1.9.0</commons-validator.version>
+        <semver4j.version>3.1.0</semver4j.version>
+        <tika.version>3.2.3</tika.version>
+        <guava.version>33.2.1-jre</guava.version>
+        <querydsl.version>7.1</querydsl.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
         <surefire-plugin.version>3.5.4</surefire-plugin.version>
     </properties>
 
@@ -94,6 +100,46 @@
             <version>${jspecify.version}</version>
         </dependency>
         <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+            <version>${commons-validator.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vdurmont</groupId>
+            <artifactId>semver4j</artifactId>
+            <version>${semver4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
+       
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.dvbern.oss.commons-logging-mdc</groupId>
+            <artifactId>dvb-commons-logging-mdc-jaxrs-filter</artifactId>
+            <version>0.0.2</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.openfeign.querydsl</groupId>
+            <artifactId>querydsl-jpa</artifactId>
+            <version>${querydsl.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${mapstruct.version}</version>
+        </dependency>
+        <dependency>
             <groupId>ch.dvbern.oss.commons-i18n-l10n</groupId>
             <artifactId>dvb-commons-i18n-l10n-api</artifactId>
             <version>1.0.0</version>
@@ -133,6 +179,27 @@
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
                             <version>${lombok.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                        <path>
+                            <groupId>io.github.openfeign.querydsl</groupId>
+                            <artifactId>querydsl-apt</artifactId>
+                            <classifier>jpa</classifier>
+                            <version>${querydsl.version}</version>
+                        </path>
+                        <dependency>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok-mapstruct-binding</artifactId>
+                            <version>0.2.0</version>
+                        </dependency>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${mapstruct.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>

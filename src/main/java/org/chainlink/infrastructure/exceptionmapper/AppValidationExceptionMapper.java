@@ -2,10 +2,10 @@ package org.chainlink.infrastructure.exceptionmapper;
 
 import java.util.List;
 
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.AppValidationException;
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.json.AppValidationErrorJson;
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.json.ViolationJson;
-import ch.dvbern.dvbstarter.shared.i18n.translations.TL;
+import org.chainlink.infrastructure.errorhandling.AppValidationException;
+import org.chainlink.infrastructure.errorhandling.json.AppValidationErrorJson;
+import org.chainlink.infrastructure.errorhandling.json.ViolationJson;
+import ch.dvbern.dvbstarter.i18n.translations.TL;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;

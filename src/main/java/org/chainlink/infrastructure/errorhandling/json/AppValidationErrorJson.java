@@ -3,8 +3,8 @@ package org.chainlink.infrastructure.errorhandling.json;
 import java.util.Collection;
 import java.util.List;
 
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.FailureType;
-import ch.dvbern.dvbstarter.infrastructure.stereotypes.JaxDTO;
+import org.chainlink.infrastructure.errorhandling.FailureType;
+import org.chainlink.infrastructure.stereotypes.JaxDTO;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;

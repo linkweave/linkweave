@@ -7,8 +7,7 @@ import java.util.Base64;
 import java.util.Objects;
 import java.util.UUID;
 
-import ch.dvbern.dvbstarter.shared.openapi.OpenApiConst;
-import ch.dvbern.oss.hemed.esc.api.shared.types.IgnoreForIdClassTest;
+import ch.dvbern.dvbstarter.openapi.OpenApiConst;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import jakarta.validation.constraints.NotEmpty;
@@ -17,6 +16,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.commons.lang3.StringUtils;
+import org.chainlink.infrastructure.types.IgnoreForIdClassTest;
 import org.jspecify.annotations.NonNull;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;

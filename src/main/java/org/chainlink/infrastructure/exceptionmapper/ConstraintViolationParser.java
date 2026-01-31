@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.json.ViolationJson;
+import org.chainlink.infrastructure.errorhandling.json.ViolationJson;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Path;
 import jakarta.validation.Path.Node;

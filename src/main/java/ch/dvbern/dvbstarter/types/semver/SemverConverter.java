@@ -1,6 +1,6 @@
 package ch.dvbern.dvbstarter.types.semver;
 
-import ch.dvbern.dvbstarter.shared.types.GenericStringConverter;
+import ch.dvbern.dvbstarter.types.GenericStringConverter;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.vdurmont.semver4j.Semver;
 import lombok.experimental.UtilityClass;

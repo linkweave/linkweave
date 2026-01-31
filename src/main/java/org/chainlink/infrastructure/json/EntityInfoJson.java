@@ -3,9 +3,9 @@ package org.chainlink.infrastructure.json;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-import ch.dvbern.dvbstarter.infrastructure.stereotypes.JaxDTO;
-import ch.dvbern.dvbstarter.shared.i18n.datetime.DateConst;
-import ch.dvbern.oss.hemed.esc.api.shared.abstractentity.AbstractEntity;
+import org.chainlink.api.shared.abstractentity.AbstractEntity;
+import org.chainlink.infrastructure.stereotypes.JaxDTO;
+import ch.dvbern.dvbstarter.i18n.datetime.DateConst;
 import jakarta.validation.constraints.NotNull;
 import lombok.Value;
 import org.jspecify.annotations.NonNull;

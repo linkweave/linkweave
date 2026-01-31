@@ -4,7 +4,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 
-import ch.dvbern.dvbstarter.shared.i18n.datetime.DateConst;
+import ch.dvbern.dvbstarter.i18n.datetime.DateConst;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped

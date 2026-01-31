@@ -2,7 +2,7 @@ package ch.dvbern.dvbstarter.types.url;
 
 import java.net.URL;
 
-import ch.dvbern.dvbstarter.shared.openapi.OpenApiConst;
+import ch.dvbern.dvbstarter.openapi.OpenApiConst;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 

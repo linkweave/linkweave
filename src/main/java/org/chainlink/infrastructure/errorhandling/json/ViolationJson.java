@@ -3,7 +3,7 @@ package org.chainlink.infrastructure.errorhandling.json;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import ch.dvbern.dvbstarter.infrastructure.stereotypes.JaxDTO;
+import org.chainlink.infrastructure.stereotypes.JaxDTO;
 import com.fasterxml.jackson.databind.JsonMappingException.Reference;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;

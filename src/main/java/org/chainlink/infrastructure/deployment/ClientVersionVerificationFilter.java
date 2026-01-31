@@ -1,7 +1,7 @@
 package org.chainlink.infrastructure.deployment;
 
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.AppValidationException;
-import ch.dvbern.oss.hemed.esc.api.shared.config.service.ConfigService;
+import org.chainlink.api.shared.config.ConfigService;
+import org.chainlink.infrastructure.errorhandling.AppValidationException;
 import com.vdurmont.semver4j.Semver;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import static ch.dvbern.dvbstarter.infrastructure.errorhandling.AppValidationMessage.clientVersionVerificationFailed;
+import static org.chainlink.infrastructure.errorhandling.AppValidationMessage.clientVersionVerificationFailed;
 
 @Provider
 @PreMatching

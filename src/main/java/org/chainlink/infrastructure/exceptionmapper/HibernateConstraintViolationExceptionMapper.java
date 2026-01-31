@@ -1,8 +1,8 @@
 package org.chainlink.infrastructure.exceptionmapper;
 
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.AppValidationException;
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.AppValidationMessage;
-import ch.dvbern.dvbstarter.shared.i18n.translations.TL;
+import org.chainlink.infrastructure.errorhandling.AppValidationException;
+import org.chainlink.infrastructure.errorhandling.AppValidationMessage;
+import ch.dvbern.dvbstarter.i18n.translations.TL;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;

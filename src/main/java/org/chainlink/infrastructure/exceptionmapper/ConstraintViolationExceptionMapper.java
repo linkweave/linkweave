@@ -1,6 +1,6 @@
 package org.chainlink.infrastructure.exceptionmapper;
 
-import ch.dvbern.dvbstarter.infrastructure.errorhandling.json.AppValidationErrorJson;
+import org.chainlink.infrastructure.errorhandling.json.AppValidationErrorJson;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;

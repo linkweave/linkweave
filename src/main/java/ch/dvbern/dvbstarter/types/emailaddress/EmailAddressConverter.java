@@ -1,6 +1,6 @@
 package ch.dvbern.dvbstarter.types.emailaddress;
 
-import ch.dvbern.dvbstarter.shared.types.GenericStringConverter;
+import ch.dvbern.dvbstarter.types.GenericStringConverter;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import jakarta.persistence.Converter;
 import org.jspecify.annotations.Nullable;

@@ -5,10 +5,10 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.UUID;
 
-import ch.dvbern.oss.hemed.esc.api.shared.abstractentity.AbstractEntity;
 import jakarta.ws.rs.ext.ParamConverter;
 import jakarta.ws.rs.ext.ParamConverterProvider;
 import jakarta.ws.rs.ext.Provider;
+import org.chainlink.api.shared.abstractentity.AbstractEntity;
 import org.jspecify.annotations.Nullable;
 
 import static java.util.Objects.requireNonNull;

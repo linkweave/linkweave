@@ -8,7 +8,7 @@ import ch.dvbern.oss.commons.logging.mdc.LoggingPrincipal;
 import ch.dvbern.oss.commons.logging.mdc.LoggingSource;
 import ch.dvbern.oss.commons.logging.mdc.LoggingTenant;
 import ch.dvbern.oss.commons.logging.mdc.jaxrsfilter.CommonMDCFieldRequestFilterHelper;
-import ch.dvbern.oss.hemed.esc.api.shared.config.service.ConfigService;
+
 import com.vdurmont.semver4j.Semver;
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.RequestScoped;
@@ -20,6 +20,7 @@ import jakarta.ws.rs.ext.Provider;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import org.chainlink.api.shared.config.ConfigService;
 import org.jspecify.annotations.NonNull;
 
 @Provider

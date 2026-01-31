@@ -8,7 +8,7 @@ import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
-import ch.dvbern.dvbstarter.shared.i18n.datetime.DateUtil;
+import ch.dvbern.dvbstarter.i18n.datetime.DateUtil;
 import jakarta.enterprise.context.RequestScoped;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;

@@ -1,7 +1,6 @@
 package org.chainlink.infrastructure.json;
 
-import ch.dvbern.dvbstarter.shared.types.id.ID;
-import ch.dvbern.oss.hemed.esc.api.shared.abstractentity.AbstractEntity;
+import ch.dvbern.dvbstarter.types.id.ID;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriBuilder;
@@ -9,6 +8,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.With;
+import org.chainlink.api.shared.abstractentity.AbstractEntity;
 
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)

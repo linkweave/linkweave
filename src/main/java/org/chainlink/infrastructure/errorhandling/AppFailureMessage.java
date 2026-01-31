@@ -20,16 +20,13 @@ package org.chainlink.infrastructure.errorhandling;
 
 import java.time.LocalDate;
 
-import ch.dvbern.dvbstarter.shared.types.id.ID;
+import ch.dvbern.dvbstarter.types.id.ID;
 import ch.dvbern.oss.commons.i18nl10n.I18nMessage;
-import ch.dvbern.oss.hemed.esc.api.features.anlass.einladung.Einladung;
-import ch.dvbern.oss.hemed.esc.api.features.anlass.types.AnlassTyp;
-import ch.dvbern.oss.hemed.esc.api.shared.abstractentity.AbstractEntity;
-import ch.dvbern.oss.hemed.esc.api.shared.scheduler.SchedulerTyp;
-import ch.dvbern.oss.hemed.esc.api.shared.types.IgnoreForIdClassTest;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import org.chainlink.infrastructure.types.IgnoreForIdClassTest;
 import org.jspecify.annotations.NonNull;
 
 @Value
@@ -63,15 +60,6 @@ public class AppFailureMessage {
         ));
     }
 
-    @NonNull
-    public static AppFailureMessage changedByOtherUser(AbstractEntity<?> entity) {
-        return build(I18nMessage.of(
-            "AppFailure.CHANGED_BY_OTHER_USER",
-            ENTITY_NAME, entity.getClass().getSimpleName(),
-            "versionBackend", entity.getVersion(),
-            "versionFrontend", entity.getVersionFromFrontend()
-        ));
-    }
 
     @NonNull
     public static AppFailureMessage couldNotCreateEntity(@NonNull String entityName) {
@@ -145,50 +133,7 @@ public class AppFailureMessage {
         ));
     }
 
-    @NonNull
-    public static AppFailureMessage schedulerConfigNotFound(@NonNull SchedulerTyp typ) {
-        return build(I18nMessage.of(
-            "AppFailure.SCHEDULER_CONFIG_NOT_FOUND",
-            "schedulerTyp", typ
-        ));
-    }
 
-    @NonNull
-    public static AppFailureMessage anlassConfigNotFound(@NonNull AnlassTyp typ, @NonNull LocalDate stichTag) {
-        return build(I18nMessage.of(
-            "AppFailure.ANLASS_CONFIG_NOT_FOUND",
-            "anlassTyp", typ,
-            "stichtag", stichTag.toString()
-        ));
-    }
-
-    @NonNull
-    public static AppFailureMessage einladungCannotBeRemoved(@NonNull Einladung einladung) {
-        return build(I18nMessage.of(
-            "AppFailure.EINLADUNG_CANNOT_BE_REMOVED",
-            "kindName", einladung.getDossier().getKind().getNameVorname()
-        ));
-    }
-
-    @NonNull
-    public static AppFailureMessage impfungInternCannotBeRemoved() {
-        return build(I18nMessage.of(
-            "AppFailure.IMPFUNG_INTERN_CANNOT_BE_REMOVED"
-        ));
-    }
-
-    @NonNull
-    public static AppFailureMessage missingBerechtigung(
-        Class<?> entity,
-        ID<? extends AbstractEntity<?>> id,
-        String username
-    ) {
-        return build(I18nMessage.of(
-            "AppFailure.MISSING_BERECHTIGUNG",
-            "entity", entity.getSimpleName(),
-            "id", id,
-            "username", username));
-    }
 
     @NonNull
     public static AppFailureMessage updateFachRollenNotAllowed() {
