@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.persistence.CacheRetrieveMode;
+import jakarta.persistence.CacheStoreMode;
 import jakarta.persistence.FlushModeType;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.NoResultException;
@@ -50,6 +52,11 @@ public class SmartTypedQuery<X> implements TypedQuery<X> {
     @Nullable
     public X getSingleResult() {
         return delegate.getSingleResult();
+    }
+
+    @Override
+    public X getSingleResultOrNull() {
+        return delegate.getSingleResultOrNull();
     }
 
     @Override
@@ -240,6 +247,36 @@ public class SmartTypedQuery<X> implements TypedQuery<X> {
     @NonNull
     public SmartTypedQuery<X> setLockMode(@NonNull LockModeType lockMode) {
         return new SmartTypedQuery<>(delegate.setLockMode(lockMode));
+    }
+
+    @Override
+    public TypedQuery<X> setCacheRetrieveMode(CacheRetrieveMode cacheRetrieveMode) {
+        return delegate.setCacheRetrieveMode(cacheRetrieveMode);
+    }
+
+    @Override
+    public TypedQuery<X> setCacheStoreMode(CacheStoreMode cacheStoreMode) {
+        return delegate.setCacheStoreMode(cacheStoreMode);
+    }
+
+    @Override
+    public CacheRetrieveMode getCacheRetrieveMode() {
+        return delegate.getCacheRetrieveMode();
+    }
+
+    @Override
+    public CacheStoreMode getCacheStoreMode() {
+        return delegate.getCacheStoreMode();
+    }
+
+    @Override
+    public TypedQuery<X> setTimeout(Integer timeout) {
+        return delegate.setTimeout(timeout);
+    }
+
+    @Override
+    public Integer getTimeout() {
+        return delegate.getTimeout();
     }
 
     @Override
