@@ -1,4 +1,19 @@
-#Maven
+### Project specific ignores ###
+
+# Place .gitignore settings specific to your project here
+
+
+##### Common ignore settings ####
+
+## Local developer / local build settings
+developer-local-settings/
+build.properties
+.env
+docker-compose.override.yml
+
+### Build systems ###
+
+## Maven
 target/
 pom.xml.tag
 pom.xml.releaseBackup

@@ -105,10 +105,9 @@ public class Benutzer extends AbstractEntity<Benutzer> {
     private String fachRollen;
 
     @NonNull
-    @Valid
     @OneToMany(mappedBy = "benutzer", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    private Set<BenutzerBerechtigung> berechtigungen = new HashSet<>();
+    private Set<@Valid BenutzerBerechtigung> berechtigungen = new HashSet<>();
 
     /**
      * The actual deactivation happens in the login system (i.e. Keycloak or Entra) but this serves as a flag, so we
