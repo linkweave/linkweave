@@ -1,4 +1,4 @@
-package org.chainlink.domain;
+package org.chainlink.api.bookmark;
 
 import java.net.URL;
 import java.util.HashSet;
@@ -13,7 +13,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 import org.chainlink.api.shared.abstractentity.AbstractEntity;
 import org.chainlink.infrastructure.db.DbConst;
 import org.jspecify.annotations.Nullable;

@@ -1,18 +1,16 @@
-package org.chainlink.domain;
+package org.chainlink.api.bookmark;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 import org.chainlink.api.shared.abstractentity.AbstractEntity;
 import org.chainlink.infrastructure.db.DbConst;
 
@@ -20,11 +18,13 @@ import org.chainlink.infrastructure.db.DbConst;
 @Table()
 @NoArgsConstructor
 
-public class Folder extends AbstractEntity<Folder> {
+public class Tag extends AbstractEntity<Tag> {
 
     @NotBlank
     @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH)
     @Column(nullable = false, length = DbConst.DB_DEFAULT_MAX_LENGTH)
     public String name;
 
+    @ManyToMany(mappedBy = "tags")
+    public Set<Bookmark> bookmarks = new HashSet<>();
 }
