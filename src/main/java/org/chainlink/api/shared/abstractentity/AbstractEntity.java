@@ -24,8 +24,8 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import org.chainlink.api.shared.Util;
 import org.chainlink.infrastructure.db.DbConst;
 import org.chainlink.infrastructure.types.IgnoreForIdClassTest;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.hibernate.Hibernate;
 import org.hibernate.envers.Audited;
 
