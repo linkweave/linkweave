@@ -87,8 +87,8 @@ This document provides essential information for agentic coding agents working o
 - Use `@Entity` annotation on classes
 - Use `@Id` and set a UUID on the server for primary keys
 - Fields can be public for simple entities (following existing pattern)
-- Document entities with Javadoc including usage examples
-
+- JPA Data can be used
+- 
 ### REST Endpoint Guidelines
 - Use JAX-RS annotations (`@Path`, `@GET`, `@POST`, etc.)
 - Inject dependencies via constructor
@@ -114,9 +114,9 @@ src/main/resources/
 
 ### Backend
 - **Quarkus 3.30.8**: Main framework
-- **Hibernate ORM**: Database operations
+- **Hibernate ORM and Jakarta Data**: Database operations
 - **Hibernate Validator**: Bean validation
-- **Liquibase**: Database migrations
+- **Flyway**: Database migrations
 - **Hibernate Envers**: Entity auditing
 - **SQLite**: Local database storage
 - **JAX-RS**: REST API
@@ -178,8 +178,6 @@ src/main/resources/
 ## Performance Guidelines
 
 - Leverage Quarkus build-time optimizations
-- Use native compilation for production when beneficial
-- Consider GraalVM native image for containerized deployments
 - Profile using Quarkus development tools
 
 ## Package Management
@@ -205,6 +203,7 @@ public SomePage(Template page) {
     this.page = requireNonNull(page, "page is required");
 }
 ```
+Or better yet use @RequiredArgsConstructor from lombok
 
 ### REST Endpoints
 ```java
@@ -213,7 +212,9 @@ public SomePage(Template page) {
 public TemplateInstance get(@QueryParam("name") String name) {
     return page.data("name", name);
 }
+
 ```
+Annotate the Resource with the @JaxRendereable stereotype
 
 ### JPA Entities
 ```java
@@ -224,8 +225,10 @@ public class MyEntity {
     public Long id;
     public String field;
 }
-```
 
+```
+## Architecture
+- adhere to the layering model, the following layers exist: Entities, Repository, Repository, Service, Resource. There are stereotype annotations like org.chainlink.infrastructure.stereotypes.JaxResource available
 ## CI/CD
 
 - **GitHub Actions**: Runs on push/PR to main
@@ -236,12 +239,10 @@ public class MyEntity {
 ## Environment Variables
 
 - `maven.home`: Automatically set for tests
-- `native.image.path`: Used for integration tests with native builds
-
 ## Additional Notes
 
 - German comments in `.editorconfig` indicate previous German development
-- Default port: 8080
+- Default port: 8443, default url https://local-chainlink.localhost:8443/
 - Development mode includes comprehensive Dev UI
 - Quarkus live reloads both Java and web resources
-- Database schema managed by Hibernate unless Liquibase migrations exist
+

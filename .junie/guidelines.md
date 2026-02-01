@@ -50,6 +50,7 @@
   - Use Lombok for boilerplate (Getter, Setter, ToString, etc.).
   - Use Jakarta Persistence annotations for mapping.
   - Entities should generally extend `AbstractEntity`.
+  - Jakarta data can be used for queries.
 - **Database Migrations**: Uses Flyway. Migration files are located in `src/main/resources/db/migration`.
 - **Custom Types**: The project uses several custom types like `ID<T>` and `EmailAddress`. Use their `fromString` or `of` methods for instantiation.
 - **Service Layer**: Use `@Service` (custom stereotype) and `@RequiredArgsConstructor` for dependency injection.
