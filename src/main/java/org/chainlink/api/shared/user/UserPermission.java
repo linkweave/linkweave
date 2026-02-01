@@ -20,7 +20,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.chainlink.api.shared.abstractentity.AbstractEntity;
 import org.chainlink.api.shared.auth.Permission;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NonNull;
 import org.hibernate.envers.Audited;
 
 @Entity

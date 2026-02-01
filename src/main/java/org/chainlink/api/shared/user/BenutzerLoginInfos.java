@@ -15,7 +15,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.chainlink.infrastructure.db.DbConst;
 import org.chainlink.infrastructure.types.IgnoreForIdClassTest;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 @Embeddable
 @Getter

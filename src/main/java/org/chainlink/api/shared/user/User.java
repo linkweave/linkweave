@@ -30,8 +30,8 @@ import org.chainlink.api.shared.auth.FachRolle;
 import org.chainlink.api.shared.util.EnumSetUtil;
 import org.chainlink.infrastructure.db.DbConst;
 import org.chainlink.infrastructure.types.IgnoreForIdClassTest;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.hibernate.envers.Audited;
 
 @Entity

@@ -5,7 +5,7 @@ import java.util.Optional;
 import ch.dvbern.dvbstarter.types.id.ID;
 import jakarta.inject.Inject;
 import org.chainlink.api.shared.abstractentity.AbstractEntity;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NonNull;
 
 public abstract class BaseRepo<T extends AbstractEntity<T>> {
 

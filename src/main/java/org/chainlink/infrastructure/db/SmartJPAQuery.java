@@ -26,7 +26,7 @@ import com.querydsl.jpa.impl.JPAQuery;
 import jakarta.persistence.EntityGraph;
 import jakarta.persistence.FlushModeType;
 import jakarta.persistence.LockModeType;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import static java.util.Optional.ofNullable;
 

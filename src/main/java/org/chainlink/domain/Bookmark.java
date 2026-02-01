@@ -16,12 +16,11 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.chainlink.api.shared.abstractentity.AbstractEntity;
 import org.chainlink.infrastructure.db.DbConst;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 @Entity
 @Table()
 @NoArgsConstructor
-@SuperBuilder
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 public class Bookmark extends AbstractEntity<Bookmark> {
 

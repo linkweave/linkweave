@@ -19,7 +19,6 @@ import org.chainlink.infrastructure.db.DbConst;
 @Entity
 @Table()
 @NoArgsConstructor
-@SuperBuilder
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 public class Folder extends AbstractEntity<Folder> {
 

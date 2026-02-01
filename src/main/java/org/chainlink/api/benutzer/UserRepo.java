@@ -19,7 +19,7 @@ import org.chainlink.api.shared.user.QUser;
 import org.chainlink.infrastructure.db.BaseRepo;
 import org.chainlink.infrastructure.db.SmartJPAQuery;
 import org.chainlink.infrastructure.stereotypes.Repository;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NonNull;
 
 @Repository
 @RequiredArgsConstructor

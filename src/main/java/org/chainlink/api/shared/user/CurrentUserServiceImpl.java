@@ -12,7 +12,7 @@ import org.chainlink.api.shared.auth.BerechtigungName;
 import org.chainlink.infrastructure.errorhandling.AppAuthException;
 import org.chainlink.infrastructure.errorhandling.AppValidationException;
 import org.chainlink.infrastructure.stereotypes.Service;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NonNull;
 
 @Service
 @RequiredArgsConstructor

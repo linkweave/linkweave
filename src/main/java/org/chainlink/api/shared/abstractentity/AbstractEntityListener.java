@@ -10,7 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.api.shared.config.ConfigService;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NonNull;
 
 @ApplicationScoped
 @AllArgsConstructor(access = AccessLevel.PACKAGE)

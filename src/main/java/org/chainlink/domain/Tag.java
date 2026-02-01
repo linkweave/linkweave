@@ -18,7 +18,6 @@ import org.chainlink.infrastructure.db.DbConst;
 @Entity
 @Table()
 @NoArgsConstructor
-@SuperBuilder
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 public class Tag extends AbstractEntity<Tag> {
 
