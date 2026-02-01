@@ -11,7 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.EqualsAndHashCode;
+
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.chainlink.api.shared.abstractentity.AbstractEntity;
@@ -21,7 +21,7 @@ import org.jspecify.annotations.Nullable;
 @Entity
 @Table()
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
+
 public class Bookmark extends AbstractEntity<Bookmark> {
 
     @NotBlank
