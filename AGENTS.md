@@ -77,7 +77,7 @@ This document provides essential information for agentic coding agents working o
 - **Method Naming**: camelCase (e.g., `getSomePage`, `doSomething`)
 - **Field Naming**: camelCase for private fields, can be public for JPA entities
 - **Constants**: UPPER_SNAKE_CASE for static final fields
-
+- **Getter/Setter**: Use Lombok annotations (`@Getter`, `@Setter`) for simple entities
 ### Import Organization
 - Group imports: Jakarta/JEE, then third-party, then your own packages
 - Use static imports for `java.util.Objects.requireNonNull`
