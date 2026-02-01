@@ -1,7 +1,5 @@
 package org.chainlink.api.shared.abstractentity;
 
-import java.util.Objects;
-
 import ch.dvbern.dvbstarter.clock.AppClock;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -10,7 +8,7 @@ import jakarta.persistence.PreUpdate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import org.chainlink.api.shared.benutzer.CurrentUserService;
+import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.api.shared.config.ConfigService;
 import org.checkerframework.checker.nullness.qual.NonNull;
 

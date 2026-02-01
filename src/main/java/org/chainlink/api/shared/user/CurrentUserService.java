@@ -1,4 +1,4 @@
-package org.chainlink.api.shared.benutzer;
+package org.chainlink.api.shared.user;
 
 import java.util.Optional;
 
@@ -6,13 +6,13 @@ import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
 import ch.dvbern.dvbstarter.types.id.ID;
 
 public interface CurrentUserService {
-    ID<Benutzer> currentUserID();
+    ID<User> currentUserID();
 
     EmailAddress currentUserName();
 
-    Optional<Benutzer> findCurrentUser();
+    Optional<User> findCurrentUser();
 
-    Benutzer currentUser();
+    User currentUser();
 
-    Benutzer currentUserRef();
+    User currentUserRef();
 }

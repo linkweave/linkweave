@@ -1,6 +1,5 @@
 package org.chainlink.api.benutzer;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -15,26 +14,24 @@ import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.chainlink.api.shared.auth.FachRolle;
-import org.chainlink.api.shared.benutzer.Benutzer;
-import org.chainlink.api.shared.benutzer.QBenutzer;
+import org.chainlink.api.shared.user.User;
+import org.chainlink.api.shared.user.QUser;
 import org.chainlink.infrastructure.db.BaseRepo;
 import org.chainlink.infrastructure.db.SmartJPAQuery;
 import org.chainlink.infrastructure.stereotypes.Repository;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 @Repository
 @RequiredArgsConstructor
 @Slf4j
-public class BenutzerRepo extends BaseRepo<Benutzer> {
+public class UserRepo extends BaseRepo<User> {
 
     private final AppClock appClock;
 
     @NonNull
-    public Optional<Benutzer> findByEmail(@NonNull EmailAddress email) {
-        return db.selectFrom(QBenutzer.benutzer)
-            .where(QBenutzer.benutzer.email.eq(email))
+    public Optional<User> findByEmail(@NonNull EmailAddress email) {
+        return db.selectFrom(QUser.user)
+            .where(QUser.user.email.eq(email))
             .fetchOne();
     }
 
@@ -42,32 +39,32 @@ public class BenutzerRepo extends BaseRepo<Benutzer> {
     // transactions it may produce stack overflows
     @NonNull
     @Transactional(TxType.REQUIRES_NEW)
-    public Optional<Benutzer> getByBenutzernameWithBerechtigungen(@NonNull EmailAddress email) {
-        return getByPredicateWithBerechtigungen(QBenutzer.benutzer.email.eq(email));
+    public Optional<User> getByBenutzernameWithBerechtigungen(@NonNull EmailAddress email) {
+        return getByPredicateWithBerechtigungen(QUser.user.email.eq(email));
     }
 
     // to read this from the CurrentUserService we make sure to run this in a new transaction, if it uses preexisting
     // transactions it may produce stack overflows
     @Transactional(TxType.REQUIRES_NEW)
     @NonNull
-    public Optional<ID<Benutzer>> findBenutzerIdFromBenutzername(@NonNull EmailAddress parsedEmail) {
-        Optional<UUID> userIdOpt = db.select(QBenutzer.benutzer.id)
-            .from(QBenutzer.benutzer)
-            .where(QBenutzer.benutzer.email.eq(parsedEmail))
+    public Optional<ID<User>> findBenutzerIdFromBenutzername(@NonNull EmailAddress parsedEmail) {
+        Optional<UUID> userIdOpt = db.select(QUser.user.id)
+            .from(QUser.user)
+            .where(QUser.user.email.eq(parsedEmail))
             .fetchOne();
-        return userIdOpt.map(uuid -> ID.of(uuid, Benutzer.class));
+        return userIdOpt.map(uuid -> ID.of(uuid, User.class));
     }
 
     @NonNull
-    private Optional<Benutzer> getByPredicateWithBerechtigungen(@NonNull Predicate where) {
-        EntityGraph<Benutzer> entityGraph = db.getEntityManager().createEntityGraph(Benutzer.class);
-        entityGraph.addAttributeNodes(QBenutzer.benutzer.berechtigungen.getMetadata().getName());
+    private Optional<User> getByPredicateWithBerechtigungen(@NonNull Predicate where) {
+        EntityGraph<User> entityGraph = db.getEntityManager().createEntityGraph(User.class);
+        entityGraph.addAttributeNodes(QUser.user.berechtigungen.getMetadata().getName());
 
-        SmartJPAQuery<Benutzer> benutzerSmartJPAQuery = db.selectFrom(QBenutzer.benutzer)
+        SmartJPAQuery<User> benutzerSmartJPAQuery = db.selectFrom(QUser.user)
             .where(where);
         benutzerSmartJPAQuery = benutzerSmartJPAQuery.setHint("jakarta.persistence.loadgraph", entityGraph);
 
-        List<Benutzer> fetchedUsers = benutzerSmartJPAQuery.fetch();
+        List<User> fetchedUsers = benutzerSmartJPAQuery.fetch();
 
         if (fetchedUsers.size() > 1) {
             throw new NonUniqueResultException("Found more than one Benutzer");
@@ -81,24 +78,24 @@ public class BenutzerRepo extends BaseRepo<Benutzer> {
     }
 
     @NonNull
-    public List<Benutzer> findAll() {
+    public List<User> findAll() {
         // Unsere Systemadmins nicht anzeigen
         List<UUID> systemAdmins = List.of(
-            Benutzer.getSystemAdminId().getUUID()
+            User.getSystemAdminId().getUUID()
 
         );
 
-        return db.selectFrom(QBenutzer.benutzer)
-            .where(QBenutzer.benutzer.id.notIn(systemAdmins))
-            .orderBy(QBenutzer.benutzer.vorname.asc(), QBenutzer.benutzer.nachname.asc())
+        return db.selectFrom(QUser.user)
+            .where(QUser.user.id.notIn(systemAdmins))
+            .orderBy(QUser.user.vorname.asc(), QUser.user.nachname.asc())
             .fetch();
     }
 
     @NonNull
-    public List<Benutzer> findAllActive() {
-        return db.selectFrom(QBenutzer.benutzer)
-            .where(QBenutzer.benutzer.aktiv.isTrue())
-            .orderBy(QBenutzer.benutzer.vorname.asc(), QBenutzer.benutzer.nachname.asc())
+    public List<User> findAllActive() {
+        return db.selectFrom(QUser.user)
+            .where(QUser.user.aktiv.isTrue())
+            .orderBy(QUser.user.vorname.asc(), QUser.user.nachname.asc())
             .fetch();
     }
 
@@ -106,9 +103,9 @@ public class BenutzerRepo extends BaseRepo<Benutzer> {
 
 
     @NonNull
-    public Benutzer getSystemAdmin() {
-        Benutzer benutzer = db.selectFrom(QBenutzer.benutzer)
-            .where(QBenutzer.benutzer.id.eq(Benutzer.getSystemAdminId().getUUID()))
+    public User getSystemAdmin() {
+        User benutzer = db.selectFrom(QUser.user)
+            .where(QUser.user.id.eq(User.getSystemAdminId().getUUID()))
             .fetchFirst();
         if (benutzer == null) {
             throw new IllegalStateException("System admin not found");

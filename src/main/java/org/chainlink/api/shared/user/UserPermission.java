@@ -1,7 +1,6 @@
-package org.chainlink.api.shared.benutzer;
+package org.chainlink.api.shared.user;
 
 import java.io.Serial;
-
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -31,13 +30,13 @@ import org.hibernate.envers.Audited;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(
-    indexes = @Index(name = "ix_benutzerberechtigung_benutzer", columnList = "benutzer_id"),
+    indexes = @Index(name = "ix_userpermission_user", columnList = "user_id"),
     uniqueConstraints = @UniqueConstraint(
-        name = "uc_benutzerberechtigung_benutzer_berechtigung", columnNames = { "benutzer_id", "berechtigung" }
+        name = "uc_userpermission_user_permission", columnNames = { "user_id", "permission" }
     )
 )
 @ToString(onlyExplicitlyIncluded = true)
-public class BenutzerBerechtigung extends AbstractEntity<BenutzerBerechtigung> {
+public class UserPermission extends AbstractEntity<UserPermission> {
 
     @Serial
     private static final long serialVersionUID = 3647102230877993926L;
@@ -45,10 +44,10 @@ public class BenutzerBerechtigung extends AbstractEntity<BenutzerBerechtigung> {
     @NotNull
     @NonNull
     @ManyToOne(optional = false)
-    @JoinColumn(foreignKey = @ForeignKey(name = "fk_benutzerberechtigung_benutzer"),
+    @JoinColumn(foreignKey = @ForeignKey(name = "fk_userpermission_user"),
         nullable = false,
         updatable = false)
-    private Benutzer benutzer;
+    private User user;
 
     @NotNull
     @NonNull

@@ -1,4 +1,4 @@
-package org.chainlink.api.shared.benutzer;
+package org.chainlink.api.shared.user;
 
 import java.io.Serial;
 import java.io.Serializable;

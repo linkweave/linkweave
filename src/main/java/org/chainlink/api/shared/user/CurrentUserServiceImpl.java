@@ -1,4 +1,4 @@
-package org.chainlink.api.shared.benutzer;
+package org.chainlink.api.shared.user;
 
 import java.util.Optional;
 
@@ -7,7 +7,7 @@ import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.identity.CurrentIdentityAssociation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.chainlink.api.benutzer.BenutzerRepo;
+import org.chainlink.api.benutzer.UserRepo;
 import org.chainlink.api.shared.auth.BerechtigungName;
 import org.chainlink.infrastructure.errorhandling.AppAuthException;
 import org.chainlink.infrastructure.errorhandling.AppValidationException;
@@ -20,15 +20,15 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 public class CurrentUserServiceImpl implements CurrentUserService {
 
     private final CurrentIdentityAssociation association;
-    private final BenutzerRepo repo;
+    private final UserRepo repo;
 
 
     @Override
-    public ID<Benutzer> currentUserID() {
+    public ID<User> currentUserID() {
         requireNotAnonymous();
 
         if (isSystemAdmin()) {
-            return Benutzer.getSystemAdminId();
+            return User.getSystemAdminId();
         }
 
         // otherwise check who we are
@@ -88,7 +88,7 @@ public class CurrentUserServiceImpl implements CurrentUserService {
     }
 
     @Override
-    public Optional<Benutzer> findCurrentUser() {
+    public Optional<User> findCurrentUser() {
         if (association.getIdentity().isAnonymous()) {
             return Optional.empty();
         }
@@ -96,12 +96,12 @@ public class CurrentUserServiceImpl implements CurrentUserService {
     }
 
     @Override
-    public Benutzer currentUser() {
+    public User currentUser() {
         return repo.getById(currentUserID());
     }
 
     @Override
-    public Benutzer currentUserRef() {
+    public User currentUserRef() {
         return repo.referenceById(currentUserID());
     }
 }

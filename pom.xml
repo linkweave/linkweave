@@ -44,6 +44,10 @@
             <artifactId>quarkus-hibernate-orm</artifactId>
         </dependency>
         <dependency>
+            <groupId>jakarta.data</groupId>
+            <artifactId>jakarta.data-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.quarkiverse.web-bundler</groupId>
             <artifactId>quarkus-web-bundler</artifactId>
             <version>2.2.0</version>
@@ -60,10 +64,7 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-rest-qute</artifactId>
         </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-liquibase</artifactId>
-        </dependency>
+
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-hibernate-envers</artifactId>
@@ -109,6 +110,10 @@
             <version>${commons-validator.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.vdurmont</groupId>
             <artifactId>semver4j</artifactId>
             <version>${semver4j.version}</version>
@@ -148,6 +153,10 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-smallrye-openapi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-flyway</artifactId>
         </dependency>
     </dependencies>
 
@@ -190,6 +199,11 @@
                             <artifactId>querydsl-apt</artifactId>
                             <classifier>jpa</classifier>
                             <version>${querydsl.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.hibernate.orm</groupId>
+                            <artifactId>hibernate-processor</artifactId>
+                            <!-- Note, no artifact version is required, it's managed by Quarkus.  -->
                         </path>
                         <dependency>
                             <groupId>org.projectlombok</groupId>

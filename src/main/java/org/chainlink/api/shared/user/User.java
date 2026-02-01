@@ -1,4 +1,4 @@
-package org.chainlink.api.shared.benutzer;
+package org.chainlink.api.shared.user;
 
 import java.io.Serial;
 import java.time.OffsetDateTime;
@@ -10,7 +10,6 @@ import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
 import ch.dvbern.dvbstarter.types.id.ID;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
@@ -38,13 +37,13 @@ import org.hibernate.envers.Audited;
 @Entity
 @Table(
     indexes = {
-        @Index(name = "ix_benutzer_id", columnList = "id, version"),
-        @Index(name = "ix_benutzer_email", columnList = "email, id"),
-        @Index(name = "ix_benutzer_keycloakId", columnList = "keycloakId, id"),
+        @Index(name = "ix_user_id", columnList = "id, version"),
+        @Index(name = "ix_user_email", columnList = "email, id"),
+        @Index(name = "ix_user_keycloakId", columnList = "keycloakId, id"),
     },
     uniqueConstraints = {
-        @UniqueConstraint(name = "uc_benutzer_keycloakId", columnNames = "keycloakId"),
-        @UniqueConstraint(name = "uc_benutzer_email", columnNames = "email"),
+        @UniqueConstraint(name = "uc_user_keycloakId", columnNames = "keycloakId"),
+        @UniqueConstraint(name = "uc_user_email", columnNames = "email"),
     }
 )
 @Audited
@@ -53,13 +52,13 @@ import org.hibernate.envers.Audited;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class Benutzer extends AbstractEntity<Benutzer> {
+public class User extends AbstractEntity<User> {
 
     @Serial
-    private static final long serialVersionUID = -4471131500166716925L;
+    private static final long serialVersionUID = 4416654585500344772L;
 
-    public static final ID<Benutzer> SYSTEM_ADMIN_ID =
-        ID.parse("11111111-1111-1111-1111-111111111112", Benutzer.class);
+    public static final ID<User> SYSTEM_ADMIN_ID =
+        ID.parse("11111111-1111-1111-1111-111111111112", User.class);
 
 
     @Nullable
@@ -105,9 +104,9 @@ public class Benutzer extends AbstractEntity<Benutzer> {
     private String fachRollen;
 
     @NonNull
-    @OneToMany(mappedBy = "benutzer", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    private Set<@Valid BenutzerBerechtigung> berechtigungen = new HashSet<>();
+    private Set<UserPermission> berechtigungen = new HashSet<>();
 
     /**
      * The actual deactivation happens in the login system (i.e. Keycloak or Entra) but this serves as a flag, so we
@@ -140,7 +139,7 @@ public class Benutzer extends AbstractEntity<Benutzer> {
     }
 
     @NonNull
-    public static ID<Benutzer> getSystemAdminId() {
+    public static ID<User> getSystemAdminId() {
        return SYSTEM_ADMIN_ID;
     }
 }
