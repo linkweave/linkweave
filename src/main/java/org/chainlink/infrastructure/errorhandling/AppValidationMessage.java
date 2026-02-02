@@ -22,8 +22,8 @@ import org.jspecify.annotations.Nullable;
 public class AppValidationMessage {
 
     // This key is sent to the client in the error response
-    private final String clientKey;
-    private final I18nMessage i18nMessage;
+    String clientKey;
+    I18nMessage i18nMessage;
     private static final String ENTITY_ID = "entityId";
 
 

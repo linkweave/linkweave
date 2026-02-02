@@ -24,10 +24,12 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import org.chainlink.api.shared.Util;
 import org.chainlink.infrastructure.db.DbConst;
 import org.chainlink.infrastructure.types.IgnoreForIdClassTest;
+import org.hibernate.Hibernate;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.envers.Audited;
+import org.hibernate.type.SqlTypes;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.hibernate.Hibernate;
-import org.hibernate.envers.Audited;
 
 @SuppressWarnings("ClassReferencesSubclass")
 @MappedSuperclass
@@ -46,6 +48,7 @@ public abstract class AbstractEntity<Entity extends AbstractEntity<Entity>> impl
     @Column(nullable = false, updatable = false)
     @Getter(AccessLevel.NONE)
     @IgnoreForIdClassTest
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     private UUID id = UUID.randomUUID();
 
     @Version
