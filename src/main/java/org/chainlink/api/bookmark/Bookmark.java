@@ -13,8 +13,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import lombok.NoArgsConstructor;
+import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.shared.abstractentity.AbstractEntity;
 import org.chainlink.infrastructure.db.DbConst;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 @Entity
@@ -24,11 +26,13 @@ import org.jspecify.annotations.Nullable;
 public class Bookmark extends AbstractEntity<Bookmark> {
 
     @NotBlank
+    @NonNull
     @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH)
     @Column(nullable = false, length = DbConst.DB_DEFAULT_MAX_LENGTH)
     public String title;
 
     @NotBlank
+    @NonNull
     @Column(nullable = false, length = DbConst.DB_TEXTAREA_MAX_LENGTH_2000)
     public URL url;
 
@@ -36,6 +40,7 @@ public class Bookmark extends AbstractEntity<Bookmark> {
     @Column(nullable = true, length = DbConst.DB_TEXTAREA_MAX_LENGTH_5000)
     public String notes;
 
+    @NonNull
     @ManyToOne(optional = false)
     public Folder folder;
 

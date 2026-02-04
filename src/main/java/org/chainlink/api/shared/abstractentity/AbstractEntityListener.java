@@ -34,9 +34,10 @@ public class AbstractEntityListener {
 
         entity.setTimestampErstellt(now);
         entity.setTimestampMutiert(now);
-        entity.setUserErstellt(currentUserService.currentUserRef().getId().getId());
-        entity.setUserMutiert(currentUserService.currentUserRef().getId().getId());
-
+//        entity.setUserErstellt(currentUserService.currentUserRef().getId().getId());
+//        entity.setUserMutiert(currentUserService.currentUserRef().getId().getId());
+        entity.setUserMutiert("foobaruser");
+        entity.setUserErstellt("foobaruser");
 
     }
 
@@ -46,7 +47,8 @@ public class AbstractEntityListener {
         var now = clock.offsetDateTime().now();
 
         entity.setTimestampMutiert(now);
-        entity.setUserMutiert(currentUserService.currentUserRef().getId().getId());
+//        entity.setUserMutiert(currentUserService.currentUserRef().getId().getId());
+        entity.setUserMutiert("updateuser");
 
     }
 
