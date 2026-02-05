@@ -18,8 +18,6 @@
 
 package org.chainlink.infrastructure.errorhandling;
 
-import java.time.LocalDate;
-
 import ch.dvbern.dvbstarter.types.id.ID;
 import ch.dvbern.oss.commons.i18nl10n.I18nMessage;
 
@@ -99,7 +97,7 @@ public class AppFailureMessage {
     }
 
     @NonNull
-    public static <T> AppFailureMessage entityNotFoundUsingExternalId(
+    public static <T> AppFailureMessage entityNotFoundMsg(
         @NonNull Class<T> clazz,
         @IgnoreForIdClassTest @NonNull String id) {
         return build(I18nMessage.of(

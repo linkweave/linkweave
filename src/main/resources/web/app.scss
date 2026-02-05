@@ -1,91 +1,386 @@
-// This style will be bundled by the Web-Bundler and available using the {#bundle /} tag
-// for more information about how to use the {#bundle /} tag, see https://docs.quarkiverse.io/quarkus-web-bundler/dev/advanced-guides.html#bundle-tag
+// Bookmark Manager - Dark Theme Styles
+// Based on the UI design specification
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 body {
-  margin: 0;
-  background-color: black;
+  background-color: #1e1e1e;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.5;
+  min-height: 100vh;
 }
 
-.star {
+// Sidebar Styles
+.sidebar {
+  width: 280px;
+  background-color: #252525;
+  border-right: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  overflow-y: auto;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+}
+
+.sidebar-section {
+  margin-bottom: 20px;
+}
+
+.sidebar-header {
+  padding: 0 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #888;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nav-item {
+  padding: 8px 20px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #ccc;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: background-color 0.15s;
+  
+  &:hover {
+    background-color: #333;
+  }
+  
+  &.active {
+    background-color: #4695EB;
+    color: white;
+  }
+  
+  .count {
+    background-color: #333;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    
+    .active & {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+  
+  &.new-item {
+    color: #4695EB;
+    font-weight: 500;
+  }
+}
+
+// Main Content
+.main-content {
+  margin-left: 280px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header {
+  background-color: #252525;
+  border-bottom: 1px solid #333;
+  padding: 20px 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+}
+
+.btn-add {
   position: absolute;
-  width: 1px;
-  height: 1px;
-  background-color: white;
-}
-
-.intro {
-  position: absolute;
-  top: 30%;
-  left: 35%;
-  z-index: 1;
-  animation: intro 6s ease-out 1s;
-  color: rgb(75, 213, 238);
-  font-weight: 400;
-  font-size: 300%;
-  opacity: 0;
-}
-
-@keyframes intro {
-  0% {
-    opacity: 0;
+  right: 30px;
+  background-color: #4695EB;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: #3a7ed8;
   }
-  20% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
+  
+  &::before {
+    content: "+";
+    font-size: 1.2rem;
+    font-weight: 600;
   }
 }
 
-p {
-  color: #FFFF82;
+.bookmark-list {
+  padding: 20px 30px;
+  flex: 1;
 }
 
-/* Set the font, lean the board, position it */
-#board {
-  font-family: Century Gothic, CenturyGothic, AppleGothic, sans-serif;
-  transform: perspective(300px) rotateX(25deg);
-  transform-origin: 50% 100%;
-  text-align: justify;
-  position: absolute;
-  margin-left: -9em;
-  font-weight: bold;
-  overflow: hidden;
-  font-size: 350%;
-  height: 50em;
-  width: 18em;
-  bottom: 0;
-  left: 50%;
-
-  &:after {
-    position: absolute;
-    content: ' ';
-    bottom: 60%;
-    left: 0;
-    right: 0;
-    top: 0;
+.bookmark-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 16px;
+  background-color: #252525;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: #2a2a2a;
   }
 }
 
-/* Set the scrolling animation and position it */
-#content {
-  animation: scroll 120s linear 5s;
-  position: absolute;
-  top: 100%;
+.bookmark-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background-color: #333;
+  margin-right: 16px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #4695EB;
 }
 
-#title, #subtitle {
+.bookmark-content {
+  flex: 1;
+}
+
+.bookmark-title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.bookmark-url {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 8px;
+  word-break: break-all;
+}
+
+.bookmark-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.bookmark-folder {
+  font-size: 0.85rem;
+  color: #4695EB;
+}
+
+.tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  
+  &.tag-blue { background-color: #4695EB; }
+  &.tag-green { background-color: #22c55e; }
+  &.tag-orange { background-color: #f97316; }
+  &.tag-purple { background-color: #a855f7; }
+  &.tag-pink { background-color: #ec4899; }
+}
+
+// Offline Indicator
+.offline-indicator {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #dc2626;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  display: none;
+  z-index: 1000;
+  
+  &.visible {
+    display: block;
+  }
+}
+
+// Form Styles
+.bookmark-form {
+  background-color: #252525;
+  padding: 20px;
+  border-radius: 8px;
+  
+  h2 {
+    margin-bottom: 20px;
+    color: #fff;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 8px;
+    color: #ccc;
+    font-size: 0.9rem;
+  }
+  
+  input[type="text"],
+  input[type="url"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 10px;
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 0.95rem;
+    
+    &:focus {
+      outline: none;
+      border-color: #4695EB;
+    }
+  }
+  
+  textarea {
+    resize: vertical;
+  }
+  
+  button[type="submit"] {
+    background-color: #4695EB;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    
+    &:hover {
+      background-color: #3a7ed8;
+    }
+  }
+  
+  button[type="button"] {
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    
+    &:hover {
+      background-color: #444;
+    }
+  }
+}
+
+// Login Styles
+.login-container {
+  width: 400px;
+  background-color: #252525;
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  margin: auto;
+}
+
+.login-header {
   text-align: center;
+  margin-bottom: 30px;
+  
+  h1 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  
+  p {
+    color: #888;
+    font-size: 0.95rem;
+  }
 }
 
-@keyframes scroll {
-  0% {
-    top: 100%;
+.form-group {
+  margin-bottom: 20px;
+}
+
+.btn-login {
+  width: 100%;
+  background-color: #4695EB;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: #3a7ed8;
   }
-  100% {
-    top: -170%;
+}
+
+.error-message {
+  background-color: #dc2626;
+  color: white;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+    z-index: 100;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+  
+  .header {
+    padding: 20px 15px;
+  }
+  
+  .bookmark-list {
+    padding: 20px 15px;
   }
 }
