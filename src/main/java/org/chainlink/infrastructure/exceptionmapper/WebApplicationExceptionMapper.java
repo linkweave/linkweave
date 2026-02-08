@@ -39,9 +39,9 @@ public class WebApplicationExceptionMapper implements ExceptionMapper<WebApplica
         if (exception.getCause() instanceof JsonParseException jpe) {
             return new JsonParseExceptionMapper(tl).toResponse(jpe);
         }
-        if (exception instanceof ClientErrorException) {
-            return buildClientErrorResponse(exception);
-        }
+//        if (exception instanceof ClientErrorException) {
+//            return buildClientErrorResponse(exception);
+//        }
 
         throw exception;
     }

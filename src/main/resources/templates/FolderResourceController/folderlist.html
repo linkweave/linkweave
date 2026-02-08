@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folders</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .folder-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .folder-item {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .folder-item:hover {
+            background-color: #e8e8e8;
+        }
+        .folder-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .folder-id {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .parent-info {
+            color: #999;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+        .empty-message {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>Folders</h1>
+
+    {#if folders && folders.size() > 0}
+        <ul class="folder-list">
+            {#for folder in folders}
+                <li class="folder-item">
+                    <div class="folder-name">{folder.name}</div>
+                    <div class="folder-id">ID: {folder.id}</div>
+                    {#if folder.parent}
+                        <div class="parent-info">Parent: {folder.parent.name}</div>
+                    {/if}
+                </li>
+            {/for}
+        </ul>
+    {#else}
+        <p class="empty-message">No folders available.</p>
+    {/if}
+
+</body>
+</html>
