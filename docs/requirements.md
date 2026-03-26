@@ -38,7 +38,6 @@
 | FR-017 | Filter Bookmarks by Folder  | As a User, I want to filter bookmarks by folder so that I can browse bookmarks within a specific folder.                             | High     | Open   |
 | FR-018 | Share Project               | As a Project Owner, I want to share my project with another user so that we can collaborate on a shared bookmark collection.         | Medium   | Open   |
 | FR-019 | Access Shared Project       | As a User, I want to access a project shared with me so that I can view and manage its bookmarks.                                    | Medium   | Open   |
-| FR-020 | View Audit Log              | As a User, I want to view a log of changes made in my project so that I can track who changed what and when.                         | Low      | Open   |
 
 ---
 
@@ -49,7 +48,7 @@
 | NFR-001 | Page Load Time          | All page loads must complete within 2 seconds under normal load (up to 10 concurrent users).         | Performance  | High     | Open   |
 | NFR-002 | API Response Time       | All API responses must be returned within 500 ms under normal load (up to 10 concurrent users).      | Performance  | High     | Open   |
 | NFR-003 | Access Control          | A user must not be able to read or modify resources belonging to a project they have no access to; violations must return HTTP 403. | Security     | High     | Open   |
-| NFR-004 | Audit Coverage          | All create, update, and delete operations on bookmarks, folders, and tags must produce an audit record within the same transaction. | Auditability | Low      | Open   |
+| NFR-004 | Audit Coverage          | All create, update, and delete operations on Bookmark, Folder, and Tag entities must be automatically tracked using Hibernate Envers; no custom audit table is required. | Auditability | Low      | Open   |
 | NFR-005 | Code Coverage           | Service and repository classes must maintain a minimum of 80% line coverage as measured by the CI test run. | Testability  | Medium   | Open   |
 | NFR-006 | Use Case Test Coverage  | Every functional requirement must be traceable to at least one automated integration test that verifies the main success scenario. | Testability  | Medium   | Open   |
 
@@ -64,4 +63,5 @@
 | C-003 | Single Database    | All projects, bookmarks, folders, tags, and access control must be stored in a single SQLite database file. Multi-tenancy is achieved via `project_id` foreign keys. (Note: Multi-database architecture may be considered for future scaling.) | Technical | High     | Open   |
 | C-004 | Deployment Model   | The application must be deployable as a self-hosted installation without external cloud dependencies. | Technical | High     | Open   |
 | C-005 | User Identity      | Users must be identified by a stable, unique username. For this release, Quarkus form-based authentication with an in-memory user store is used. OIDC integration is planned for a future release. | Technical | High     | Open   |
-| C-006 | Out of Scope       | User management (creating, editing, deleting user accounts by an admin) is out of scope for this release. | Business  | High     | Open   |
+| C-006 | Primary Keys       | All entity primary keys must be UUIDs generated server-side; auto-increment sequences must not be used. | Technical | High     | Open   |
+| C-007 | Out of Scope       | User management (creating, editing, deleting user accounts by an admin) is out of scope for this release. | Business  | High     | Open   |
