@@ -61,9 +61,7 @@
 |-------|--------------------|----------------------------------------------------------------------------|-----------|----------|--------|
 | C-001 | Backend Framework  | Backend must be implemented using Quarkus.                                 | Technical | High     | Open   |
 | C-002 | Frontend Framework | Frontend must be implemented using Vue.js with Pinia for state management. | Technical | High     | Open   |
-| C-003 | Project Database   | Each project must be stored in its own dedicated SQLite database file containing only that project's bookmarks, folders, and tags. | Technical | High     | Open   |
-| C-004 | Registry Database  | A single shared SQLite file (`registry.db`) must serve as the index for all projects; it stores project metadata (`id`, `name`, `owner`, `db_path`) and access control (`project_id`, `subject`, `role`, `is_current`) but no bookmark data. At most one `project_access` row per subject may have `is_current = true`. | Technical | High     | Open   |
-| C-005 | Deployment Model   | The application must be deployable as a self-hosted installation without external cloud dependencies. | Technical | High     | Open   |
-| C-006 | User Identity      | Users must be identified by a SubjectName — a stable, unique string (e.g. OIDC `sub` claim); no local password store is required. | Technical | High     | Open   |
-| C-007 | Out of Scope       | Authentication implementation (login, session management, password storage) is deferred to a future OIDC integration and is out of scope for this release. | Business  | High     | Open   |
-| C-008 | Out of Scope       | User management (creating, editing, deleting user accounts by an admin) is out of scope for this release. | Business  | High     | Open   |
+| C-003 | Single Database    | All projects, bookmarks, folders, tags, and access control must be stored in a single SQLite database file. Multi-tenancy is achieved via `project_id` foreign keys. (Note: Multi-database architecture may be considered for future scaling.) | Technical | High     | Open   |
+| C-004 | Deployment Model   | The application must be deployable as a self-hosted installation without external cloud dependencies. | Technical | High     | Open   |
+| C-005 | User Identity      | Users must be identified by a stable, unique username. For this release, Quarkus form-based authentication with an in-memory user store is used. OIDC integration is planned for a future release. | Technical | High     | Open   |
+| C-006 | Out of Scope       | User management (creating, editing, deleting user accounts by an admin) is out of scope for this release. | Business  | High     | Open   |
