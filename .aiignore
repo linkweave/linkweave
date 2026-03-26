@@ -1,0 +1,65 @@
+### Project specific ignores ###
+
+# Place .gitignore settings specific to your project here
+
+ChainlinkFirstTechSpecForAgent.md
+##### Common ignore settings ####
+
+## Local developer / local build settings
+developer-local-settings/
+build.properties
+.env
+docker-compose.override.yml
+
+### Build systems ###
+
+## Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+release.properties
+.flattened-pom.xml
+
+# Eclipse
+.project
+.classpath
+.settings/
+bin/
+
+# IntelliJ
+.idea
+*.ipr
+*.iml
+*.iws
+
+# NetBeans
+nb-configuration.xml
+
+# Visual Studio Code
+.vscode
+.factorypath
+
+# OSX
+.DS_Store
+
+# Vim
+*.swp
+*.swo
+
+# patch
+*.orig
+*.rej
+
+# Local environment
+.env
+
+# Plugin directory
+/.quarkus/cli/plugins/
+# TLS Certificates
+.certs/
+
+# Web Bundler
+node_modules/
+.vfox/
+/developer-local-settings/
