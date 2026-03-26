@@ -28,16 +28,21 @@
 | FR-007 | Edit Bookmark               | As a User, I want to edit a bookmark's URL, title, and description so that I can keep my bookmarks up to date.                       | High     | Open   |
 | FR-008 | Delete Bookmark             | As a User, I want to delete a bookmark so that I can remove resources I no longer need.                                              | High     | Open   |
 | FR-009 | Create Folder               | As a User, I want to create a folder so that I can organize bookmarks into groups.                                                   | High     | Open   |
-| FR-010 | Nest Folders                | As a User, I want to nest folders inside other folders so that I can create a hierarchy for my bookmarks.                            | Medium   | Open   |
-| FR-011 | Move Bookmark to Folder     | As a User, I want to move a bookmark into a folder so that I can organize my bookmarks.                                              | High     | Open   |
-| FR-012 | Delete Folder               | As a User, I want to delete a folder so that I can remove organizational structures I no longer need.                                | Medium   | Open   |
-| FR-013 | Create Tag                  | As a User, I want to create a tag so that I can label bookmarks with custom categories.                                              | High     | Open   |
-| FR-014 | Apply Tag to Bookmark       | As a User, I want to apply one or more tags to a bookmark so that I can categorize and filter my bookmarks.                          | High     | Open   |
-| FR-015 | Remove Tag from Bookmark    | As a User, I want to remove a tag from a bookmark so that I can correct miscategorized bookmarks.                                    | Medium   | Open   |
-| FR-016 | Filter Bookmarks by Tag     | As a User, I want to filter bookmarks by tag so that I can quickly find bookmarks in a category.                                     | High     | Open   |
-| FR-017 | Filter Bookmarks by Folder  | As a User, I want to filter bookmarks by folder so that I can browse bookmarks within a specific folder.                             | High     | Open   |
-| FR-018 | Share Project               | As a Project Owner, I want to share my project with another user so that we can collaborate on a shared bookmark collection.         | Medium   | Open   |
-| FR-019 | Access Shared Project       | As a User, I want to access a project shared with me so that I can view and manage its bookmarks.                                    | Medium   | Open   |
+| FR-010 | View Folders                | As a User, I want to view all folders in my project so that I can see my organizational structure.                                   | High     | Open   |
+| FR-011 | Rename Folder               | As a User, I want to rename a folder so that I can keep my organizational structure accurate.                                        | Medium   | Open   |
+| FR-012 | Nest Folders                | As a User, I want to nest folders inside other folders so that I can create a hierarchy for my bookmarks.                            | Medium   | Open   |
+| FR-013 | Move Bookmark to Folder     | As a User, I want to move a bookmark into a folder so that I can organize my bookmarks.                                              | High     | Open   |
+| FR-014 | Delete Folder               | As a User, I want to delete a folder so that I can remove organizational structures I no longer need.                                | Medium   | Open   |
+| FR-015 | Create Tag                  | As a User, I want to create a tag so that I can label bookmarks with custom categories.                                              | High     | Open   |
+| FR-016 | View Tags                   | As a User, I want to view all tags in my project so that I can see and manage my available labels.                                   | High     | Open   |
+| FR-017 | Rename Tag                  | As a User, I want to rename a tag so that I can correct or improve my labeling scheme.                                               | Medium   | Open   |
+| FR-018 | Delete Tag                  | As a User, I want to delete a tag so that I can remove labels I no longer use.                                                       | Medium   | Open   |
+| FR-019 | Apply Tag to Bookmark       | As a User, I want to apply one or more tags to a bookmark so that I can categorize and filter my bookmarks.                          | High     | Open   |
+| FR-020 | Remove Tag from Bookmark    | As a User, I want to remove a tag from a bookmark so that I can correct miscategorized bookmarks.                                    | Medium   | Open   |
+| FR-021 | Filter Bookmarks by Tag     | As a User, I want to filter bookmarks by tag so that I can quickly find bookmarks in a category.                                     | High     | Open   |
+| FR-022 | Filter Bookmarks by Folder  | As a User, I want to filter bookmarks by folder so that I can browse bookmarks within a specific folder.                             | High     | Open   |
+| FR-023 | Share Project               | As a Project Owner, I want to share my project with another user so that we can collaborate on a shared bookmark collection.         | Medium   | Open   |
+| FR-024 | Access Shared Project       | As a User, I want to access a project shared with me so that I can view and manage its bookmarks.                                    | Medium   | Open   |
 
 ---
 

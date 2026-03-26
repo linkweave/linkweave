@@ -1,0 +1,85 @@
+@startuml Chainlink Use Cases
+left to right direction
+
+actor "User" as user
+actor "Project Owner" as owner
+
+owner --|> user
+
+rectangle "Chainlink Bookmark Manager" {
+
+    rectangle "Project Management" {
+        usecase "UC-001\nAuto-Provision on\nFirst Login" as UC001
+        usecase "UC-002\nAuto-Navigate\nto Project" as UC002
+        usecase "UC-003\nList Projects" as UC003
+        usecase "UC-004\nSet Default Project" as UC004
+        usecase "UC-023\nShare Project" as UC023
+        usecase "UC-024\nAccess Shared Project" as UC024
+    }
+
+    rectangle "Bookmark Management" {
+        usecase "UC-005\nCreate Bookmark" as UC005
+        usecase "UC-006\nView Bookmarks" as UC006
+        usecase "UC-007\nEdit Bookmark" as UC007
+        usecase "UC-008\nDelete Bookmark" as UC008
+        usecase "UC-013\nMove Bookmark\nto Folder" as UC013
+    }
+
+    rectangle "Folder Management" {
+        usecase "UC-009\nCreate Folder" as UC009
+        usecase "UC-010\nView Folders" as UC010
+        usecase "UC-011\nRename Folder" as UC011
+        usecase "UC-012\nNest Folders" as UC012
+        usecase "UC-014\nDelete Folder" as UC014
+    }
+
+    rectangle "Tag Management" {
+        usecase "UC-015\nCreate Tag" as UC015
+        usecase "UC-016\nView Tags" as UC016
+        usecase "UC-017\nRename Tag" as UC017
+        usecase "UC-018\nDelete Tag" as UC018
+        usecase "UC-019\nApply Tag\nto Bookmark" as UC019
+        usecase "UC-020\nRemove Tag\nfrom Bookmark" as UC020
+    }
+
+    rectangle "Filtering" {
+        usecase "UC-021\nFilter Bookmarks\nby Tag" as UC021
+        usecase "UC-022\nFilter Bookmarks\nby Folder" as UC022
+    }
+}
+
+' Project Management
+user --> UC001
+user --> UC002
+user --> UC003
+user --> UC004
+owner --> UC023
+user --> UC024
+
+' Bookmark Management
+user --> UC005
+user --> UC006
+user --> UC007
+user --> UC008
+user --> UC013
+
+' Folder Management
+user --> UC009
+user --> UC010
+user --> UC011
+user --> UC012
+user --> UC014
+
+' Tag Management
+user --> UC015
+user --> UC016
+user --> UC017
+user --> UC018
+user --> UC019
+user --> UC020
+
+' Filtering
+user --> UC021
+user --> UC022
+
+@enduml
