@@ -47,6 +47,6 @@
 
 The list must only show collections the user owns or has been granted access to; other users' collections must not be visible.
 
-### BR-007: Default Indicator
+### BR-048: Default Indicator
 
 The collection currently marked as the user's default must be visually distinguished in the list.

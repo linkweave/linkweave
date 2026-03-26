@@ -64,10 +64,10 @@
 
 ## Business Rules
 
-### BR-030: Cascade Tag Removal
+### BR-049: Cascade Tag Removal
 
 Deleting a bookmark removes all associations with tags; the tags themselves remain in the collection.
 
-### BR-031: Undo Not Supported
+### BR-050: Undo Not Supported
 
 Bookmark deletion is permanent; there is no undo functionality.

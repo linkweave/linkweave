@@ -23,9 +23,9 @@
 | FR-002 | Auto-Navigate to Collection    | As a User, I want the system to take me directly to my collection when I have only one collection or have set a default collection, so that I do not have to choose every time I open the application. | High     | Open   |
 | FR-003 | List My Collections            | As a User, I want to see a list of all collections I have access to so that I can navigate to the right bookmark collection when I have more than one collection and no default is set. | High     | Open   |
 | FR-004 | Set Default Collection         | As a User, I want to designate one collection as my default so that I am taken directly to it on every login without needing to select it. | Medium   | Open   |
-| FR-005 | Create Bookmark             | As a User, I want to create a bookmark with a URL and title so that I can save web resources.                                        | High     | Open   |
+| FR-005 | Create Bookmark             | As a User, I want to create a bookmark with a URL, title, and optionally a folder and tags so that I can save and organize web resources. | High     | Open   |
 | FR-006 | View Bookmarks              | As a User, I want to view all bookmarks in my collection so that I can browse my saved resources.                                    | High     | Open   |
-| FR-007 | Edit Bookmark               | As a User, I want to edit a bookmark's URL, title, and description so that I can keep my bookmarks up to date.                       | High     | Open   |
+| FR-007 | Edit Bookmark               | As a User, I want to edit a bookmark's URL, title, description, folder, and tags so that I can keep my bookmarks up to date. | High     | Open   |
 | FR-008 | Delete Bookmark             | As a User, I want to delete a bookmark so that I can remove resources I no longer need.                                              | High     | Open   |
 | FR-009 | Create Folder               | As a User, I want to create a folder so that I can organize bookmarks into groups.                                                   | High     | Open   |
 | FR-010 | View Folders                | As a User, I want to view all folders in my collection so that I can see my organizational structure.                                | High     | Open   |
