@@ -64,7 +64,7 @@ Controls which users can access which projects and tracks the default project pe
 
 **Constraints:**
 - The combination of `project_id` and `user_id` must be unique.
-- At most one row per `user_id` may have `is_default = true`.
+- Exactly one row per `user_id` must have `is_default = true` at all times. A user without a default project is invalid.
 
 ---
 
