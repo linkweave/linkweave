@@ -2,19 +2,19 @@
 left to right direction
 
 actor "User" as user
-actor "Project Owner" as owner
+actor "Collection Owner" as owner
 
 owner --|> user
 
 rectangle "Chainlink Bookmark Manager" {
 
-    rectangle "Project Management" {
+    rectangle "Collection Management" {
         usecase "UC-001\nAuto-Provision on\nFirst Login" as UC001
-        usecase "UC-002\nAuto-Navigate\nto Project" as UC002
-        usecase "UC-003\nList Projects" as UC003
-        usecase "UC-004\nSet Default Project" as UC004
-        usecase "UC-023\nShare Project" as UC023
-        usecase "UC-024\nAccess Shared Project" as UC024
+        usecase "UC-002\nAuto-Navigate\nto Collection" as UC002
+        usecase "UC-003\nList Collections" as UC003
+        usecase "UC-004\nSet Default Collection" as UC004
+        usecase "UC-023\nShare Collection" as UC023
+        usecase "UC-024\nAccess Shared Collection" as UC024
     }
 
     rectangle "Bookmark Management" {
@@ -48,7 +48,7 @@ rectangle "Chainlink Bookmark Manager" {
     }
 }
 
-' Project Management
+' Collection Management
 user --> UC001
 user --> UC002
 user --> UC003

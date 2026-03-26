@@ -10,12 +10,12 @@
 
 ```mermaid
 erDiagram
-    USER ||--o{ PROJECT : "owns"
-    USER ||--o{ PROJECT_ACCESS : "has"
-    PROJECT ||--o{ PROJECT_ACCESS : "granted via"
-    PROJECT ||--o{ BOOKMARK : "contains"
-    PROJECT ||--o{ FOLDER : "contains"
-    PROJECT ||--o{ TAG : "defines"
+    USER ||--o{ COLLECTION : "owns"
+    USER ||--o{ COLLECTION_ACCESS : "has"
+    COLLECTION ||--o{ COLLECTION_ACCESS : "granted via"
+    COLLECTION ||--o{ BOOKMARK : "contains"
+    COLLECTION ||--o{ FOLDER : "contains"
+    COLLECTION ||--o{ TAG : "defines"
     FOLDER ||--o{ BOOKMARK : "organizes"
     FOLDER ||--o{ FOLDER : "nests"
     BOOKMARK }o--o{ TAG : "labeled with"
@@ -37,45 +37,45 @@ Represents an authenticated user identified by a unique username.
 
 ---
 
-### PROJECT
+### COLLECTION
 
 A named collection of bookmarks owned by a user.
 
 | Attribute  | Description                        | Data Type | Length/Precision | Validation Rules              |
 |------------|------------------------------------|-----------|------------------|-------------------------------|
 | id         | Unique identifier                  | UUID      | 36               | Primary Key, Server-assigned  |
-| name       | Display name of the project        | String    | 100              | Not Null                      |
-| owner_id   | Reference to the user who created the project | UUID | 36        | Not Null, Foreign Key (USER.id) |
-| created_at | Timestamp when the project was created | DateTime | -            | Not Null                      |
+| name       | Display name of the collection     | String    | 100              | Not Null                      |
+| owner_id   | Reference to the user who created the collection | UUID | 36        | Not Null, Foreign Key (USER.id) |
+| created_at | Timestamp when the collection was created | DateTime | -            | Not Null                      |
 
 ---
 
-### PROJECT_ACCESS
+### COLLECTION_ACCESS
 
-Controls which users can access which projects and tracks the default project per user.
+Controls which users can access which collections and tracks the default collection per user.
 
 | Attribute  | Description                                      | Data Type | Length/Precision | Validation Rules                  |
 |------------|--------------------------------------------------|-----------|------------------|-----------------------------------|
 | id         | Unique identifier                                | UUID      | 36               | Primary Key, Server-assigned      |
-| project_id | Reference to the project                         | UUID      | 36               | Not Null, Foreign Key (PROJECT.id) |
+| collection_id | Reference to the collection                     | UUID      | 36               | Not Null, Foreign Key (COLLECTION.id) |
 | user_id    | Reference to the user                            | UUID      | 36               | Not Null, Foreign Key (USER.id)   |
-| role       | Access role of the user in the project           | String    | 10               | Not Null, Values: owner, member   |
-| is_default | Marks this as the user's default project         | Boolean   | 1                | Not Null                          |
+| role       | Access role of the user in the collection        | String    | 10               | Not Null, Values: owner, member   |
+| is_default | Marks this as the user's default collection      | Boolean   | 1                | Not Null                          |
 
 **Constraints:**
-- The combination of `project_id` and `user_id` must be unique.
-- Exactly one row per `user_id` must have `is_default = true` at all times. A user without a default project is invalid.
+- The combination of `collection_id` and `user_id` must be unique.
+- Exactly one row per `user_id` must have `is_default = true` at all times. A user without a default collection is invalid.
 
 ---
 
 ### BOOKMARK
 
-A saved web resource with a URL and title, belonging to a project.
+A saved web resource with a URL and title, belonging to a collection.
 
 | Attribute   | Description                                  | Data Type | Length/Precision | Validation Rules                   |
 |-------------|----------------------------------------------|-----------|------------------|------------------------------------|
 | id          | Unique identifier                            | UUID      | 36               | Primary Key, Server-assigned       |
-| project_id  | Reference to the owning project              | UUID      | 36               | Not Null, Foreign Key (PROJECT.id) |
+| collection_id  | Reference to the owning collection        | UUID      | 36               | Not Null, Foreign Key (COLLECTION.id) |
 | folder_id   | Reference to the containing folder           | UUID      | 36               | Optional, Foreign Key (FOLDER.id)  |
 | url         | The saved URL                                | String    | 2048             | Not Null                           |
 | title       | Display title of the bookmark                | String    | 255              | Not Null                           |
@@ -83,38 +83,38 @@ A saved web resource with a URL and title, belonging to a project.
 | created_at  | Timestamp when the bookmark was created      | DateTime  | -                | Not Null                           |
 | updated_at  | Timestamp of the last update                 | DateTime  | -                | Not Null                           |
 
-**Constraints:** `folder_id`, when set, must reference a folder belonging to the same `project_id`.
+**Constraints:** `folder_id`, when set, must reference a folder belonging to the same `collection_id`.
 
 ---
 
 ### FOLDER
 
-An organizational container for bookmarks within a project, supporting nesting.
+An organizational container for bookmarks within a collection, supporting nesting.
 
 | Attribute  | Description                                   | Data Type | Length/Precision | Validation Rules                   |
 |------------|-----------------------------------------------|-----------|------------------|------------------------------------|
 | id         | Unique identifier                             | UUID      | 36               | Primary Key, Server-assigned       |
-| project_id | Reference to the owning project               | UUID      | 36               | Not Null, Foreign Key (PROJECT.id) |
+| collection_id | Reference to the owning collection         | UUID      | 36               | Not Null, Foreign Key (COLLECTION.id) |
 | parent_id  | Reference to the parent folder (null = root)  | UUID      | 36               | Optional, Foreign Key (FOLDER.id)  |
 | name       | Display name of the folder                    | String    | 100              | Not Null                           |
 | created_at | Timestamp when the folder was created         | DateTime  | -                | Not Null                           |
 
-**Constraints:** `parent_id`, when set, must reference a folder belonging to the same `project_id`.
+**Constraints:** `parent_id`, when set, must reference a folder belonging to the same `collection_id`.
 
 ---
 
 ### TAG
 
-A user-defined label scoped to a project, applied to bookmarks for categorization.
+A user-defined label scoped to a collection, applied to bookmarks for categorization.
 
 | Attribute  | Description                           | Data Type | Length/Precision | Validation Rules                   |
 |------------|---------------------------------------|-----------|------------------|------------------------------------|
 | id         | Unique identifier                     | UUID      | 36               | Primary Key, Server-assigned       |
-| project_id | Reference to the owning project       | UUID      | 36               | Not Null, Foreign Key (PROJECT.id) |
+| collection_id | Reference to the owning collection | UUID      | 36               | Not Null, Foreign Key (COLLECTION.id) |
 | name       | Display name of the tag               | String    | 50               | Not Null                           |
 | created_at | Timestamp when the tag was created    | DateTime  | -                | Not Null                           |
 
-**Constraints:** `name` must be unique within a `project_id`.
+**Constraints:** `name` must be unique within a `collection_id`.
 
 ---
 
@@ -129,7 +129,7 @@ Junction table linking bookmarks to their applied tags (many-to-many).
 
 **Constraints:**
 - Composite primary key: (`bookmark_id`, `tag_id`).
-- `bookmark_id` and `tag_id` must belong to the same `project_id`.
+- `bookmark_id` and `tag_id` must belong to the same `collection_id`.
 
 ---
 

@@ -11,8 +11,8 @@ The goal is not only to provide nice user experience for managing bookmarks, but
 
 * Enable users to manage bookmarks
 * Enable users to organize bookmarks using tags and folders
-* Each user starts with a single 'project' where his bookmarks / folders / tags are stored for the project
-* Allow users to share projects
+* Each user starts with a single 'collection' where his bookmarks / folders / tags are stored for the collection
+* Allow users to share collections
 * Ensure users can see and change only bookmarks they are allowed to access
 * Keep specifications, implementation, and tests consistent over time
 * Application will be self-hosted
@@ -36,8 +36,8 @@ The goal is not only to provide nice user experience for managing bookmarks, but
 In scope:
 
 * Authentication
-* Users as owner of projects
-* Projects
+* Users as owner of collections
+* Collections
 * Bookmarks
 * Folders
 * Tags
