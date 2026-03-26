@@ -1,7 +1,5 @@
 # AGENTS.md - Chainlink Project Guide
 
-This document provides essential information for agentic coding agents working on the Chainlink project.
-
 ## Project Overview
 
 **Type**: Quarkus-based Java web application with full-stack capabilities  
@@ -9,26 +7,17 @@ This document provides essential information for agentic coding agents working o
 **Framework**: Quarkus 3.30.8 (Supersonic Subatomic Java)  
 **Build System**: Maven 3.9.12  
 **Database**: SQLite with Hibernate ORM  
-**Frontend**: JavaScript/SCSS with Web Bundler  
+**Frontend**: vueJs 
 
 ## Essential Commands
 
 ### Development
 ```bash
-# Start development server with hot reload
-./mvnw quarkus:dev
-
 # Build application
 ./mvnw package
 
 # Build uber-jar
 ./mvnw package -Dquarkus.package.jar.type=uber-jar
-
-# Build native executable
-./mvnw package -Dnative
-
-# Build native in container
-./mvnw package -Dnative -Dquarkus.native.container-build=true
 
 # Clean and build
 ./mvnw clean verify
@@ -42,11 +31,6 @@ This document provides essential information for agentic coding agents working o
 # Run only unit tests
 ./mvnw test
 
-# Run only integration tests
-./mvnw verify -DskipTests=false -DskipITs=false
-
-# Run tests with native profile
-./mvnw verify -Pnative
 ```
 
 ### Single Test Execution
@@ -88,7 +72,7 @@ This document provides essential information for agentic coding agents working o
 - Use `@Id` and set a UUID on the server for primary keys
 - Fields can be public for simple entities (following existing pattern)
 - JPA Data can be used
-- 
+
 ### REST Endpoint Guidelines
 - Use JAX-RS annotations (`@Path`, `@GET`, `@POST`, etc.)
 - Inject dependencies via constructor
@@ -98,51 +82,41 @@ This document provides essential information for agentic coding agents working o
 
 ## Project Structure
 
-```
-src/main/java/org/chainlink/     # Java source code
-src/main/resources/
-├── application.properties        # Quarkus configuration
-├── templates/                   # Qute templates
-│   ├── *.qute.html             # Server-side templates
-│   └── pub/                    # Static HTML files
-└── web/                        # Frontend assets
-    ├── app.js                  # JavaScript application
-    └── app.scss                # SCSS stylesheets
-```
 
 ## Technology Stack
 
 ### Backend
-- **Quarkus 3.30.8**: Main framework
+- **Quarkus**: Main framework
 - **Hibernate ORM and Jakarta Data**: Database operations
 - **Hibernate Validator**: Bean validation
 - **Flyway**: Database migrations
 - **Hibernate Envers**: Entity auditing
 - **SQLite**: Local database storage
 - **JAX-RS**: REST API
-- **Qute**: Template engine
 
 ### Frontend
-- **Web Bundler 2.2.0**: Asset bundling
-- **JavaScript**: ES6 modules supported
-- **SCSS**: Stylesheet preprocessing
-- **Qute Web**: Template serving
+- **VueJS**: WebFramework
 
 ## Database Configuration
 
 - **Type**: SQLite
 - **Location**: `developer-local-settings/chainlink.db`
 - **ORM**: Hibernate with JPA annotations
-- **Migrations**: Liquibase (when needed)
+- **Migrations**: flyway (when needed)
 
 ## Testing Guidelines
 
 ### Test Framework
 - **JUnit 5**: Primary testing framework
-- **AssertJ**: Fluent assertions
+- **AssertJ**: Fluent assertions (use `org.assertj.core.api.Assertions.assertThat`)
 - **Maven Surefire**: Unit tests (`src/test/java`)
 - **Maven Failsafe**: Integration tests (`src/test/java`)
 - **Quarkus Test**: use `@QuarkusTest` for integration tests
+
+### Security in Tests
+- Most entities extend `AbstractEntity`, which has an `AbstractEntityListener` that automatically sets `userErstellt` and `userMutiert` using `CurrentUserService`
+- To test persistence/services that depend on current user, provide a security context, use `@TestSecurity`
+
 
 ### Test Naming
 - Unit tests: `ClassNameTest`
@@ -175,25 +149,10 @@ src/main/resources/
 - Follow Java security best practices
 - Validate all input using Hibernate Validator
 
-## Performance Guidelines
-
-- Leverage Quarkus build-time optimizations
-- Profile using Quarkus development tools
-
-## Package Management
-
-- Add dependencies via `pom.xml`
-- Use Quarkus BOM for version management
-- Web dependencies: Use Maven with `provided` scope for npm packages
-- Frontend: Import modules in `app.js`, bundled automatically
-
 ## Docker Support
 
 Multiple Dockerfiles available:
 - `Dockerfile.jvm`: JVM mode
-- `Dockerfile.native`: Native compilation
-- `Dockerfile.native-micro`: Micro native
-- `Dockerfile.legacy-jar`: Legacy JAR deployment
 
 ## Common Patterns
 
@@ -205,15 +164,6 @@ public SomePage(Template page) {
 ```
 Or better yet use @RequiredArgsConstructor from lombok
 
-### REST Endpoints
-```java
-@GET
-@Produces(MediaType.TEXT_HTML)
-public TemplateInstance get(@QueryParam("name") String name) {
-    return page.data("name", name);
-}
-
-```
 Annotate the Resource with the @JaxRendereable stereotype
 
 ### JPA Entities
@@ -229,20 +179,16 @@ public class MyEntity {
 ```
 ## Architecture
 - adhere to the layering model, the following layers exist: Entities, Repository, Repository, Service, Resource. There are stereotype annotations like org.chainlink.infrastructure.stereotypes.JaxResource available
+
+## Custom Types
+- The project uses several custom types like `ID<T>` and `EmailAddress`
+- Use their `fromString` or `of` methods for instantiation
 ## CI/CD
 
-- **GitHub Actions**: Runs on push/PR to main
+- **GitTea Actions**: Runs on push/PR to main
 - **JDK Version**: Temurin JDK 21
 - **Build Command**: `./mvnw verify -B`
 - **Caching**: Maven dependencies cached automatically
 
-## Environment Variables
 
-- `maven.home`: Automatically set for tests
-## Additional Notes
-
-- German comments in `.editorconfig` indicate previous German development
-- Default port: 8443, default url https://local-chainlink.localhost:8443/
-- Development mode includes comprehensive Dev UI
-- Quarkus live reloads both Java and web resources
 
