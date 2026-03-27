@@ -17,7 +17,14 @@ jobs:
         with:
           java-version: 25
           distribution: temurin
-          cache: maven
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
       - name: Build
         run: ./mvnw package -B
