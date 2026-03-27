@@ -36,7 +36,7 @@ rectangle "Chainlink Bookmark Manager" {
     rectangle "Tag Management" {
         usecase "UC-015\nCreate Tag" as UC015
         usecase "UC-016\nView Tags" as UC016
-        usecase "UC-017\nRename Tag" as UC017
+        usecase "UC-017\nEdit Tag" as UC017
         usecase "UC-018\nDelete Tag" as UC018
         usecase "UC-019\nApply Tag\nto Bookmark" as UC019
         usecase "UC-020\nRemove Tag\nfrom Bookmark" as UC020

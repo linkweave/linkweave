@@ -22,8 +22,9 @@
 4. User submits the form.
 5. System validates the tag name is not empty.
 6. System validates the tag name is unique within the collection.
-7. System creates the tag in the current collection.
-8. System displays the new tag in the tag list.
+7. System auto-assigns a color from the predefined palette.
+8. System creates the tag in the current collection.
+9. System displays the new tag in the tag list with its assigned color.
 
 ## Alternative Flows
 
@@ -61,7 +62,7 @@
 
 ### Success Postconditions
 
-- A new tag exists in the collection.
+- A new tag exists in the collection with an auto-assigned color.
 - The tag is visible in the tag list.
 - The tag is available to be applied to bookmarks.
 
@@ -83,3 +84,7 @@ Tag names must be unique within a collection.
 ### BR-034: Tag Name Length
 
 Tag names must not exceed 50 characters.
+
+### BR-051: Auto-Assigned Tag Color
+
+When a tag is created, the system assigns a color from a predefined palette automatically.

@@ -35,7 +35,7 @@
 | FR-014 | Delete Folder               | As a User, I want to delete a folder so that I can remove organizational structures I no longer need.                                | Medium   | Open   |
 | FR-015 | Create Tag                  | As a User, I want to create a tag so that I can label bookmarks with custom categories.                                              | High     | Open   |
 | FR-016 | View Tags                   | As a User, I want to view all tags in my collection so that I can see and manage my available labels.                                | High     | Open   |
-| FR-017 | Rename Tag                  | As a User, I want to rename a tag so that I can correct or improve my labeling scheme.                                               | Medium   | Open   |
+| FR-017 | Edit Tag                  | As a User, I want to edit a tag's name and color so that I can correct or improve my labeling scheme.                                               | Medium   | Open   |
 | FR-018 | Delete Tag                  | As a User, I want to delete a tag so that I can remove labels I no longer use.                                                       | Medium   | Open   |
 | FR-019 | Apply Tag to Bookmark       | As a User, I want to apply one or more tags to a bookmark so that I can categorize and filter my bookmarks.                          | High     | Open   |
 | FR-020 | Remove Tag from Bookmark    | As a User, I want to remove a tag from a bookmark so that I can correct miscategorized bookmarks.                                    | Medium   | Open   |
@@ -43,6 +43,7 @@
 | FR-022 | Filter Bookmarks by Folder  | As a User, I want to filter bookmarks by folder so that I can browse bookmarks within a specific folder.                             | High     | Open   |
 | FR-023 | Share Collection               | As a Collection Owner, I want to share my collection with another user so that we can collaborate on a shared bookmark collection.   | Medium   | Open   |
 | FR-024 | Access Shared Collection       | As a User, I want to access a collection shared with me so that I can view and manage its bookmarks.                                 | Medium   | Open   |
+| FR-025 | Customize Tag Color             | As a User, I want to change a tag's color so that I can visually distinguish tags in my collection.                                  | Low      | Open   |
 
 ---
 

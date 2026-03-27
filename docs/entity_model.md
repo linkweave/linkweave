@@ -112,6 +112,7 @@ A user-defined label scoped to a collection, applied to bookmarks for categoriza
 | id         | Unique identifier                     | UUID      | 36               | Primary Key, Server-assigned       |
 | collection_id | Reference to the owning collection | UUID      | 36               | Not Null, Foreign Key (COLLECTION.id) |
 | name       | Display name of the tag               | String    | 50               | Not Null                           |
+| color      | Hex color code for display            | String    | 7                | Not Null, Default: auto-assigned   |
 | created_at | Timestamp when the tag was created    | DateTime  | -                | Not Null                           |
 
 **Constraints:** `name` must be unique within a `collection_id`.
