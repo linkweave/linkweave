@@ -63,3 +63,4 @@ nb-configuration.xml
 node_modules/
 .vfox/
 /developer-local-settings/
+/chainlink-layout/

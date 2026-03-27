@@ -70,3 +70,4 @@
 | C-005 | User Identity      | Users must be identified by a stable, unique username. For this release, Quarkus form-based authentication with an in-memory user store is used. OIDC integration is planned for a future release. | Technical | High     | Open   |
 | C-006 | Primary Keys       | All entity primary keys must be UUIDs generated server-side; auto-increment sequences must not be used. | Technical | High     | Open   |
 | C-007 | Out of Scope       | User management (creating, editing, deleting user accounts by an admin) is out of scope for this release. | Business  | High     | Open   |
+| C-008 | UI Layout          | The frontend must follow the layout and design system defined in [ui-layout.md](ui-layout.md), including the three-column desktop layout, sidebar components, and shadcn/vue component library with Tailwind CSS. | Technical | High     | Open   |
