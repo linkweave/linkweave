@@ -8,6 +8,12 @@
 **Goal:** See all tags in a collection to understand available categories.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-016
+
+---
+
 ## Preconditions
 
 - The user is authenticated.

@@ -8,6 +8,12 @@
 **Goal:** Change which collection is the default so that login navigates directly to it.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-004
+
+---
+
 ## Preconditions
 
 - The user is authenticated.

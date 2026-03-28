@@ -8,6 +8,12 @@
 **Goal:** Browse all bookmarks in a collection to find saved resources.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-006
+
+---
+
 ## Preconditions
 
 - The user is authenticated.

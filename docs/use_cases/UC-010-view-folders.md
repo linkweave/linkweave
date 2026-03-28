@@ -8,6 +8,12 @@
 **Goal:** See all folders in a collection to understand the organizational structure.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-010
+
+---
+
 ## Preconditions
 
 - The user is authenticated.

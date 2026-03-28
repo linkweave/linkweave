@@ -8,6 +8,12 @@
 **Goal:** Open and work with a collection that another user has shared with them.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-024
+
+---
+
 ## Preconditions
 
 - The user is authenticated.

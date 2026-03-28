@@ -8,6 +8,12 @@
 **Goal:** Categorize a bookmark by applying one or more tags to it.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-019
+
+---
+
 ## Preconditions
 
 - The user is authenticated.

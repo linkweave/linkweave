@@ -8,6 +8,12 @@
 **Goal:** Move a folder inside another folder to create a hierarchical structure.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-012
+
+---
+
 ## Preconditions
 
 - The user is authenticated.

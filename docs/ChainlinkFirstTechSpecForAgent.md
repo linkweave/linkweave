@@ -1,3 +1,5 @@
+> **⚠️ OBSOLETE — This document describes an earlier architecture (server-rendered Qute + htmx) that has been superseded. The current architecture is a Vue.js SPA with a Quarkus REST backend. See [vision.md](vision.md), [requirements.md](requirements.md), and [ui-layout.md](ui-layout.md) for the active specifications. This file is kept for historical reference only.**
+
 Bookmark Manager – Technical Specification (Agent Version)
 1. Purpose
 

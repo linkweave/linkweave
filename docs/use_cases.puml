@@ -15,6 +15,7 @@ rectangle "Chainlink Bookmark Manager" {
         usecase "UC-004\nSet Default Collection" as UC004
         usecase "UC-023\nShare Collection" as UC023
         usecase "UC-024\nAccess Shared Collection" as UC024
+        usecase "UC-025\nRevoke Collection\nAccess" as UC025
     }
 
     rectangle "Bookmark Management" {
@@ -55,6 +56,7 @@ user --> UC003
 user --> UC004
 owner --> UC023
 user --> UC024
+owner --> UC025
 
 ' Bookmark Management
 user --> UC005

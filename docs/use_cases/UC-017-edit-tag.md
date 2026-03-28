@@ -8,6 +8,12 @@
 **Goal:** Change the name and/or color of an existing tag.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-017, FR-025
+
+---
+
 ## Preconditions
 
 - The user is authenticated.

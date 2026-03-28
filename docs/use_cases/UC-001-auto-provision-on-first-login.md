@@ -8,6 +8,12 @@
 **Goal:** Automatically receive a default collection on first login so bookmarks can be saved immediately without manual setup.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-001
+
+---
+
 ## Preconditions
 
 - The user has valid credentials in the system.

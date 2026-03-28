@@ -8,6 +8,12 @@
 **Goal:** Create a new folder to organize bookmarks within a collection.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-009
+
+---
+
 ## Preconditions
 
 - The user is authenticated.

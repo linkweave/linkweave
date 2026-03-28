@@ -8,6 +8,12 @@
 **Goal:** Modify a bookmark's URL, title, description, folder, or tags to keep it up to date.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-007
+
+---
+
 ## Preconditions
 
 - The user is authenticated.

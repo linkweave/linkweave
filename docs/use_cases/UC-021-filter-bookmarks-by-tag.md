@@ -8,6 +8,12 @@
 **Goal:** View only bookmarks that have a specific tag applied.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-021
+
+---
+
 ## Preconditions
 
 - The user is authenticated.

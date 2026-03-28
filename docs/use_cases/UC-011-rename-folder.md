@@ -8,6 +8,12 @@
 **Goal:** Change the name of an existing folder to keep the organizational structure accurate.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-011
+
+---
+
 ## Preconditions
 
 - The user is authenticated.

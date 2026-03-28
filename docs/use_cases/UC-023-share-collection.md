@@ -8,6 +8,12 @@
 **Goal:** Grant another user access to a collection so they can collaborate on the shared bookmark collection.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-023
+
+---
+
 ## Preconditions
 
 - The actor is authenticated.

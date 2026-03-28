@@ -8,6 +8,12 @@
 **Goal:** Remove a bookmark that is no longer needed from the collection.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-008
+
+---
+
 ## Preconditions
 
 - The user is authenticated.

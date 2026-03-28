@@ -8,6 +8,12 @@
 **Goal:** Organize a bookmark by placing it into a specific folder.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-013
+
+---
+
 ## Preconditions
 
 - The user is authenticated.

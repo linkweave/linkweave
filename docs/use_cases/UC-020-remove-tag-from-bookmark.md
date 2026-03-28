@@ -8,6 +8,12 @@
 **Goal:** Remove an incorrect or unwanted tag from a bookmark.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-020
+
+---
+
 ## Preconditions
 
 - The user is authenticated.

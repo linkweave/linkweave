@@ -44,6 +44,7 @@
 | FR-023 | Share Collection               | As a Collection Owner, I want to share my collection with another user so that we can collaborate on a shared bookmark collection.   | Medium   | Open   |
 | FR-024 | Access Shared Collection       | As a User, I want to access a collection shared with me so that I can view and manage its bookmarks.                                 | Medium   | Open   |
 | FR-025 | Customize Tag Color             | As a User, I want to change a tag's color so that I can visually distinguish tags in my collection.                                  | Low      | Open   |
+| FR-026 | Revoke Collection Access        | As a Collection Owner, I want to revoke another user's access to my shared collection so that they can no longer view or modify its contents. | Medium   | Open   |
 
 ---
 

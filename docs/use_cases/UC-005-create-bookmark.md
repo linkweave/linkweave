@@ -8,6 +8,12 @@
 **Goal:** Save a web resource with a URL and title to the collection.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-005
+
+---
+
 ## Preconditions
 
 - The user is authenticated.

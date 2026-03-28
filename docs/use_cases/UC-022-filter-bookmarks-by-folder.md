@@ -8,6 +8,12 @@
 **Goal:** View only bookmarks that are in a specific folder.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-022
+
+---
+
 ## Preconditions
 
 - The user is authenticated.

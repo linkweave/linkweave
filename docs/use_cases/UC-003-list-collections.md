@@ -8,6 +8,12 @@
 **Goal:** View all collections the user has access to and navigate to a non-default collection.   
 **Status:** Draft   
 
+## Traceability
+
+**Maps to:** FR-003
+
+---
+
 ## Preconditions
 
 - The user is authenticated.
