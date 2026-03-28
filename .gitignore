@@ -21,8 +21,9 @@ build.properties
 .env
 docker-compose.override.yml
 
-## test database
-api/chainlink.db
+ ## test database
+ api/chainlink.db
+ api/chainlink-test.db
 
 ### Build systems ###
 
