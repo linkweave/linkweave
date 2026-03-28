@@ -38,5 +38,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: git.markushofstetter.com/chainlink-api:latest
+          tags: git.markushofstetter.com//dividbzero/chainlink-api:latest
           file: api/src/main/docker/Dockerfile.jvm
