@@ -88,7 +88,9 @@ CREATE TABLE Folder (
     userErstellt VARCHAR(255) NOT NULL,
     userMutiert VARCHAR(255) NOT NULL,
     version BIGINT NOT NULL,
-    name VARCHAR(255) NOT NULL
+    name VARCHAR(255) NOT NULL,
+    parent_id BLOB,
+    FOREIGN KEY (parent_id) REFERENCES Folder(id)
 );
 
 -- Create Folder_AUD table for Hibernate Envers
@@ -102,6 +104,7 @@ CREATE TABLE Folder_AUD (
     userMutiert VARCHAR(255),
     version BIGINT,
     name VARCHAR(255),
+    parent_id BLOB,
     PRIMARY KEY (REV, id)
 );
 
