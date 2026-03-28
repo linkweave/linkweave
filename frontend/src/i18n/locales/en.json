@@ -1,0 +1,35 @@
+{
+  "app": {
+    "title": "Chainlink"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "loading": "Loading..."
+  },
+  "header": {
+    "addBookmark": "Add Bookmark"
+  },
+  "sidebar": {
+    "bookmarks": "Bookmarks",
+    "allBookmarks": "All Bookmarks",
+    "tags": "Tags",
+    "newFolder": "New Folder"
+  },
+  "folder": {
+    "none": "No folders yet"
+  },
+  "tag": {
+    "none": "No tags yet"
+  },
+  "home": {
+    "noBookmarks": "No bookmarks yet. Click \"Add Bookmark\" to get started."
+  },
+  "language": {
+    "en": "English",
+    "switch": "Switch language"
+  }
+}

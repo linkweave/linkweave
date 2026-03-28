@@ -2,6 +2,16 @@
 
 # Place .gitignore settings specific to your project here
 
+# Claude hooks
+.claude/hooks/
+
+# Temporary output files
+token-usage-output.txt
+
+# Frontend
+frontend/playwright-report/
+frontend/test-results/
+
 
 ##### Common ignore settings ####
 
@@ -51,8 +61,7 @@ nb-configuration.xml
 *.orig
 *.rej
 
-# Local environment
-.env
+
 
 # Plugin directory
 /.quarkus/cli/plugins/
