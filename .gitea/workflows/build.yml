@@ -12,12 +12,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Set up JDK 25
+      - id: java-setup
+        name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
           java-version: 25
           distribution: temurin
           cache: maven
+
 
       - name: Build
         working-directory: api
@@ -38,5 +40,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: git.markushofstetter.com//dividbzero/chainlink-api:latest
+          tags: git.markushofstetter.com/dividbzero/chainlink-api:latest
           file: api/src/main/docker/Dockerfile.jvm
