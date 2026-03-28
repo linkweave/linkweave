@@ -7,7 +7,7 @@
 #
 # Then, build the image with:
 #
-# docker build -f src/main/docker/Dockerfile.legacy-jar -t quarkus/chainlink-legacy-jar .
+# docker build -f api/src/main/docker/Dockerfile.legacy-jar -t quarkus/chainlink-legacy-jar .
 #
 # Then run the container using:
 #
@@ -83,8 +83,8 @@ FROM registry.access.redhat.com/ubi9/openjdk-21:1.23
 ENV LANGUAGE='en_US:en'
 
 
-COPY target/lib/* /deployments/lib/
-COPY target/*-runner.jar /deployments/quarkus-run.jar
+COPY api/target/lib/* /deployments/lib/
+COPY api/target/*-runner.jar /deployments/quarkus-run.jar
 
 EXPOSE 8080
 USER 185

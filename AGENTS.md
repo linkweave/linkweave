@@ -11,38 +11,40 @@
 
 ## Essential Commands
 
+All Maven commands must be run from the `api/` directory (or use `-f api/pom.xml` from root).
+
 ### Development
 ```bash
 # Build application
-./mvnw package
+cd api && ./mvnw package
 
 # Build uber-jar
-./mvnw package -Dquarkus.package.jar.type=uber-jar
+cd api && ./mvnw package -Dquarkus.package.jar.type=uber-jar
 
 # Clean and build
-./mvnw clean verify
+cd api && ./mvnw clean verify
 ```
 
 ### Testing
 ```bash
 # Run all tests (unit + integration)
-./mvnw verify
+cd api && ./mvnw verify
 
 # Run only unit tests
-./mvnw test
+cd api && ./mvnw test
 
 ```
 
 ### Single Test Execution
 ```bash
 # Run specific test class
-./mvnw test -Dtest=ClassNameTest
+cd api && ./mvnw test -Dtest=ClassNameTest
 
 # Run specific test method
-./mvnw test -Dtest=ClassNameTest#methodName
+cd api && ./mvnw test -Dtest=ClassNameTest#methodName
 
 # Run tests matching pattern
-./mvnw test -Dtest="*IntegrationTest"
+cd api && ./mvnw test -Dtest="*IntegrationTest"
 ```
 
 ## Code Style Guidelines
@@ -82,6 +84,21 @@
 
 ## Project Structure
 
+```
+api/                    # Java/Quarkus backend
+  src/
+    main/
+      java/            # Application source code
+      resources/       # Configuration, templates, migrations
+      docker/          # Dockerfiles
+    test/
+      java/            # Test source code
+      resources/       # Test configuration and fixtures
+  pom.xml              # Maven build configuration
+  mvnw                 # Maven wrapper
+frontend/              # VueJS frontend
+developer-local-settings/  # Local dev config and database
+```
 
 ## Technology Stack
 
@@ -109,8 +126,8 @@
 ### Test Framework
 - **JUnit 5**: Primary testing framework
 - **AssertJ**: Fluent assertions (use `org.assertj.core.api.Assertions.assertThat`)
-- **Maven Surefire**: Unit tests (`src/test/java`)
-- **Maven Failsafe**: Integration tests (`src/test/java`)
+- **Maven Surefire**: Unit tests (`api/src/test/java`)
+- **Maven Failsafe**: Integration tests (`api/src/test/java`)
 - **Quarkus Test**: use `@QuarkusTest` for integration tests
 
 ### Security in Tests
@@ -129,7 +146,7 @@
 
 ## Development Workflow
 
-1. **Local Development**: Use `./mvnw quarkus:dev` for hot reload
+1. **Local Development**: Use `cd api && ./mvnw quarkus:dev` for hot reload
 2. **Database**: SQLite automatically created in developer-local-settings/
 3. **Frontend**: Use Web Bundler for asset management
 4. **Templates**: Qute templates auto-reload in dev mode
@@ -186,9 +203,8 @@ public class MyEntity {
 ## CI/CD
 
 - **GitTea Actions**: Runs on push/PR to main
-- **JDK Version**: Temurin JDK 21
-- **Build Command**: `./mvnw verify -B`
+- **JDK Version**: Temurin JDK 25
+- **Build Command**: `cd api && ./mvnw verify -B`
 - **Caching**: Maven dependencies cached automatically
-
 
 

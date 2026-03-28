@@ -22,4 +22,5 @@ jobs:
           cache: maven
 
       - name: Build
+        working-directory: api
         run: ./mvnw verify -B

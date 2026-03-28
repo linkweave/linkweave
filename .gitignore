@@ -21,6 +21,9 @@ build.properties
 .env
 docker-compose.override.yml
 
+## test database
+api/chainlink.db
+
 ### Build systems ###
 
 ## Maven
@@ -73,3 +76,4 @@ node_modules/
 .vfox/
 /developer-local-settings/
 /chainlink-layout/
+/api/.vfox.toml
