@@ -77,7 +77,7 @@ public class IDType implements EnhancedUserType<ID>, DynamicParameterizedType {
 
     @Override
     public int getSqlType() {
-        return SqlTypes.UUID;
+        return SqlTypes.VARCHAR; // sqlite does not have uuid type
     }
 
     @Override

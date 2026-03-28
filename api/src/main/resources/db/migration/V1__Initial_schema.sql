@@ -9,7 +9,7 @@ CREATE TABLE REVINFO (
 
 -- Create User table
 CREATE TABLE User (
-    id BLOB NOT NULL PRIMARY KEY,
+    id VARCHAR(36) NOT NULL PRIMARY KEY,
     timestampErstellt TIMESTAMP NOT NULL,
     timestampMutiert TIMESTAMP NOT NULL,
     userErstellt VARCHAR(255) NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE User (
 
 -- Create User_AUD table for Hibernate Envers
 CREATE TABLE User_AUD (
-    id BLOB NOT NULL,
+    id VARCHAR(36) NOT NULL,
     REV INTEGER NOT NULL,
     REVTYPE TINYINT,
     timestampErstellt TIMESTAMP,
@@ -55,20 +55,20 @@ CREATE TABLE User_AUD (
 
 -- Create UserPermission table
 CREATE TABLE UserPermission (
-    id BLOB NOT NULL PRIMARY KEY,
+    id VARCHAR(36) NOT NULL PRIMARY KEY,
     timestampErstellt TIMESTAMP NOT NULL,
     timestampMutiert TIMESTAMP NOT NULL,
     userErstellt VARCHAR(255) NOT NULL,
     userMutiert VARCHAR(255) NOT NULL,
     version BIGINT NOT NULL,
     permission VARCHAR(255) NOT NULL CHECK (permission IN ('SUPPORT','SYSTEM_ADMIN','BOOKMARK_READ','BOOKMARK_WRITE')),
-    user_id BLOB NOT NULL,
+    user_id VARCHAR(36) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES User(id)
 );
 
 -- Create UserPermission_AUD table for Hibernate Envers
 CREATE TABLE UserPermission_AUD (
-    id BLOB NOT NULL,
+    id VARCHAR(36) NOT NULL,
     REV INTEGER NOT NULL,
     REVTYPE TINYINT,
     timestampErstellt TIMESTAMP,
@@ -76,26 +76,26 @@ CREATE TABLE UserPermission_AUD (
     userErstellt VARCHAR(255),
     userMutiert VARCHAR(255),
     permission VARCHAR(255) CHECK (permission IN ('SUPPORT','SYSTEM_ADMIN','BOOKMARK_READ','BOOKMARK_WRITE')),
-    user_id BLOB,
+    user_id VARCHAR(36),
     PRIMARY KEY (REV, id)
 );
 
 -- Create Folder table
 CREATE TABLE Folder (
-    id BLOB NOT NULL PRIMARY KEY,
+    id VARCHAR(36) NOT NULL PRIMARY KEY,
     timestampErstellt TIMESTAMP NOT NULL,
     timestampMutiert TIMESTAMP NOT NULL,
     userErstellt VARCHAR(255) NOT NULL,
     userMutiert VARCHAR(255) NOT NULL,
     version BIGINT NOT NULL,
     name VARCHAR(255) NOT NULL,
-    parent_id BLOB,
+    parent_id VARCHAR(36),
     FOREIGN KEY (parent_id) REFERENCES Folder(id)
 );
 
 -- Create Folder_AUD table for Hibernate Envers
 CREATE TABLE Folder_AUD (
-    id BLOB NOT NULL,
+    id VARCHAR(36) NOT NULL,
     REV INTEGER NOT NULL,
     REVTYPE TINYINT,
     timestampErstellt TIMESTAMP,
@@ -104,13 +104,13 @@ CREATE TABLE Folder_AUD (
     userMutiert VARCHAR(255),
     version BIGINT,
     name VARCHAR(255),
-    parent_id BLOB,
+    parent_id VARCHAR(36),
     PRIMARY KEY (REV, id)
 );
 
 -- Create Tag table
 CREATE TABLE Tag (
-    id BLOB NOT NULL PRIMARY KEY,
+    id VARCHAR(36) NOT NULL PRIMARY KEY,
     timestampErstellt TIMESTAMP NOT NULL,
     timestampMutiert TIMESTAMP NOT NULL,
     userErstellt VARCHAR(255) NOT NULL,
@@ -121,7 +121,7 @@ CREATE TABLE Tag (
 
 -- Create Tag_AUD table for Hibernate Envers
 CREATE TABLE Tag_AUD (
-    id BLOB NOT NULL,
+    id VARCHAR(36) NOT NULL,
     REV INTEGER NOT NULL,
     REVTYPE TINYINT,
     timestampErstellt TIMESTAMP,
@@ -135,7 +135,7 @@ CREATE TABLE Tag_AUD (
 
 -- Create Bookmark table
 CREATE TABLE Bookmark (
-    id BLOB NOT NULL PRIMARY KEY,
+    id VARCHAR(36) NOT NULL PRIMARY KEY,
     timestampErstellt TIMESTAMP NOT NULL,
     timestampMutiert TIMESTAMP NOT NULL,
     userErstellt VARCHAR(255) NOT NULL,
@@ -144,14 +144,14 @@ CREATE TABLE Bookmark (
     title VARCHAR(255) NOT NULL,
     url VARCHAR(2000) NOT NULL,
     notes VARCHAR(5000),
-    folder_id BLOB NOT NULL,
+    folder_id VARCHAR(36) NOT NULL,
     CONSTRAINT fk_bookmark_folder
         FOREIGN KEY (folder_id) REFERENCES Folder(id)
 );
 
 -- Create Bookmark_AUD table for Hibernate Envers
 CREATE TABLE Bookmark_AUD (
-    id BLOB NOT NULL,
+    id VARCHAR(36) NOT NULL,
     REV INTEGER NOT NULL,
     REVTYPE TINYINT,
     timestampErstellt TIMESTAMP,
@@ -162,14 +162,14 @@ CREATE TABLE Bookmark_AUD (
     title VARCHAR(255),
     url VARCHAR(2000),
     notes VARCHAR(5000),
-    folder_id BLOB,
+    folder_id VARCHAR(36),
     PRIMARY KEY (REV, id)
 );
 
 -- Create Bookmark_Tag join table for ManyToMany relationship
 CREATE TABLE Bookmark_Tag (
-    bookmarks_id BLOB NOT NULL,
-    tags_id BLOB NOT NULL,
+    bookmarks_id VARCHAR(36) NOT NULL,
+    tags_id VARCHAR(36) NOT NULL,
     PRIMARY KEY (bookmarks_id, tags_id),
     CONSTRAINT fk_bookmark_tag_bookmark
         FOREIGN KEY (bookmarks_id) REFERENCES Bookmark(id),
