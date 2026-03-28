@@ -30,6 +30,15 @@ const props = defineProps<Props>()
       </div>
 
       <FolderTree class-name="mt-2" />
+
+      <Button
+        variant="ghost"
+        size="sm"
+        class="w-full justify-start text-muted-foreground hover:text-foreground mt-2"
+      >
+        <Plus class="h-4 w-4 mr-2" />
+        {{ t('sidebar.newFolder') }}
+      </Button>
     </div>
 
     <!-- Tags Section -->
@@ -41,18 +50,6 @@ const props = defineProps<Props>()
         </span>
       </div>
       <TagList class-name="px-2 pb-2" />
-    </div>
-
-    <!-- Add Folder Button -->
-    <div class="p-3 border-t border-border">
-      <Button
-        variant="ghost"
-        size="sm"
-        class="w-full justify-start text-muted-foreground hover:text-foreground"
-      >
-        <Plus class="h-4 w-4 mr-2" />
-        {{ t('sidebar.newFolder') }}
-      </Button>
     </div>
   </div>
 </template>
