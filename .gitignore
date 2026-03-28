@@ -22,8 +22,8 @@ build.properties
 docker-compose.override.yml
 
  ## test database
- api/chainlink.db
- api/chainlink-test.db
+api/chainlink.db
+api/chainlink-test.db
 
 ### Build systems ###
 
@@ -78,3 +78,4 @@ node_modules/
 /developer-local-settings/
 /chainlink-layout/
 /api/.vfox.toml
+
