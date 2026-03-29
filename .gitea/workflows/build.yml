@@ -95,3 +95,38 @@ jobs:
             org.opencontainers.image.commit=${{ steps.commit-hash.outputs.COMMIT_HASH }}
             org.opencontainers.image.title=Chainlink Frontend
             org.opencontainers.image.description=Vue.js frontend for Chainlink
+
+  deploy:
+    needs: [build, build-frontend]
+    if: gitea.event_name == 'push' && gitea.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get commit hash
+        id: commit-hash
+        run: |
+          hash="${{ gitea.sha }}"
+          echo "COMMIT_HASH=${hash::7}" >> $GITEA_OUTPUT
+
+      - name: Checkout docker-compose-config
+        uses: actions/checkout@v5
+        with:
+          repository: mh03r932/docker-compose-config
+          token: ${{ secrets.DOCKER_COMPOSE_TOKEN_GITHUB }}
+          path: docker-compose-config
+
+      - name: Update image tags in docker-compose.yml
+        working-directory: docker-compose-config/chainlink
+        run: |
+          COMMIT_HASH="${{ steps.commit-hash.outputs.COMMIT_HASH }}"
+          sed -i "s|chainlink-api:latest|chainlink-api:${COMMIT_HASH}|g" docker-compose.yml
+          sed -i "s|chainlink-frontend:latest|chainlink-frontend:${COMMIT_HASH}|g" docker-compose.yml
+
+      - name: Commit and push changes
+        working-directory: docker-compose-config
+        run: |
+          git config user.name "gitea-actions[bot]"
+          git config user.email "gitea-actions[bot]@users.noreply.gitea"
+          git add chainlink/docker-compose.yml
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore(chainlink): update image tags to ${{ steps.commit-hash.outputs.COMMIT_HASH }}"
+          git push
