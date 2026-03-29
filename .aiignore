@@ -2,17 +2,7 @@
 
 # Place .gitignore settings specific to your project here
 
-# Claude hooks
-.claude/hooks/
-
-# Temporary output files
-token-usage-output.txt
-
-# Frontend
-frontend/playwright-report/
-frontend/test-results/
-
-
+ChainlinkFirstTechSpecForAgent.md
 ##### Common ignore settings ####
 
 ## Local developer / local build settings
@@ -20,10 +10,6 @@ developer-local-settings/
 build.properties
 .env
 docker-compose.override.yml
-
- ## test database
-api/chainlink.db
-api/chainlink-test.db
 
 ### Build systems ###
 
@@ -65,7 +51,8 @@ nb-configuration.xml
 *.orig
 *.rej
 
-
+# Local environment
+.env
 
 # Plugin directory
 /.quarkus/cli/plugins/
@@ -76,6 +63,3 @@ nb-configuration.xml
 node_modules/
 .vfox/
 /developer-local-settings/
-/chainlink-layout/
-/api/.vfox.toml
-

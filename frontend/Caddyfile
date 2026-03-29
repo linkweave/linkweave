@@ -1,0 +1,22 @@
+:80 {
+	root * /srv
+
+	header {
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		X-XSS-Protection "0"
+	}
+
+	try_files {path} /index.html
+
+	encode gzip
+
+	file_server {
+		precompressed br gzip
+	}
+
+	reverse_proxy /api/* http://api:8080
+}
