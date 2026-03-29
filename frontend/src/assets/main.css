@@ -29,22 +29,22 @@
 
 @media (prefers-color-scheme: dark) {
   @theme {
-    --color-background: #0a0a0a;
+    --color-background: #1a1d23;
     --color-foreground: #ededed;
-    --color-card: #0a0a0a;
+    --color-card: #1f2329;
     --color-card-foreground: #ededed;
     --color-primary: #3b82f6;
     --color-primary-foreground: #ffffff;
-    --color-secondary: #262626;
+    --color-secondary: #252a32;
     --color-secondary-foreground: #ededed;
-    --color-muted: #262626;
+    --color-muted: #252a32;
     --color-muted-foreground: #a3a3a3;
-    --color-accent: #262626;
+    --color-accent: #252a32;
     --color-accent-foreground: #ededed;
     --color-destructive: #dc2626;
     --color-destructive-foreground: #ffffff;
-    --color-border: #262626;
-    --color-input: #262626;
+    --color-border: #2d333b;
+    --color-input: #252a32;
     --color-ring: #3b82f6;
   }
 }
