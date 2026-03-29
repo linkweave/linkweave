@@ -114,6 +114,9 @@ jobs:
           token: ${{ secrets.DOCKER_COMPOSE_TOKEN_GITHUB }}
           path: docker-compose-config
 
+      - name: Print commit hash
+        run: echo "Deploying with commit hash ${{ steps.commit-hash.outputs.COMMIT_HASH }}"
+
       - name: Update image tags in docker-compose.yml
         working-directory: docker-compose-config/chainlink
         run: |
