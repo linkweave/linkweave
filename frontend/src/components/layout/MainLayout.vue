@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import {Button, LanguageSwitcher} from '@/components/ui'
 import {cn} from '@/lib/utils'
-import {Menu, X} from 'lucide-vue-next'
+import {LogOut, Menu, X} from 'lucide-vue-next'
 import {ref} from 'vue'
 import {useI18n} from 'vue-i18n'
 import Sidebar from './Sidebar.vue'
+import {useAuthStore} from '@/stores/auth'
 
 const { t } = useI18n()
+const auth = useAuthStore()
 const sidebarOpen = ref(false)
 
 const toggleSidebar = () => {
@@ -30,6 +32,10 @@ const closeSidebar = () => {
       </div>
       <div class="flex items-center gap-2">
         <slot name="header-actions" />
+        <span v-if="auth.isAuthenticated" class="text-sm text-muted-foreground">{{ auth.displayName }}</span>
+        <Button v-if="auth.isAuthenticated" variant="ghost" size="icon" @click="auth.logout">
+          <LogOut class="h-4 w-4" />
+        </Button>
         <LanguageSwitcher />
       </div>
     </header>

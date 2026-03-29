@@ -2,6 +2,7 @@ package org.chainlink.api.bookmark.folder;
 
 import java.util.List;
 
+import io.quarkus.security.Authenticated;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -11,6 +12,7 @@ import org.chainlink.infrastructure.stereotypes.JaxResource;
 
 @JaxResource
 @RequiredArgsConstructor
+@Authenticated
 @Path("/folders")
 public class FolderResourceController {
 

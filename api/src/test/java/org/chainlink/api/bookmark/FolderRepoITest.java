@@ -18,7 +18,7 @@ class FolderRepoITest {
 
     @Test
     @TestSecurity(
-        user = "Testuser",
+        user = "test@example.com",
         roles = {"BOOKMARK_WRITE"}
     )
     void saveFolder_shouldSaveFolder() {
@@ -31,7 +31,7 @@ class FolderRepoITest {
 
     @Test
     @TestSecurity(
-        user = "Testuser",
+        user = "test@example.com",
         roles = {"BOOKMARK_WRITE"}
     )
     void findById_shouldReturnFolder_whenFolderExists() {
@@ -48,7 +48,7 @@ class FolderRepoITest {
 
     @Test
     @TestSecurity(
-        user = "Testuser",
+        user = "test@example.com",
         roles = {"BOOKMARK_WRITE"}
     )
     void findById_shouldReturnEmpty_whenFolderDoesNotExist() {
@@ -61,7 +61,7 @@ class FolderRepoITest {
 
     @Test
     @TestSecurity(
-        user = "Testuser",
+        user = "test@example.com",
         roles = {"BOOKMARK_WRITE"}
     )
     void getById_shouldReturnFolder_whenFolderExists() {
@@ -78,7 +78,7 @@ class FolderRepoITest {
 
     @Test
     @TestSecurity(
-        user = "Testuser",
+        user = "test@example.com",
         roles = {"BOOKMARK_WRITE"}
     )
     void findAll_shouldReturnAllFolders() {
@@ -99,7 +99,7 @@ class FolderRepoITest {
 
     @Test
     @TestSecurity(
-        user = "Testuser",
+        user = "test@example.com",
         roles = {"BOOKMARK_WRITE"}
     )
     @Transactional
@@ -119,7 +119,7 @@ class FolderRepoITest {
 
     @Test
     @TestSecurity(
-        user = "Testuser",
+        user = "test@example.com",
         roles = {"BOOKMARK_WRITE"}
     )
     void deleteFolder_shouldRemoveFolder() {

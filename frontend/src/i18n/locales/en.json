@@ -12,7 +12,8 @@
     "loading": "Loading..."
   },
   "header": {
-    "addBookmark": "Add Bookmark"
+    "addBookmark": "Add Bookmark",
+    "logout": "Sign out"
   },
   "sidebar": {
     "bookmarks": "Bookmarks",
@@ -32,5 +33,11 @@
   "language": {
     "en": "English",
     "switch": "Switch language"
+  },
+  "login": {
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "error": "Invalid email or password."
   }
 }
