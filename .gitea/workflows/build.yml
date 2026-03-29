@@ -113,6 +113,7 @@ jobs:
           repository: mh03r932/docker-compose-config
           token: ${{ secrets.DOCKER_COMPOSE_TOKEN_GITHUB }}
           path: docker-compose-config
+          github-server-url: https://github.com
 
       - name: Print commit hash
         run: echo "Deploying with commit hash ${{ steps.commit-hash.outputs.COMMIT_HASH }}"
