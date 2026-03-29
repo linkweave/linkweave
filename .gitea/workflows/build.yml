@@ -15,7 +15,7 @@ jobs:
       - name: Get commit hash
         id: commit-hash
         run: |
-          hash=${GITEA_SHA}
+          hash="${{ gitea.sha }}"
           echo "COMMIT_HASH=${hash::7}" >> $GITEA_OUTPUT
 
       - id: java-setup
@@ -63,10 +63,7 @@ jobs:
       - name: Get commit hash
         id: commit-hash
         run: |
-          echo "GITEA_SHA value: ${GITEA_SHA}"
-          hash=${GITEA_SHA}
-          echo "Hash after assignment: $hash"
-          echo "Hash sliced (first 7 chars): ${hash::7}"
+          hash="${{ gitea.sha }}"
           echo "COMMIT_HASH=${hash::7}" >> $GITEA_OUTPUT
 
       - name: Print commit hash
