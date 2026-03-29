@@ -12,6 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Get commit hash
+        id: commit-hash
+        run: |
+          hash=${{ env.GITEA_SHA }}
+          echo "COMMIT_HASH=${hash::7}" >> $GITEA_OUTPUT
+
       - id: java-setup
         name: Set up JDK 25
         uses: actions/setup-java@v4
@@ -19,7 +25,6 @@ jobs:
           java-version: 25
           distribution: temurin
           cache: maven
-
 
       - name: Build
         working-directory: api
@@ -40,8 +45,15 @@ jobs:
         with:
           context: .
           push: true
-          tags: git.markushofstetter.com/dividbzero/chainlink-api:latest
+          tags: |
+            git.markushofstetter.com/dividbzero/chainlink-api:latest
+            git.markushofstetter.com/dividbzero/chainlink-api:${{ steps.commit-hash.outputs.COMMIT_HASH }}
           file: api/src/main/docker/Dockerfile.jvm
+          build-args: COMMIT_HASH=${{ steps.commit-hash.outputs.COMMIT_HASH }}
+          labels: |
+            org.opencontainers.image.commit=${{ steps.commit-hash.outputs.COMMIT_HASH }}
+            org.opencontainers.image.title=Chainlink API
+            org.opencontainers.image.description=Quarkus-based Java backend for Chainlink
 
   build-frontend:
     runs-on: ubuntu-latest
@@ -50,7 +62,9 @@ jobs:
 
       - name: Get commit hash
         id: commit-hash
-        run: echo "COMMIT_HASH=${{ gitea.sha }}" >> $GITEA_OUTPUT
+        run: |
+          hash=${{ env.GITEA_SHA }}
+          echo "COMMIT_HASH=${hash::7}" >> $GITEA_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
