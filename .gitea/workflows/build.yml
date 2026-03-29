@@ -128,8 +128,8 @@ jobs:
           echo "COMMIT_HASH variable value: $COMMIT_HASH"
           echo "Current docker-compose.yml content (before sed):"
           cat docker-compose.yml
-          sed -i "s|chainlink-api:latest|chainlink-api:${COMMIT_HASH}|g" docker-compose.yml
-          sed -i "s|chainlink-frontend:latest|chainlink-frontend:${COMMIT_HASH}|g" docker-compose.yml
+          sed -i "s|chainlink-api:.*|chainlink-api:${COMMIT_HASH}|g" docker-compose.yml
+          sed -i "s|chainlink-frontend:.*|chainlink-frontend:${COMMIT_HASH}|g" docker-compose.yml
           echo "docker-compose.yml content (after sed):"
           cat docker-compose.yml
           echo "Git diff showing changes:"
