@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Menu, X } from 'lucide-vue-next'
-import { Button, LanguageSwitcher } from '@/components/ui'
+import {Button, LanguageSwitcher} from '@/components/ui'
+import {cn} from '@/lib/utils'
+import {Menu, X} from 'lucide-vue-next'
+import {ref} from 'vue'
+import {useI18n} from 'vue-i18n'
 import Sidebar from './Sidebar.vue'
-import { cn } from '@/lib/utils'
-import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const sidebarOpen = ref(false)

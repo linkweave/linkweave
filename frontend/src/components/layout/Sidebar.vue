@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Folder, Plus, Tag } from 'lucide-vue-next'
-import { Button } from '@/components/ui'
 import FolderTree from '@/components/folder/FolderTree.vue'
 import TagList from '@/components/tag/TagList.vue'
-import { useI18n } from 'vue-i18n'
+import {Button} from '@/components/ui'
+import Buildversion from '@/components/ui/Buildversion.vue';
+import {Folder, Plus, Tag} from 'lucide-vue-next'
+import {useI18n} from 'vue-i18n'
 
 const { t } = useI18n()
 
@@ -50,6 +51,12 @@ const props = defineProps<Props>()
         </span>
       </div>
       <TagList class-name="px-2 pb-2" />
+    </div>
+    <div class="border-t border-border">
+     <div class="p-3 flex items-center justify-between">
+       <Buildversion/>
+     </div>
+
     </div>
   </div>
 </template>

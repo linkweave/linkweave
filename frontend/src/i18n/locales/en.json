@@ -1,6 +1,7 @@
 {
   "app": {
-    "title": "Chainlink"
+    "title": "Chainlink",
+    "version": "version"
   },
   "common": {
     "save": "Save",

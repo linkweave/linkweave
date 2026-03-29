@@ -48,6 +48,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Get commit hash
+        id: commit-hash
+        run: echo "COMMIT_HASH=${{ gitea.sha }}" >> $GITEA_OUTPUT
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -63,5 +67,12 @@ jobs:
         with:
           context: frontend
           push: true
-          tags: git.markushofstetter.com/dividbzero/chainlink-frontend:latest
+          tags: |
+            git.markushofstetter.com/dividbzero/chainlink-frontend:latest
+            git.markushofstetter.com/dividbzero/chainlink-frontend:${{ steps.commit-hash.outputs.COMMIT_HASH }}
           file: frontend/Dockerfile
+          build-args: COMMIT_HASH=${{ steps.commit-hash.outputs.COMMIT_HASH }}
+          labels: |
+            org.opencontainers.image.commit=${{ steps.commit-hash.outputs.COMMIT_HASH }}
+            org.opencontainers.image.title=Chainlink Frontend
+            org.opencontainers.image.description=Vue.js frontend for Chainlink
