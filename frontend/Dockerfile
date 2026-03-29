@@ -1,7 +1,8 @@
-ARG COMMIT_HASH
 FROM docker.io/library/node:22-alpine AS builder
 
 WORKDIR /app
+
+ARG COMMIT_HASH
 
 COPY package.json package-lock.json* ./
 RUN npm ci
@@ -13,6 +14,7 @@ RUN find dist -type f \( -name '*.js' -o -name '*.css' -o -name '*.html' -o -nam
      -exec gzip -k -9 {} \; \
      -exec brotli -k -9 {} \;
 
+RUN echo "COMMIT_HASH is: '${COMMIT_HASH}'"
 RUN echo "{\"commit\":\"${COMMIT_HASH}\"}" > /app/dist/commit.json
 
 FROM docker.io/library/caddy:2-alpine

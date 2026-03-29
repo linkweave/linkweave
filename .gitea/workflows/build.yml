@@ -16,6 +16,7 @@ jobs:
         id: commit-hash
         run: |
           hash="${{ gitea.sha }}"
+          echo "Hash sliced (first 7 chars): ${hash::7}"
           echo "COMMIT_HASH=${hash::7}" >> $GITEA_OUTPUT
 
       - id: java-setup
@@ -49,7 +50,8 @@ jobs:
             git.markushofstetter.com/dividbzero/chainlink-api:latest
             git.markushofstetter.com/dividbzero/chainlink-api:${{ steps.commit-hash.outputs.COMMIT_HASH }}
           file: api/src/main/docker/Dockerfile.jvm
-          build-args: COMMIT_HASH=${{ steps.commit-hash.outputs.COMMIT_HASH }}
+          build-args: |
+            COMMIT_HASH=${{ steps.commit-hash.outputs.COMMIT_HASH }}
           labels: |
             org.opencontainers.image.commit=${{ steps.commit-hash.outputs.COMMIT_HASH }}
             org.opencontainers.image.title=Chainlink API
@@ -90,7 +92,8 @@ jobs:
             git.markushofstetter.com/dividbzero/chainlink-frontend:latest
             git.markushofstetter.com/dividbzero/chainlink-frontend:${{ steps.commit-hash.outputs.COMMIT_HASH }}
           file: frontend/Dockerfile
-          build-args: COMMIT_HASH=${{ steps.commit-hash.outputs.COMMIT_HASH }}
+          build-args: |
+            COMMIT_HASH=${{ steps.commit-hash.outputs.COMMIT_HASH }}
           labels: |
             org.opencontainers.image.commit=${{ steps.commit-hash.outputs.COMMIT_HASH }}
             org.opencontainers.image.title=Chainlink Frontend
