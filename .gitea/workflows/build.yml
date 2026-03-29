@@ -125,8 +125,15 @@ jobs:
         working-directory: docker-compose-config/chainlink
         run: |
           COMMIT_HASH="${{ steps.commit-hash.outputs.COMMIT_HASH }}"
+          echo "COMMIT_HASH variable value: $COMMIT_HASH"
+          echo "Current docker-compose.yml content (before sed):"
+          cat docker-compose.yml
           sed -i "s|chainlink-api:latest|chainlink-api:${COMMIT_HASH}|g" docker-compose.yml
           sed -i "s|chainlink-frontend:latest|chainlink-frontend:${COMMIT_HASH}|g" docker-compose.yml
+          echo "docker-compose.yml content (after sed):"
+          cat docker-compose.yml
+          echo "Git diff showing changes:"
+          git diff docker-compose.yml
 
       - name: Commit and push changes
         working-directory: docker-compose-config
