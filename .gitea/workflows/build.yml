@@ -64,6 +64,7 @@ jobs:
         id: commit-hash
         run: |
           hash="${{ gitea.sha }}"
+          echo "Hash sliced (first 7 chars): ${hash::7}"
           echo "COMMIT_HASH=${hash::7}" >> $GITEA_OUTPUT
 
       - name: Print commit hash
