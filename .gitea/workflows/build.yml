@@ -15,7 +15,7 @@ jobs:
       - name: Get commit hash
         id: commit-hash
         run: |
-          hash=${{ env.GITEA_SHA }}
+          hash=${GITEA_SHA}
           echo "COMMIT_HASH=${hash::7}" >> $GITEA_OUTPUT
 
       - id: java-setup
@@ -63,8 +63,15 @@ jobs:
       - name: Get commit hash
         id: commit-hash
         run: |
-          hash=${{ env.GITEA_SHA }}
+          echo "GITEA_SHA value: ${GITEA_SHA}"
+          hash=${GITEA_SHA}
+          echo "Hash after assignment: $hash"
+          echo "Hash sliced (first 7 chars): ${hash::7}"
           echo "COMMIT_HASH=${hash::7}" >> $GITEA_OUTPUT
+
+      - name: Print commit hash
+        run: |
+          echo "Commit hash output: ${{ steps.commit-hash.outputs.COMMIT_HASH }}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
