@@ -6,29 +6,34 @@ import {fileURLToPath, URL} from 'node:url'
 import {defineConfig} from 'vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
-const certsDir = path.resolve(__dirname, '../developer-local-settings/config/certs')
+export default defineConfig(({ command }) => {
+  const isDev = command === 'serve'
 
+  const certsDir = path.resolve(__dirname, '../developer-local-settings/config/certs')
+  const certFile = path.join(certsDir, 'local-chainlink.localhost.pem')
+  const keyFile = path.join(certsDir, 'local-chainlink.localhost.key')
 
-
-
-export default defineConfig({
-  plugins: [vue(), vueDevTools(), tailwindcss()],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
-    }
-  },
-  server: {
-    port: 5173,
-    https: {
-      cert: fs.readFileSync(path.join(certsDir, 'local-chainlink.localhost.pem')),
-      key: fs.readFileSync(path.join(certsDir, 'local-chainlink.localhost.key'))
+  return {
+    plugins: [vue(), vueDevTools(), tailwindcss()],
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url))
+      }
     },
-    proxy: {
-      '/api': {
-        target: 'https://local-chainlink.localhost:8443',
-        changeOrigin: true,
-        secure: false
+    server: {
+      port: 5173,
+      ...(isDev ? {
+        https: {
+          cert: fs.readFileSync(certFile),
+          key: fs.readFileSync(keyFile)
+        }
+      } : {}),
+      proxy: {
+        '/api': {
+          target: 'https://local-chainlink.localhost:8443',
+          changeOrigin: true,
+          secure: false
+        }
       }
     }
   }
