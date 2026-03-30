@@ -1,6 +1,16 @@
 import { defineStore } from 'pinia'
+import { ref } from 'vue'
 
 export const useCollectionStore = defineStore('collection', () => {
-  // State and actions will be implemented later
-  return {}
+  const currentCollectionId = ref<string | null>(null)
+
+  function setCurrentCollectionId(id: string | null) {
+    currentCollectionId.value = id
+  }
+
+
+  return {
+    currentCollectionId,
+    setCurrentCollectionId,
+  }
 })

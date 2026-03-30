@@ -43,6 +43,12 @@ export interface UserInfoJson {
      * @memberof UserInfoJson
      */
     roles: Set<string>;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserInfoJson
+     */
+    defaultCollectionId?: string;
 }
 
 /**
@@ -70,6 +76,7 @@ export function UserInfoJsonFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'firstName': json['firstName'],
         'lastName': json['lastName'],
         'roles': new Set(json['roles']),
+        'defaultCollectionId': json['defaultCollectionId'] == null ? undefined : json['defaultCollectionId'],
     };
 }
 
@@ -88,6 +95,7 @@ export function UserInfoJsonToJSONTyped(value?: UserInfoJson | null, ignoreDiscr
         'firstName': value['firstName'],
         'lastName': value['lastName'],
         'roles': Array.from(value['roles'] as Set<any>),
+        'defaultCollectionId': value['defaultCollectionId'],
     };
 }
 
