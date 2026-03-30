@@ -58,3 +58,7 @@ The project uses custom types like `ID<T>` and `EmailAddress`. Use their `fromSt
 - Unit tests: `ClassNameTest`
 - Integration tests: `ClassNameIT` or `*IntegrationTest`
 - Test methods: descriptive camelCase starting with `should`
+
+### Api
+- The project lets quarkus generate the openapi.json file on its default endpoint.
+- to generate the frontend code, use the `npm run generate-api` command.

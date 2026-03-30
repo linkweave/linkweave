@@ -14,7 +14,7 @@ import org.jspecify.annotations.NonNull;
 @RequiredArgsConstructor
 @Authenticated
 @Path("/folders")
-public class FolderResourceController {
+public class FolderResource {
 
     private final FolderService folderService;
 

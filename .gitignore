@@ -80,3 +80,6 @@ node_modules/
 /api/.vfox.toml
 
 /frontend/.vite/
+/frontend/openapitools.json
+/frontend/src/api/generated/.openapi-generator/
+/frontend/src/api/generated/docs/
