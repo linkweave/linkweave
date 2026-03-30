@@ -32,6 +32,22 @@
     "parentFolder": "Parent Folder",
     "noParent": "None (root level)"
   },
+  "bookmark": {
+    "createTitle": "Create Bookmark",
+    "url": "URL",
+    "urlPlaceholder": "https://example.com",
+    "urlRequired": "URL is required.",
+    "urlInvalid": "Please enter a valid URL.",
+    "title": "Title",
+    "titlePlaceholder": "Enter bookmark title",
+    "titleRequired": "Title is required.",
+    "description": "Description",
+    "descriptionPlaceholder": "Optional description...",
+    "folder": "Folder",
+    "noFolder": "No folder (unfiled)",
+    "tags": "Tags",
+    "createError": "Failed to create bookmark."
+  },
   "tag": {
     "none": "No tags yet"
   },

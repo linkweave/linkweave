@@ -39,7 +39,8 @@ All access checks are performed in the **Resource layer** using `AuthorizationSe
 
 - **Package**: `org.chainlink` for all application code
 - Use `@RequiredArgsConstructor` (Lombok) for constructor injection, or `requireNonNull()` manually
-- JPA entities have private fields made accessable using lombok @Getter and @Setter
+- JPA entities have private fields made accessible using lombok @Getter and @Setter
+- Specify field lengths of @Coolumns in entities using constants from `DbConst`
 - Serverside Architecture adheres to a 3 tiered architecture:
 - **Persistence**: JPA Entites and Repositories (naming convetion: `ClassNameRepo`)
 - **Services**: Services are responsible for business logic and orchestration of repositories. They should not contain any persistence logic. Naming convention: `ClassNameService`

@@ -4,8 +4,11 @@ import { Plus } from 'lucide-vue-next'
 import { MainLayout } from '@/components/layout'
 import { ButtonCl } from '@/components/ui'
 import { useI18n } from 'vue-i18n'
+import { useCollectionStore } from '@/stores/collection'
+import CreateBookmarkDialog from '@/components/bookmark/CreateBookmarkDialog.vue'
 
 const { t } = useI18n()
+const collectionStore = useCollectionStore()
 const isAddingBookmark = ref(false)
 </script>
 
@@ -25,5 +28,12 @@ const isAddingBookmark = ref(false)
         </p>
       </div>
     </div>
+
+    <CreateBookmarkDialog
+      v-if="collectionStore.currentCollectionId"
+      :collection-id="collectionStore.currentCollectionId"
+      v-model:open="isAddingBookmark"
+      @created="isAddingBookmark = false"
+    />
   </MainLayout>
 </template>
