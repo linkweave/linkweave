@@ -4,131 +4,46 @@
 
 **Type**: Quarkus-based Java web application with full-stack capabilities  
 **Language**: Java 25
-**Framework**: Quarkus 3.30.8 (Supersonic Subatomic Java)  
+**Framework**: Quarkus 3.30.8  
 **Build System**: Maven 3.9.12  
 **Database**: SQLite with Hibernate ORM  
-**Frontend**: vueJs 
+**Frontend**: VueJS 
 
 ## Essential Commands
 
 All Maven commands must be run from the `api/` directory (or use `-f api/pom.xml` from root).
 
-### Development
 ```bash
-# Build application
-cd api && ./mvnw package
-
-# Build uber-jar
-cd api && ./mvnw package -Dquarkus.package.jar.type=uber-jar
-
-# Clean and build
-cd api && ./mvnw clean verify
+cd api && ./mvnw package            # Build
+cd api && ./mvnw verify             # All tests (unit + integration)
+cd api && ./mvnw test -Dtest=ClassNameTest           # Specific class
+cd api && ./mvnw quarkus:dev        # Dev mode with hot reload, assume running
+cd frontend && npm run dev # frontend dev mode, assume running
 ```
 
-### Testing
-```bash
-# Run all tests (unit + integration)
-cd api && ./mvnw verify
+## Architecture
 
-# Run only unit tests
-cd api && ./mvnw test
+Adhere to the layering model: **Entities → Repository → Service → Resource**.  
+Use stereotype annotations like `org.chainlink.infrastructure.stereotypes.JaxResource` and `@JaxRendereable`.
 
-```
+## Conventions
 
-### Single Test Execution
-```bash
-# Run specific test class
-cd api && ./mvnw test -Dtest=ClassNameTest
-
-# Run specific test method
-cd api && ./mvnw test -Dtest=ClassNameTest#methodName
-
-# Run tests matching pattern
-cd api && ./mvnw test -Dtest="*IntegrationTest"
-```
-
-## Code Style Guidelines
-
-### Formatting
-- **Indentation**: 4 spaces for Java files, 2 spaces for most others
-- **Line Length**: 120 characters maximum
-- **Encoding**: UTF-8
-- **Line Endings**: LF (Unix style)
-- **Final Newline**: Always insert final newline
-- **Trailing Whitespace**: Trim (except XML files)
-
-### Java Conventions
 - **Package**: `org.chainlink` for all application code
-- **Class Naming**: PascalCase (e.g., `MyEntity`, `SomePage`)
-- **Method Naming**: camelCase (e.g., `getSomePage`, `doSomething`)
-- **Field Naming**: camelCase for private fields, can be public for JPA entities
-- **Constants**: UPPER_SNAKE_CASE for static final fields
-- **Getter/Setter**: Use Lombok annotations (`@Getter`, `@Setter`) for simple entities
-### Import Organization
-- Group imports: Jakarta/JEE, then third-party, then your own packages
-- Use static imports for `java.util.Objects.requireNonNull`
-- Avoid wildcard imports except for test classes
+- Use `@RequiredArgsConstructor` (Lombok) for constructor injection, or `requireNonNull()` manually
+- JPA entities can have public fields
+- Test naming: unit tests `ClassNameTest`, integration tests `ClassNameIT` or `*IntegrationTest`
+- Test methods: descriptive camelCase starting with `should`
+- Use `@TestSecurity` when testing persistence/services that depend on current user
+- Most entities extend `AbstractEntity` which auto-sets `userErstellt` and `userMutiert` via `CurrentUserService`
 
-### JPA Entity Guidelines
-- Use `@Entity` annotation on classes
-- Use `@Id` and set a UUID on the server for primary keys
-- Fields can be public for simple entities (following existing pattern)
-- JPA Data can be used
+## Custom Types
 
-### REST Endpoint Guidelines
-- Use JAX-RS annotations (`@Path`, `@GET`, `@POST`, etc.)
-- Inject dependencies via constructor
-- Use `requireNonNull()` for null checks in constructors
-- Return appropriate media types (`@Produces`)
-- Use `@QueryParam` for query parameters
+The project uses custom types like `ID<T>` and `EmailAddress`. Use their `fromString` or `of` methods for instantiation.
 
-## Project Structure
+## Database
 
-```
-api/                    # Java/Quarkus backend
-  src/
-    main/
-      java/            # Application source code
-      resources/       # Configuration, templates, migrations
-      docker/          # Dockerfiles
-    test/
-      java/            # Test source code
-      resources/       # Test configuration and fixtures
-  pom.xml              # Maven build configuration
-  mvnw                 # Maven wrapper
-frontend/              # VueJS frontend
-developer-local-settings/  # Local dev config and database
-```
-
-## Technology Stack
-
-### Backend
-- **Quarkus**: Main framework
-- **Hibernate ORM and Jakarta Data**: Database operations
-- **Hibernate Validator**: Bean validation
-- **Flyway**: Database migrations
-- **Hibernate Envers**: Entity auditing
-- **SQLite**: Local database storage
-- **JAX-RS**: REST API
-
-### Frontend
-- **VueJS**: WebFramework
-
-## Database Configuration
-
-- **Type**: SQLite
 - **Location**: `developer-local-settings/chainlink.db`
-- **ORM**: Hibernate with JPA annotations
-- **Migrations**: flyway (when needed)
-
-## Testing Guidelines
-
-### Test Framework
-- **JUnit 5**: Primary testing framework
-- **AssertJ**: Fluent assertions (use `org.assertj.core.api.Assertions.assertThat`)
-- **Maven Surefire**: Unit tests (`api/src/test/java`)
-- **Maven Failsafe**: Integration tests (`api/src/test/java`)
-- **Quarkus Test**: use `@QuarkusTest` for integration tests
+- **Migrations**: Flyway
 
 ### Security in Tests
 - Most entities extend `AbstractEntity`, which has an `AbstractEntityListener` that automatically sets `userErstellt` and `userMutiert` using `CurrentUserService`
@@ -139,72 +54,3 @@ developer-local-settings/  # Local dev config and database
 - Unit tests: `ClassNameTest`
 - Integration tests: `ClassNameIT` or `*IntegrationTest`
 - Test methods: descriptive camelCase starting with `should`
-
-### Test Configuration
-- Uses custom logging manager: `org.jboss.logmanager.LogManager`
-- Requires `--add-opens java.base/java.lang=ALL-UNNAMED` for module access
-
-## Development Workflow
-
-1. **Local Development**: Use `cd api && ./mvnw quarkus:dev` for hot reload
-2. **Database**: SQLite automatically created in developer-local-settings/
-3. **Frontend**: Use Web Bundler for asset management
-4. **Templates**: Qute templates auto-reload in dev mode
-5. **API Testing**: Dev UI available at `http://localhost:8080/q/dev/`
-
-## Error Handling
-
-- Use `requireNonNull()` for constructor parameter validation
-- Follow Quarkus exception handling patterns
-- Use appropriate HTTP status codes for REST endpoints
-- Log errors appropriately (Quarkus uses SLF4J)
-
-## Security Considerations
-
-- Never commit secrets or configuration files with credentials
-- Use environment variables for sensitive data
-- Follow Java security best practices
-- Validate all input using Hibernate Validator
-
-## Docker Support
-
-Multiple Dockerfiles available:
-- `Dockerfile.jvm`: JVM mode
-
-## Common Patterns
-
-### Constructor Injection
-```java
-public SomePage(Template page) {
-    this.page = requireNonNull(page, "page is required");
-}
-```
-Or better yet use @RequiredArgsConstructor from lombok
-
-Annotate the Resource with the @JaxRendereable stereotype
-
-### JPA Entities
-```java
-@Entity
-public class MyEntity {
-    @Id
-    @GeneratedValue
-    public Long id;
-    public String field;
-}
-
-```
-## Architecture
-- adhere to the layering model, the following layers exist: Entities, Repository, Repository, Service, Resource. There are stereotype annotations like org.chainlink.infrastructure.stereotypes.JaxResource available
-
-## Custom Types
-- The project uses several custom types like `ID<T>` and `EmailAddress`
-- Use their `fromString` or `of` methods for instantiation
-## CI/CD
-
-- **GitTea Actions**: Runs on push/PR to main
-- **JDK Version**: Temurin JDK 25
-- **Build Command**: `cd api && ./mvnw verify -B`
-- **Caching**: Maven dependencies cached automatically
-
-
