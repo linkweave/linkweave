@@ -16,7 +16,9 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
-    "generate-api": "tsx scripts/generate-api.ts"
+    "generate-api": "tsx scripts/generate-api.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",
@@ -51,6 +53,7 @@
     "typescript": "~5.9.3",
     "vite": "^7.3.1",
     "vite-plugin-vue-devtools": "^8.0.7",
+    "vitest": "^4.1.2",
     "vue-tsc": "^3.2.5"
   },
   "engines": {

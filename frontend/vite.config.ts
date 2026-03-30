@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
 import fs from 'node:fs'
@@ -35,6 +36,11 @@ export default defineConfig(({ command }) => {
           secure: false
         }
       }
+    },
+    test: {
+      globals: true,
+      environment: 'node',
+      exclude: ['node_modules', 'dist', 'e2e/**']
     }
   }
 })
