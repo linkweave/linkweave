@@ -6,7 +6,7 @@
 **Use Case Name:** Create Folder   
 **Primary Actor:** User   
 **Goal:** Create a new folder to organize bookmarks within a collection.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

@@ -30,7 +30,7 @@ rectangle "Chainlink Bookmark Manager" {
     }
 
     rectangle "Folder Management" {
-        usecase "UC-009\nCreate Folder" as UC009
+        usecase "UC-009\nCreate Folder" as UC009 <<implemented>>
         usecase "UC-010\nView Folders" as UC010
         usecase "UC-011\nRename Folder" as UC011
         usecase "UC-012\nNest Folders" as UC012
