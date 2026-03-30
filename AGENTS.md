@@ -39,6 +39,7 @@ Use stereotype annotations like `org.chainlink.infrastructure.stereotypes.JaxRes
 - Test methods: descriptive camelCase starting with `should`
 - Use `@TestSecurity` when testing persistence/services that depend on current user
 - Most entities extend `AbstractEntity` which auto-sets `userErstellt` and `userMutiert` via `CurrentUserService`
+- Use `@AllArgsConstructor` for entity classes to ensure all fields are initialized
 
 ## Custom Types
 
@@ -56,7 +57,7 @@ The project uses custom types like `ID<T>` and `EmailAddress`. Use their `fromSt
 
 ### Test Naming
 - Unit tests: `ClassNameTest`
-- Integration tests: `ClassNameIT` or `*IntegrationTest`
+- Integration tests: `ClassNameITest`
 - Test methods: descriptive camelCase starting with `should`
 
 ### Api

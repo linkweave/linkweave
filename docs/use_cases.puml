@@ -1,6 +1,9 @@
 @startuml Chainlink Use Cases
 left to right direction
 
+skinparam usecaseBackgroundColor<<implemented>> #E8F5E9
+skinparam usecaseBorderColor<<implemented>> #4CAF50
+
 actor "User" as user
 actor "Collection Owner" as owner
 
@@ -9,7 +12,7 @@ owner --|> user
 rectangle "Chainlink Bookmark Manager" {
 
     rectangle "Collection Management" {
-        usecase "UC-001\nAuto-Provision on\nFirst Login" as UC001
+        usecase "UC-001\nAuto-Provision on\nFirst Login" as UC001 <<implemented>>
         usecase "UC-002\nAuto-Navigate\nto Collection" as UC002
         usecase "UC-003\nList Collections" as UC003
         usecase "UC-004\nSet Default Collection" as UC004
@@ -83,5 +86,10 @@ user --> UC020
 ' Filtering
 user --> UC021
 user --> UC022
+
+legend right
+  |<#E8F5E9>| Implemented |
+  |<#FFFFFF>| Not started |
+endlegend
 
 @enduml

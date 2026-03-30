@@ -6,7 +6,7 @@
 **Use Case Name:** Auto-Provision on First Login   
 **Primary Actor:** User   
 **Goal:** Automatically receive a default collection on first login so bookmarks can be saved immediately without manual setup.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

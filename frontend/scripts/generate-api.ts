@@ -30,9 +30,7 @@ async function main() {
 
   await new Promise<void>((resolve, reject) => {
     child.on('exit', (code: number | null) =>
-      code === 0
-        ? resolve()
-        : reject(new Error('Generator exited with code ' + code)),
+      code === 0 ? resolve() : reject(new Error('Generator exited with code ' + code)),
     )
     child.on('error', reject)
   })
@@ -40,8 +38,7 @@ async function main() {
   console.log('Done. Generated to', OUTPUT_DIR)
 }
 
-
- 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 void main().catch((err: unknown) => {
   console.error(err)
   process.exit(1)

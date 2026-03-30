@@ -1,5 +1,7 @@
 create table Bookmark (timestampErstellt timestamp not null, timestampMutiert timestamp not null, version bigint not null, folder_id varchar(36) not null, id varchar(36) not null, url varchar(2000) not null, notes varchar(5000), title varchar(255) not null, userErstellt varchar(255) not null, userMutiert varchar(255) not null, primary key (id));
 create table Bookmark_Tag (bookmarks_id varchar(36) not null, tags_id varchar(36) not null, primary key (bookmarks_id, tags_id));
+create table Collection (timestampErstellt timestamp not null, timestampMutiert timestamp not null, version bigint not null, id varchar(36) not null, owner_id varchar(36) not null, name varchar(255) not null, userErstellt varchar(255) not null, userMutiert varchar(255) not null, primary key (id));
+create table CollectionAccess (isDefault boolean not null, timestampErstellt timestamp not null, timestampMutiert timestamp not null, version bigint not null, role varchar(30) not null check ((role in ('OWNER','MEMBER'))), collection_id varchar(36) not null, id varchar(36) not null, user_id varchar(36) not null, userErstellt varchar(255) not null, userMutiert varchar(255) not null, primary key (id));
 create table Folder (timestampErstellt timestamp not null, timestampMutiert timestamp not null, version bigint not null, id varchar(36) not null, parent_id varchar(36), name varchar(255) not null, userErstellt varchar(255) not null, userMutiert varchar(255) not null, primary key (id));
 create table REVINFO (REV integer, REVTSTMP bigint, primary key (REV));
 create table Tag (timestampErstellt timestamp not null, timestampMutiert timestamp not null, version bigint not null, id varchar(36) not null, name varchar(255) not null, userErstellt varchar(255) not null, userMutiert varchar(255) not null, primary key (id));
@@ -7,6 +9,10 @@ create table User (aktiv boolean not null, lastUsedSessionTimestamp timestamp, t
 create table User_AUD (REV integer not null, REVTYPE tinyint, aktiv boolean, lastUsedSessionTimestamp timestamp, timestampErstellt timestamp, timestampLastManuallyActivated timestamp, timestampMutiert timestamp, id varchar(36) not null, fachRollen varchar(2000), email varchar(255), keycloakId varchar(255), lastUsedIp varchar(255), lastUsedSessionId varchar(255), nachname varchar(255), oidcIssuer varchar(255), titel varchar(255), userErstellt varchar(255), userMutiert varchar(255), vorname varchar(255), primary key (REV, id));
 create table UserPermission (timestampErstellt timestamp not null, timestampMutiert timestamp not null, version bigint not null, id varchar(36) not null, user_id varchar(36) not null, permission varchar(255) not null check ((permission in ('SUPPORT','SYSTEM_ADMIN','BOOKMARK_READ','BOOKMARK_WRITE'))), userErstellt varchar(255) not null, userMutiert varchar(255) not null, primary key (id));
 create table UserPermission_AUD (REV integer not null, REVTYPE tinyint, timestampErstellt timestamp, timestampMutiert timestamp, id varchar(36) not null, user_id varchar(36), permission varchar(255) check ((permission in ('SUPPORT','SYSTEM_ADMIN','BOOKMARK_READ','BOOKMARK_WRITE'))), userErstellt varchar(255), userMutiert varchar(255), primary key (REV, id));
+create index ix_collection_owner on Collection (owner_id);
+create index ix_collectionaccess_user on CollectionAccess (user_id);
+create index ix_collectionaccess_collection on CollectionAccess (collection_id);
+create index ix_collectionaccess_user_default on CollectionAccess (user_id, isDefault);
 create index ix_user_id on User (id, version);
 create index ix_user_email on User (email, id);
 create index ix_user_keycloakId on User (keycloakId, id);
