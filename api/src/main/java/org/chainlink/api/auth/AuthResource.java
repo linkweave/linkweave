@@ -1,5 +1,6 @@
 package org.chainlink.api.auth;
 
+import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.vertx.http.runtime.security.FormAuthenticationMechanism;
@@ -10,6 +11,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
+import org.chainlink.api.collection.Collection;
 import org.chainlink.api.collection.CollectionAccessRepo;
 import org.chainlink.api.collection.CollectionService;
 import org.chainlink.api.shared.user.CurrentUserService;
@@ -42,9 +44,9 @@ public class AuthResource {
 
         collectionService.autoProvisionForUser(user);
 
-        String defaultCollectionId = collectionAccessRepo
+        ID<Collection> defaultCollectionId = collectionAccessRepo
             .getDefaultByUser(user.getId())
-            .collection.getId().getId();
+            .collection.getId();
 
         return new UserInfoJson(
             identity.getPrincipal().getName(),

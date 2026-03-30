@@ -7,6 +7,7 @@ import ch.dvbern.dvbstarter.types.id.IDConverter;
 import ch.dvbern.dvbstarter.types.semver.SemverConverter;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.cfg.ConstructorDetector;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.quarkus.jackson.ObjectMapperCustomizer;
 import jakarta.inject.Singleton;
@@ -22,8 +23,9 @@ public class JacksonCustomizer implements ObjectMapperCustomizer {
     public void customize(ObjectMapper mapper) {
 
         mapper.enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        mapper.setConstructorDetector(ConstructorDetector.USE_PROPERTIES_BASED);
 
-        SimpleModule module = new SimpleModule("esc.api");
+        SimpleModule module = new SimpleModule("chainlink.api");
 
         EmailAddressConverter.registerJackson(module);
         CleanFileNameConverter.registerJackson(module);

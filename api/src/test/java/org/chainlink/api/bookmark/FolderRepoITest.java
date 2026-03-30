@@ -11,11 +11,10 @@ import org.chainlink.api.benutzer.UserRepo;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.bookmark.folder.FolderRepo;
 import org.chainlink.api.collection.Collection;
-import org.chainlink.api.collection.CollectionAccess;
-import org.chainlink.api.collection.CollectionAccessRepo;
 import org.chainlink.api.collection.CollectionRepo;
-import org.chainlink.api.collection.CollectionRole;
 import org.chainlink.api.shared.user.User;
+import org.chainlink.infrastructure.db.DatabaseService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
@@ -28,10 +27,15 @@ class FolderRepoITest {
     CollectionRepo collectionRepo;
 
     @Inject
-    CollectionAccessRepo collectionAccessRepo;
+    UserRepo userRepo;
 
     @Inject
-    UserRepo userRepo;
+    DatabaseService databaseService;
+
+    @BeforeEach
+    void resetDatabase() {
+        databaseService.resetDatabase();
+    }
 
     private Collection createTestCollection() {
         User user = userRepo.findByEmail(EmailAddress.fromString("test@example.com")).orElseThrow();
@@ -39,14 +43,6 @@ class FolderRepoITest {
         collection.name = "Test Collection";
         collection.owner = user;
         collectionRepo.persist(collection);
-
-        CollectionAccess access = new CollectionAccess();
-        access.collection = collection;
-        access.user = user;
-        access.role = CollectionRole.OWNER;
-        access.isDefault = true;
-        collectionAccessRepo.persist(access);
-
         return collection;
     }
 
@@ -62,7 +58,9 @@ class FolderRepoITest {
         testFolder.collection = collection;
         testFolder.name = "Test Folder";
         folderRepo.persist(testFolder);
-        Assertions.assertThat(folderRepo.findAll()).isNotEmpty();
+
+        var allFolders = folderRepo.findAll();
+        Assertions.assertThat(allFolders).anyMatch(f -> f.getId().equals(testFolder.getId()));
         Assertions.assertThat(folderRepo.findById(testFolder.getId())).isPresent();
     }
 
@@ -139,9 +137,9 @@ class FolderRepoITest {
 
         var allFolders = folderRepo.findAll();
 
-        Assertions.assertThat(allFolders).hasSizeGreaterThanOrEqualTo(2)
-            .anyMatch(f -> f.name.equals("Folder 1"))
-            .anyMatch(f -> f.name.equals("Folder 2"));
+        Assertions.assertThat(allFolders)
+            .anyMatch(f -> f.name.equals("Folder 1") && f.getId().equals(folder1.getId()))
+            .anyMatch(f -> f.name.equals("Folder 2") && f.getId().equals(folder2.getId()));
     }
 
     @Test
@@ -208,8 +206,8 @@ class FolderRepoITest {
 
         var folders = folderRepo.findByCollection(collection.getId());
 
-        Assertions.assertThat(folders).hasSize(2)
-            .anyMatch(f -> f.name.equals("Folder 1"))
-            .anyMatch(f -> f.name.equals("Folder 2"));
+        Assertions.assertThat(folders)
+            .anyMatch(f -> f.name.equals("Folder 1") && f.getId().equals(folder1.getId()))
+            .anyMatch(f -> f.name.equals("Folder 2") && f.getId().equals(folder2.getId()));
     }
 }

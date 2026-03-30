@@ -1,14 +1,19 @@
 package org.chainlink.api.auth;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
 class AuthFlowITest {
+
+    @Inject
+    ObjectMapper objectMapper;
 
     @Test
     void shouldRejectUnauthenticatedMeRequest() {
@@ -30,7 +35,7 @@ class AuthFlowITest {
     }
 
     @Test
-    void shouldLoginAndAccessProtectedEndpoint() {
+    void shouldLoginAndAccessProtectedEndpoint() throws Exception {
         String sessionCookie = RestAssured.given()
             .contentType(ContentType.URLENC)
             .formParam("j_username", "test@example.com")
@@ -43,13 +48,15 @@ class AuthFlowITest {
 
         assertThat(sessionCookie).isNotBlank();
 
-        UserInfoJson userInfoJson = RestAssured.given()
+        String json = RestAssured.given()
             .cookie("quarkus-credential", sessionCookie)
             .get("/auth/me")
             .then()
             .statusCode(200)
             .extract()
-            .as(UserInfoJson.class);
+            .asString();
+
+        UserInfoJson userInfoJson = objectMapper.readValue(json, UserInfoJson.class);
 
         assertThat(userInfoJson.email()).isEqualTo("test@example.com");
         assertThat(userInfoJson.roles()).contains("USER");
