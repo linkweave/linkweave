@@ -1,22 +1,23 @@
 :80 {
-	root * /srv
-
-	header {
-		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-		X-Content-Type-Options "nosniff"
-		X-Frame-Options "DENY"
-		Referrer-Policy "strict-origin-when-cross-origin"
-		Permissions-Policy "camera=(), microphone=(), geolocation=()"
-		X-XSS-Protection "0"
-	}
-
-  reverse_proxy /api/* http://api:8080
-
-  try_files {path} /index.html
+  root * /srv
 
   encode gzip
+  header {
+    Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    X-XSS-Protection "0"
+  }
+  handle /api/* {
+    reverse_proxy http://api:8080
+  }
 
-  file_server {
-    precompressed br gzip
+  handle {
+    try_files {path} /index.html
+    file_server {
+      precompressed br gzip
+    }
   }
 }
