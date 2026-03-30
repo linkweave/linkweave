@@ -26,6 +26,15 @@ cd frontend && npm run dev # frontend dev mode, assume running
 Adhere to the layering model: **Entities → Repository → Service → Resource**.  
 Use stereotype annotations like `org.chainlink.infrastructure.stereotypes.JaxResource` and `@JaxRendereable`.
 
+### Authorization
+
+All access checks are performed in the **Resource layer** using `AuthorizationService`.
+- Services and Repositories never perform authorization checks — they trust the caller.
+- `AuthorizationService` (`org.chainlink.api.shared.auth.AuthorizationService`) is the single source of truth for "can user X access resource Y".
+- Use `require*` methods (e.g. `requireCollectionAccess`) for guard clauses — they throw `AppAuthorizationException` (HTTP 403).
+- Use `has*` methods (e.g. `hasCollectionAccess`) for conditional branching — they return boolean.
+- Never inject `CollectionAccessRepo` or `CurrentUserService` into business services for authorization purposes.
+
 ## Conventions
 
 - **Package**: `org.chainlink` for all application code

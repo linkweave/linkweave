@@ -2,20 +2,26 @@ package org.chainlink.api.bookmark.folder;
 
 import java.util.List;
 
+import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.AllArgsConstructor;
+import org.chainlink.api.collection.Collection;
 import org.chainlink.infrastructure.db.BaseRepo;
-import org.chainlink.infrastructure.db.Db;
 import org.chainlink.infrastructure.stereotypes.Repository;
+import org.jspecify.annotations.NonNull;
 
 @Repository
 @AllArgsConstructor
 public class FolderRepo extends BaseRepo<Folder> {
 
-    private final Db db;
 
     public List<Folder> findAll() {
         return db.findAll(QFolder.folder);
     }
 
-
+    @NonNull
+    public List<Folder> findByCollection(@NonNull ID<Collection> collectionId) {
+        return db.selectFrom(QFolder.folder)
+            .where(QFolder.folder.collection.id.eq(collectionId.getUUID()))
+            .fetch();
+    }
 }

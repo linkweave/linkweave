@@ -6,6 +6,8 @@ import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
 import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.api.shared.user.User;
+import org.chainlink.infrastructure.db.DatabaseService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
@@ -23,6 +25,14 @@ class AutoProvisionITest {
     @Inject
     CurrentUserService currentUserService;
 
+    @Inject
+    DatabaseService databaseService;
+
+    @BeforeEach
+    void resetDatabase() {
+        databaseService.resetDatabase();
+    }
+
     @Test
     @TestSecurity(
         user = "test@example.com",
@@ -35,14 +45,16 @@ class AutoProvisionITest {
 
         var collections = collectionRepo.findByOwner(user.getId());
         Assertions.assertThat(collections).hasSize(1);
-        Assertions.assertThat(collections.get(0).name).isEqualTo("My Bookmarks");
-        Assertions.assertThat(collections.get(0).owner.getId()).isEqualTo(user.getId());
+        var created = collections.getFirst();
+        Assertions.assertThat(created.name).isEqualTo("My Bookmarks");
+        Assertions.assertThat(created.owner.getId()).isEqualTo(user.getId());
 
         var accessList = collectionAccessRepo.findByUser(user.getId());
         Assertions.assertThat(accessList).hasSize(1);
-        Assertions.assertThat(accessList.get(0).role).isEqualTo(CollectionRole.OWNER);
-        Assertions.assertThat(accessList.get(0).isDefault).isTrue();
-        Assertions.assertThat(accessList.get(0).collection.getId()).isEqualTo(collections.get(0).getId());
+        var access = accessList.getFirst();
+        Assertions.assertThat(access.role).isEqualTo(CollectionRole.OWNER);
+        Assertions.assertThat(access.isDefault).isTrue();
+        Assertions.assertThat(access.collection.getId()).isEqualTo(created.getId());
     }
 
     @Test
@@ -58,8 +70,11 @@ class AutoProvisionITest {
 
         var collections = collectionRepo.findByOwner(user.getId());
         Assertions.assertThat(collections).hasSize(1);
+        var created = collections.getFirst();
+        Assertions.assertThat(created.name).isEqualTo("My Bookmarks");
 
         var accessList = collectionAccessRepo.findByUser(user.getId());
         Assertions.assertThat(accessList).hasSize(1);
+        Assertions.assertThat(accessList.getFirst().collection.getId()).isEqualTo(created.getId());
     }
 }

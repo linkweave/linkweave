@@ -22,7 +22,15 @@
     "newFolder": "New Folder"
   },
   "folder": {
-    "none": "No folders yet"
+    "none": "No folders yet",
+    "createTitle": "Create Folder",
+    "name": "Folder Name",
+    "namePlaceholder": "Enter folder name",
+    "nameRequired": "Folder name is required.",
+    "createError": "Failed to create folder.",
+    "createSubfolder": "Create Subfolder",
+    "parentFolder": "Parent Folder",
+    "noParent": "None (root level)"
   },
   "tag": {
     "none": "No tags yet"

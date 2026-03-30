@@ -38,7 +38,7 @@ async function main() {
   console.log('Done. Generated to', OUTPUT_DIR)
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
+ 
 void main().catch((err: unknown) => {
   console.error(err)
   process.exit(1)
