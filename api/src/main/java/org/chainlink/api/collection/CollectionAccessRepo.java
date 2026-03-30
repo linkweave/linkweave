@@ -37,4 +37,11 @@ public class CollectionAccessRepo extends BaseRepo<CollectionAccess> {
             .where(QCollectionAccess.collectionAccess.user.id.eq(userId.getUUID()))
             .fetchFirst() != null;
     }
+
+    public boolean hasAccess(@NonNull ID<User> userId, @NonNull ID<Collection> collectionId) {
+        return db.selectFrom(QCollectionAccess.collectionAccess)
+            .where(QCollectionAccess.collectionAccess.user.id.eq(userId.getUUID()))
+            .where(QCollectionAccess.collectionAccess.collection.id.eq(collectionId.getUUID()))
+            .fetchFirst() != null;
+    }
 }

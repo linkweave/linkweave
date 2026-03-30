@@ -24,6 +24,12 @@ export interface FolderSaveJson {
      * @type {string}
      * @memberof FolderSaveJson
      */
+    collectionId: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof FolderSaveJson
+     */
     parentId?: string;
     /**
      * 
@@ -37,6 +43,7 @@ export interface FolderSaveJson {
  * Check if a given object implements the FolderSaveJson interface.
  */
 export function instanceOfFolderSaveJson(value: object): value is FolderSaveJson {
+    if (!('collectionId' in value) || value['collectionId'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     return true;
 }
@@ -51,6 +58,7 @@ export function FolderSaveJsonFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
+        'collectionId': json['collectionId'],
         'parentId': json['parentId'] == null ? undefined : json['parentId'],
         'name': json['name'],
     };
@@ -67,6 +75,7 @@ export function FolderSaveJsonToJSONTyped(value?: FolderSaveJson | null, ignoreD
 
     return {
         
+        'collectionId': value['collectionId'],
         'parentId': value['parentId'],
         'name': value['name'],
     };

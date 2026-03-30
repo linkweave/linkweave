@@ -15,12 +15,22 @@
 
 import * as runtime from '../runtime';
 import type {
+  FolderJson,
   FolderListJson,
+  FolderSaveJson,
 } from '../models/index';
 import {
+    FolderJsonFromJSON,
+    FolderJsonToJSON,
     FolderListJsonFromJSON,
     FolderListJsonToJSON,
+    FolderSaveJsonFromJSON,
+    FolderSaveJsonToJSON,
 } from '../models/index';
+
+export interface FolderResourceApiApiFoldersPostRequest {
+    folderSaveJson: FolderSaveJson;
+}
 
 /**
  * 
@@ -61,6 +71,53 @@ export class FolderResourceApi extends runtime.BaseAPI {
      */
     async apiFoldersGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FolderListJson> {
         const response = await this.apiFoldersGetRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for apiFoldersPost without sending the request
+     */
+    async apiFoldersPostRequestOpts(requestParameters: FolderResourceApiApiFoldersPostRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['folderSaveJson'] == null) {
+            throw new runtime.RequiredError(
+                'folderSaveJson',
+                'Required parameter "folderSaveJson" was null or undefined when calling apiFoldersPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/folders`;
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: FolderSaveJsonToJSON(requestParameters['folderSaveJson']),
+        };
+    }
+
+    /**
+     * Create
+     */
+    async apiFoldersPostRaw(requestParameters: FolderResourceApiApiFoldersPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FolderJson>> {
+        const requestOptions = await this.apiFoldersPostRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FolderJsonFromJSON(jsonValue));
+    }
+
+    /**
+     * Create
+     */
+    async apiFoldersPost(requestParameters: FolderResourceApiApiFoldersPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FolderJson> {
+        const response = await this.apiFoldersPostRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
