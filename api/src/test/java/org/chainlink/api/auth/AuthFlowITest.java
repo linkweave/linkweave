@@ -60,6 +60,7 @@ class AuthFlowITest {
 
         assertThat(userInfoJson.email()).isEqualTo("test@example.com");
         assertThat(userInfoJson.roles()).contains("USER");
+        assertThat(userInfoJson.defaultCollectionId()).isNotNull();
     }
 
     @Test

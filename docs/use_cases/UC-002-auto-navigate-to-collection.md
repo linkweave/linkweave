@@ -6,7 +6,7 @@
 **Use Case Name:** Auto-Navigate to Collection   
 **Primary Actor:** User   
 **Goal:** Be taken directly to the default collection after login without any manual selection.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 
