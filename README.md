@@ -1,92 +1,51 @@
-# chainlink
+# Chainlink
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+A self-hosted bookmark manager for organizing web resources with folders, tags, and shared collections.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## Features
 
-## Running the application in dev mode
+- **Bookmarks** — Save, edit, and delete bookmarks with URLs, titles, and descriptions
+- **Folders** — Organize bookmarks into a nested folder hierarchy
+- **Tags** — Label bookmarks with custom tags and filter by them
+- **Collections** — Group bookmarks into separate collections; share collections with other users
 
-You can run your application in dev mode that enables live coding using:
 
-```shell script
+## Getting Started
+
+### Backend (Quarkus)
+
+```shell
 cd api && ./mvnw quarkus:dev
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+The API runs at `http://localhost:8080`. Dev UI is available at `http://localhost:8080/q/dev/`.
 
-## Packaging and running the application
+### Frontend (Vue.js + Vite)
 
-The application can be packaged using:
-
-```shell script
-cd api && ./mvnw package
+```shell
+cd frontend && npm install && npm run dev
 ```
 
-It produces the `quarkus-run.jar` file in the `api/target/quarkus-app/` directory.
-Be aware that it's not an _über-jar_ as the dependencies are copied into the `api/target/quarkus-app/lib/` directory.
+### Local HTTPS Certificates
 
-The application is now runnable using `java -jar api/target/quarkus-app/quarkus-run.jar`.
+The project uses `mkcert` for locally-trusted TLS certificates. Install it from [mkcert](https://github.com/FiloSottile/mkcert), then run:
 
-If you want to build an _über-jar_, execute the following command:
-
-```shell script
-cd api && ./mvnw package -Dquarkus.package.jar.type=uber-jar
+```shell
+mkcert -install
+./scripts/certs/generate-keypair.sh
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar api/target/*-runner.jar`.
+Certs are output to `developer-local-settings/config/certs/`.
 
-## Creating a native executable
+## Tech Stack
 
-You can create a native executable using:
+| Layer     | Technology                         |
+|-----------|-------------------------------------|
+| Backend   | Quarkus, Hibernate ORM, JAX-RS     |
+| Frontend  | Vue.js, Pinia, Tailwind CSS, shadcn/vue |
+| Database  | SQLite                             |
+| Migrations | Flyway                            |
 
-```shell script
-cd api && ./mvnw package -Dnative
-```
+## License
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-
-```shell script
-cd api && ./mvnw package -Dnative -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./api/target/chainlink-1.0.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
-
-## Related Guides
-
-- Hibernate ORM ([guide](https://quarkus.io/guides/hibernate-orm)): Define your persistent model with Hibernate ORM and Jakarta Persistence
-- Web Bundler ([guide](https://docs.quarkiverse.io/quarkus-web-bundler/dev/)): Creating full-stack Web Apps is fast and simple with this extension. Zero config bundling for your web-app scripts (js, jsx, ts, tsx), dependencies (jquery, react, htmx, ...) and styles (css, scss, sass).
-- Qute Web ([guide](https://quarkiverse.github.io/quarkiverse-docs/quarkus-qute-web/dev/index.html)): Serves Qute templates directly over HTTP.
-- Hibernate Validator ([guide](https://quarkus.io/guides/validation)): Validate object properties (field, getter) and method parameters for your beans (REST, CDI, Jakarta Persistence)
-- REST Qute ([guide](https://quarkus.io/guides/qute-reference#rest_integration)): Qute integration for Quarkus REST. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it.
-- Liquibase ([guide](https://quarkus.io/guides/liquibase)): Handle your database schema migrations with Liquibase
-- Hibernate Envers ([guide](https://quarkus.io/guides/hibernate-orm#envers)): Enable Hibernate Envers capabilities in your Jakarta Persistence applications
-
-## Provided Code
-
-### Hibernate ORM
-
-Create your first JPA entity
-
-[Related guide section...](https://quarkus.io/guides/hibernate-orm)
-
-
-
-### Qute Web
-
-Qute templates like `some-page.html` served via HTTP automatically by Quarkus from the `api/src/main/resource/templates/pub` directory. No controllers needed. Once the quarkus app is started visit the generated page at http://localhost:8080/some-page?name=World
-
-[Related guide section...](https://docs.quarkiverse.io/quarkus-qute-web/dev/index.html)
-
-### REST Qute
-
-Create your web page using Quarkus REST and Qute
-
-[Related guide section...](https://quarkus.io/guides/qute#type-safe-templates)
-
-### Web Bundler
-
-This is a tiny app `web-bundler.html` to get started with the Web Bundler. Once the quarkus app is started visit the generated page at http://localhost:8080/web-bundler.html
-
-[Related guide section...](https://docs.quarkiverse.io/quarkus-web-bundler/dev/)
+This project is licensed under the [Business Source License 1.1](LICENSE) (BSL), converting to AGPL-3.0 on 2030-01-01.
