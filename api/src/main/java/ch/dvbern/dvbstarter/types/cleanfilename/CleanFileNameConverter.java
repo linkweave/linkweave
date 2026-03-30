@@ -2,6 +2,7 @@ package ch.dvbern.dvbstarter.types.cleanfilename;
 
 
 import ch.dvbern.dvbstarter.types.GenericStringConverter;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import jakarta.persistence.Converter;
 import org.jspecify.annotations.Nullable;
 
@@ -24,5 +25,14 @@ public class CleanFileNameConverter extends GenericStringConverter<CleanFileName
             : CleanFileName.parse(s);
     }
 
-
+    public static void registerJackson(
+        SimpleModule module
+    ) {
+        GenericStringConverter.registerJackson(
+            module,
+            CleanFileName.class,
+            CleanFileNameConverter::toExternalForm,
+            CleanFileNameConverter::fromString
+        );
+    }
 }

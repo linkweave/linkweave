@@ -1,7 +1,5 @@
 package org.chainlink.api.auth;
 
-import java.util.Set;
-
 import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.vertx.http.runtime.security.FormAuthenticationMechanism;
@@ -14,12 +12,13 @@ import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.api.shared.user.User;
+import org.chainlink.infrastructure.errorhandling.AppAuthException;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 
 @JaxResource
 @RequiredArgsConstructor
 @Path("/auth")
-public class AuthResourceController {
+public class AuthResource {
 
     private final SecurityIdentity identity;
     private final CurrentUserService currentUserService;
@@ -27,22 +26,22 @@ public class AuthResourceController {
     @GET
     @Path("/me")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response me() {
+    public UserInfoJson me() {
         if (identity.isAnonymous()) {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
+            throw new AppAuthException();
         }
 
         User user = currentUserService.findCurrentUser().orElse(null);
         if (user == null) {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
+            throw new AppAuthException();
         }
 
-        return Response.ok(new UserInfo(
+        return new UserInfoJson(
             identity.getPrincipal().getName(),
             user.getVorname(),
             user.getNachname(),
             identity.getRoles()
-        )).build();
+        );
     }
 
     @POST

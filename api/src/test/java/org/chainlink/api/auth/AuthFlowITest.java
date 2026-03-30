@@ -43,16 +43,16 @@ class AuthFlowITest {
 
         assertThat(sessionCookie).isNotBlank();
 
-        UserInfo userInfo = RestAssured.given()
+        UserInfoJson userInfoJson = RestAssured.given()
             .cookie("quarkus-credential", sessionCookie)
             .get("/auth/me")
             .then()
             .statusCode(200)
             .extract()
-            .as(UserInfo.class);
+            .as(UserInfoJson.class);
 
-        assertThat(userInfo.email()).isEqualTo("test@example.com");
-        assertThat(userInfo.roles()).contains("USER");
+        assertThat(userInfoJson.email()).isEqualTo("test@example.com");
+        assertThat(userInfoJson.roles()).contains("USER");
     }
 
     @Test

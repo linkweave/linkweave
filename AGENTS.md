@@ -30,7 +30,11 @@ Use stereotype annotations like `org.chainlink.infrastructure.stereotypes.JaxRes
 
 - **Package**: `org.chainlink` for all application code
 - Use `@RequiredArgsConstructor` (Lombok) for constructor injection, or `requireNonNull()` manually
-- JPA entities can have public fields
+- JPA entities have private fields made accessable using lombok @Getter and @Setter
+- Serverside Architecture adheres to a 3 tiered architecture:
+- **Persistence**: JPA Entites and Repositories (naming convetion: `ClassNameRepo`)
+- **Services**: Services are responsible for business logic and orchestration of repositories. They should not contain any persistence logic. Naming convention: `ClassNameService`
+- **Resources**: Resources are responsible for exposing the services to the outside world. They never return entites but rather DTOs ending in Json Naming convention: `ClassNameResource`
 - Test naming: unit tests `ClassNameTest`, integration tests `ClassNameIT` or `*IntegrationTest`
 - Test methods: descriptive camelCase starting with `should`
 - Use `@TestSecurity` when testing persistence/services that depend on current user
