@@ -22,7 +22,7 @@ rectangle "Chainlink Bookmark Manager" {
     }
 
     rectangle "Bookmark Management" {
-        usecase "UC-005\nCreate Bookmark" as UC005
+        usecase "UC-005\nCreate Bookmark" as UC005 <<implemented>>
         usecase "UC-006\nView Bookmarks" as UC006
         usecase "UC-007\nEdit Bookmark" as UC007
         usecase "UC-008\nDelete Bookmark" as UC008
