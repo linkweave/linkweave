@@ -1,10 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { api, type UserInfo } from '@/api/client'
+import { AuthResourceApi } from '@/api/generated'
+import { config } from '@/api'
+import type { UserInfoJson } from '@/api/generated'
 import router from '@/router'
 
+const authApi = new AuthResourceApi(config)
+
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref<UserInfo | null>(null)
+  const user = ref<UserInfoJson | null>(null)
   const loading = ref(true)
   const initialized = ref(false)
 
@@ -16,22 +20,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function fetchCurrentUser(): Promise<boolean> {
     try {
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
-      })
-
-      if (response.status === 401) {
-        user.value = null
-        return false
-      }
-
-      if (!response.ok) {
-        user.value = null
-        return false
-      }
-
-      user.value = await response.json()
+      user.value = await authApi.apiAuthMeGet()
       return true
     } catch {
       user.value = null
@@ -44,7 +33,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout() {
     try {
-      await api.post('/auth/logout')
+      await authApi.apiAuthLogoutPost()
     } catch {
       // cookie is cleared by server, ignore errors
     } finally {

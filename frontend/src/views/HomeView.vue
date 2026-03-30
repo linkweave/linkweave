@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { Plus } from 'lucide-vue-next'
 import { MainLayout } from '@/components/layout'
-import { Button } from '@/components/ui'
+import { ButtonCl } from '@/components/ui'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -12,10 +12,10 @@ const isAddingBookmark = ref(false)
 <template>
   <MainLayout>
     <template #header-actions>
-      <Button size="sm" @click="isAddingBookmark = true">
+      <ButtonCl size="sm" @click="isAddingBookmark = true">
         <Plus class="h-4 w-4 mr-2" />
         {{ t('header.addBookmark') }}
-      </Button>
+      </ButtonCl>
     </template>
 
     <div class="max-w-4xl mx-auto space-y-6">

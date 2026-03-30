@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
-import { Button } from '@/components/ui'
+import { ButtonCl } from '@/components/ui'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -82,9 +82,9 @@ async function handleLogin() {
           />
         </div>
 
-        <Button type="submit" class="w-full" :disabled="loading">
+        <ButtonCl type="submit" class="w-full" :disabled="loading">
           {{ loading ? t('common.loading') : t('login.submit') }}
-        </Button>
+        </ButtonCl>
       </form>
     </div>
   </div>

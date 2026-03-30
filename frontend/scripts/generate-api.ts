@@ -40,7 +40,9 @@ async function main() {
   console.log('Done. Generated to', OUTPUT_DIR)
 }
 
-main().catch((err: unknown) => {
+
+ 
+void main().catch((err: unknown) => {
   console.error(err)
   process.exit(1)
 })

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import FolderTree from '@/components/folder/FolderTree.vue'
 import TagList from '@/components/tag/TagList.vue'
-import {Button} from '@/components/ui'
-import Buildversion from '@/components/ui/Buildversion.vue';
+import {ButtonCl} from '@/components/ui'
+import BuildversionCl from '@/components/ui/BuildversionCl.vue';
 import {Folder, Plus, Tag} from 'lucide-vue-next'
 import {useI18n} from 'vue-i18n'
 
@@ -32,14 +32,14 @@ const props = defineProps<Props>()
 
       <FolderTree class-name="mt-2" />
 
-      <Button
+      <ButtonCl
         variant="ghost"
         size="sm"
         class="w-full justify-start text-muted-foreground hover:text-foreground mt-2"
       >
         <Plus class="h-4 w-4 mr-2" />
         {{ t('sidebar.newFolder') }}
-      </Button>
+      </ButtonCl>
     </div>
 
     <!-- Tags Section -->
@@ -54,7 +54,7 @@ const props = defineProps<Props>()
     </div>
     <div class="border-t border-border">
      <div class="p-3 flex items-center justify-between">
-       <Buildversion/>
+       <BuildversionCl/>
      </div>
 
     </div>

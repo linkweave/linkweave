@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import {Button, LanguageSwitcher} from '@/components/ui'
+import {ButtonCl, LanguageSwitcherCl} from '@/components/ui'
 import {cn} from '@/lib/utils'
 import {LogOut, Menu, X} from 'lucide-vue-next'
 import {ref} from 'vue'
 import {useI18n} from 'vue-i18n'
-import Sidebar from './Sidebar.vue'
+import SidebarCl from './SidebarCl.vue'
 import {useAuthStore} from '@/stores/auth'
 
 const { t } = useI18n()
@@ -25,18 +25,18 @@ const closeSidebar = () => {
     <!-- Header (full width) -->
     <header class="flex items-center justify-between gap-4 p-4 border-b border-border bg-card shrink-0">
       <div class="flex items-center gap-3">
-        <Button variant="ghost" size="icon" class="lg:hidden" @click="toggleSidebar">
+        <ButtonCl variant="ghost" size="icon" class="lg:hidden" @click="toggleSidebar">
           <Menu class="h-5 w-5" />
-        </Button>
+        </ButtonCl>
         <h1 class="text-xl font-semibold text-foreground">{{ t('app.title') }}</h1>
       </div>
       <div class="flex items-center gap-2">
         <slot name="header-actions" />
         <span v-if="auth.isAuthenticated" class="text-sm text-muted-foreground">{{ auth.displayName }}</span>
-        <Button v-if="auth.isAuthenticated" variant="ghost" size="icon" @click="auth.logout">
+        <ButtonCl v-if="auth.isAuthenticated" variant="ghost" size="icon" @click="auth.logout">
           <LogOut class="h-4 w-4" />
-        </Button>
-        <LanguageSwitcher />
+        </ButtonCl>
+        <LanguageSwitcherCl />
       </div>
     </header>
 
@@ -60,11 +60,11 @@ const closeSidebar = () => {
       >
         <div class="flex items-center justify-between p-4 lg:hidden">
           <span class="font-semibold">Menu</span>
-          <Button variant="ghost" size="icon" @click="closeSidebar">
+          <ButtonCl variant="ghost" size="icon" @click="closeSidebar">
             <X class="h-5 w-5" />
-          </Button>
+          </ButtonCl>
         </div>
-        <Sidebar class="h-full" />
+        <SidebarCl class="h-full" />
       </aside>
 
       <!-- Main content -->
