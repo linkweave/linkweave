@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { requireValue } from '@/lib/nullish.ts'
 import { Folder } from 'lucide-vue-next'
 import {
   ContextMenuRoot,
@@ -36,7 +37,7 @@ const emit = defineEmits<{
         <ContextMenuTrigger as-child>
           <div
             class="flex items-center gap-2 rounded-md py-1.5 text-sm cursor-pointer transition-colors hover:bg-accent hover:text-accent-foreground"
-            :style="{ paddingLeft: `${depth * 16 + 8}px`, paddingRight: '8px' }"
+            :style="{ paddingLeft: `${requireValue(depth) * 16 + 8}px`, paddingRight: '8px' }"
           >
             <Folder class="h-4 w-4 shrink-0 text-muted-foreground" />
             <span class="truncate">{{ node.folder.data.name }}</span>
@@ -59,7 +60,7 @@ const emit = defineEmits<{
       <FolderTreeNode
         v-if="node.children.length > 0"
         :nodes="node.children"
-        :depth="depth + 1"
+        :depth="requireValue(depth) + 1"
         @create-subfolder="emit('createSubfolder', $event)"
       />
     </li>
