@@ -6,7 +6,7 @@
 **Use Case Name:** List Collections   
 **Primary Actor:** User   
 **Goal:** View all collections the user has access to and navigate to a non-default collection.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 
