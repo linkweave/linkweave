@@ -10,13 +10,13 @@
 		X-XSS-Protection "0"
 	}
 
-	try_files {path} /index.html
+  reverse_proxy /api/* http://api:8080
 
-	encode gzip
+  try_files {path} /index.html
 
-	file_server {
-		precompressed br gzip
-	}
+  encode gzip
 
-	reverse_proxy /api/* http://api:8080
+  file_server {
+    precompressed br gzip
+  }
 }
