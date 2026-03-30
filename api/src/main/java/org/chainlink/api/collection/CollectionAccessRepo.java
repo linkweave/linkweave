@@ -1,12 +1,13 @@
 package org.chainlink.api.collection;
 
 import java.util.List;
-import java.util.Optional;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.AllArgsConstructor;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.infrastructure.db.BaseRepo;
+import org.chainlink.infrastructure.errorhandling.AppFailureException;
+import org.chainlink.infrastructure.errorhandling.AppFailureMessage;
 import org.chainlink.infrastructure.stereotypes.Repository;
 import org.jspecify.annotations.NonNull;
 
@@ -24,11 +25,11 @@ public class CollectionAccessRepo extends BaseRepo<CollectionAccess> {
     }
 
     @NonNull
-    public Optional<CollectionAccess> findDefaultByUser(@NonNull ID<User> userId) {
+    public CollectionAccess getDefaultByUser(@NonNull ID<User> userId) {
         return db.selectFrom(QCollectionAccess.collectionAccess)
             .where(QCollectionAccess.collectionAccess.user.id.eq(userId.getUUID()))
             .where(QCollectionAccess.collectionAccess.isDefault.isTrue())
-            .fetchOne();
+            .fetchOne().orElseThrow(() -> new AppFailureException(AppFailureMessage.entityNotFoundMsg( CollectionAccess.class, "no default collection for user")));
     }
 
     public boolean existsByUser(@NonNull ID<User> userId) {

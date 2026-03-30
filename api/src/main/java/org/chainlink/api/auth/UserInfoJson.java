@@ -20,6 +20,9 @@ public record UserInfoJson(
 
     @NotNull
     @NonNull
-    Set<String> roles
+    Set<String> roles,
+
+    @NonNull
+    String defaultCollectionId
 ) {
 }
