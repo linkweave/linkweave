@@ -17,6 +17,8 @@ import org.chainlink.api.collection.CollectionRole;
 import org.chainlink.api.shared.user.User;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.hamcrest.Matchers.*;
 
 @QuarkusTest
@@ -52,6 +54,92 @@ class BookmarkResourceITest {
         collectionAccessRepo.persist(access);
 
         return collection;
+    }
+
+    @Test
+    void shouldReturn401_whenGetBookmarksNotAuthenticated() {
+        RestAssured.given()
+            .queryParam("collectionId", UUID.randomUUID().toString())
+            .get("/bookmarks")
+            .then()
+            .statusCode(401);
+    }
+
+    @Test
+    @TestSecurity(
+        user = "test@example.com",
+        roles = {"BOOKMARK_READ"}
+    )
+    void shouldReturnEmptyList_whenCollectionHasNoBookmarks() {
+        Collection collection = createTestCollection();
+        RestAssured.given()
+            .queryParam("collectionId", collection.getId().getUUID().toString())
+            .get("/bookmarks")
+            .then()
+            .statusCode(200)
+            .body("bookmarkList", hasSize(0));
+    }
+
+    @Test
+    @TestSecurity(
+        user = "test@example.com",
+        roles = {"BOOKMARK_READ"}
+    )
+    void shouldReturnBookmarks_whenCollectionHasBookmarks() {
+        Collection collection = createTestCollection();
+        String collectionId = collection.getId().getUUID().toString();
+
+        String body = """
+            {"collectionId":"%s","title":"Test","url":"https://example.com"}
+            """.formatted(collectionId);
+        RestAssured.given().contentType(ContentType.JSON).body(body).post("/bookmarks");
+
+        RestAssured.given()
+            .queryParam("collectionId", collectionId)
+            .get("/bookmarks")
+            .then()
+            .statusCode(200)
+            .body("bookmarkList", hasSize(1))
+            .body("bookmarkList[0].data.title", equalTo("Test"));
+    }
+
+    @Test
+    @TestSecurity(
+        user = "test@example.com",
+        roles = {"BOOKMARK_READ"}
+    )
+    void shouldReturnBookmarksOrderedByCreationDateDesc() {
+        Collection collection = createTestCollection();
+        String collectionId = collection.getId().getUUID().toString();
+
+        RestAssured.given().contentType(ContentType.JSON)
+            .body("{\"collectionId\":\"%s\",\"title\":\"First\",\"url\":\"https://first.com\"}".formatted(collectionId))
+            .post("/bookmarks");
+        RestAssured.given().contentType(ContentType.JSON)
+            .body("{\"collectionId\":\"%s\",\"title\":\"Second\",\"url\":\"https://second.com\"}".formatted(collectionId))
+            .post("/bookmarks");
+
+        RestAssured.given()
+            .queryParam("collectionId", collectionId)
+            .get("/bookmarks")
+            .then()
+            .statusCode(200)
+            .body("bookmarkList", hasSize(2))
+            .body("bookmarkList[0].data.title", equalTo("Second"))
+            .body("bookmarkList[1].data.title", equalTo("First"));
+    }
+
+    @Test
+    @TestSecurity(
+        user = "test@example.com",
+        roles = {"BOOKMARK_READ"}
+    )
+    void shouldReturn403_whenGetBookmarksWithoutCollectionAccess() {
+        RestAssured.given()
+            .queryParam("collectionId", UUID.randomUUID().toString())
+            .get("/bookmarks")
+            .then()
+            .statusCode(403);
     }
 
     @Test

@@ -3,6 +3,7 @@
 export * from './app-failure-error-json';
 export * from './app-validation-error-json';
 export * from './bookmark-json';
+export * from './bookmark-list-json';
 export * from './bookmark-save-json';
 export * from './entity-info-json';
 export * from './failure-type';

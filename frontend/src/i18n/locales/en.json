@@ -51,8 +51,9 @@
   "tag": {
     "none": "No tags yet"
   },
-  "home": {
-    "noBookmarks": "No bookmarks yet. Click \"Add Bookmark\" to get started."
+  "bookmarkList": {
+    "empty": "No bookmarks yet. Click \"Add Bookmark\" to get started.",
+    "loading": "Loading bookmarks..."
   },
   "language": {
     "en": "English",

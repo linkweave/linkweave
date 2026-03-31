@@ -4,6 +4,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import ch.dvbern.dvbstarter.types.id.ID;
@@ -26,6 +27,11 @@ public class BookmarkService {
     private final CollectionRepo collectionRepo;
     private final FolderRepo folderRepo;
     private final TagRepo tagRepo;
+
+    @NonNull
+    public List<Bookmark> getBookmarksByCollection(@NonNull ID<Collection> collectionId) {
+        return bookmarkRepo.findByCollection(collectionId);
+    }
 
     @NonNull
     public Bookmark createBookmark(@NonNull BookmarkSaveJson json) {
