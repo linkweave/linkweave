@@ -4,6 +4,7 @@ import { Plus } from 'lucide-vue-next'
 import { MainLayout } from '@/components/layout'
 import { ButtonCl } from '@/components/ui'
 import { BookmarkList } from '@/components/bookmark'
+import { FolderBreadcrumbCl } from '@/components/folder'
 import { useI18n } from 'vue-i18n'
 import { useCollectionStore } from '@/stores/collection'
 import { useBookmarkStore } from '@/stores/bookmark'
@@ -32,6 +33,8 @@ watch(() => collectionStore.currentCollectionId, loadBookmarks)
         {{ t('header.addBookmark') }}
       </ButtonCl>
     </template>
+
+    <FolderBreadcrumbCl />
 
     <BookmarkList />
 

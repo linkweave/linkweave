@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   FolderJson,
   FolderListJson,
+  FolderMoveJson,
   FolderSaveJson,
 } from '../models/index';
 import {
@@ -24,9 +25,29 @@ import {
     FolderJsonToJSON,
     FolderListJsonFromJSON,
     FolderListJsonToJSON,
+    FolderMoveJsonFromJSON,
+    FolderMoveJsonToJSON,
     FolderSaveJsonFromJSON,
     FolderSaveJsonToJSON,
 } from '../models/index';
+
+export interface FolderResourceApiApiFoldersFolderIdDeleteRequest {
+    folderId: string;
+}
+
+export interface FolderResourceApiApiFoldersFolderIdMovePatchRequest {
+    folderId: string;
+    folderMoveJson: FolderMoveJson;
+}
+
+export interface FolderResourceApiApiFoldersFolderIdPutRequest {
+    folderId: string;
+    folderSaveJson: FolderSaveJson;
+}
+
+export interface FolderResourceApiApiFoldersGetRequest {
+    collectionId?: string;
+}
 
 export interface FolderResourceApiApiFoldersPostRequest {
     folderSaveJson: FolderSaveJson;
@@ -38,10 +59,168 @@ export interface FolderResourceApiApiFoldersPostRequest {
 export class FolderResourceApi extends runtime.BaseAPI {
 
     /**
+     * Creates request options for apiFoldersFolderIdDelete without sending the request
+     */
+    async apiFoldersFolderIdDeleteRequestOpts(requestParameters: FolderResourceApiApiFoldersFolderIdDeleteRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['folderId'] == null) {
+            throw new runtime.RequiredError(
+                'folderId',
+                'Required parameter "folderId" was null or undefined when calling apiFoldersFolderIdDelete().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/api/folders/{folderId}`;
+        urlPath = urlPath.replace(`{${"folderId"}}`, encodeURIComponent(String(requestParameters['folderId'])));
+
+        return {
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * Delete
+     */
+    async apiFoldersFolderIdDeleteRaw(requestParameters: FolderResourceApiApiFoldersFolderIdDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.apiFoldersFolderIdDeleteRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Delete
+     */
+    async apiFoldersFolderIdDelete(requestParameters: FolderResourceApiApiFoldersFolderIdDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiFoldersFolderIdDeleteRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Creates request options for apiFoldersFolderIdMovePatch without sending the request
+     */
+    async apiFoldersFolderIdMovePatchRequestOpts(requestParameters: FolderResourceApiApiFoldersFolderIdMovePatchRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['folderId'] == null) {
+            throw new runtime.RequiredError(
+                'folderId',
+                'Required parameter "folderId" was null or undefined when calling apiFoldersFolderIdMovePatch().'
+            );
+        }
+
+        if (requestParameters['folderMoveJson'] == null) {
+            throw new runtime.RequiredError(
+                'folderMoveJson',
+                'Required parameter "folderMoveJson" was null or undefined when calling apiFoldersFolderIdMovePatch().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/folders/{folderId}/move`;
+        urlPath = urlPath.replace(`{${"folderId"}}`, encodeURIComponent(String(requestParameters['folderId'])));
+
+        return {
+            path: urlPath,
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: FolderMoveJsonToJSON(requestParameters['folderMoveJson']),
+        };
+    }
+
+    /**
+     * Move
+     */
+    async apiFoldersFolderIdMovePatchRaw(requestParameters: FolderResourceApiApiFoldersFolderIdMovePatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FolderJson>> {
+        const requestOptions = await this.apiFoldersFolderIdMovePatchRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FolderJsonFromJSON(jsonValue));
+    }
+
+    /**
+     * Move
+     */
+    async apiFoldersFolderIdMovePatch(requestParameters: FolderResourceApiApiFoldersFolderIdMovePatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FolderJson> {
+        const response = await this.apiFoldersFolderIdMovePatchRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for apiFoldersFolderIdPut without sending the request
+     */
+    async apiFoldersFolderIdPutRequestOpts(requestParameters: FolderResourceApiApiFoldersFolderIdPutRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['folderId'] == null) {
+            throw new runtime.RequiredError(
+                'folderId',
+                'Required parameter "folderId" was null or undefined when calling apiFoldersFolderIdPut().'
+            );
+        }
+
+        if (requestParameters['folderSaveJson'] == null) {
+            throw new runtime.RequiredError(
+                'folderSaveJson',
+                'Required parameter "folderSaveJson" was null or undefined when calling apiFoldersFolderIdPut().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/folders/{folderId}`;
+        urlPath = urlPath.replace(`{${"folderId"}}`, encodeURIComponent(String(requestParameters['folderId'])));
+
+        return {
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: FolderSaveJsonToJSON(requestParameters['folderSaveJson']),
+        };
+    }
+
+    /**
+     * Rename
+     */
+    async apiFoldersFolderIdPutRaw(requestParameters: FolderResourceApiApiFoldersFolderIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FolderJson>> {
+        const requestOptions = await this.apiFoldersFolderIdPutRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FolderJsonFromJSON(jsonValue));
+    }
+
+    /**
+     * Rename
+     */
+    async apiFoldersFolderIdPut(requestParameters: FolderResourceApiApiFoldersFolderIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FolderJson> {
+        const response = await this.apiFoldersFolderIdPutRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Creates request options for apiFoldersGet without sending the request
      */
-    async apiFoldersGetRequestOpts(): Promise<runtime.RequestOpts> {
+    async apiFoldersGetRequestOpts(requestParameters: FolderResourceApiApiFoldersGetRequest = {}): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
+
+        if (requestParameters['collectionId'] != null) {
+            queryParameters['collectionId'] = requestParameters['collectionId'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -59,8 +238,8 @@ export class FolderResourceApi extends runtime.BaseAPI {
     /**
      * Get All
      */
-    async apiFoldersGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FolderListJson>> {
-        const requestOptions = await this.apiFoldersGetRequestOpts();
+    async apiFoldersGetRaw(requestParameters: FolderResourceApiApiFoldersGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FolderListJson>> {
+        const requestOptions = await this.apiFoldersGetRequestOpts(requestParameters);
         const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => FolderListJsonFromJSON(jsonValue));
@@ -69,8 +248,8 @@ export class FolderResourceApi extends runtime.BaseAPI {
     /**
      * Get All
      */
-    async apiFoldersGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FolderListJson> {
-        const response = await this.apiFoldersGetRaw(initOverrides);
+    async apiFoldersGet(requestParameters: FolderResourceApiApiFoldersGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FolderListJson> {
+        const response = await this.apiFoldersGetRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

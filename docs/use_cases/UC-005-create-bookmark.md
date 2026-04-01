@@ -6,7 +6,7 @@
 **Use Case Name:** Create Bookmark   
 **Primary Actor:** User   
 **Goal:** Save a web resource with a URL and title to the collection.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

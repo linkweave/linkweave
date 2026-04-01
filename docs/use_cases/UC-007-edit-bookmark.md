@@ -6,7 +6,7 @@
 **Use Case Name:** Edit Bookmark   
 **Primary Actor:** User   
 **Goal:** Modify a bookmark's URL, title, description, folder, or tags to keep it up to date.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

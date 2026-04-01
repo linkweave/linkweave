@@ -1,10 +1,62 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useBookmarkStore } from '@/stores/bookmark'
 import BookmarkCard from './BookmarkCard.vue'
+import EditBookmarkDialog from './EditBookmarkDialog.vue'
+import MoveBookmarkDialog from './MoveBookmarkDialog.vue'
+import { ConfirmDialog } from '@/components/ui'
+import type { BookmarkJson } from '@/api/generated'
 
 const { t } = useI18n()
 const bookmarkStore = useBookmarkStore()
+
+const editingBookmark = ref<BookmarkJson | null>(null)
+const showEditDialog = ref(false)
+const movingBookmark = ref<BookmarkJson | null>(null)
+const showMoveDialog = ref(false)
+const deletingBookmark = ref<BookmarkJson | null>(null)
+const showDeleteConfirm = ref(false)
+
+function handleEdit(bookmark: BookmarkJson) {
+  editingBookmark.value = bookmark
+  showEditDialog.value = true
+}
+
+function handleEditDialogUpdate(open: boolean) {
+  showEditDialog.value = open
+  if (!open) editingBookmark.value = null
+}
+
+function handleMove(bookmark: BookmarkJson) {
+  movingBookmark.value = bookmark
+  showMoveDialog.value = true
+}
+
+function handleMoveDialogUpdate(open: boolean) {
+  showMoveDialog.value = open
+  if (!open) movingBookmark.value = null
+}
+
+function handleDelete(bookmark: BookmarkJson) {
+  deletingBookmark.value = bookmark
+  showDeleteConfirm.value = true
+}
+
+function handleDeleteDialogUpdate(open: boolean) {
+  showDeleteConfirm.value = open
+  if (!open) deletingBookmark.value = null
+}
+
+async function confirmDelete() {
+  if (!deletingBookmark.value) return
+  try {
+    await bookmarkStore.deleteBookmark(deletingBookmark.value.id)
+  } finally {
+    deletingBookmark.value = null
+    showDeleteConfirm.value = false
+  }
+}
 </script>
 
 <template>
@@ -12,15 +64,40 @@ const bookmarkStore = useBookmarkStore()
     <p class="text-muted-foreground">{{ t('bookmarkList.loading') }}</p>
   </div>
 
-  <div v-else-if="bookmarkStore.bookmarks.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
+  <div v-else-if="bookmarkStore.filteredBookmarks.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
     <p class="text-muted-foreground">{{ t('bookmarkList.empty') }}</p>
   </div>
 
   <div v-else class="max-w-4xl mx-auto space-y-3">
     <BookmarkCard
-      v-for="bookmark in bookmarkStore.bookmarks"
+      v-for="bookmark in bookmarkStore.filteredBookmarks"
       :key="bookmark.id"
       :bookmark="bookmark"
+      @edit="handleEdit"
+      @delete="handleDelete"
+      @move="handleMove"
     />
   </div>
+
+  <EditBookmarkDialog
+    :bookmark="editingBookmark"
+    v-model:open="showEditDialog"
+    @update:open="handleEditDialogUpdate"
+    @saved="handleEditDialogUpdate(false)"
+  />
+
+  <MoveBookmarkDialog
+    :bookmark="movingBookmark"
+    v-model:open="showMoveDialog"
+    @update:open="handleMoveDialogUpdate"
+    @moved="handleMoveDialogUpdate(false)"
+  />
+
+  <ConfirmDialog
+    v-model:open="showDeleteConfirm"
+    :title="t('bookmark.deleteTitle')"
+    :message="t('bookmark.deleteConfirm')"
+    @confirmed="confirmDelete"
+    @update:open="handleDeleteDialogUpdate"
+  />
 </template>

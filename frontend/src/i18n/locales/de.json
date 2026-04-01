@@ -1,0 +1,80 @@
+{
+  "app": {
+    "title": "Chainlink",
+    "version": "Version"
+  },
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "loading": "Laden...",
+    "confirm": "Bestätigen"
+  },
+  "header": {
+    "addBookmark": "Lesezeichen hinzufügen",
+    "logout": "Abmelden"
+  },
+  "sidebar": {
+    "bookmarks": "Lesezeichen",
+    "allBookmarks": "Alle Lesezeichen",
+    "tags": "Schlagworte",
+    "newFolder": "Neuer Ordner"
+  },
+  "folder": {
+    "none": "Noch keine Ordner",
+    "createTitle": "Ordner erstellen",
+    "name": "Ordnername",
+    "namePlaceholder": "Ordnernamen eingeben",
+    "nameRequired": "Ordnername ist erforderlich.",
+    "createError": "Ordner konnte nicht erstellt werden.",
+    "createSubfolder": "Unterordner erstellen",
+    "parentFolder": "Übergeordneter Ordner",
+    "noParent": "Keine (Stammebene)",
+    "renameTitle": "Ordner umbenennen",
+    "renameError": "Ordner konnte nicht umbenannt werden.",
+    "deleteTitle": "Ordner löschen",
+    "deleteConfirm": "Möchten Sie diesen Ordner wirklich löschen? Alle Lesezeichen darin werden dauerhaft gelöscht."
+  },
+  "bookmark": {
+    "createTitle": "Lesezeichen erstellen",
+    "editTitle": "Lesezeichen bearbeiten",
+    "url": "URL",
+    "urlPlaceholder": "https://example.com",
+    "urlRequired": "URL ist erforderlich.",
+    "urlInvalid": "Bitte geben Sie eine gültige URL ein.",
+    "title": "Titel",
+    "titlePlaceholder": "Lesezeichen-Titel eingeben",
+    "titleRequired": "Titel ist erforderlich.",
+    "description": "Beschreibung",
+    "descriptionPlaceholder": "Optionale Beschreibung...",
+    "folder": "Ordner",
+    "noFolder": "Kein Ordner (nicht zugeordnet)",
+    "tags": "Schlagworte",
+    "createError": "Lesezeichen konnte nicht erstellt werden.",
+    "updateError": "Lesezeichen konnte nicht aktualisiert werden.",
+    "moveError": "Lesezeichen konnte nicht verschoben werden.",
+    "moveToFolder": "In Ordner verschieben",
+    "deleteTitle": "Lesezeichen löschen",
+    "deleteConfirm": "Möchten Sie dieses Lesezeichen wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+  },
+  "tag": {
+    "none": "Noch keine Schlagworte"
+  },
+  "bookmarkList": {
+    "empty": "Noch keine Lesezeichen. Klicken Sie auf 'Lesezeichen hinzufügen', um zu beginnen.",
+    "loading": "Lesezeichen laden..."
+  },
+  "language": {
+    "en": "English",
+    "de": "Deutsch",
+    "switch": "Sprache wechseln"
+  },
+  "login": {
+    "email": "E-Mail",
+    "password": "Passwort",
+    "submit": "Anmelden",
+    "error": "Ungültige E-Mail oder Passwort."
+  }
+}

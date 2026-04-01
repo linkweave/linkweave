@@ -11,6 +11,7 @@ import org.chainlink.infrastructure.errorhandling.AppFailureException;
 import org.chainlink.infrastructure.errorhandling.AppFailureMessage;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 @Service
 @RequiredArgsConstructor
@@ -35,11 +36,7 @@ public class FolderService {
         ID<Folder> parentId = json.getParentId();
         if (parentId != null) {
             Folder parent = folderRepo.getById(parentId);
-            if (!parent.collection.getId().equals(collectionId)) {
-                throw new AppFailureException(
-                    AppFailureMessage.internalError("Parent folder does not belong to the same collection")
-                );
-            }
+            requireFolderBelongsToCollection(parent, collectionId);
             folder.parent = parent;
         }
 
@@ -56,7 +53,67 @@ public class FolderService {
         return folderRepo.getById(id);
     }
 
+    @NonNull
+    public Folder updateFolder(@NonNull ID<Folder> id, @NonNull FolderSaveJson json) {
+        Folder folder = folderRepo.getById(id);
+
+        ID<Collection> collectionId = json.getCollectionId();
+        ID<Folder> parentId = json.getParentId();
+
+        if (parentId != null) {
+            Folder parent = folderRepo.getById(parentId);
+            requireFolderBelongsToCollection(parent, collectionId);
+            requireNotAncestor(id, parent);
+            folder.parent = parent;
+        } else {
+            folder.parent = null;
+        }
+
+        folder.collection = collectionRepo.referenceById(collectionId);
+        folder.name = json.getName();
+
+        folderRepo.persist(folder);
+        return folder;
+    }
+
+    @NonNull
+    public Folder moveFolder(@NonNull ID<Folder> id, @Nullable ID<Folder> newParentId, @NonNull ID<Collection> collectionId) {
+        Folder folder = folderRepo.getById(id);
+
+        if (newParentId != null) {
+            Folder parent = folderRepo.getById(newParentId);
+            requireFolderBelongsToCollection(parent, collectionId);
+            requireNotAncestor(id, parent);
+            folder.parent = parent;
+        } else {
+            folder.parent = null;
+        }
+
+        folderRepo.persist(folder);
+        return folder;
+    }
+
     public void removeFolder(@NonNull ID<Folder> id) {
         folderRepo.remove(id);
+    }
+
+    private void requireFolderBelongsToCollection(@NonNull Folder folder, @NonNull ID<Collection> collectionId) {
+        if (!folder.collection.getId().equals(collectionId)) {
+            throw new AppFailureException(
+                AppFailureMessage.internalError("Folder does not belong to the specified collection")
+            );
+        }
+    }
+
+    private void requireNotAncestor(@NonNull ID<Folder> folderId, @NonNull Folder candidate) {
+        Folder current = candidate;
+        while (current != null) {
+            if (current.getId().equals(folderId)) {
+                throw new AppFailureException(
+                    AppFailureMessage.internalError("Cannot move a folder into itself or one of its descendants")
+                );
+            }
+            current = current.parent;
+        }
     }
 }

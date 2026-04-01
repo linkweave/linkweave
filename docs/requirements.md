@@ -45,6 +45,10 @@
 | FR-024 | Access Shared Collection       | As a User, I want to access a collection shared with me so that I can view and manage its bookmarks.                                 | Medium   | Open   |
 | FR-025 | Customize Tag Color             | As a User, I want to change a tag's color so that I can visually distinguish tags in my collection.                                  | Low      | Open   |
 | FR-026 | Revoke Collection Access        | As a Collection Owner, I want to revoke another user's access to my shared collection so that they can no longer view or modify its contents. | Medium   | Open   |
+| FR-027 | Logout                           | As a User, I want to log out of the application so that my session is ended and my data is protected from unauthorized access. | High     | Open   |
+| FR-028 | Switch Language                  | As a User, I want to switch the interface language between English and German so that I can use the application in my preferred language. | Low      | Open   |
+| FR-029 | Navigate Folder Hierarchy        | As a User, I want to see a breadcrumb showing the path to the currently selected folder so that I can see where I am and quickly navigate to parent folders. | Medium   | Open   |
+| FR-029 | Navigate Folder Hierarchy        | As a User, I want to see a breadcrumb showing the path to the currently selected folder so that I can see where I am and quickly navigate to parent folders. | Medium   | Open   |
 
 ---
 
