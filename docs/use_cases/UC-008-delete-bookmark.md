@@ -6,7 +6,7 @@
 **Use Case Name:** Delete Bookmark   
 **Primary Actor:** User   
 **Goal:** Remove a bookmark that is no longer needed from the collection.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

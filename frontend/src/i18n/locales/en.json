@@ -9,7 +9,8 @@
     "delete": "Delete",
     "edit": "Edit",
     "create": "Create",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "confirm": "Confirm"
   },
   "header": {
     "addBookmark": "Add Bookmark",
@@ -30,10 +31,15 @@
     "createError": "Failed to create folder.",
     "createSubfolder": "Create Subfolder",
     "parentFolder": "Parent Folder",
-    "noParent": "None (root level)"
+    "noParent": "None (root level)",
+    "renameTitle": "Rename Folder",
+    "renameError": "Failed to rename folder.",
+    "deleteTitle": "Delete Folder",
+    "deleteConfirm": "Are you sure you want to delete this folder? All bookmarks inside will be permanently deleted."
   },
   "bookmark": {
     "createTitle": "Create Bookmark",
+    "editTitle": "Edit Bookmark",
     "url": "URL",
     "urlPlaceholder": "https://example.com",
     "urlRequired": "URL is required.",
@@ -46,16 +52,23 @@
     "folder": "Folder",
     "noFolder": "No folder (unfiled)",
     "tags": "Tags",
-    "createError": "Failed to create bookmark."
+    "createError": "Failed to create bookmark.",
+    "updateError": "Failed to update bookmark.",
+    "moveError": "Failed to move bookmark.",
+    "moveToFolder": "Move to Folder",
+    "deleteTitle": "Delete Bookmark",
+    "deleteConfirm": "Are you sure you want to delete this bookmark? This action cannot be undone."
   },
   "tag": {
     "none": "No tags yet"
   },
-  "home": {
-    "noBookmarks": "No bookmarks yet. Click \"Add Bookmark\" to get started."
+  "bookmarkList": {
+    "empty": "No bookmarks yet. Click \"Add Bookmark\" to get started.",
+    "loading": "Loading bookmarks..."
   },
   "language": {
     "en": "English",
+    "de": "Deutsch",
     "switch": "Switch language"
   },
   "login": {

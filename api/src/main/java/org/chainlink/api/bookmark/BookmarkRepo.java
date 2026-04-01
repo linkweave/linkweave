@@ -1,10 +1,10 @@
 package org.chainlink.api.bookmark;
 
 import java.util.List;
-import java.util.Optional;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import org.chainlink.api.bookmark.folder.Folder;
+import org.chainlink.api.collection.Collection;
 import org.chainlink.infrastructure.db.BaseRepo;
 import org.chainlink.infrastructure.stereotypes.Repository;
 import org.jspecify.annotations.NonNull;
@@ -47,6 +47,14 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
     public List<Bookmark> findByTagId(ID<Tag> tagId) {
         return db.selectFrom(QBookmark.bookmark)
             .where(QBookmark.bookmark.tags.any().id.eq(tagId.getUUID()))
+            .fetch();
+    }
+
+    @NonNull
+    public List<Bookmark> findByCollection(@NonNull ID<Collection> collectionId) {
+        return db.selectFrom(QBookmark.bookmark)
+            .where(QBookmark.bookmark.collection.id.eq(collectionId.getUUID()))
+            .orderBy(QBookmark.bookmark.timestampErstellt.desc())
             .fetch();
     }
 

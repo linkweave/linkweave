@@ -6,7 +6,7 @@
 **Use Case Name:** Move Bookmark to Folder   
 **Primary Actor:** User   
 **Goal:** Organize a bookmark by placing it into a specific folder.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

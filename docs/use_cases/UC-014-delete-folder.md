@@ -6,7 +6,7 @@
 **Use Case Name:** Delete Folder   
 **Primary Actor:** User   
 **Goal:** Remove a folder that is no longer needed from the collection.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

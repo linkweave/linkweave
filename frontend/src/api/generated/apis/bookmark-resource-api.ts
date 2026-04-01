@@ -16,14 +16,38 @@
 import * as runtime from '../runtime';
 import type {
   BookmarkJson,
+  BookmarkListJson,
+  BookmarkMoveJson,
   BookmarkSaveJson,
 } from '../models/index';
 import {
     BookmarkJsonFromJSON,
     BookmarkJsonToJSON,
+    BookmarkListJsonFromJSON,
+    BookmarkListJsonToJSON,
+    BookmarkMoveJsonFromJSON,
+    BookmarkMoveJsonToJSON,
     BookmarkSaveJsonFromJSON,
     BookmarkSaveJsonToJSON,
 } from '../models/index';
+
+export interface BookmarkResourceApiApiBookmarksBookmarkIdDeleteRequest {
+    bookmarkId: string;
+}
+
+export interface BookmarkResourceApiApiBookmarksBookmarkIdMovePatchRequest {
+    bookmarkId: string;
+    bookmarkMoveJson: BookmarkMoveJson;
+}
+
+export interface BookmarkResourceApiApiBookmarksBookmarkIdPutRequest {
+    bookmarkId: string;
+    bookmarkSaveJson: BookmarkSaveJson;
+}
+
+export interface BookmarkResourceApiApiBookmarksGetRequest {
+    collectionId: string;
+}
 
 export interface BookmarkResourceApiApiBookmarksPostRequest {
     bookmarkSaveJson: BookmarkSaveJson;
@@ -33,6 +57,208 @@ export interface BookmarkResourceApiApiBookmarksPostRequest {
  * 
  */
 export class BookmarkResourceApi extends runtime.BaseAPI {
+
+    /**
+     * Creates request options for apiBookmarksBookmarkIdDelete without sending the request
+     */
+    async apiBookmarksBookmarkIdDeleteRequestOpts(requestParameters: BookmarkResourceApiApiBookmarksBookmarkIdDeleteRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['bookmarkId'] == null) {
+            throw new runtime.RequiredError(
+                'bookmarkId',
+                'Required parameter "bookmarkId" was null or undefined when calling apiBookmarksBookmarkIdDelete().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/api/bookmarks/{bookmarkId}`;
+        urlPath = urlPath.replace(`{${"bookmarkId"}}`, encodeURIComponent(String(requestParameters['bookmarkId'])));
+
+        return {
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * Delete
+     */
+    async apiBookmarksBookmarkIdDeleteRaw(requestParameters: BookmarkResourceApiApiBookmarksBookmarkIdDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.apiBookmarksBookmarkIdDeleteRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Delete
+     */
+    async apiBookmarksBookmarkIdDelete(requestParameters: BookmarkResourceApiApiBookmarksBookmarkIdDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiBookmarksBookmarkIdDeleteRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Creates request options for apiBookmarksBookmarkIdMovePatch without sending the request
+     */
+    async apiBookmarksBookmarkIdMovePatchRequestOpts(requestParameters: BookmarkResourceApiApiBookmarksBookmarkIdMovePatchRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['bookmarkId'] == null) {
+            throw new runtime.RequiredError(
+                'bookmarkId',
+                'Required parameter "bookmarkId" was null or undefined when calling apiBookmarksBookmarkIdMovePatch().'
+            );
+        }
+
+        if (requestParameters['bookmarkMoveJson'] == null) {
+            throw new runtime.RequiredError(
+                'bookmarkMoveJson',
+                'Required parameter "bookmarkMoveJson" was null or undefined when calling apiBookmarksBookmarkIdMovePatch().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/bookmarks/{bookmarkId}/move`;
+        urlPath = urlPath.replace(`{${"bookmarkId"}}`, encodeURIComponent(String(requestParameters['bookmarkId'])));
+
+        return {
+            path: urlPath,
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: BookmarkMoveJsonToJSON(requestParameters['bookmarkMoveJson']),
+        };
+    }
+
+    /**
+     * Move
+     */
+    async apiBookmarksBookmarkIdMovePatchRaw(requestParameters: BookmarkResourceApiApiBookmarksBookmarkIdMovePatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BookmarkJson>> {
+        const requestOptions = await this.apiBookmarksBookmarkIdMovePatchRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BookmarkJsonFromJSON(jsonValue));
+    }
+
+    /**
+     * Move
+     */
+    async apiBookmarksBookmarkIdMovePatch(requestParameters: BookmarkResourceApiApiBookmarksBookmarkIdMovePatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BookmarkJson> {
+        const response = await this.apiBookmarksBookmarkIdMovePatchRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for apiBookmarksBookmarkIdPut without sending the request
+     */
+    async apiBookmarksBookmarkIdPutRequestOpts(requestParameters: BookmarkResourceApiApiBookmarksBookmarkIdPutRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['bookmarkId'] == null) {
+            throw new runtime.RequiredError(
+                'bookmarkId',
+                'Required parameter "bookmarkId" was null or undefined when calling apiBookmarksBookmarkIdPut().'
+            );
+        }
+
+        if (requestParameters['bookmarkSaveJson'] == null) {
+            throw new runtime.RequiredError(
+                'bookmarkSaveJson',
+                'Required parameter "bookmarkSaveJson" was null or undefined when calling apiBookmarksBookmarkIdPut().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/bookmarks/{bookmarkId}`;
+        urlPath = urlPath.replace(`{${"bookmarkId"}}`, encodeURIComponent(String(requestParameters['bookmarkId'])));
+
+        return {
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: BookmarkSaveJsonToJSON(requestParameters['bookmarkSaveJson']),
+        };
+    }
+
+    /**
+     * Update
+     */
+    async apiBookmarksBookmarkIdPutRaw(requestParameters: BookmarkResourceApiApiBookmarksBookmarkIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BookmarkJson>> {
+        const requestOptions = await this.apiBookmarksBookmarkIdPutRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BookmarkJsonFromJSON(jsonValue));
+    }
+
+    /**
+     * Update
+     */
+    async apiBookmarksBookmarkIdPut(requestParameters: BookmarkResourceApiApiBookmarksBookmarkIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BookmarkJson> {
+        const response = await this.apiBookmarksBookmarkIdPutRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for apiBookmarksGet without sending the request
+     */
+    async apiBookmarksGetRequestOpts(requestParameters: BookmarkResourceApiApiBookmarksGetRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['collectionId'] == null) {
+            throw new runtime.RequiredError(
+                'collectionId',
+                'Required parameter "collectionId" was null or undefined when calling apiBookmarksGet().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['collectionId'] != null) {
+            queryParameters['collectionId'] = requestParameters['collectionId'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/api/bookmarks`;
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * List
+     */
+    async apiBookmarksGetRaw(requestParameters: BookmarkResourceApiApiBookmarksGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BookmarkListJson>> {
+        const requestOptions = await this.apiBookmarksGetRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BookmarkListJsonFromJSON(jsonValue));
+    }
+
+    /**
+     * List
+     */
+    async apiBookmarksGet(requestParameters: BookmarkResourceApiApiBookmarksGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BookmarkListJson> {
+        const response = await this.apiBookmarksGetRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Creates request options for apiBookmarksPost without sending the request

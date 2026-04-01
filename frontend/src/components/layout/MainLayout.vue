@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import {ButtonCl, LanguageSwitcherCl} from '@/components/ui'
+import {ButtonCl, UserMenuCl} from '@/components/ui'
 import {cn} from '@/lib/utils'
-import {LogOut, Menu, X} from 'lucide-vue-next'
+import {Menu, X} from 'lucide-vue-next'
 import {ref} from 'vue'
 import {useI18n} from 'vue-i18n'
 import SidebarCl from './SidebarCl.vue'
 import {useAuthStore} from '@/stores/auth'
+import logoUrl from '@/assets/logo.png'
 
 const { t } = useI18n()
 const auth = useAuthStore()
@@ -28,15 +29,14 @@ const closeSidebar = () => {
         <ButtonCl variant="ghost" size="icon" class="lg:hidden" @click="toggleSidebar">
           <Menu class="h-5 w-5" />
         </ButtonCl>
-        <h1 class="text-xl font-semibold text-foreground">{{ t('app.title') }}</h1>
+        <h1 class="text-xl font-semibold text-foreground flex items-center gap-2">
+          <img :src="logoUrl" alt="" class="h-6 w-6" />
+          {{ t('app.title') }}
+        </h1>
       </div>
       <div class="flex items-center gap-2">
         <slot name="header-actions" />
-        <span v-if="auth.isAuthenticated" class="text-sm text-muted-foreground">{{ auth.displayName }}</span>
-        <ButtonCl v-if="auth.isAuthenticated" variant="ghost" size="icon" @click="auth.logout">
-          <LogOut class="h-4 w-4" />
-        </ButtonCl>
-        <LanguageSwitcherCl />
+        <UserMenuCl v-if="auth.isAuthenticated" />
       </div>
     </header>
 

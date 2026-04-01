@@ -6,7 +6,7 @@
 **Use Case Name:** Rename Folder   
 **Primary Actor:** User   
 **Goal:** Change the name of an existing folder to keep the organizational structure accurate.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

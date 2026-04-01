@@ -1,0 +1,67 @@
+<script setup lang="ts">
+import {
+  DropdownMenuRoot,
+  DropdownMenuTrigger,
+  DropdownMenuPortal,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from 'radix-vue'
+import { ChevronDown, LogOut } from 'lucide-vue-next'
+import { useAuthStore } from '@/stores/auth'
+import { useLocaleStore } from '@/stores/locale'
+import type { SupportedLocale } from '@/i18n'
+
+const auth = useAuthStore()
+const localeStore = useLocaleStore()
+
+function switchLocale(locale: SupportedLocale) {
+  localeStore.setLocale(locale)
+}
+</script>
+
+<template>
+  <DropdownMenuRoot>
+    <DropdownMenuTrigger as-child>
+      <button
+        class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      >
+        {{ auth.displayName }}
+        <ChevronDown class="h-4 w-4" />
+      </button>
+    </DropdownMenuTrigger>
+    <DropdownMenuPortal>
+      <DropdownMenuContent
+        class="min-w-[160px] z-50 rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+        align="end"
+        :side-offset="4"
+      >
+        <div class="flex items-center justify-center gap-1 rounded-sm px-2 py-1.5 text-sm">
+          <button
+            class="px-1 transition-colors hover:text-accent-foreground"
+            :class="localeStore.currentLocale === 'de' ? 'underline font-semibold text-accent-foreground' : 'text-muted-foreground'"
+            @click="switchLocale('de')"
+          >
+            DE
+          </button>
+          <span class="text-muted-foreground">|</span>
+          <button
+            class="px-1 transition-colors hover:text-accent-foreground"
+            :class="localeStore.currentLocale === 'en' ? 'underline font-semibold text-accent-foreground' : 'text-muted-foreground'"
+            @click="switchLocale('en')"
+          >
+            EN
+          </button>
+        </div>
+        <DropdownMenuSeparator class="-mx-1 my-1 h-px bg-border" />
+        <DropdownMenuItem
+          class="relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+          @select="auth.logout"
+        >
+          <LogOut class="h-4 w-4" />
+          {{ $t('header.logout') }}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenuPortal>
+  </DropdownMenuRoot>
+</template>

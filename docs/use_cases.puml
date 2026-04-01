@@ -23,19 +23,21 @@ rectangle "Chainlink Bookmark Manager" {
 
     rectangle "Bookmark Management" {
         usecase "UC-005\nCreate Bookmark" as UC005 <<implemented>>
-        usecase "UC-006\nView Bookmarks" as UC006
-        usecase "UC-007\nEdit Bookmark" as UC007
-        usecase "UC-008\nDelete Bookmark" as UC008
-        usecase "UC-013\nMove Bookmark\nto Folder" as UC013
+        usecase "UC-006\nView Bookmarks" as UC006 <<implemented>>
+        usecase "UC-007\nEdit Bookmark" as UC007 <<implemented>>
+        usecase "UC-008\nDelete Bookmark" as UC008 <<implemented>>
+        usecase "UC-013\nMove Bookmark\nto Folder" as UC013 <<implemented>>
     }
 
-    rectangle "Folder Management" {
-        usecase "UC-009\nCreate Folder" as UC009 <<implemented>>
-        usecase "UC-010\nView Folders" as UC010
-        usecase "UC-011\nRename Folder" as UC011
-        usecase "UC-012\nNest Folders" as UC012
-        usecase "UC-014\nDelete Folder" as UC014
+    rectangle "Filtering" {
+        usecase "UC-021\nFilter Bookmarks\nby Tag" as UC021
+        usecase "UC-022\nFilter Bookmarks\nby Folder" as UC022
     }
+
+    rectangle "Navigation" {
+        usecase "UC-029\nNavigate Folder\nHierarchy" as UC029
+    }
+}
 
     rectangle "Tag Management" {
         usecase "UC-015\nCreate Tag" as UC015
@@ -49,6 +51,10 @@ rectangle "Chainlink Bookmark Manager" {
     rectangle "Filtering" {
         usecase "UC-021\nFilter Bookmarks\nby Tag" as UC021
         usecase "UC-022\nFilter Bookmarks\nby Folder" as UC022
+    }
+
+    rectangle "Navigation" {
+        usecase "UC-029\nNavigate Folder\nHierarchy" as UC029
     }
 }
 
@@ -86,6 +92,9 @@ user --> UC020
 ' Filtering
 user --> UC021
 user --> UC022
+
+' Navigation
+user --> UC029
 
 legend right
   |<#E8F5E9>| Implemented |

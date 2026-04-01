@@ -6,7 +6,7 @@
 **Use Case Name:** View Bookmarks   
 **Primary Actor:** User   
 **Goal:** Browse all bookmarks in a collection to find saved resources.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

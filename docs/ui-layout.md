@@ -58,10 +58,11 @@ Sidebar collapses to a drawer overlay triggered by hamburger menu.
 | Collection Selector | Always visible dropdown to switch between collections |
 | Search Bar | Full-text search across bookmarks, tags, URLs |
 | Add Bookmark Button | Primary action, opens create dialog |
-| User Menu | Avatar dropdown with settings, logout |
+| User Menu | Username button (shows display name) that opens a dropdown with language switcher ("DE \| EN", current underlined) and logout |
 
 ### Behavior
 - Fixed at top of viewport
+- User Menu only visible when authenticated
 - Search with debounce (300ms)
 
 ---
@@ -74,9 +75,10 @@ Sidebar collapses to a drawer overlay triggered by hamburger menu.
 |---------|-------------|
 | Root node | "All Bookmarks" shows unfiltered list |
 | Nesting | Folders support up to 3 levels deep |
-| Expand/Collapse | Chevron icons, persists state in localStorage |
+| Expand/Collapse | Chevron icons (rotated 90° when expanded, invisible for leaf nodes); default expanded |
 | Selection | Single-select, highlights active folder |
-| Context Menu | Right-click: Rename, Add Subfolder, Delete |
+| Folder Icons | `FolderOpen` when expanded with children, `Folder` otherwise; both in `text-primary` |
+| Actions | Hover "..." button (appears via `group-hover:opacity-100` pattern) opens dropdown: Create Subfolder, Rename, Delete (destructive red) |
 
 ### Tag Filter
 
@@ -110,13 +112,19 @@ Sidebar collapses to a drawer overlay triggered by hamburger menu.
 | URL | Muted text, single line with ellipsis |
 | Tags | Badge chips with tag colors |
 | Folder | "in FolderName" muted text |
-| Actions | Hover: Open (external), Edit, Delete |
+| Actions | Hover "..." button opens dropdown: Edit, Move to Folder, Delete (destructive red) |
 
 ### Breadcrumb Navigation
 
 Shows current folder path: `All Bookmarks / Work / Frontend / React`
 
-Each segment is clickable to navigate up the tree.
+- Displayed above the bookmark list when a folder is selected
+- Each segment is a clickable button to navigate up the folder hierarchy
+- Last segment (current folder) is bold (`font-medium`, `text-foreground`)
+- Parent segments are muted (`text-muted-foreground`) with hover effect
+- Separator: `/` character in muted color
+- "All Bookmarks" root segment navigates to unfiltered view (sets `selectedFolderId` to `null`)
+- Hidden when no folder is selected (All Bookmarks view)
 
 ---
 

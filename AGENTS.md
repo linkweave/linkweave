@@ -2,10 +2,10 @@
 
 ## Project Overview
 
-**Type**: Quarkus-based Java web application with full-stack capabilities  
-**Language**: Java 25
-**Framework**: Quarkus 3.30.8  
-**Build System**: Maven 3.9.12  
+**Type**: Quarkus-based Java web application with vue frontend
+**Language**: Java 25 / typescript
+**Framework**: Quarkus 3.30.8  and VueJS
+**Build System**: Maven 3.9.12 and npm
 **Database**: SQLite with Hibernate ORM  
 **Frontend**: VueJS 
 
@@ -19,6 +19,8 @@ cd api && ./mvnw verify             # All tests (unit + integration)
 cd api && ./mvnw test -Dtest=ClassNameTest           # Specific class
 cd api && ./mvnw quarkus:dev        # Dev mode with hot reload, assume running
 cd frontend && npm run dev # frontend dev mode, assume running
+cd fontend && npm run type-check # frontend type checking
+
 ```
 
 ## Architecture
@@ -37,7 +39,6 @@ All access checks are performed in the **Resource layer** using `AuthorizationSe
 
 ## Conventions
 
-- **Package**: `org.chainlink` for all application code
 - Use `@RequiredArgsConstructor` (Lombok) for constructor injection, or `requireNonNull()` manually
 - JPA entities have private fields made accessible using lombok @Getter and @Setter
 - Specify field lengths of @Coolumns in entities using constants from `DbConst`
@@ -50,6 +51,7 @@ All access checks are performed in the **Resource layer** using `AuthorizationSe
 - Use `@TestSecurity` when testing persistence/services that depend on current user
 - Most entities extend `AbstractEntity` which auto-sets `userErstellt` and `userMutiert` via `CurrentUserService`
 - Use `@AllArgsConstructor` for entity classes to ensure all fields are initialized
+- Always check your code by running npm run type-check and by compiling using maven
 
 ## Custom Types
 
