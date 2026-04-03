@@ -42,8 +42,8 @@ class BookmarkResourceITest {
     private Collection createTestCollection() {
         User user = userRepo.findByEmail(EmailAddress.fromString("test@example.com")).orElseThrow();
         Collection collection = new Collection();
-        collection.name = "Test Collection";
-        collection.owner = user;
+        collection.setName("Test Collection");
+        collection.setOwner(user);
         collectionRepo.persist(collection);
 
         CollectionAccess access = new CollectionAccess();

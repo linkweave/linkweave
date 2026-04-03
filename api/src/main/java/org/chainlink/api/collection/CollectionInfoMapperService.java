@@ -10,8 +10,6 @@ import org.chainlink.api.bookmark.Tag;
 import org.chainlink.api.bookmark.TagMapper;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.bookmark.folder.FolderMapper;
-import org.chainlink.api.bookmark.folder.json.FolderJson;
-import org.chainlink.api.bookmark.json.BookmarkJson;
 import org.chainlink.infrastructure.stereotypes.Service;
 
 @Service
@@ -32,6 +30,5 @@ public class CollectionInfoMapperService {
             folders.stream().map(FolderMapper::toJson).toList(),
             tags.stream().map(TagMapper::toJson).toList()
         );
-        }
     }
 }

@@ -12,7 +12,9 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.abstractentity.AbstractEntity;
@@ -22,32 +24,34 @@ import org.jspecify.annotations.Nullable;
 
 @Entity
 @Table()
+@Getter
+@Setter
 @NoArgsConstructor
 public class Bookmark extends AbstractEntity<Bookmark> {
 
     @NonNull
     @ManyToOne(optional = false)
-    public Collection collection;
+    private Collection collection;
 
     @Nullable
     @ManyToOne(optional = true)
-    public Folder folder;
+    private Folder folder;
 
     @NotBlank
     @NonNull
     @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH)
     @Column(nullable = false, length = DbConst.DB_DEFAULT_MAX_LENGTH)
-    public String title;
+    private String title;
 
     @NonNull
     @Column(nullable = false, length = DbConst.DB_TEXTAREA_MAX_LENGTH_2000)
-    public URL url;
+    private URL url;
 
     @Nullable
     @Column(nullable = true, length = DbConst.DB_TEXTAREA_MAX_LENGTH_5000)
-    public String description;
+    private String description;
 
     @ManyToMany()
-    public Set<Tag> tags = new HashSet<>();
+    private Set<Tag> tags = new HashSet<>();
 
 }

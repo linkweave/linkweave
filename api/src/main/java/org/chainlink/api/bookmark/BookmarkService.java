@@ -51,12 +51,12 @@ public class BookmarkService {
         Set<Tag> tags = resolveTags(json.getTagIds());
 
         Bookmark bookmark = new Bookmark();
-        bookmark.collection = collectionRepo.referenceById(collectionId);
-        bookmark.folder = folderId != null ? folderRepo.referenceById(folderId) : null;
-        bookmark.title = json.getTitle();
-        bookmark.url = parseUrl(json.getUrl());
-        bookmark.description = json.getDescription();
-        bookmark.tags = tags;
+        bookmark.setCollection(collectionRepo.referenceById(collectionId));
+        bookmark.setFolder(folderId != null ? folderRepo.referenceById(folderId) : null);
+        bookmark.setTitle(json.getTitle());
+        bookmark.setUrl(parseUrl(json.getUrl()));
+        bookmark.setDescription(json.getDescription());
+        bookmark.setTags(tags);
 
         bookmarkRepo.persist(bookmark);
         return bookmark;
@@ -75,12 +75,12 @@ public class BookmarkService {
 
         Set<Tag> tags = resolveTags(json.getTagIds());
 
-        bookmark.collection = collectionRepo.referenceById(collectionId);
-        bookmark.folder = folderId != null ? folderRepo.referenceById(folderId) : null;
-        bookmark.title = json.getTitle();
-        bookmark.url = parseUrl(json.getUrl());
-        bookmark.description = json.getDescription();
-        bookmark.tags = tags;
+        bookmark.setCollection(collectionRepo.referenceById(collectionId));
+        bookmark.setFolder(folderId != null ? folderRepo.referenceById(folderId) : null);
+        bookmark.setTitle(json.getTitle());
+        bookmark.setUrl(parseUrl(json.getUrl()));
+        bookmark.setDescription(json.getDescription());
+        bookmark.setTags(tags);
 
         bookmarkRepo.persist(bookmark);
         return bookmark;
@@ -98,9 +98,9 @@ public class BookmarkService {
         if (folderId != null) {
             Folder folder = folderRepo.getById(folderId);
             requireFolderBelongsToCollection(folder, json.getCollectionId());
-            bookmark.folder = folder;
+            bookmark.setFolder(folder);
         } else {
-            bookmark.folder = null;
+            bookmark.setFolder(null);
         }
 
         bookmarkRepo.persist(bookmark);

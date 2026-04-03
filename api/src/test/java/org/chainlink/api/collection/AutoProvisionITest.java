@@ -46,8 +46,8 @@ class AutoProvisionITest {
         var collections = collectionRepo.findByOwner(user.getId());
         Assertions.assertThat(collections).hasSize(1);
         var created = collections.getFirst();
-        Assertions.assertThat(created.name).isEqualTo("My Bookmarks");
-        Assertions.assertThat(created.owner.getId()).isEqualTo(user.getId());
+        Assertions.assertThat(created.getName()).isEqualTo("My Bookmarks");
+        Assertions.assertThat(created.getOwner().getId()).isEqualTo(user.getId());
 
         var accessList = collectionAccessRepo.findByUser(user.getId());
         Assertions.assertThat(accessList).hasSize(1);
@@ -71,7 +71,7 @@ class AutoProvisionITest {
         var collections = collectionRepo.findByOwner(user.getId());
         Assertions.assertThat(collections).hasSize(1);
         var created = collections.getFirst();
-        Assertions.assertThat(created.name).isEqualTo("My Bookmarks");
+        Assertions.assertThat(created.getName()).isEqualTo("My Bookmarks");
 
         var accessList = collectionAccessRepo.findByUser(user.getId());
         Assertions.assertThat(accessList).hasSize(1);

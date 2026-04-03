@@ -18,8 +18,8 @@ class FolderMapperTest {
         owner.setVorname("Test");
 
         Collection collection = new Collection();
-        collection.name = "Test Collection";
-        collection.owner = owner;
+        collection.setName("Test Collection");
+        collection.setOwner(owner);
         collection.setTimestampErstellt(OffsetDateTime.now());
         collection.setTimestampMutiert(OffsetDateTime.now());
         collection.setUserErstellt("test@example.com");
