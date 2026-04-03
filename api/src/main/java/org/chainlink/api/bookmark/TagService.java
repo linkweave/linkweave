@@ -43,10 +43,6 @@ public class TagService {
         return tagRepo.getById(id);
     }
 
-    @NonNull
-    public List<Tag> getTagsByCollection(@NonNull ID<Collection> collectionId) {
-        return tagRepo.findByCollection(collectionId);
-    }
 
     @NonNull
     public Tag updateTag(@NonNull Tag tag, @NonNull TagSaveJson json) {
@@ -73,5 +69,9 @@ public class TagService {
 
     public void removeTag(@NonNull ID<Tag> id) {
         tagRepo.remove(id);
+    }
+
+    public List<Tag> findByCollection(@NonNull ID<Collection> collectionID) {
+        return  tagRepo.findByCollection(collectionID);
     }
 }

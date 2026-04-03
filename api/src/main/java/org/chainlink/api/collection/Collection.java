@@ -8,7 +8,9 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.chainlink.api.shared.abstractentity.AbstractEntity;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.infrastructure.db.DbConst;
@@ -22,14 +24,16 @@ import org.jspecify.annotations.NonNull;
 )
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 public class Collection extends AbstractEntity<Collection> {
 
     @NotBlank
     @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH)
     @Column(nullable = false, length = DbConst.DB_DEFAULT_MAX_LENGTH)
-    public String name;
+    private String name;
 
     @NonNull
     @ManyToOne(optional = false)
-    public User owner;
+    private User owner;
 }

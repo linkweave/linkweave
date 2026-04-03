@@ -53,6 +53,7 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
     @NonNull
     public List<Bookmark> findByCollection(@NonNull ID<Collection> collectionId) {
         return db.selectFrom(QBookmark.bookmark)
+            .leftJoin(QBookmark.bookmark.tags).fetchJoin()
             .where(QBookmark.bookmark.collection.id.eq(collectionId.getUUID()))
             .orderBy(QBookmark.bookmark.timestampErstellt.desc())
             .fetch();

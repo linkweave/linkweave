@@ -38,7 +38,7 @@ public class TagResource {
     public TagListJson list(@QueryParam("collectionId") @NotNull @NonNull ID<Collection> collectionId) {
         authorizationService.requireCollectionAccess(collectionId);
         return new TagListJson(
-            tagService.getTagsByCollection(collectionId).stream()
+            tagService.findByCollection(collectionId).stream()
                 .map(TagMapper::toJson)
                 .toList()
         );
