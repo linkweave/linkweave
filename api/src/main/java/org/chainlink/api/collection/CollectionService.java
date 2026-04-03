@@ -36,13 +36,15 @@ public class CollectionService {
         Collection collection = new Collection(DEFAULT_COLLECTION_NAME, user);
         collectionRepo.persist(collection);
 
-        CollectionAccess access = new CollectionAccess(
-            collection,
-            user,
-            CollectionRole.OWNER,
-            true
-        );
-        collectionAccessRepo.persist(access);
+        if (!collectionAccessRepo.existsByUser(user.getId())) {
+            CollectionAccess access = new CollectionAccess(
+                collection,
+                user,
+                CollectionRole.OWNER,
+                true
+            );
+            collectionAccessRepo.persist(access);
+        }
     }
 
     public CollectionInfoJson getCollectionInfoById(@NonNull ID<Collection> collectionID) {

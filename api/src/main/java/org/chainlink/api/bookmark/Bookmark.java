@@ -6,6 +6,10 @@ import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -23,7 +27,10 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 @Entity
-@Table()
+@Table(indexes = {
+    @Index(name = "ix_bookmark_collection_id", columnList = "collection_id, id"),
+    @Index(name = "ix_bookmark_folder_id", columnList = "folder_id, id"),
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -31,10 +38,12 @@ public class Bookmark extends AbstractEntity<Bookmark> {
 
     @NonNull
     @ManyToOne(optional = false)
+    @JoinColumn(foreignKey = @ForeignKey(name = "fk_bookmark_collection"), nullable = false)
     private Collection collection;
 
     @Nullable
     @ManyToOne(optional = true)
+    @JoinColumn(foreignKey = @ForeignKey(name = "fk_bookmark_folder"), nullable = true)
     private Folder folder;
 
     @NotBlank
@@ -51,7 +60,19 @@ public class Bookmark extends AbstractEntity<Bookmark> {
     @Column(nullable = true, length = DbConst.DB_TEXTAREA_MAX_LENGTH_5000)
     private String description;
 
-    @ManyToMany()
+    @ManyToMany
+    @JoinTable(name = "Bookmark_Tag",
+        joinColumns = @JoinColumn(
+            name = "bookmark_id",
+            foreignKey = @ForeignKey(name = "fk_bookmark_tag_bookmark")),
+        inverseJoinColumns = @JoinColumn(
+            name = "tag_id",
+            foreignKey = @ForeignKey(name = "fk_bookmark_tag_tag")),
+        indexes = {
+            @Index(name = "ix_bookmark_tag_bookmark_id", columnList = "bookmark_id, tag_id"),
+            @Index(name = "ix_bookmark_tag_tag_id", columnList = "tag_id, bookmark_id"),
+        }
+    )
     private Set<Tag> tags = new HashSet<>();
 
 }

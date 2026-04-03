@@ -4,7 +4,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -19,8 +21,8 @@ import org.jspecify.annotations.NonNull;
 @Entity
 @Table(
     indexes = {
-        @Index(name = "ix_collectionaccess_user", columnList = "user_id"),
-        @Index(name = "ix_collectionaccess_collection", columnList = "collection_id"),
+        @Index(name = "ix_collectionaccess_user_id", columnList = "user_id, id"),
+        @Index(name = "ix_collectionaccess_collection_id", columnList = "collection_id, id"),
         @Index(name = "ix_collectionaccess_user_default", columnList = "user_id, isDefault"),
     },
     uniqueConstraints = {
@@ -34,11 +36,13 @@ public class CollectionAccess extends AbstractEntity<CollectionAccess> {
     @NonNull
     @NotNull
     @ManyToOne(optional = false)
+    @JoinColumn(foreignKey = @ForeignKey(name = "fk_collectionaccess_collection"), nullable = false)
     public Collection collection;
 
     @NonNull
     @NotNull
     @ManyToOne(optional = false)
+    @JoinColumn(foreignKey = @ForeignKey(name = "fk_collectionaccess_user"), nullable = false)
     public User user;
 
     @NonNull

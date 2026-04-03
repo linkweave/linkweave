@@ -5,6 +5,9 @@ import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -19,13 +22,19 @@ import org.chainlink.infrastructure.db.DbConst;
 import org.jspecify.annotations.NonNull;
 
 @Entity
-@Table(uniqueConstraints = @UniqueConstraint(name = "uq_tag_name_collection", columnNames = {"name", "collection_id"}))
+@Table(
+    indexes = {
+        @Index(name = "ix_tag_collection_id", columnList = "collection_id, id"),
+    },
+    uniqueConstraints = @UniqueConstraint(name = "uq_tag_name_collection", columnNames = {"name", "collection_id"})
+)
 @NoArgsConstructor
 @AllArgsConstructor
 public class Tag extends AbstractEntity<Tag> {
 
     @NonNull
     @ManyToOne(optional = false)
+    @JoinColumn(foreignKey = @ForeignKey(name = "fk_tag_collection"), nullable = false)
     public Collection collection;
 
     @NotBlank

@@ -2,7 +2,9 @@ package org.chainlink.api.collection;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
@@ -17,11 +19,9 @@ import org.chainlink.infrastructure.db.DbConst;
 import org.jspecify.annotations.NonNull;
 
 @Entity
-@Table(
-    indexes = {
-        @Index(name = "ix_collection_owner", columnList = "owner_id"),
-    }
-)
+@Table(indexes = {
+    @Index(name = "ix_collection_owner_id", columnList = "owner_id, id"),
+})
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -35,5 +35,6 @@ public class Collection extends AbstractEntity<Collection> {
 
     @NonNull
     @ManyToOne(optional = false)
+    @JoinColumn(foreignKey = @ForeignKey(name = "fk_collection_owner"), nullable = false)
     private User owner;
 }
