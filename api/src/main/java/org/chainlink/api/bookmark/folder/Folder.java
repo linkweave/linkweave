@@ -11,7 +11,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.abstractentity.AbstractEntity;
 import org.chainlink.infrastructure.db.DbConst;
@@ -25,20 +27,22 @@ import org.jspecify.annotations.Nullable;
 })
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 public class Folder extends AbstractEntity<Folder> {
 
     @NonNull
     @ManyToOne(optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "fk_folder_collection"), nullable = false)
-    public Collection collection;
+    private Collection collection;
 
     @Nullable
     @ManyToOne(optional = true)
     @JoinColumn(foreignKey = @ForeignKey(name = "fk_folder_parent"), nullable = true)
-    public Folder parent;
+    private Folder parent;
 
     @NotBlank
     @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH)
     @Column(nullable = false, length = DbConst.DB_DEFAULT_MAX_LENGTH)
-    public String name;
+    private String name;
 }

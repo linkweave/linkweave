@@ -15,7 +15,9 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.abstractentity.AbstractEntity;
 import org.chainlink.infrastructure.db.DbConst;
@@ -30,23 +32,25 @@ import org.jspecify.annotations.NonNull;
 )
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 public class Tag extends AbstractEntity<Tag> {
 
     @NonNull
     @ManyToOne(optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "fk_tag_collection"), nullable = false)
-    public Collection collection;
+    private Collection collection;
 
     @NotBlank
     @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH)
     @Column(nullable = false, length = DbConst.DB_DEFAULT_MAX_LENGTH)
-    public String name;
+    private String name;
 
     @NotBlank
     @Size(max = 7)
     @Column(nullable = false, length = 7)
-    public String color;
+    private String color;
 
     @ManyToMany(mappedBy = "tags")
-    public Set<Bookmark> bookmarks = new HashSet<>();
+    private Set<Bookmark> bookmarks = new HashSet<>();
 }

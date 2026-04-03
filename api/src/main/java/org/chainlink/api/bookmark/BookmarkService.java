@@ -108,7 +108,7 @@ public class BookmarkService {
     }
 
     private void requireFolderBelongsToCollection(@NonNull Folder folder, @NonNull ID<Collection> collectionId) {
-        if (!folder.collection.getId().equals(collectionId)) {
+        if (!folder.getCollection().getId().equals(collectionId)) {
             throw new AppFailureException(
                 AppFailureMessage.internalError("Folder does not belong to the specified collection")
             );

@@ -47,10 +47,10 @@ class BookmarkResourceITest {
         collectionRepo.persist(collection);
 
         CollectionAccess access = new CollectionAccess();
-        access.collection = collection;
-        access.user = user;
-        access.role = CollectionRole.OWNER;
-        access.isDefault = true;
+        access.setCollection(collection);
+        access.setUser(user);
+        access.setRole(CollectionRole.OWNER);
+        access.setDefault(true);
         collectionAccessRepo.persist(access);
 
         return collection;
@@ -188,8 +188,8 @@ class BookmarkResourceITest {
         String collectionId = collection.getId().getUUID().toString();
 
         Folder folder = new Folder();
-        folder.collection = collection;
-        folder.name = "Test Folder";
+        folder.setCollection(collection);
+        folder.setName("Test Folder");
         folderRepo.persist(folder);
         String folderId = folder.getId().getUUID().toString();
 
@@ -217,9 +217,9 @@ class BookmarkResourceITest {
         String collectionId = collection.getId().getUUID().toString();
 
         Tag tag = new Tag();
-        tag.collection = collection;
-        tag.name = "Test Tag";
-        tag.color = "#FF0000";
+        tag.setCollection(collection);
+        tag.setName("Test Tag");
+        tag.setColor("#FF0000");
         tagRepo.persist(tag);
         String tagId = tag.getId().getUUID().toString();
 

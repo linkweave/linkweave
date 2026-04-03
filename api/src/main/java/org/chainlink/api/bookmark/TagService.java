@@ -46,10 +46,10 @@ public class TagService {
 
     @NonNull
     public Tag updateTag(@NonNull Tag tag, @NonNull TagSaveJson json) {
-        tag.collection = collectionRepo.referenceById(json.getCollectionId());
-        tag.name = json.getName();
+        tag.setCollection(collectionRepo.referenceById(json.getCollectionId()));
+        tag.setName(json.getName());
         if (json.getColor() != null) {
-            tag.color = json.getColor();
+            tag.setColor(json.getColor());
         }
         upsertTagAndFlush(tag);
         return tag;

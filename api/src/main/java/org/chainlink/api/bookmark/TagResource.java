@@ -66,7 +66,7 @@ public class TagResource {
 
         authorizationService.requireCollectionAccess(json.getCollectionId());
         Tag tag = tagService.getTag(tagId);
-        authorizationService.requireCollectionAccess(tag.collection.getId());
+        authorizationService.requireCollectionAccess(tag.getCollection().getId());
         Tag updated = tagService.updateTag(tag, json);
         return TagMapper.toJson(updated);
     }
@@ -77,7 +77,7 @@ public class TagResource {
         @PathParam("tagId") @NotNull @NonNull ID<Tag> tagId
     ) {
         Tag tag = tagService.getTag(tagId);
-        authorizationService.requireCollectionAccess(tag.collection.getId());
+        authorizationService.requireCollectionAccess(tag.getCollection().getId());
         tagService.removeTag(tagId);
     }
 }

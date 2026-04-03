@@ -55,8 +55,8 @@ class FolderRepoITest {
         Collection collection = createTestCollection();
 
         Folder testFolder = new Folder();
-        testFolder.collection = collection;
-        testFolder.name = "Test Folder";
+        testFolder.setCollection(collection);
+        testFolder.setName("Test Folder");
         folderRepo.persist(testFolder);
 
         var allFolders = folderRepo.findAll();
@@ -73,14 +73,14 @@ class FolderRepoITest {
         Collection collection = createTestCollection();
 
         Folder testFolder = new Folder();
-        testFolder.collection = collection;
-        testFolder.name = "Test Folder";
+        testFolder.setCollection(collection);
+        testFolder.setName("Test Folder");
         folderRepo.persist(testFolder);
 
         var foundFolder = folderRepo.findById(testFolder.getId());
 
         Assertions.assertThat(foundFolder).isPresent();
-        Assertions.assertThat(foundFolder.get().name).isEqualTo("Test Folder");
+        Assertions.assertThat(foundFolder.get().getName()).isEqualTo("Test Folder");
         Assertions.assertThat(foundFolder.get().getId()).isEqualTo(testFolder.getId());
     }
 
@@ -106,14 +106,14 @@ class FolderRepoITest {
         Collection collection = createTestCollection();
 
         Folder testFolder = new Folder();
-        testFolder.collection = collection;
-        testFolder.name = "Test Folder";
+        testFolder.setCollection(collection);
+        testFolder.setName("Test Folder");
         folderRepo.persist(testFolder);
 
         var foundFolder = folderRepo.getById(testFolder.getId());
 
         Assertions.assertThat(foundFolder).isNotNull();
-        Assertions.assertThat(foundFolder.name).isEqualTo("Test Folder");
+        Assertions.assertThat(foundFolder.getName()).isEqualTo("Test Folder");
         Assertions.assertThat(foundFolder.getId()).isEqualTo(testFolder.getId());
     }
 
@@ -126,20 +126,20 @@ class FolderRepoITest {
         Collection collection = createTestCollection();
 
         Folder folder1 = new Folder();
-        folder1.collection = collection;
-        folder1.name = "Folder 1";
+        folder1.setCollection(collection);
+        folder1.setName("Folder 1");
         folderRepo.persist(folder1);
 
         Folder folder2 = new Folder();
-        folder2.collection = collection;
-        folder2.name = "Folder 2";
+        folder2.setCollection(collection);
+        folder2.setName("Folder 2");
         folderRepo.persist(folder2);
 
         var allFolders = folderRepo.findAll();
 
         Assertions.assertThat(allFolders)
-            .anyMatch(f -> f.name.equals("Folder 1") && f.getId().equals(folder1.getId()))
-            .anyMatch(f -> f.name.equals("Folder 2") && f.getId().equals(folder2.getId()));
+            .anyMatch(f -> f.getName().equals("Folder 1") && f.getId().equals(folder1.getId()))
+            .anyMatch(f -> f.getName().equals("Folder 2") && f.getId().equals(folder2.getId()));
     }
 
     @Test
@@ -152,16 +152,16 @@ class FolderRepoITest {
         Collection collection = createTestCollection();
 
         Folder testFolder = new Folder();
-        testFolder.collection = collection;
-        testFolder.name = "Original Name";
+        testFolder.setCollection(collection);
+        testFolder.setName("Original Name");
         folderRepo.persist(testFolder);
 
         Folder foundFolder = folderRepo.getById(testFolder.getId());
-        foundFolder.name = "Updated Name";
+        foundFolder.setName("Updated Name");
 
         var updatedFolder = folderRepo.getById(testFolder.getId());
 
-        Assertions.assertThat(updatedFolder.name).isEqualTo("Updated Name");
+        Assertions.assertThat(updatedFolder.getName()).isEqualTo("Updated Name");
         Assertions.assertThat(updatedFolder.getId()).isEqualTo(testFolder.getId());
     }
 
@@ -174,8 +174,8 @@ class FolderRepoITest {
         Collection collection = createTestCollection();
 
         Folder testFolder = new Folder();
-        testFolder.collection = collection;
-        testFolder.name = "Test Folder";
+        testFolder.setCollection(collection);
+        testFolder.setName("Test Folder");
         folderRepo.persist(testFolder);
 
         var folderId = testFolder.getId();
@@ -195,19 +195,19 @@ class FolderRepoITest {
         Collection collection = createTestCollection();
 
         Folder folder1 = new Folder();
-        folder1.collection = collection;
-        folder1.name = "Folder 1";
+        folder1.setCollection(collection);
+        folder1.setName("Folder 1");
         folderRepo.persist(folder1);
 
         Folder folder2 = new Folder();
-        folder2.collection = collection;
-        folder2.name = "Folder 2";
+        folder2.setCollection(collection);
+        folder2.setName("Folder 2");
         folderRepo.persist(folder2);
 
         var folders = folderRepo.findByCollection(collection.getId());
 
         Assertions.assertThat(folders)
-            .anyMatch(f -> f.name.equals("Folder 1") && f.getId().equals(folder1.getId()))
-            .anyMatch(f -> f.name.equals("Folder 2") && f.getId().equals(folder2.getId()));
+            .anyMatch(f -> f.getName().equals("Folder 1") && f.getId().equals(folder1.getId()))
+            .anyMatch(f -> f.getName().equals("Folder 2") && f.getId().equals(folder2.getId()));
     }
 }

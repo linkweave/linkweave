@@ -12,7 +12,9 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.chainlink.api.shared.abstractentity.AbstractEntity;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.infrastructure.db.DbConst;
@@ -31,27 +33,29 @@ import org.jspecify.annotations.NonNull;
 )
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 public class CollectionAccess extends AbstractEntity<CollectionAccess> {
 
     @NonNull
     @NotNull
     @ManyToOne(optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "fk_collectionaccess_collection"), nullable = false)
-    public Collection collection;
+    private Collection collection;
 
     @NonNull
     @NotNull
     @ManyToOne(optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "fk_collectionaccess_user"), nullable = false)
-    public User user;
+    private User user;
 
     @NonNull
     @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = DbConst.DB_ENUM_LENGTH)
-    public CollectionRole role;
+    private CollectionRole role;
 
     @NotNull
     @Column(nullable = false)
-    public boolean isDefault = false;
+    private boolean isDefault = false;
 }

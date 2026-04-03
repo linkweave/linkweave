@@ -17,9 +17,9 @@ public class FolderMapper {
             folder.getId(),
             EntityInfoJson.fromEntity(folder),
             new FolderSaveJson(
-                folder.collection.getId(),
-                folder.parent != null ? folder.parent.getId() : null,
-                folder.name
+                folder.getCollection().getId(),
+                folder.getParent() != null ? folder.getParent().getId() : null,
+                folder.getName()
             )
         );
     }

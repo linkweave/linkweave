@@ -44,10 +44,10 @@ class FolderResourceITest {
         collectionRepo.persist(collection);
 
         CollectionAccess access = new CollectionAccess();
-        access.collection = collection;
-        access.user = user;
-        access.role = CollectionRole.OWNER;
-        access.isDefault = true;
+        access.setCollection(collection);
+        access.setUser(user);
+        access.setRole(CollectionRole.OWNER);
+        access.setDefault(true);
         collectionAccessRepo.persist(access);
 
         return collection;
@@ -102,8 +102,8 @@ class FolderResourceITest {
         String collectionId = collection.getId().getUUID().toString();
 
         Folder parent = new Folder();
-        parent.collection = collection;
-        parent.name = "Parent";
+        parent.setCollection(collection);
+        parent.setName("Parent");
         folderRepo.persist(parent);
         String parentId = parent.getId().getUUID().toString();
 

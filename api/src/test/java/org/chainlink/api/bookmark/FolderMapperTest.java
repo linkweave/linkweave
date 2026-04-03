@@ -32,8 +32,8 @@ class FolderMapperTest {
         Collection collection = createTestCollection();
 
         Folder folder = new Folder();
-        folder.collection = collection;
-        folder.name = "Test Folder";
+        folder.setCollection(collection);
+        folder.setName("Test Folder");
         folder.setTimestampErstellt(OffsetDateTime.now());
         folder.setTimestampMutiert(OffsetDateTime.now());
         folder.setUserErstellt("test@example.com");
@@ -54,17 +54,17 @@ class FolderMapperTest {
         Collection collection = createTestCollection();
 
         Folder parent = new Folder();
-        parent.collection = collection;
-        parent.name = "Parent Folder";
+        parent.setCollection(collection);
+        parent.setName("Parent Folder");
         parent.setTimestampErstellt(OffsetDateTime.now());
         parent.setTimestampMutiert(OffsetDateTime.now());
         parent.setUserErstellt("test@example.com");
         parent.setUserMutiert("test@example.com");
 
         Folder child = new Folder();
-        child.collection = collection;
-        child.name = "Child Folder";
-        child.parent = parent;
+        child.setCollection(collection);
+        child.setName("Child Folder");
+        child.setParent(parent);
         child.setTimestampErstellt(OffsetDateTime.now());
         child.setTimestampMutiert(OffsetDateTime.now());
         child.setUserErstellt("test@example.com");

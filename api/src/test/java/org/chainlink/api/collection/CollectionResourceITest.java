@@ -33,10 +33,10 @@ class CollectionResourceITest {
         collectionRepo.persist(collection);
 
         CollectionAccess access = new CollectionAccess();
-        access.collection = collection;
-        access.user = user;
-        access.role = CollectionRole.OWNER;
-        access.isDefault = true;
+        access.setCollection(collection);
+        access.setUser(user);
+        access.setRole(CollectionRole.OWNER);
+        access.setDefault(true);
         collectionAccessRepo.persist(access);
 
         return collection;

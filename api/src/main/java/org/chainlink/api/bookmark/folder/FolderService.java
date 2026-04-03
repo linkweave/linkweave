@@ -30,14 +30,14 @@ public class FolderService {
         ID<Collection> collectionId = json.getCollectionId();
 
         Folder folder = new Folder();
-        folder.collection = collectionRepo.referenceById(collectionId);
-        folder.name = json.getName();
+        folder.setCollection(collectionRepo.referenceById(collectionId));
+        folder.setName(json.getName());
 
         ID<Folder> parentId = json.getParentId();
         if (parentId != null) {
             Folder parent = folderRepo.getById(parentId);
             requireFolderBelongsToCollection(parent, collectionId);
-            folder.parent = parent;
+            folder.setParent(parent);
         }
 
         folderRepo.persist(folder);
@@ -64,13 +64,13 @@ public class FolderService {
             Folder parent = folderRepo.getById(parentId);
             requireFolderBelongsToCollection(parent, collectionId);
             requireNotAncestor(id, parent);
-            folder.parent = parent;
+            folder.setParent(parent);
         } else {
-            folder.parent = null;
+            folder.setParent(null);
         }
 
-        folder.collection = collectionRepo.referenceById(collectionId);
-        folder.name = json.getName();
+        folder.setCollection(collectionRepo.referenceById(collectionId));
+        folder.setName(json.getName());
 
         folderRepo.persist(folder);
         return folder;
@@ -84,9 +84,9 @@ public class FolderService {
             Folder parent = folderRepo.getById(newParentId);
             requireFolderBelongsToCollection(parent, collectionId);
             requireNotAncestor(id, parent);
-            folder.parent = parent;
+            folder.setParent(parent);
         } else {
-            folder.parent = null;
+            folder.setParent(null);
         }
 
         folderRepo.persist(folder);
@@ -98,7 +98,7 @@ public class FolderService {
     }
 
     private void requireFolderBelongsToCollection(@NonNull Folder folder, @NonNull ID<Collection> collectionId) {
-        if (!folder.collection.getId().equals(collectionId)) {
+        if (!folder.getCollection().getId().equals(collectionId)) {
             throw new AppFailureException(
                 AppFailureMessage.internalError("Folder does not belong to the specified collection")
             );
@@ -113,7 +113,7 @@ public class FolderService {
                     AppFailureMessage.internalError("Cannot move a folder into itself or one of its descendants")
                 );
             }
-            current = current.parent;
+            current = current.getParent();
         }
     }
 }
