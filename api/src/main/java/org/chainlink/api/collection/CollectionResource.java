@@ -21,8 +21,8 @@ public class CollectionResource {
 
     @GET
     @Path("{id}")
-    public CollectionInfoJson getCollectionById(@PathParam("id") ID<Collection> id) {
+    public CollectionInfoJson getCollectionInfoById(@PathParam("id") ID<Collection> id) {
         authorizationService.requireCollectionAccess(id);
-        return collectionService.getCollectionById(id);
+        return collectionService.getCollectionInfoById(id);
     }
 }

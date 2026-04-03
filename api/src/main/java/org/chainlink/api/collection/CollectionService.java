@@ -45,7 +45,7 @@ public class CollectionService {
         collectionAccessRepo.persist(access);
     }
 
-    public CollectionInfoJson getCollectionById(@NonNull ID<Collection> collectionID) {
+    public CollectionInfoJson getCollectionInfoById(@NonNull ID<Collection> collectionID) {
 
         List<Bookmark> bookmarks = bookmarkService.getBookmarksByCollection(collectionID);
         Collection collection = collectionRepo.getById(collectionID);
