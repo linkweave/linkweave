@@ -6,7 +6,7 @@
 **Use Case Name:** Create Tag   
 **Primary Actor:** User   
 **Goal:** Create a new tag to label and categorize bookmarks.   
-**Status:** Draft   
+**Status:** Done   
 
 ## Traceability
 

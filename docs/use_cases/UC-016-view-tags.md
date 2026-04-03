@@ -6,7 +6,7 @@
 **Use Case Name:** View Tags   
 **Primary Actor:** User   
 **Goal:** See all tags in a collection to understand available categories.   
-**Status:** Draft   
+**Status:** Done   
 
 ## Traceability
 

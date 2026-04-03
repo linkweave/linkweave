@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Plus, Pencil, Trash2, X } from 'lucide-vue-next'
 import { useTagStore } from '@/stores/tag'
+import { useBookmarkStore } from '@/stores/bookmark'
 import CreateTagDialog from './CreateTagDialog.vue'
 import EditTagDialog from './EditTagDialog.vue'
 import { ConfirmDialog } from '@/components/ui'
@@ -10,6 +11,22 @@ import type { TagJson } from '@/api/generated'
 
 const { t } = useI18n()
 const tagStore = useTagStore()
+const bookmarkStore = useBookmarkStore()
+
+const bookmarkCountByTag = computed(() => {
+  const counts = new Map<string, number>()
+  for (const tag of tagStore.tags) {
+    counts.set(tag.id, 0)
+  }
+  for (const bookmark of bookmarkStore.bookmarks) {
+    if (bookmark.data.tagIds) {
+      for (const tagId of bookmark.data.tagIds) {
+        counts.set(tagId, (counts.get(tagId) ?? 0) + 1)
+      }
+    }
+  }
+  return counts
+})
 
 interface Props {
   className?: string
@@ -76,6 +93,7 @@ async function confirmDelete() {
           :style="{ backgroundColor: tag.data.color ?? '#64748b' }"
         />
         <span class="truncate flex-1">{{ tag.data.name }}</span>
+        <span v-if="(bookmarkCountByTag.get(tag.id) ?? 0) > 0" class="text-xs opacity-40 shrink-0">{{ bookmarkCountByTag.get(tag.id) }}</span>
         <span class="inline-flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             class="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-primary hover:text-primary-foreground"

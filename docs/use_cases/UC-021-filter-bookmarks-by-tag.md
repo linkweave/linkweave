@@ -6,7 +6,7 @@
 **Use Case Name:** Filter Bookmarks by Tag   
 **Primary Actor:** User   
 **Goal:** View only bookmarks that have a specific tag applied.   
-**Status:** Draft   
+**Status:** Done   
 
 ## Traceability
 

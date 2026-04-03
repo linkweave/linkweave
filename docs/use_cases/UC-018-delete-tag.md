@@ -6,7 +6,7 @@
 **Use Case Name:** Delete Tag   
 **Primary Actor:** User   
 **Goal:** Remove a tag that is no longer needed from the collection.   
-**Status:** Draft   
+**Status:** Done   
 
 ## Traceability
 

@@ -6,7 +6,7 @@
 **Use Case Name:** Edit Tag   
 **Primary Actor:** User   
 **Goal:** Change the name and/or color of an existing tag.   
-**Status:** Draft   
+**Status:** Done   
 
 ## Traceability
 
