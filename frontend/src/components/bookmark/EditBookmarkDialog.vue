@@ -4,11 +4,13 @@ import { useI18n } from 'vue-i18n'
 import { DialogCl, ButtonCl } from '@/components/ui'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useFolderStore } from '@/stores/folder'
+import { useTagStore } from '@/stores/tag'
 import type { BookmarkJson, BookmarkSaveJson } from '@/api/generated'
 
 const { t } = useI18n()
 const bookmarkStore = useBookmarkStore()
 const folderStore = useFolderStore()
+const tagStore = useTagStore()
 
 interface Props {
   bookmark: BookmarkJson | null
@@ -26,6 +28,7 @@ const url = ref('')
 const title = ref('')
 const description = ref('')
 const selectedFolderId = ref<string | undefined>(undefined)
+const selectedTagIds = ref<Set<string>>(new Set())
 const error = ref('')
 const loading = ref(false)
 
@@ -39,6 +42,7 @@ watch(() => props.open, (val) => {
     title.value = props.bookmark.data.title
     description.value = props.bookmark.data.description ?? ''
     selectedFolderId.value = props.bookmark.data.folderId ?? undefined
+    selectedTagIds.value = props.bookmark.data.tagIds ? new Set(props.bookmark.data.tagIds) : new Set()
     error.value = ''
   }
 })
@@ -50,6 +54,16 @@ function isValidUrl(urlString: string): boolean {
   } catch {
     return false
   }
+}
+
+function toggleTagId(tagId: string) {
+  const next = new Set(selectedTagIds.value)
+  if (next.has(tagId)) {
+    next.delete(tagId)
+  } else {
+    next.add(tagId)
+  }
+  selectedTagIds.value = next
 }
 
 async function handleSubmit() {
@@ -79,7 +93,7 @@ async function handleSubmit() {
     url: url.value.trim(),
     folderId: selectedFolderId.value,
     description: description.value.trim() || undefined,
-    tagIds: props.bookmark.data.tagIds,
+    tagIds: selectedTagIds.value.size > 0 ? selectedTagIds.value : undefined,
   }
 
   try {
@@ -150,6 +164,24 @@ async function handleSubmit() {
             {{ opt.name }}
           </option>
         </select>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-sm font-medium">{{ t('bookmark.tags') }}</label>
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="tag in tagStore.tags"
+            :key="tag.id"
+            type="button"
+            class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs transition-opacity"
+            :class="selectedTagIds.has(tag.id) ? 'opacity-100' : 'opacity-40'"
+            :style="{ backgroundColor: tag.data.color ?? '#64748b', color: 'white' }"
+            @click="toggleTagId(tag.id)"
+          >
+            {{ tag.data.name }}
+          </button>
+        </div>
+        <p v-if="tagStore.tags.length === 0" class="text-xs text-muted-foreground">{{ t('tag.none') }}</p>
       </div>
 
       <div class="flex justify-end gap-2">

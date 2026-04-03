@@ -60,7 +60,19 @@
     "deleteConfirm": "Are you sure you want to delete this bookmark? This action cannot be undone."
   },
   "tag": {
-    "none": "No tags yet"
+    "none": "No tags yet",
+    "createShort": "New tag",
+    "createTitle": "Create Tag",
+    "editTitle": "Edit Tag",
+    "name": "Tag Name",
+    "namePlaceholder": "Enter tag name",
+    "nameRequired": "Tag name is required.",
+    "color": "Color",
+    "createError": "Failed to create tag.",
+    "updateError": "Failed to update tag.",
+    "deleteTitle": "Delete Tag",
+    "deleteConfirm": "Are you sure you want to delete this tag? The tag will be removed from all bookmarks.",
+    "clearFilter": "Clear filter"
   },
   "bookmarkList": {
     "empty": "No bookmarks yet. Click \"Add Bookmark\" to get started.",

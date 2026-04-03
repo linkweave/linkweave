@@ -30,6 +30,10 @@ public abstract class BaseRepo<T extends AbstractEntity<T>> {
     public void persist(@NonNull T entity) {
         db.persist(entity);
     }
+    public void persistAndFlush(@NonNull T entity) {
+        db.persist(entity);
+        db.flush();
+    }
 
     @NonNull
     public final <E extends AbstractEntity<T>> E persistWithOptimisticLocking(

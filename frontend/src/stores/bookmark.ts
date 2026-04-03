@@ -4,6 +4,7 @@ import { BookmarkResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import type { BookmarkJson, BookmarkSaveJson, BookmarkMoveJson } from '@/api/generated'
 import { useFolderStore } from '@/stores/folder'
+import { useTagStore } from '@/stores/tag'
 
 const bookmarkApi = new BookmarkResourceApi(config)
 
@@ -13,10 +14,25 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 
   const filteredBookmarks = computed(() => {
     const folderStore = useFolderStore()
-    if (folderStore.selectedFolderId === null) {
-      return bookmarks.value
+    const tagStore = useTagStore()
+    let result = bookmarks.value
+
+    if (folderStore.selectedFolderId !== null) {
+      result = result.filter(b => b.data.folderId === folderStore.selectedFolderId)
     }
-    return bookmarks.value.filter(b => b.data.folderId === folderStore.selectedFolderId)
+
+    if (tagStore.selectedTagIds.size > 0) {
+      result = result.filter(b => {
+        const tagIds = b.data.tagIds
+        if (!tagIds) return false
+        for (const selectedId of tagStore.selectedTagIds) {
+          if (tagIds.has(selectedId)) return true
+        }
+        return false
+      })
+    }
+
+    return result
   })
 
   async function fetchBookmarks(collectionId: string) {

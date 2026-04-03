@@ -19,7 +19,7 @@
   "sidebar": {
     "bookmarks": "Lesezeichen",
     "allBookmarks": "Alle Lesezeichen",
-    "tags": "Schlagworte",
+    "tags": "Tags",
     "newFolder": "Neuer Ordner"
   },
   "folder": {
@@ -51,7 +51,7 @@
     "descriptionPlaceholder": "Optionale Beschreibung...",
     "folder": "Ordner",
     "noFolder": "Kein Ordner (nicht zugeordnet)",
-    "tags": "Schlagworte",
+    "tags": "Tags",
     "createError": "Lesezeichen konnte nicht erstellt werden.",
     "updateError": "Lesezeichen konnte nicht aktualisiert werden.",
     "moveError": "Lesezeichen konnte nicht verschoben werden.",
@@ -60,7 +60,19 @@
     "deleteConfirm": "Möchten Sie dieses Lesezeichen wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
   },
   "tag": {
-    "none": "Noch keine Schlagworte"
+    "none": "Noch keine Tags",
+    "createShort": "Neuer Tag",
+    "createTitle": "Tag erstellen",
+    "editTitle": "Tag bearbeiten",
+    "name": "Tag-Name",
+    "namePlaceholder": "Tag-Namen eingeben",
+    "nameRequired": "Tag-Name ist erforderlich.",
+    "color": "Farbe",
+    "createError": "Tag konnte nicht erstellt werden.",
+    "updateError": "Tag konnte nicht aktualisiert werden.",
+    "deleteTitle": "Tag löschen",
+    "deleteConfirm": "Möchten Sie diesen Tag wirklich löschen? Er wird von allen Lesezeichen entfernt.",
+    "clearFilter": "Filter zurücksetzen"
   },
   "bookmarkList": {
     "empty": "Noch keine Lesezeichen. Klicken Sie auf 'Lesezeichen hinzufügen', um zu beginnen.",

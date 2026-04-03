@@ -71,3 +71,4 @@ export function BookmarkMoveJsonToJSONTyped(value?: BookmarkMoveJson | null, ign
         'folderId': value['folderId'],
     };
 }
+
