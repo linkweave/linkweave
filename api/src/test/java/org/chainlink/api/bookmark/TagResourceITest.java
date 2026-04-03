@@ -1,18 +1,14 @@
 package org.chainlink.api.bookmark;
 
-import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
-import org.chainlink.api.benutzer.UserRepo;
 import org.chainlink.api.collection.Collection;
-import org.chainlink.api.collection.CollectionAccess;
 import org.chainlink.api.collection.CollectionAccessRepo;
 import org.chainlink.api.collection.CollectionRepo;
-import org.chainlink.api.collection.CollectionRole;
-import org.chainlink.api.shared.user.User;
+import org.chainlink.api.testutil.fixture.FixtureService;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -23,31 +19,9 @@ import static org.hamcrest.Matchers.*;
 @QuarkusTest
 class TagResourceITest {
 
-    @Inject
-    CollectionRepo collectionRepo;
 
     @Inject
-    CollectionAccessRepo collectionAccessRepo;
-
-    @Inject
-    UserRepo userRepo;
-
-    private Collection createTestCollection() {
-        User user = userRepo.findByEmail(EmailAddress.fromString("test@example.com")).orElseThrow();
-        Collection collection = new Collection();
-        collection.setName("Test Collection");
-        collection.setOwner(user);
-        collectionRepo.persist(collection);
-
-        CollectionAccess access = new CollectionAccess();
-        access.setCollection(collection);
-        access.setUser(user);
-        access.setRole(CollectionRole.OWNER);
-        access.setDefault(true);
-        collectionAccessRepo.persist(access);
-
-        return collection;
-    }
+    FixtureService fixtureService;
 
     @Test
     void shouldReturn401_whenGetTagsNotAuthenticated() {
@@ -61,7 +35,7 @@ class TagResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturnEmptyList_whenCollectionHasNoTags() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         RestAssured.given()
             .queryParam("collectionId", collection.getId().getUUID().toString())
             .get("/tags")
@@ -73,7 +47,7 @@ class TagResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldCreateTag_withAutoAssignedColor() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
         String body = """
@@ -94,7 +68,7 @@ class TagResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldCreateTag_withProvidedColor() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
         String body = """
@@ -113,7 +87,7 @@ class TagResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldRejectDuplicateTagName_withinSameCollection() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
         String body = """
@@ -133,8 +107,8 @@ class TagResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldAllowSameTagName_inDifferentCollections() {
-        Collection collection1 = createTestCollection();
-        Collection collection2 = createTestCollection();
+        Collection collection1 = fixtureService.createTestCollection();
+        Collection collection2 = fixtureService.createTestCollection();
 
         String body1 = """
             {"collectionId":"%s","name":"Same Name"}
@@ -154,7 +128,7 @@ class TagResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturnTags_forCollection() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
         RestAssured.given().contentType(ContentType.JSON)
@@ -175,7 +149,7 @@ class TagResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldUpdateTagName() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
         String createBody = """
@@ -206,7 +180,7 @@ class TagResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldUpdateTagColor() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
         String createBody = """
@@ -237,7 +211,7 @@ class TagResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldDeleteTag() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
         String createBody = """
@@ -268,7 +242,7 @@ class TagResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldDeleteTagAndPreserveBookmarks() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
         String tagId = RestAssured.given().contentType(ContentType.JSON)
@@ -305,7 +279,7 @@ class TagResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldAutoAssignColors_fromPalette() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
         String color1 = RestAssured.given().contentType(ContentType.JSON)

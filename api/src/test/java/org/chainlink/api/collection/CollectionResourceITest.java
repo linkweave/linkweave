@@ -1,12 +1,10 @@
 package org.chainlink.api.collection;
 
-import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
 import jakarta.inject.Inject;
-import org.chainlink.api.benutzer.UserRepo;
-import org.chainlink.api.shared.user.User;
+import org.chainlink.api.testutil.fixture.FixtureService;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -23,24 +21,7 @@ class CollectionResourceITest {
     CollectionAccessRepo collectionAccessRepo;
 
     @Inject
-    UserRepo userRepo;
-
-    private Collection createTestCollection() {
-        User user = userRepo.findByEmail(EmailAddress.fromString("test@example.com")).orElseThrow();
-        Collection collection = new Collection();
-        collection.setName("Test Collection");
-        collection.setOwner(user);
-        collectionRepo.persist(collection);
-
-        CollectionAccess access = new CollectionAccess();
-        access.setCollection(collection);
-        access.setUser(user);
-        access.setRole(CollectionRole.OWNER);
-        access.setDefault(true);
-        collectionAccessRepo.persist(access);
-
-        return collection;
-    }
+    FixtureService fixtureService;
 
     @Test
     void shouldReturn401_whenNotAuthenticated() {
@@ -70,7 +51,7 @@ class CollectionResourceITest {
         roles = {"BOOKMARK_READ"}
     )
     void shouldReturnCollectionInfo_whenUserHasAccess() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
 
         RestAssured.given()
             .pathParam("id", collection.getId().getUUID().toString())

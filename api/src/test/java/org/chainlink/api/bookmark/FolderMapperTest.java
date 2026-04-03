@@ -1,43 +1,38 @@
 package org.chainlink.api.bookmark;
 
-import java.time.OffsetDateTime;
-
 import org.assertj.core.api.Assertions;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.bookmark.folder.FolderMapper;
 import org.chainlink.api.collection.Collection;
-import org.chainlink.api.shared.user.User;
+import org.chainlink.api.testutil.EntityTestHelper;
+import org.chainlink.api.testutil.builder.CollectionBuilder;
+import org.chainlink.api.testutil.builder.FolderBuilder;
+import org.chainlink.api.testutil.builder.UserBuilder;
 import org.junit.jupiter.api.Test;
 
 class FolderMapperTest {
 
     private Collection createTestCollection() {
-        User owner = new User();
-        owner.setEmail(ch.dvbern.dvbstarter.types.emailaddress.EmailAddress.fromString("test@example.com"));
-        owner.setNachname("User");
-        owner.setVorname("Test");
-
-        Collection collection = new Collection();
-        collection.setName("Test Collection");
-        collection.setOwner(owner);
-        collection.setTimestampErstellt(OffsetDateTime.now());
-        collection.setTimestampMutiert(OffsetDateTime.now());
-        collection.setUserErstellt("test@example.com");
-        collection.setUserMutiert("test@example.com");
-        return collection;
+        Collection collection = CollectionBuilder.build(b -> b
+            .withOwner(UserBuilder.build(u -> u
+                .withEmail("test@example.com")
+                .withVorname("Test")
+                .withNachname("User")
+            ))
+            .withName("Test Collection")
+        );
+        return EntityTestHelper.initEntityInfo(collection);
     }
 
     @Test
     void toJson_shouldMapFolderWithoutParent() {
         Collection collection = createTestCollection();
 
-        Folder folder = new Folder();
-        folder.setCollection(collection);
-        folder.setName("Test Folder");
-        folder.setTimestampErstellt(OffsetDateTime.now());
-        folder.setTimestampMutiert(OffsetDateTime.now());
-        folder.setUserErstellt("test@example.com");
-        folder.setUserMutiert("test@example.com");
+        Folder folder = FolderBuilder.build(b -> b
+            .withCollection(collection)
+            .withName("Test Folder")
+        );
+        EntityTestHelper.initEntityInfo(folder);
 
         var result = FolderMapper.toJson(folder);
 
@@ -53,22 +48,18 @@ class FolderMapperTest {
     void toJson_shouldMapFolderWithParent() {
         Collection collection = createTestCollection();
 
-        Folder parent = new Folder();
-        parent.setCollection(collection);
-        parent.setName("Parent Folder");
-        parent.setTimestampErstellt(OffsetDateTime.now());
-        parent.setTimestampMutiert(OffsetDateTime.now());
-        parent.setUserErstellt("test@example.com");
-        parent.setUserMutiert("test@example.com");
+        Folder parent = FolderBuilder.build(b -> b
+            .withCollection(collection)
+            .withName("Parent Folder")
+        );
+        EntityTestHelper.initEntityInfo(parent);
 
-        Folder child = new Folder();
-        child.setCollection(collection);
-        child.setName("Child Folder");
-        child.setParent(parent);
-        child.setTimestampErstellt(OffsetDateTime.now());
-        child.setTimestampMutiert(OffsetDateTime.now());
-        child.setUserErstellt("test@example.com");
-        child.setUserMutiert("test@example.com");
+        Folder child = FolderBuilder.build(b -> b
+            .withCollection(collection)
+            .withName("Child Folder")
+            .withParent(parent)
+        );
+        EntityTestHelper.initEntityInfo(child);
 
         var result = FolderMapper.toJson(child);
 

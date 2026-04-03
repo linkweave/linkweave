@@ -1,19 +1,16 @@
 package org.chainlink.api.bookmark;
 
-import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
-import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.assertj.core.api.Assertions;
-import org.chainlink.api.benutzer.UserRepo;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.bookmark.folder.FolderRepo;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.collection.CollectionRepo;
-import org.chainlink.api.shared.user.User;
 import org.chainlink.infrastructure.db.DatabaseService;
+import org.chainlink.api.testutil.fixture.FixtureService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -23,11 +20,9 @@ class FolderRepoITest {
     @Inject
     FolderRepo folderRepo;
 
-    @Inject
-    CollectionRepo collectionRepo;
 
     @Inject
-    UserRepo userRepo;
+    FixtureService fixtureService;
 
     @Inject
     DatabaseService databaseService;
@@ -37,27 +32,18 @@ class FolderRepoITest {
         databaseService.resetDatabase();
     }
 
-    private Collection createTestCollection() {
-        User user = userRepo.findByEmail(EmailAddress.fromString("test@example.com")).orElseThrow();
-        Collection collection = new Collection();
-        collection.setName("Test Collection");
-        collection.setOwner(user);
-        collectionRepo.persist(collection);
-        return collection;
-    }
-
     @Test
     @TestSecurity(
         user = "test@example.com",
         roles = { "BOOKMARK_WRITE" }
     )
     void saveFolder_shouldSaveFolder() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
 
-        Folder testFolder = new Folder();
-        testFolder.setCollection(collection);
-        testFolder.setName("Test Folder");
-        folderRepo.persist(testFolder);
+        Folder testFolder = fixtureService.persistFolder(b -> b
+            .withCollection(collection)
+            .withName("Test Folder")
+        );
 
         var allFolders = folderRepo.findAll();
         Assertions.assertThat(allFolders).anyMatch(f -> f.getId().equals(testFolder.getId()));
@@ -70,12 +56,12 @@ class FolderRepoITest {
         roles = { "BOOKMARK_WRITE" }
     )
     void findById_shouldReturnFolder_whenFolderExists() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
 
-        Folder testFolder = new Folder();
-        testFolder.setCollection(collection);
-        testFolder.setName("Test Folder");
-        folderRepo.persist(testFolder);
+        Folder testFolder = fixtureService.persistFolder(b -> b
+            .withCollection(collection)
+            .withName("Test Folder")
+        );
 
         var foundFolder = folderRepo.findById(testFolder.getId());
 
@@ -90,7 +76,7 @@ class FolderRepoITest {
         roles = { "BOOKMARK_WRITE" }
     )
     void findById_shouldReturnEmpty_whenFolderDoesNotExist() {
-        var nonExistentId = ID.of(java.util.UUID.randomUUID(), Folder.class);
+        var nonExistentId = ch.dvbern.dvbstarter.types.id.ID.of(java.util.UUID.randomUUID(), Folder.class);
 
         var foundFolder = folderRepo.findById(nonExistentId);
 
@@ -103,12 +89,12 @@ class FolderRepoITest {
         roles = { "BOOKMARK_WRITE" }
     )
     void getById_shouldReturnFolder_whenFolderExists() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
 
-        Folder testFolder = new Folder();
-        testFolder.setCollection(collection);
-        testFolder.setName("Test Folder");
-        folderRepo.persist(testFolder);
+        Folder testFolder = fixtureService.persistFolder(b -> b
+            .withCollection(collection)
+            .withName("Test Folder")
+        );
 
         var foundFolder = folderRepo.getById(testFolder.getId());
 
@@ -123,17 +109,17 @@ class FolderRepoITest {
         roles = { "BOOKMARK_WRITE" }
     )
     void findAll_shouldReturnAllFolders() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
 
-        Folder folder1 = new Folder();
-        folder1.setCollection(collection);
-        folder1.setName("Folder 1");
-        folderRepo.persist(folder1);
+        Folder folder1 = fixtureService.persistFolder(b -> b
+            .withCollection(collection)
+            .withName("Folder 1")
+        );
 
-        Folder folder2 = new Folder();
-        folder2.setCollection(collection);
-        folder2.setName("Folder 2");
-        folderRepo.persist(folder2);
+        Folder folder2 = fixtureService.persistFolder(b -> b
+            .withCollection(collection)
+            .withName("Folder 2")
+        );
 
         var allFolders = folderRepo.findAll();
 
@@ -149,12 +135,12 @@ class FolderRepoITest {
     )
     @Transactional
     void updateFolder_shouldUpdateFolder() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
 
-        Folder testFolder = new Folder();
-        testFolder.setCollection(collection);
-        testFolder.setName("Original Name");
-        folderRepo.persist(testFolder);
+        Folder testFolder = fixtureService.persistFolder(b -> b
+            .withCollection(collection)
+            .withName("Original Name")
+        );
 
         Folder foundFolder = folderRepo.getById(testFolder.getId());
         foundFolder.setName("Updated Name");
@@ -171,12 +157,12 @@ class FolderRepoITest {
         roles = { "BOOKMARK_WRITE" }
     )
     void deleteFolder_shouldRemoveFolder() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
 
-        Folder testFolder = new Folder();
-        testFolder.setCollection(collection);
-        testFolder.setName("Test Folder");
-        folderRepo.persist(testFolder);
+        Folder testFolder = fixtureService.persistFolder(b -> b
+            .withCollection(collection)
+            .withName("Test Folder")
+        );
 
         var folderId = testFolder.getId();
 
@@ -192,17 +178,17 @@ class FolderRepoITest {
         roles = { "BOOKMARK_WRITE" }
     )
     void findByCollection_shouldReturnFoldersForCollection() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
 
-        Folder folder1 = new Folder();
-        folder1.setCollection(collection);
-        folder1.setName("Folder 1");
-        folderRepo.persist(folder1);
+        Folder folder1 = fixtureService.persistFolder(b -> b
+            .withCollection(collection)
+            .withName("Folder 1")
+        );
 
-        Folder folder2 = new Folder();
-        folder2.setCollection(collection);
-        folder2.setName("Folder 2");
-        folderRepo.persist(folder2);
+        Folder folder2 = fixtureService.persistFolder(b -> b
+            .withCollection(collection)
+            .withName("Folder 2")
+        );
 
         var folders = folderRepo.findByCollection(collection.getId());
 

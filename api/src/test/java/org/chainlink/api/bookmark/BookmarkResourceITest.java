@@ -1,23 +1,17 @@
 package org.chainlink.api.bookmark;
 
-import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
-import org.chainlink.api.benutzer.UserRepo;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.bookmark.folder.FolderRepo;
 import org.chainlink.api.collection.Collection;
-import org.chainlink.api.collection.CollectionAccess;
 import org.chainlink.api.collection.CollectionAccessRepo;
 import org.chainlink.api.collection.CollectionRepo;
-import org.chainlink.api.collection.CollectionRole;
-import org.chainlink.api.shared.user.User;
+import org.chainlink.api.testutil.fixture.FixtureService;
 import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
 
@@ -31,35 +25,18 @@ class BookmarkResourceITest {
     CollectionAccessRepo collectionAccessRepo;
 
     @Inject
-    UserRepo userRepo;
-
-    @Inject
     FolderRepo folderRepo;
 
     @Inject
     TagRepo tagRepo;
 
-    private Collection createTestCollection() {
-        User user = userRepo.findByEmail(EmailAddress.fromString("test@example.com")).orElseThrow();
-        Collection collection = new Collection();
-        collection.setName("Test Collection");
-        collection.setOwner(user);
-        collectionRepo.persist(collection);
-
-        CollectionAccess access = new CollectionAccess();
-        access.setCollection(collection);
-        access.setUser(user);
-        access.setRole(CollectionRole.OWNER);
-        access.setDefault(true);
-        collectionAccessRepo.persist(access);
-
-        return collection;
-    }
+    @Inject
+    FixtureService fixtureService;
 
     @Test
     void shouldReturn401_whenGetBookmarksNotAuthenticated() {
         RestAssured.given()
-            .queryParam("collectionId", UUID.randomUUID().toString())
+            .queryParam("collectionId", java.util.UUID.randomUUID().toString())
             .get("/bookmarks")
             .then()
             .statusCode(401);
@@ -71,7 +48,7 @@ class BookmarkResourceITest {
         roles = {"BOOKMARK_READ"}
     )
     void shouldReturnEmptyList_whenCollectionHasNoBookmarks() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         RestAssured.given()
             .queryParam("collectionId", collection.getId().getUUID().toString())
             .get("/bookmarks")
@@ -86,7 +63,7 @@ class BookmarkResourceITest {
         roles = {"BOOKMARK_READ"}
     )
     void shouldReturnBookmarks_whenCollectionHasBookmarks() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
         String body = """
@@ -109,7 +86,7 @@ class BookmarkResourceITest {
         roles = {"BOOKMARK_READ"}
     )
     void shouldReturnBookmarksOrderedByCreationDateDesc() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
         RestAssured.given().contentType(ContentType.JSON)
@@ -136,7 +113,7 @@ class BookmarkResourceITest {
     )
     void shouldReturn403_whenGetBookmarksWithoutCollectionAccess() {
         RestAssured.given()
-            .queryParam("collectionId", UUID.randomUUID().toString())
+            .queryParam("collectionId", java.util.UUID.randomUUID().toString())
             .get("/bookmarks")
             .then()
             .statusCode(403);
@@ -161,7 +138,7 @@ class BookmarkResourceITest {
         roles = {"BOOKMARK_WRITE"}
     )
     void shouldCreateBookmarkWithoutFolder_whenFolderIdIsNull() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
         String body = """
@@ -184,13 +161,13 @@ class BookmarkResourceITest {
         roles = {"BOOKMARK_WRITE"}
     )
     void shouldCreateBookmarkWithFolder_whenFolderIdProvided() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
-        Folder folder = new Folder();
-        folder.setCollection(collection);
-        folder.setName("Test Folder");
-        folderRepo.persist(folder);
+        Folder folder = fixtureService.persistFolder(b -> b
+            .withCollection(collection)
+            .withName("Test Folder")
+        );
         String folderId = folder.getId().getUUID().toString();
 
         String body = """
@@ -213,14 +190,14 @@ class BookmarkResourceITest {
         roles = {"BOOKMARK_WRITE"}
     )
     void shouldCreateBookmarkWithTags_whenTagIdsProvided() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
-        Tag tag = new Tag();
-        tag.setCollection(collection);
-        tag.setName("Test Tag");
-        tag.setColor("#FF0000");
-        tagRepo.persist(tag);
+        Tag tag = fixtureService.persistTag(b -> b
+            .withCollection(collection)
+            .withName("Test Tag")
+            .withColor("#FF0000")
+        );
         String tagId = tag.getId().getUUID().toString();
 
         String body = """
@@ -243,7 +220,7 @@ class BookmarkResourceITest {
         roles = {"BOOKMARK_WRITE"}
     )
     void shouldCreateBookmarkWithDescription_whenDescriptionProvided() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
         String body = """
