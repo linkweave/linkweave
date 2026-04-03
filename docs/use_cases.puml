@@ -29,15 +29,13 @@ rectangle "Chainlink Bookmark Manager" {
         usecase "UC-013\nMove Bookmark\nto Folder" as UC013 <<implemented>>
     }
 
-    rectangle "Filtering" {
-        usecase "UC-021\nFilter Bookmarks\nby Tag" as UC021
-        usecase "UC-022\nFilter Bookmarks\nby Folder" as UC022
+    rectangle "Folder Management" {
+        usecase "UC-009\nCreate Folder" as UC009
+        usecase "UC-010\nView Folders" as UC010
+        usecase "UC-011\nRename Folder" as UC011
+        usecase "UC-012\nNest Folders" as UC012
+        usecase "UC-014\nDelete Folder" as UC014
     }
-
-    rectangle "Navigation" {
-        usecase "UC-029\nNavigate Folder\nHierarchy" as UC029
-    }
-}
 
     rectangle "Tag Management" {
         usecase "UC-015\nCreate Tag" as UC015
@@ -55,6 +53,14 @@ rectangle "Chainlink Bookmark Manager" {
 
     rectangle "Navigation" {
         usecase "UC-029\nNavigate Folder\nHierarchy" as UC029
+    }
+
+    rectangle "Import" {
+        usecase "UC-031\nImport Browser\nBookmarks" as UC031
+        note right of UC031
+          See bookmark-import.md
+          for implementation plan
+        end note
     }
 }
 
@@ -95,6 +101,9 @@ user --> UC022
 
 ' Navigation
 user --> UC029
+
+' Import
+user --> UC031
 
 legend right
   |<#E8F5E9>| Implemented |

@@ -48,7 +48,9 @@
 | FR-027 | Logout                           | As a User, I want to log out of the application so that my session is ended and my data is protected from unauthorized access. | High     | Open   |
 | FR-028 | Switch Language                  | As a User, I want to switch the interface language between English and German so that I can use the application in my preferred language. | Low      | Open   |
 | FR-029 | Navigate Folder Hierarchy        | As a User, I want to see a breadcrumb showing the path to the currently selected folder so that I can see where I am and quickly navigate to parent folders. | Medium   | Open   |
-| FR-029 | Navigate Folder Hierarchy        | As a User, I want to see a breadcrumb showing the path to the currently selected folder so that I can see where I am and quickly navigate to parent folders. | Medium   | Open   |
+| FR-030 | Search Bar Keyboard Shortcut      | As a User, I want to focus the search bar by pressing a keyboard shortcut (e.g. ⌘E on Mac, Ctrl+E on Windows/Linux) so that I can quickly start searching without reaching for the mouse. | Low      | Open   |
+| FR-031 | Import Browser Bookmarks          | As a User, I want to import bookmarks from Brave or Firefox so that I can easily migrate my existing bookmarks into Chainlink. | Low      | Open   |
+| FR-032 | Offline Mode                      | As a User, I want to browse and search my bookmarks while offline so that I can access my saved resources without an active network connection. The app should load all collection data in a single request and cache it client-side. Authentication handling for offline access needs to be investigated. | Low      | Open   |
 
 ---
 
