@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -18,7 +19,7 @@ import org.chainlink.infrastructure.db.DbConst;
 import org.jspecify.annotations.NonNull;
 
 @Entity
-@Table()
+@Table(uniqueConstraints = @UniqueConstraint(name = "uq_tag_name_collection", columnNames = {"name", "collection_id"}))
 @NoArgsConstructor
 @AllArgsConstructor
 public class Tag extends AbstractEntity<Tag> {

@@ -1,23 +1,40 @@
 package org.chainlink.api.bookmark;
 
+import java.util.Collections;
 import java.util.List;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.RequiredArgsConstructor;
+import org.chainlink.api.bookmark.json.TagSaveJson;
+import org.chainlink.api.collection.Collection;
+import org.chainlink.api.collection.CollectionRepo;
+import org.chainlink.infrastructure.errorhandling.AppValidationException;
+import org.chainlink.infrastructure.errorhandling.AppValidationMessage;
 import org.chainlink.infrastructure.stereotypes.Service;
+import org.hibernate.exception.ConstraintViolationException;
 import org.jspecify.annotations.NonNull;
 
 @Service
 @RequiredArgsConstructor
 public class TagService {
 
+    private static final String CONSTRAINT_UQ_TAG_NAME_COLLECTION = "uq_tag_name_collection";
+
     private final TagRepo tagRepo;
+    private final CollectionRepo collectionRepo;
 
     @NonNull
-    public Tag createTag(@NonNull String name) {
-        var tag = new Tag();
-        tag.name = name;
-        tagRepo.persist(tag);
+    public Tag createTag(@NonNull TagSaveJson json) {
+        ID<Collection> collectionId = json.getCollectionId();
+        int existingCount = tagRepo.findByCollection(collectionId).size();
+
+        Tag tag = new Tag(
+            collectionRepo.referenceById(collectionId),
+            json.getName(),
+            json.getColor() != null ? json.getColor() : TagColorPalette.autoAssignColor(existingCount),
+            Collections.emptySet()
+        );
+        upsertTagAndFlush(tag);
         return tag;
     }
 
@@ -27,20 +44,32 @@ public class TagService {
     }
 
     @NonNull
-    public Tag getTagByName(@NonNull String name) {
-        return tagRepo.getByName(name);
-    }
-
-    public List<Tag> getAllTags() {
-        return tagRepo.findAll();
+    public List<Tag> getTagsByCollection(@NonNull ID<Collection> collectionId) {
+        return tagRepo.findByCollection(collectionId);
     }
 
     @NonNull
-    public Tag updateTag(@NonNull ID<Tag> id, @NonNull String name) {
-        var tag = tagRepo.getById(id);
-        tag.name = name;
-        tagRepo.persist(tag);
+    public Tag updateTag(@NonNull ID<Tag> id, @NonNull TagSaveJson json) {
+        Tag tag = tagRepo.getById(id);
+        tag.collection = collectionRepo.referenceById(json.getCollectionId());
+        tag.name = json.getName();
+        if (json.getColor() != null) {
+            tag.color = json.getColor();
+        }
+        upsertTagAndFlush(tag);
         return tag;
+    }
+
+    private void upsertTagAndFlush(Tag tag) {
+        try {
+            tagRepo.persistAndFlush(tag);
+        } catch (ConstraintViolationException e) {
+            if (CONSTRAINT_UQ_TAG_NAME_COLLECTION.equals(e.getConstraintName())) {
+                throw new AppValidationException(AppValidationMessage.genericMessage(
+                    "AppValidation.uq_tag_name_collection"));
+            }
+            throw e;
+        }
     }
 
     public void removeTag(@NonNull ID<Tag> id) {
