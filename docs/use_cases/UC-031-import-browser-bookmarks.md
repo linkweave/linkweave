@@ -6,7 +6,7 @@
 **Use Case Name:** Import Browser Bookmarks   
 **Primary Actor:** User   
 **Goal:** Migrate existing bookmarks from another browser into a Chainlink collection.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

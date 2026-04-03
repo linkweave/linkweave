@@ -56,7 +56,7 @@ rectangle "Chainlink Bookmark Manager" {
     }
 
     rectangle "Import" {
-        usecase "UC-031\nImport Browser\nBookmarks" as UC031
+        usecase "UC-031\nImport Browser\nBookmarks" as UC031 <<implemented>>
         note right of UC031
           See bookmark-import.md
           for implementation plan
