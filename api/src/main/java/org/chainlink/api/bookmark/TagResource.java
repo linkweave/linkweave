@@ -38,7 +38,7 @@ public class TagResource {
     public TagListJson list(@QueryParam("collectionId") @NotNull @NonNull ID<Collection> collectionId) {
         authorizationService.requireCollectionAccess(collectionId);
         return new TagListJson(
-            tagService.getTagsByCollection(collectionId).stream()
+            tagService.findByCollection(collectionId).stream()
                 .map(TagMapper::toJson)
                 .toList()
         );
@@ -66,7 +66,7 @@ public class TagResource {
 
         authorizationService.requireCollectionAccess(json.getCollectionId());
         Tag tag = tagService.getTag(tagId);
-        authorizationService.requireCollectionAccess(tag.collection.getId());
+        authorizationService.requireCollectionAccess(tag.getCollection().getId());
         Tag updated = tagService.updateTag(tag, json);
         return TagMapper.toJson(updated);
     }
@@ -77,7 +77,7 @@ public class TagResource {
         @PathParam("tagId") @NotNull @NonNull ID<Tag> tagId
     ) {
         Tag tag = tagService.getTag(tagId);
-        authorizationService.requireCollectionAccess(tag.collection.getId());
+        authorizationService.requireCollectionAccess(tag.getCollection().getId());
         tagService.removeTag(tagId);
     }
 }

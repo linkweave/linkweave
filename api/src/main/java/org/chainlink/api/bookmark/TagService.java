@@ -43,17 +43,13 @@ public class TagService {
         return tagRepo.getById(id);
     }
 
-    @NonNull
-    public List<Tag> getTagsByCollection(@NonNull ID<Collection> collectionId) {
-        return tagRepo.findByCollection(collectionId);
-    }
 
     @NonNull
     public Tag updateTag(@NonNull Tag tag, @NonNull TagSaveJson json) {
-        tag.collection = collectionRepo.referenceById(json.getCollectionId());
-        tag.name = json.getName();
+        tag.setCollection(collectionRepo.referenceById(json.getCollectionId()));
+        tag.setName(json.getName());
         if (json.getColor() != null) {
-            tag.color = json.getColor();
+            tag.setColor(json.getColor());
         }
         upsertTagAndFlush(tag);
         return tag;
@@ -73,5 +69,9 @@ public class TagService {
 
     public void removeTag(@NonNull ID<Tag> id) {
         tagRepo.remove(id);
+    }
+
+    public List<Tag> findByCollection(@NonNull ID<Collection> collectionID) {
+        return  tagRepo.findByCollection(collectionID);
     }
 }

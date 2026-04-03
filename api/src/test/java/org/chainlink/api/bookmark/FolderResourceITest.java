@@ -1,20 +1,16 @@
 package org.chainlink.api.bookmark;
 
-import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
-import org.chainlink.api.benutzer.UserRepo;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.bookmark.folder.FolderRepo;
 import org.chainlink.api.collection.Collection;
-import org.chainlink.api.collection.CollectionAccess;
 import org.chainlink.api.collection.CollectionAccessRepo;
 import org.chainlink.api.collection.CollectionRepo;
-import org.chainlink.api.collection.CollectionRole;
-import org.chainlink.api.shared.user.User;
+import org.chainlink.api.testutil.fixture.FixtureService;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -24,34 +20,9 @@ import static org.hamcrest.Matchers.nullValue;
 @QuarkusTest
 class FolderResourceITest {
 
-    @Inject
-    CollectionRepo collectionRepo;
 
     @Inject
-    CollectionAccessRepo collectionAccessRepo;
-
-    @Inject
-    UserRepo userRepo;
-
-    @Inject
-    FolderRepo folderRepo;
-
-    private Collection createTestCollection() {
-        User user = userRepo.findByEmail(EmailAddress.fromString("test@example.com")).orElseThrow();
-        Collection collection = new Collection();
-        collection.name = "Test Collection";
-        collection.owner = user;
-        collectionRepo.persist(collection);
-
-        CollectionAccess access = new CollectionAccess();
-        access.collection = collection;
-        access.user = user;
-        access.role = CollectionRole.OWNER;
-        access.isDefault = true;
-        collectionAccessRepo.persist(access);
-
-        return collection;
-    }
+    FixtureService fixtureService;
 
     @Test
     void shouldReturn401_whenNotAuthenticated() {
@@ -72,7 +43,7 @@ class FolderResourceITest {
         roles = {"BOOKMARK_WRITE"}
     )
     void shouldCreateFolder_whenAuthenticatedAndHasAccess() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
         String body = """
@@ -98,13 +69,13 @@ class FolderResourceITest {
         roles = {"BOOKMARK_WRITE"}
     )
     void shouldCreateSubfolder_whenParentIdProvided() {
-        Collection collection = createTestCollection();
+        Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
-        Folder parent = new Folder();
-        parent.collection = collection;
-        parent.name = "Parent";
-        folderRepo.persist(parent);
+        Folder parent = fixtureService.persistFolder(b -> b
+            .withCollection(collection)
+            .withName("Parent")
+        );
         String parentId = parent.getId().getUUID().toString();
 
         String body = """

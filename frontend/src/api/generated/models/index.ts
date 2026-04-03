@@ -6,6 +6,7 @@ export * from './bookmark-json';
 export * from './bookmark-list-json';
 export * from './bookmark-move-json';
 export * from './bookmark-save-json';
+export * from './collection-info-json';
 export * from './entity-info-json';
 export * from './failure-type';
 export * from './folder-json';

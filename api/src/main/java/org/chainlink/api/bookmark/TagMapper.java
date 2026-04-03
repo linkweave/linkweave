@@ -17,9 +17,9 @@ public class TagMapper {
             tag.getId(),
             EntityInfoJson.fromEntity(tag),
             new TagSaveJson(
-                tag.collection.getId(),
-                tag.name,
-                tag.color
+                tag.getCollection().getId(),
+                tag.getName(),
+                tag.getColor()
             )
         );
     }

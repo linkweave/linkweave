@@ -46,7 +46,7 @@ public class AuthResource {
 
         ID<Collection> defaultCollectionId = collectionAccessRepo
             .getDefaultByUser(user.getId())
-            .collection.getId();
+            .getCollection().getId();
 
         return new UserInfoJson(
             identity.getPrincipal().getName(),

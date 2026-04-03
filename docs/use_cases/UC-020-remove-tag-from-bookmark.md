@@ -6,7 +6,7 @@
 **Use Case Name:** Remove Tag from Bookmark   
 **Primary Actor:** User   
 **Goal:** Remove an incorrect or unwanted tag from a bookmark.   
-**Status:** Draft   
+**Status:** Done   
 
 ## Traceability
 

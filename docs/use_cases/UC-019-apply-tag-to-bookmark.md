@@ -6,7 +6,7 @@
 **Use Case Name:** Apply Tag to Bookmark   
 **Primary Actor:** User   
 **Goal:** Categorize a bookmark by applying one or more tags to it.   
-**Status:** Draft   
+**Status:** Done   
 
 ## Traceability
 

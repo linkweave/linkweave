@@ -5,17 +5,24 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
+@TestMethodOrder(OrderAnnotation.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AuthFlowITest {
 
     @Inject
     ObjectMapper objectMapper;
 
     @Test
+    @Order(1)
     void shouldRejectUnauthenticatedMeRequest() {
         RestAssured.given()
             .get("/auth/me")
@@ -24,6 +31,7 @@ class AuthFlowITest {
     }
 
     @Test
+    @Order(2)
     void shouldRejectLoginWithBadCredentials() {
         RestAssured.given()
             .contentType(ContentType.URLENC)
@@ -35,6 +43,7 @@ class AuthFlowITest {
     }
 
     @Test
+    @Order(3)
     void shouldLoginAndAccessProtectedEndpoint() throws Exception {
         String sessionCookie = RestAssured.given()
             .contentType(ContentType.URLENC)
@@ -64,6 +73,7 @@ class AuthFlowITest {
     }
 
     @Test
+    @Order(4)
     void shouldLogoutAndLoseAccess() {
         String sessionCookie = RestAssured.given()
             .contentType(ContentType.URLENC)

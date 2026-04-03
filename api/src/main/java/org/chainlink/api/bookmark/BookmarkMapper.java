@@ -1,5 +1,6 @@
 package org.chainlink.api.bookmark;
 
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
@@ -19,12 +20,12 @@ public class BookmarkMapper {
             bookmark.getId(),
             EntityInfoJson.fromEntity(bookmark),
             new BookmarkSaveJson(
-                bookmark.collection.getId(),
-                bookmark.folder != null ? bookmark.folder.getId() : null,
-                bookmark.title,
-                bookmark.url.toString(),
-                bookmark.description,
-                bookmark.tags.stream()
+                bookmark.getCollection().getId(),
+                bookmark.getFolder() != null ? Objects.requireNonNull(bookmark.getFolder()).getId() : null,
+                bookmark.getTitle(),
+                bookmark.getUrl().toString(),
+                bookmark.getDescription(),
+                bookmark.getTags().stream()
                     .map(Tag::getId)
                     .collect(Collectors.toSet())
             )

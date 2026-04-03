@@ -30,7 +30,7 @@ import org.hibernate.envers.Audited;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(
-    indexes = @Index(name = "ix_userpermission_user", columnList = "user_id"),
+    indexes = @Index(name = "ix_userpermission_user_id", columnList = "user_id, id"),
     uniqueConstraints = @UniqueConstraint(
         name = "uc_userpermission_user_permission", columnNames = { "user_id", "permission" }
     )

@@ -6,13 +6,19 @@ import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.abstractentity.AbstractEntity;
@@ -21,33 +27,52 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 @Entity
-@Table()
+@Table(indexes = {
+    @Index(name = "ix_bookmark_collection_id", columnList = "collection_id, id"),
+    @Index(name = "ix_bookmark_folder_id", columnList = "folder_id, id"),
+})
+@Getter
+@Setter
 @NoArgsConstructor
 public class Bookmark extends AbstractEntity<Bookmark> {
 
     @NonNull
     @ManyToOne(optional = false)
-    public Collection collection;
+    @JoinColumn(foreignKey = @ForeignKey(name = "fk_bookmark_collection"), nullable = false)
+    private Collection collection;
 
     @Nullable
     @ManyToOne(optional = true)
-    public Folder folder;
+    @JoinColumn(foreignKey = @ForeignKey(name = "fk_bookmark_folder"), nullable = true)
+    private Folder folder;
 
     @NotBlank
     @NonNull
     @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH)
     @Column(nullable = false, length = DbConst.DB_DEFAULT_MAX_LENGTH)
-    public String title;
+    private String title;
 
     @NonNull
     @Column(nullable = false, length = DbConst.DB_TEXTAREA_MAX_LENGTH_2000)
-    public URL url;
+    private URL url;
 
     @Nullable
     @Column(nullable = true, length = DbConst.DB_TEXTAREA_MAX_LENGTH_5000)
-    public String description;
+    private String description;
 
-    @ManyToMany()
-    public Set<Tag> tags = new HashSet<>();
+    @ManyToMany
+    @JoinTable(name = "Bookmark_Tag",
+        joinColumns = @JoinColumn(
+            name = "bookmark_id",
+            foreignKey = @ForeignKey(name = "fk_bookmark_tag_bookmark")),
+        inverseJoinColumns = @JoinColumn(
+            name = "tag_id",
+            foreignKey = @ForeignKey(name = "fk_bookmark_tag_tag")),
+        indexes = {
+            @Index(name = "ix_bookmark_tag_bookmark_id", columnList = "bookmark_id, tag_id"),
+            @Index(name = "ix_bookmark_tag_tag_id", columnList = "tag_id, bookmark_id"),
+        }
+    )
+    private Set<Tag> tags = new HashSet<>();
 
 }
