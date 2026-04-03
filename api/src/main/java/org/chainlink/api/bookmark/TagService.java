@@ -49,8 +49,7 @@ public class TagService {
     }
 
     @NonNull
-    public Tag updateTag(@NonNull ID<Tag> id, @NonNull TagSaveJson json) {
-        Tag tag = tagRepo.getById(id);
+    public Tag updateTag(@NonNull Tag tag, @NonNull TagSaveJson json) {
         tag.collection = collectionRepo.referenceById(json.getCollectionId());
         tag.name = json.getName();
         if (json.getColor() != null) {

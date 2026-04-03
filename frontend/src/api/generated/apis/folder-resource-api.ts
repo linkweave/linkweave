@@ -215,7 +215,7 @@ export class FolderResourceApi extends runtime.BaseAPI {
     /**
      * Creates request options for apiFoldersGet without sending the request
      */
-    async apiFoldersGetRequestOpts(requestParameters: FolderResourceApiApiFoldersGetRequest = {}): Promise<runtime.RequestOpts> {
+    async apiFoldersGetRequestOpts(requestParameters: FolderResourceApiApiFoldersGetRequest): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         if (requestParameters['collectionId'] != null) {
@@ -238,7 +238,7 @@ export class FolderResourceApi extends runtime.BaseAPI {
     /**
      * Get All
      */
-    async apiFoldersGetRaw(requestParameters: FolderResourceApiApiFoldersGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FolderListJson>> {
+    async apiFoldersGetRaw(requestParameters: FolderResourceApiApiFoldersGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FolderListJson>> {
         const requestOptions = await this.apiFoldersGetRequestOpts(requestParameters);
         const response = await this.request(requestOptions, initOverrides);
 

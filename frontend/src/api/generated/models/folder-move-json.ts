@@ -71,3 +71,4 @@ export function FolderMoveJsonToJSONTyped(value?: FolderMoveJson | null, ignoreD
         'parentId': value['parentId'],
     };
 }
+

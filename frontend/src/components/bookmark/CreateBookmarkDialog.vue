@@ -4,11 +4,13 @@ import { useI18n } from 'vue-i18n'
 import { DialogCl, ButtonCl } from '@/components/ui'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useFolderStore } from '@/stores/folder'
+import { useTagStore } from '@/stores/tag'
 import type { BookmarkSaveJson } from '@/api/generated'
 
 const { t } = useI18n()
 const bookmarkStore = useBookmarkStore()
 const folderStore = useFolderStore()
+const tagStore = useTagStore()
 
 interface Props {
   collectionId: string
@@ -27,6 +29,7 @@ const url = ref('')
 const title = ref('')
 const description = ref('')
 const selectedFolderId = ref<string | undefined>(undefined)
+const selectedTagIds = ref<Set<string>>(new Set())
 const error = ref('')
 const loading = ref(false)
 
@@ -40,6 +43,7 @@ watch(() => props.open, (val) => {
     title.value = ''
     description.value = ''
     selectedFolderId.value = props.folderId ?? undefined
+    selectedTagIds.value = new Set()
     error.value = ''
   }
 })
@@ -51,6 +55,16 @@ function isValidUrl(urlString: string): boolean {
   } catch {
     return false
   }
+}
+
+function toggleTagId(tagId: string) {
+  const next = new Set(selectedTagIds.value)
+  if (next.has(tagId)) {
+    next.delete(tagId)
+  } else {
+    next.add(tagId)
+  }
+  selectedTagIds.value = next
 }
 
 async function handleSubmit() {
@@ -86,6 +100,10 @@ async function handleSubmit() {
     data.description = description.value.trim()
   }
 
+  if (selectedTagIds.value.size > 0) {
+    data.tagIds = selectedTagIds.value
+  }
+
   try {
     await bookmarkStore.createBookmark(data)
     emit('update:open', false)
@@ -108,9 +126,9 @@ async function handleSubmit() {
       </div>
 
       <div class="space-y-2">
-        <label for="bookmark-url" class="text-sm font-medium">{{ t('bookmark.url') }} *</label>
+        <label for="create-bookmark-url" class="text-sm font-medium">{{ t('bookmark.url') }} *</label>
         <input
-          id="bookmark-url"
+          id="create-bookmark-url"
           v-model="url"
           type="url"
           required
@@ -120,9 +138,9 @@ async function handleSubmit() {
       </div>
 
       <div class="space-y-2">
-        <label for="bookmark-title" class="text-sm font-medium">{{ t('bookmark.title') }} *</label>
+        <label for="create-bookmark-title" class="text-sm font-medium">{{ t('bookmark.title') }} *</label>
         <input
-          id="bookmark-title"
+          id="create-bookmark-title"
           v-model="title"
           type="text"
           required
@@ -132,9 +150,9 @@ async function handleSubmit() {
       </div>
 
       <div class="space-y-2">
-        <label for="bookmark-description" class="text-sm font-medium">{{ t('bookmark.description') }}</label>
+        <label for="create-bookmark-description" class="text-sm font-medium">{{ t('bookmark.description') }}</label>
         <textarea
-          id="bookmark-description"
+          id="create-bookmark-description"
           v-model="description"
           rows="3"
           :placeholder="t('bookmark.descriptionPlaceholder')"
@@ -143,9 +161,9 @@ async function handleSubmit() {
       </div>
 
       <div class="space-y-2">
-        <label for="bookmark-folder" class="text-sm font-medium">{{ t('bookmark.folder') }}</label>
+        <label for="create-bookmark-folder" class="text-sm font-medium">{{ t('bookmark.folder') }}</label>
         <select
-          id="bookmark-folder"
+          id="create-bookmark-folder"
           v-model="selectedFolderId"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
@@ -154,6 +172,24 @@ async function handleSubmit() {
             {{ opt.name }}
           </option>
         </select>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-sm font-medium">{{ t('bookmark.tags') }}</label>
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="tag in tagStore.tags"
+            :key="tag.id"
+            type="button"
+            class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs transition-opacity"
+            :class="selectedTagIds.has(tag.id) ? 'opacity-100' : 'opacity-40'"
+            :style="{ backgroundColor: tag.data.color ?? '#64748b', color: 'white' }"
+            @click="toggleTagId(tag.id)"
+          >
+            {{ tag.data.name }}
+          </button>
+        </div>
+        <p v-if="tagStore.tags.length === 0" class="text-xs text-muted-foreground">{{ t('tag.none') }}</p>
       </div>
 
       <div class="flex justify-end gap-2">

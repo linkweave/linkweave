@@ -7,11 +7,13 @@ import { Folder, Plus, Tag } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
+import { useTagStore } from '@/stores/tag'
 import { computed, ref, watch } from 'vue'
 
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
 const folderStore = useFolderStore()
+const tagStore = useTagStore()
 
 const collectionId = computed(() => collectionStore.currentCollectionId ?? '')
 const showCreateFolder = ref(false)
@@ -20,6 +22,7 @@ const subfolderParentId = ref<string | undefined>(undefined)
 watch(collectionId, (id) => {
   if (id) {
     folderStore.fetchFolders()
+    tagStore.fetchTags(id)
   }
 }, { immediate: true })
 
@@ -88,7 +91,7 @@ const props = defineProps<Props>()
           {{ t('sidebar.tags') }}
         </span>
       </div>
-      <TagList class-name="px-2 pb-2" />
+      <TagList class-name="px-2 pb-2" :collection-id="collectionId" />
     </div>
     <div class="border-t border-border">
       <div class="p-3 flex items-center justify-between">

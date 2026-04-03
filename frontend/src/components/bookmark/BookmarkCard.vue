@@ -8,6 +8,9 @@ import {
   DropdownMenuItem,
 } from 'radix-vue'
 import type { BookmarkJson } from '@/api/generated'
+import { useTagStore } from '@/stores/tag'
+
+const tagStore = useTagStore()
 
 const props = defineProps<{
   bookmark: BookmarkJson
@@ -32,6 +35,10 @@ function faviconUrl(url: string) {
   return hostname
     ? `https://icons.duckduckgo.com/ip3/${hostname}.ico`
     : ''
+}
+
+function getTagById(tagId: string) {
+  return tagStore.tags.find(t => t.id === tagId)
 }
 </script>
 
@@ -83,9 +90,10 @@ function faviconUrl(url: string) {
             <span
               v-for="tagId in props.bookmark.data.tagIds"
               :key="tagId"
-              class="inline-flex items-center rounded-full bg-secondary text-secondary-foreground px-2 py-0.5 text-xs"
+              class="inline-flex items-center rounded-full px-2 py-0.5 text-xs text-white"
+              :style="{ backgroundColor: getTagById(tagId)?.data.color ?? '#64748b' }"
             >
-              {{ tagId.substring(0, 8) }}
+              {{ getTagById(tagId)?.data.name ?? tagId.substring(0, 8) }}
             </span>
           </div>
         </div>
