@@ -22,6 +22,7 @@ public class TagService {
 
     private final TagRepo tagRepo;
     private final CollectionRepo collectionRepo;
+    private final BookmarkRepo bookmarkRepo;
 
     @NonNull
     public Tag createTag(@NonNull TagSaveJson json) {
@@ -68,6 +69,11 @@ public class TagService {
     }
 
     public void removeTag(@NonNull ID<Tag> id) {
+        Tag tag = tagRepo.getById(id);
+        List<Bookmark> bookmarksWithTag = bookmarkRepo.findByTag(tag);
+        for (Bookmark bookmark : bookmarksWithTag) {
+            bookmark.getTags().remove(tag);
+        }
         tagRepo.remove(id);
     }
 

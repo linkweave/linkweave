@@ -267,6 +267,33 @@ class TagResourceITest {
     }
 
     @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldDeleteTagFromAllBookmarks() {
+        Collection collection = fixtureService.createTestCollection();
+        String collectionId = collection.getId().getUUID().toString();
+
+        String tagId = RestAssured.given().contentType(ContentType.JSON)
+            .body("{\"collectionId\":\"%s\",\"name\":\"DeleteMe\"}".formatted(collectionId))
+            .post("/tags").then().statusCode(200).extract().path("id");
+
+        RestAssured.given().contentType(ContentType.JSON)
+            .body("{\"collectionId\":\"%s\",\"title\":\"BM\",\"url\":\"https://x.com\",\"tagIds\":[\"%s\"]}".formatted(collectionId, tagId))
+            .post("/bookmarks").then().statusCode(200);
+
+        RestAssured.given()
+            .delete("/tags/" + tagId)
+            .then()
+            .statusCode(204);
+
+        RestAssured.given()
+            .queryParam("collectionId", collectionId)
+            .get("/bookmarks")
+            .then()
+            .statusCode(200)
+            .body("bookmarkList[0].data.tagIds", not(hasItem(tagId.toString())));
+    }
+
+    @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn403_whenGetTagsWithoutCollectionAccess() {
         RestAssured.given()

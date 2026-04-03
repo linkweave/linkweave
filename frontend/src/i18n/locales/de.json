@@ -14,7 +14,17 @@
   },
   "header": {
     "addBookmark": "Lesezeichen hinzufügen",
+    "importCollection": "Sammlung importieren",
     "logout": "Abmelden"
+  },
+  "import": {
+    "title": "Lesezeichen importieren",
+    "description": "Laden Sie eine Lesezeichen-Datei im Netscape-HTML-Format hoch, um sie in diese Sammlung zu importieren. Alle Ordner und Lesezeichen werden auf der Stammebene erstellt.",
+    "file": "Lesezeichen-Datei",
+    "filePlaceholder": ".html-Datei auswählen...",
+    "submit": "Importieren",
+    "success": "{bookmarks} Lesezeichen und {folders} Ordner erfolgreich importiert.",
+    "error": "Lesezeichen konnten nicht importiert werden."
   },
   "sidebar": {
     "bookmarks": "Lesezeichen",

@@ -59,7 +59,7 @@ export class CollectionResourceApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get Collection By Id
+     * Get Collection Info By Id
      */
     async apiCollectionsIdGetRaw(requestParameters: CollectionResourceApiApiCollectionsIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CollectionInfoJson>> {
         const requestOptions = await this.apiCollectionsIdGetRequestOpts(requestParameters);
@@ -69,7 +69,7 @@ export class CollectionResourceApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get Collection By Id
+     * Get Collection Info By Id
      */
     async apiCollectionsIdGet(requestParameters: CollectionResourceApiApiCollectionsIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CollectionInfoJson> {
         const response = await this.apiCollectionsIdGetRaw(requestParameters, initOverrides);

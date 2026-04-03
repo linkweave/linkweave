@@ -14,7 +14,17 @@
   },
   "header": {
     "addBookmark": "Add Bookmark",
+    "importCollection": "Import Collection",
     "logout": "Sign out"
+  },
+  "import": {
+    "title": "Import Bookmarks",
+    "description": "Upload a Netscape HTML bookmark file to import into this collection. All folders and bookmarks will be created at the root level.",
+    "file": "Bookmark File",
+    "filePlaceholder": "Select a .html file...",
+    "submit": "Import",
+    "success": "Successfully imported {bookmarks} bookmarks and {folders} folders.",
+    "error": "Failed to import bookmarks."
   },
   "sidebar": {
     "bookmarks": "Bookmarks",

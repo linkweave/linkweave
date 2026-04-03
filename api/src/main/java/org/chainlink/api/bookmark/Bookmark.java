@@ -16,6 +16,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -33,6 +34,7 @@ import org.jspecify.annotations.Nullable;
 })
 @Getter
 @Setter
+@AllArgsConstructor
 @NoArgsConstructor
 public class Bookmark extends AbstractEntity<Bookmark> {
 
