@@ -3,10 +3,12 @@ import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { DialogCl, ButtonCl } from '@/components/ui'
 import { useFolderStore } from '@/stores/folder'
+import { useNotificationStore } from '@/stores/notification'
 import type { FolderJson } from '@/api/generated'
 
 const { t } = useI18n()
 const folderStore = useFolderStore()
+const notification = useNotificationStore()
 
 interface Props {
   folder: FolderJson | null
@@ -22,7 +24,6 @@ const emit = defineEmits<{
 
 const name = ref('')
 const selectedParentId = ref<string | undefined>(undefined)
-const error = ref('')
 const loading = ref(false)
 
 function getDescendantIds(folderId: string): Set<string> {
@@ -50,7 +51,6 @@ watch(() => props.open, (val) => {
   if (val && props.folder) {
     name.value = props.folder.data.name
     selectedParentId.value = props.folder.data.parentId ?? undefined
-    error.value = ''
   }
 })
 
@@ -58,12 +58,11 @@ async function handleSubmit() {
   if (!props.folder) return
 
   if (!name.value.trim()) {
-    error.value = t('folder.nameRequired')
+    notification.warning(t('folder.nameRequired'))
     return
   }
 
   loading.value = true
-  error.value = ''
 
   try {
     await folderStore.renameFolder(props.folder.id, {
@@ -73,8 +72,8 @@ async function handleSubmit() {
     })
     emit('update:open', false)
     emit('saved')
-  } catch {
-    error.value = t('folder.renameError')
+  } catch (err) {
+    notification.handleApiError(err, t('folder.renameError'))
   } finally {
     loading.value = false
   }
@@ -86,10 +85,6 @@ async function handleSubmit() {
     <template #title>{{ t('folder.renameTitle') }}</template>
 
     <form @submit.prevent="handleSubmit" class="space-y-4">
-      <div v-if="error" class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-        {{ error }}
-      </div>
-
       <div class="space-y-2">
         <label for="rename-folder-name" class="text-sm font-medium">{{ t('folder.name') }}</label>
         <input

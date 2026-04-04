@@ -3,10 +3,12 @@ import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { DialogCl, ButtonCl } from '@/components/ui'
 import { useFolderStore } from '@/stores/folder'
+import { useNotificationStore } from '@/stores/notification'
 import type { FolderSaveJson } from '@/api/generated'
 
 const { t } = useI18n()
 const folderStore = useFolderStore()
+const notification = useNotificationStore()
 
 interface Props {
   collectionId: string
@@ -23,7 +25,6 @@ const emit = defineEmits<{
 
 const name = ref('')
 const selectedParentId = ref<string | undefined>(undefined)
-const error = ref('')
 const loading = ref(false)
 
 const parentOptions = computed(() =>
@@ -34,18 +35,16 @@ watch(() => props.open, (val) => {
   if (val) {
     name.value = ''
     selectedParentId.value = props.parentId ?? undefined
-    error.value = ''
   }
 })
 
 async function handleSubmit() {
   if (!name.value.trim()) {
-    error.value = t('folder.nameRequired')
+    notification.warning(t('folder.nameRequired'))
     return
   }
 
   loading.value = true
-  error.value = ''
 
   const data: FolderSaveJson = {
     collectionId: props.collectionId,
@@ -60,8 +59,8 @@ async function handleSubmit() {
     await folderStore.createFolder(data)
     emit('update:open', false)
     emit('created')
-  } catch {
-    error.value = t('folder.createError')
+  } catch (err) {
+    notification.handleApiError(err, t('folder.createError'))
   } finally {
     loading.value = false
   }
@@ -73,10 +72,6 @@ async function handleSubmit() {
     <template #title>{{ t('folder.createTitle') }}</template>
 
     <form @submit.prevent="handleSubmit" class="space-y-4">
-      <div v-if="error" class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-        {{ error }}
-      </div>
-
       <div class="space-y-2">
         <label for="folder-name" class="text-sm font-medium">{{ t('folder.name') }}</label>
         <input

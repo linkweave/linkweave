@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { Plus, Pencil, Trash2, X } from 'lucide-vue-next'
 import { useTagStore } from '@/stores/tag'
 import { useBookmarkStore } from '@/stores/bookmark'
+import { useNotificationStore } from '@/stores/notification'
 import CreateTagDialog from './CreateTagDialog.vue'
 import EditTagDialog from './EditTagDialog.vue'
 import { ConfirmDialog } from '@/components/ui'
@@ -12,6 +13,7 @@ import type { TagJson } from '@/api/generated'
 const { t } = useI18n()
 const tagStore = useTagStore()
 const bookmarkStore = useBookmarkStore()
+const notification = useNotificationStore()
 
 const bookmarkCountByTag = computed(() => {
   const counts = new Map<string, number>()
@@ -65,6 +67,8 @@ async function confirmDelete() {
   if (!deletingTag.value) return
   try {
     await tagStore.deleteTag(deletingTag.value.id)
+  } catch (err) {
+    void notification.handleApiError(err, t('tag.deleteError'))
   } finally {
     deletingTag.value = null
     showDeleteConfirm.value = false

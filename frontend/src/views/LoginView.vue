@@ -4,20 +4,20 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useCollectionStore } from '@/stores/collection'
+import { useNotificationStore } from '@/stores/notification'
 import { ButtonCl } from '@/components/ui'
 
 const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 const collection = useCollectionStore()
+const notification = useNotificationStore()
 
 const email = ref('')
 const password = ref('')
-const error = ref(false)
 const loading = ref(false)
 
 async function handleLogin() {
-  error.value = false
   loading.value = true
 
   try {
@@ -41,10 +41,10 @@ async function handleLogin() {
       }
       router.push('/')
     } else {
-      error.value = true
+      notification.error(t('login.error'))
     }
   } catch {
-    error.value = true
+    notification.error(t('login.error'))
   } finally {
     loading.value = false
   }
@@ -59,10 +59,6 @@ async function handleLogin() {
       </div>
 
       <form @submit.prevent="handleLogin" class="space-y-4">
-        <div v-if="error" class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-          {{ t('login.error') }}
-        </div>
-
         <div class="space-y-2">
           <label for="email" class="text-sm font-medium">{{ t('login.email') }}</label>
           <input

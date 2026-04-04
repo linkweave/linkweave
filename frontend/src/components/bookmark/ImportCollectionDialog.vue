@@ -5,6 +5,7 @@ import { DialogCl, ButtonCl } from '@/components/ui'
 import { Upload, Loader2 } from 'lucide-vue-next'
 import { ImportResourceApi } from '@/api/generated'
 import { config } from '@/api'
+import { useNotificationStore } from '@/stores/notification'
 
 const props = defineProps<{
   open: boolean
@@ -17,10 +18,10 @@ const emits = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const notification = useNotificationStore()
 const fileInput = ref<HTMLInputElement | null>(null)
 const selectedFile = ref<File | null>(null)
 const isImporting = ref(false)
-const errorMessage = ref<string | null>(null)
 
 function handleFileChange(event: Event) {
   const target = event.target as HTMLInputElement
@@ -28,7 +29,6 @@ function handleFileChange(event: Event) {
     const file = target.files[0]
     if (file) {
       selectedFile.value = file
-      errorMessage.value = null
     }
   }
 }
@@ -37,7 +37,6 @@ async function handleImport() {
   if (!selectedFile.value) return
 
   isImporting.value = true
-  errorMessage.value = null
 
   try {
     const api = new ImportResourceApi(config)
@@ -48,9 +47,8 @@ async function handleImport() {
     emits('imported')
     emits('update:open', false)
     selectedFile.value = null
-  } catch (error) {
-    console.error('Import failed:', error)
-    errorMessage.value = t('import.error')
+  } catch (err) {
+    void notification.handleApiError(err, t('import.error'))
   } finally {
     isImporting.value = false
   }
@@ -67,7 +65,7 @@ async function handleImport() {
         <label for="bookmark-file" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
           {{ t('import.file') }}
         </label>
-        <div 
+        <div
           class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
           @click="fileInput?.click()"
         >
@@ -84,10 +82,6 @@ async function handleImport() {
           class="hidden"
           @change="handleFileChange"
         />
-      </div>
-
-      <div v-if="errorMessage" class="text-sm font-medium text-destructive">
-        {{ errorMessage }}
       </div>
     </div>
 

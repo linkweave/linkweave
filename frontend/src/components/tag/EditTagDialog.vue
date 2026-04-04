@@ -3,10 +3,12 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { DialogCl, ButtonCl } from '@/components/ui'
 import { useTagStore } from '@/stores/tag'
+import { useNotificationStore } from '@/stores/notification'
 import type { TagJson } from '@/api/generated'
 
 const { t } = useI18n()
 const tagStore = useTagStore()
+const notification = useNotificationStore()
 
 interface Props {
   tag: TagJson | null
@@ -22,14 +24,12 @@ const emit = defineEmits<{
 
 const name = ref('')
 const color = ref('')
-const error = ref('')
 const loading = ref(false)
 
 watch(() => props.open, (val) => {
   if (val && props.tag) {
     name.value = props.tag.data.name
     color.value = props.tag.data.color ?? ''
-    error.value = ''
   }
 })
 
@@ -37,12 +37,11 @@ async function handleSubmit() {
   if (!props.tag) return
 
   if (!name.value.trim()) {
-    error.value = t('tag.nameRequired')
+    notification.warning(t('tag.nameRequired'))
     return
   }
 
   loading.value = true
-  error.value = ''
 
   try {
     await tagStore.updateTag(props.tag.id, {
@@ -52,8 +51,8 @@ async function handleSubmit() {
     })
     emit('update:open', false)
     emit('saved')
-  } catch {
-    error.value = t('tag.updateError')
+  } catch (err) {
+    notification.handleApiError(err, t('tag.updateError'))
   } finally {
     loading.value = false
   }
@@ -65,10 +64,6 @@ async function handleSubmit() {
     <template #title>{{ t('tag.editTitle') }}</template>
 
     <form @submit.prevent="handleSubmit" class="space-y-4">
-      <div v-if="error" class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-        {{ error }}
-      </div>
-
       <div class="space-y-2">
         <label for="edit-tag-name" class="text-sm font-medium">{{ t('tag.name') }} *</label>
         <input

@@ -5,6 +5,7 @@ import { config } from '@/api'
 import type { BookmarkJson, BookmarkSaveJson, BookmarkMoveJson } from '@/api/generated'
 import { useFolderStore } from '@/stores/folder'
 import { useTagStore } from '@/stores/tag'
+import { useNotificationStore } from '@/stores/notification'
 
 const bookmarkApi = new BookmarkResourceApi(config)
 
@@ -40,8 +41,10 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     try {
       const result = await bookmarkApi.apiBookmarksGet({ collectionId })
       bookmarks.value = result.bookmarkList ?? []
-    } catch {
+    } catch (err) {
       bookmarks.value = []
+      const notification = useNotificationStore()
+      void notification.handleApiError(err, 'Failed to load bookmarks')
     } finally {
       loading.value = false
     }

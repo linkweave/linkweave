@@ -4,11 +4,13 @@ import { useI18n } from 'vue-i18n'
 import { DialogCl, ButtonCl } from '@/components/ui'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useFolderStore } from '@/stores/folder'
+import { useNotificationStore } from '@/stores/notification'
 import type { BookmarkJson, BookmarkMoveJson } from '@/api/generated'
 
 const { t } = useI18n()
 const bookmarkStore = useBookmarkStore()
 const folderStore = useFolderStore()
+const notification = useNotificationStore()
 
 interface Props {
   bookmark: BookmarkJson | null
@@ -23,7 +25,6 @@ const emit = defineEmits<{
 }>()
 
 const selectedFolderId = ref<string | undefined>(undefined)
-const error = ref('')
 const loading = ref(false)
 
 const folderOptions = computed(() =>
@@ -33,7 +34,6 @@ const folderOptions = computed(() =>
 watch(() => props.open, (val) => {
   if (val && props.bookmark) {
     selectedFolderId.value = props.bookmark.data.folderId ?? undefined
-    error.value = ''
   }
 })
 
@@ -41,7 +41,6 @@ async function handleSubmit() {
   if (!props.bookmark) return
 
   loading.value = true
-  error.value = ''
 
   const data: BookmarkMoveJson = {
     collectionId: props.bookmark.data.collectionId,
@@ -52,8 +51,8 @@ async function handleSubmit() {
     await bookmarkStore.moveBookmarkToFolder(props.bookmark.id, data)
     emit('update:open', false)
     emit('moved')
-  } catch {
-    error.value = t('bookmark.moveError')
+  } catch (err) {
+    void notification.handleApiError(err, t('bookmark.moveError'))
   } finally {
     loading.value = false
   }
@@ -65,10 +64,6 @@ async function handleSubmit() {
     <template #title>{{ t('bookmark.moveToFolder') }}</template>
 
     <form @submit.prevent="handleSubmit" class="space-y-4">
-      <div v-if="error" class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-        {{ error }}
-      </div>
-
       <div class="space-y-2">
         <label for="move-bookmark-folder" class="text-sm font-medium">{{ t('bookmark.folder') }}</label>
         <select

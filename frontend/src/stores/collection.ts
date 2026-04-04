@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { CollectionResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import type { CollectionInfoJson } from '@/api/generated'
+import { useNotificationStore } from '@/stores/notification'
 
 const collectionApi = new CollectionResourceApi(config)
 
@@ -26,9 +27,11 @@ export const useCollectionStore = defineStore('collection', () => {
     loading.value = true
     try {
       collectionInfo.value = await collectionApi.apiCollectionsIdGet({ id: collectionId })
-    } catch (error) {
-      console.error('Failed to fetch collection info:', error)
+    } catch (err) {
+      console.error('Failed to fetch collection info:', err)
       collectionInfo.value = null
+      const notification = useNotificationStore()
+      notification.handleApiError(err, 'Failed to load collection')
     } finally {
       loading.value = false
     }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { useFolderStore } from '@/stores/folder'
+import { useNotificationStore } from '@/stores/notification'
 import { computed, ref } from 'vue'
 import type { FolderJson } from '@/api/generated'
 import FolderTreeNode from '@/components/folder/FolderTreeNode.vue'
@@ -9,6 +10,7 @@ import { ConfirmDialog } from '@/components/ui'
 
 const { t } = useI18n()
 const folderStore = useFolderStore()
+const notification = useNotificationStore()
 
 interface Props {
   className?: string
@@ -84,6 +86,8 @@ async function confirmDeleteFolder() {
   if (!deletingFolder.value) return
   try {
     await folderStore.deleteFolder(deletingFolder.value.id)
+  } catch (err) {
+    notification.handleApiError(err, t('folder.deleteError'))
   } finally {
     deletingFolder.value = null
     showDeleteConfirm.value = false

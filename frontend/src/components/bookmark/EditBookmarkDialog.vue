@@ -5,12 +5,14 @@ import { DialogCl, ButtonCl } from '@/components/ui'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useFolderStore } from '@/stores/folder'
 import { useTagStore } from '@/stores/tag'
+import { useNotificationStore } from '@/stores/notification'
 import type { BookmarkJson, BookmarkSaveJson } from '@/api/generated'
 
 const { t } = useI18n()
 const bookmarkStore = useBookmarkStore()
 const folderStore = useFolderStore()
 const tagStore = useTagStore()
+const notification = useNotificationStore()
 
 interface Props {
   bookmark: BookmarkJson | null
@@ -29,7 +31,6 @@ const title = ref('')
 const description = ref('')
 const selectedFolderId = ref<string | undefined>(undefined)
 const selectedTagIds = ref<Set<string>>(new Set())
-const error = ref('')
 const loading = ref(false)
 
 const folderOptions = computed(() =>
@@ -43,7 +44,6 @@ watch(() => props.open, (val) => {
     description.value = props.bookmark.data.description ?? ''
     selectedFolderId.value = props.bookmark.data.folderId ?? undefined
     selectedTagIds.value = props.bookmark.data.tagIds ? new Set(props.bookmark.data.tagIds) : new Set()
-    error.value = ''
   }
 })
 
@@ -70,22 +70,21 @@ async function handleSubmit() {
   if (!props.bookmark) return
 
   if (!url.value.trim()) {
-    error.value = t('bookmark.urlRequired')
+    notification.warning(t('bookmark.urlRequired'))
     return
   }
 
   if (!isValidUrl(url.value.trim())) {
-    error.value = t('bookmark.urlInvalid')
+    notification.warning(t('bookmark.urlInvalid'))
     return
   }
 
   if (!title.value.trim()) {
-    error.value = t('bookmark.titleRequired')
+    notification.warning(t('bookmark.titleRequired'))
     return
   }
 
   loading.value = true
-  error.value = ''
 
   const data: BookmarkSaveJson = {
     collectionId: props.bookmark.data.collectionId,
@@ -100,8 +99,8 @@ async function handleSubmit() {
     await bookmarkStore.updateBookmark(props.bookmark.id, data)
     emit('update:open', false)
     emit('saved')
-  } catch {
-    error.value = t('bookmark.updateError')
+  } catch (err) {
+    notification.handleApiError(err, t('bookmark.updateError'))
   } finally {
     loading.value = false
   }
@@ -113,10 +112,6 @@ async function handleSubmit() {
     <template #title>{{ t('bookmark.editTitle') }}</template>
 
     <form @submit.prevent="handleSubmit" class="space-y-4">
-      <div v-if="error" class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-        {{ error }}
-      </div>
-
       <div class="space-y-2">
         <label for="edit-bookmark-url" class="text-sm font-medium">{{ t('bookmark.url') }} *</label>
         <input

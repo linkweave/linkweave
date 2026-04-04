@@ -1,20 +1,22 @@
 <script setup lang="ts">
-import { DialogCl, ButtonCl } from '@/components/ui'
-import { useUiStore, type Theme } from '@/stores/ui'
-import { useCollectionStore } from '@/stores/collection'
-import { useBookmarkStore } from '@/stores/bookmark'
-import { useTagStore } from '@/stores/tag'
-import { useI18n } from 'vue-i18n'
-import { Sun, Moon, Monitor, Upload, Download } from 'lucide-vue-next'
-import { ref } from 'vue'
 import ImportCollectionDialog from '@/components/bookmark/ImportCollectionDialog.vue'
+import { ButtonCl, DialogCl } from '@/components/ui'
+import { useBookmarkStore } from '@/stores/bookmark'
+import { useCollectionStore } from '@/stores/collection'
+import { useNotificationStore } from '@/stores/notification'
+import { useTagStore } from '@/stores/tag'
+import { type Theme, useUiStore } from '@/stores/ui'
 import { downloadBlobDirectly, extractFilenameFromContentDispositionHeader } from '@/utils/download'
+import { Download, Monitor, Moon, Sun, Upload } from 'lucide-vue-next'
+import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const ui = useUiStore()
 const collectionStore = useCollectionStore()
 const bookmarkStore = useBookmarkStore()
 const tagStore = useTagStore()
+const notification = useNotificationStore()
 
 interface Props {
   open?: boolean
@@ -41,7 +43,7 @@ async function handleImported() {
   if (collectionStore.currentCollectionId) {
     await Promise.all([
       bookmarkStore.fetchBookmarks(collectionStore.currentCollectionId),
-      tagStore.fetchTags(collectionStore.currentCollectionId)
+      tagStore.fetchTags(collectionStore.currentCollectionId),
     ])
   }
 }
@@ -57,11 +59,12 @@ async function handleExport() {
     if (!response.ok) throw new Error('Export failed')
 
     const contentDisposition = response.headers.get('Content-Disposition')
-    const filename = extractFilenameFromContentDispositionHeader(contentDisposition) ?? 'bookmarks.html'
+    const filename =
+      extractFilenameFromContentDispositionHeader(contentDisposition) ?? 'bookmarks.html'
     const blob = await response.blob()
     downloadBlobDirectly(blob, filename)
-  } catch (error) {
-    console.error('Export failed:', error)
+  } catch (err) {
+    void notification.handleApiError(err, t('settings.exportError'))
   } finally {
     isExporting.value = false
   }

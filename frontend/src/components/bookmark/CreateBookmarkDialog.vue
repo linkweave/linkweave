@@ -5,12 +5,14 @@ import { DialogCl, ButtonCl } from '@/components/ui'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useFolderStore } from '@/stores/folder'
 import { useTagStore } from '@/stores/tag'
+import { useNotificationStore } from '@/stores/notification'
 import type { BookmarkSaveJson } from '@/api/generated'
 
 const { t } = useI18n()
 const bookmarkStore = useBookmarkStore()
 const folderStore = useFolderStore()
 const tagStore = useTagStore()
+const notification = useNotificationStore()
 
 interface Props {
   collectionId: string
@@ -30,23 +32,24 @@ const title = ref('')
 const description = ref('')
 const selectedFolderId = ref<string | undefined>(undefined)
 const selectedTagIds = ref<Set<string>>(new Set())
-const error = ref('')
 const loading = ref(false)
 
 const folderOptions = computed(() =>
-  folderStore.folders.map(f => ({ id: f.id, name: f.data.name }))
+  folderStore.folders.map((f) => ({ id: f.id, name: f.data.name })),
 )
 
-watch(() => props.open, (val) => {
-  if (val) {
-    url.value = ''
-    title.value = ''
-    description.value = ''
-    selectedFolderId.value = props.folderId ?? undefined
-    selectedTagIds.value = new Set()
-    error.value = ''
-  }
-})
+watch(
+  () => props.open,
+  (val) => {
+    if (val) {
+      url.value = ''
+      title.value = ''
+      description.value = ''
+      selectedFolderId.value = props.folderId ?? undefined
+      selectedTagIds.value = new Set()
+    }
+  },
+)
 
 function isValidUrl(urlString: string): boolean {
   try {
@@ -69,22 +72,21 @@ function toggleTagId(tagId: string) {
 
 async function handleSubmit() {
   if (!url.value.trim()) {
-    error.value = t('bookmark.urlRequired')
+    notification.warning(t('bookmark.urlRequired'))
     return
   }
 
   if (!isValidUrl(url.value.trim())) {
-    error.value = t('bookmark.urlInvalid')
+    notification.warning(t('bookmark.urlInvalid'))
     return
   }
 
   if (!title.value.trim()) {
-    error.value = t('bookmark.titleRequired')
+    notification.warning(t('bookmark.titleRequired'))
     return
   }
 
   loading.value = true
-  error.value = ''
 
   const data: BookmarkSaveJson = {
     collectionId: props.collectionId,
@@ -108,8 +110,8 @@ async function handleSubmit() {
     await bookmarkStore.createBookmark(data)
     emit('update:open', false)
     emit('created')
-  } catch {
-    error.value = t('bookmark.createError')
+  } catch (err) {
+    notification.handleApiError(err, t('bookmark.createError'))
   } finally {
     loading.value = false
   }
@@ -121,24 +123,10 @@ async function handleSubmit() {
     <template #title>{{ t('bookmark.createTitle') }}</template>
 
     <form @submit.prevent="handleSubmit" class="space-y-4">
-      <div v-if="error" class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-        {{ error }}
-      </div>
-
       <div class="space-y-2">
-        <label for="create-bookmark-url" class="text-sm font-medium">{{ t('bookmark.url') }} *</label>
-        <input
-          id="create-bookmark-url"
-          v-model="url"
-          type="url"
-          required
-          :placeholder="t('bookmark.urlPlaceholder')"
-          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        />
-      </div>
-
-      <div class="space-y-2">
-        <label for="create-bookmark-title" class="text-sm font-medium">{{ t('bookmark.title') }} *</label>
+        <label for="create-bookmark-title" class="text-sm font-medium"
+          >{{ t('bookmark.title') }} *</label
+        >
         <input
           id="create-bookmark-title"
           v-model="title"
@@ -150,7 +138,23 @@ async function handleSubmit() {
       </div>
 
       <div class="space-y-2">
-        <label for="create-bookmark-description" class="text-sm font-medium">{{ t('bookmark.description') }}</label>
+        <label for="create-bookmark-url" class="text-sm font-medium"
+          >{{ t('bookmark.url') }} *</label
+        >
+        <input
+          id="create-bookmark-url"
+          v-model="url"
+          type="url"
+          required
+          :placeholder="t('bookmark.urlPlaceholder')"
+          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
+      </div>
+
+      <div class="space-y-2">
+        <label for="create-bookmark-description" class="text-sm font-medium">{{
+          t('bookmark.description')
+        }}</label>
         <textarea
           id="create-bookmark-description"
           v-model="description"
@@ -161,7 +165,9 @@ async function handleSubmit() {
       </div>
 
       <div class="space-y-2">
-        <label for="create-bookmark-folder" class="text-sm font-medium">{{ t('bookmark.folder') }}</label>
+        <label for="create-bookmark-folder" class="text-sm font-medium">{{
+          t('bookmark.folder')
+        }}</label>
         <select
           id="create-bookmark-folder"
           v-model="selectedFolderId"
@@ -189,7 +195,9 @@ async function handleSubmit() {
             {{ tag.data.name }}
           </button>
         </div>
-        <p v-if="tagStore.tags.length === 0" class="text-xs text-muted-foreground">{{ t('tag.none') }}</p>
+        <p v-if="tagStore.tags.length === 0" class="text-xs text-muted-foreground">
+          {{ t('tag.none') }}
+        </p>
       </div>
 
       <div class="flex justify-end gap-2">
