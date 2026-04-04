@@ -7,34 +7,19 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from 'radix-vue'
-import { ChevronDown, LogOut, Upload, Settings } from 'lucide-vue-next'
+import { ChevronDown, LogOut, Settings } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
 import { useCollectionStore } from '@/stores/collection'
-import { useBookmarkStore } from '@/stores/bookmark'
-import { useTagStore } from '@/stores/tag'
 import type { SupportedLocale } from '@/i18n'
 import { ref } from 'vue'
-import ImportCollectionDialog from '@/components/bookmark/ImportCollectionDialog.vue'
 import SettingsDialog from '@/components/ui/SettingsDialog.vue'
 
 const auth = useAuthStore()
 const localeStore = useLocaleStore()
 const collectionStore = useCollectionStore()
-const bookmarkStore = useBookmarkStore()
-const tagStore = useTagStore()
 
-const isImporting = ref(false)
 const isSettingsOpen = ref(false)
-
-async function handleImported() {
-  if (collectionStore.currentCollectionId) {
-    await Promise.all([
-      bookmarkStore.fetchBookmarks(collectionStore.currentCollectionId),
-      tagStore.fetchTags(collectionStore.currentCollectionId)
-    ])
-  }
-}
 
 function switchLocale(locale: SupportedLocale) {
   localeStore.setLocale(locale)
@@ -76,15 +61,6 @@ function switchLocale(locale: SupportedLocale) {
         </div>
         <DropdownMenuSeparator class="-mx-1 my-1 h-px bg-border" />
         <DropdownMenuItem
-          v-if="collectionStore.currentCollectionId"
-          class="relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-          @select="isImporting = true"
-        >
-          <Upload class="h-4 w-4" />
-          {{ $t('header.importCollection') }}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator v-if="collectionStore.currentCollectionId" class="-mx-1 my-1 h-px bg-border" />
-        <DropdownMenuItem
           class="relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
           @select="isSettingsOpen = true"
         >
@@ -102,13 +78,6 @@ function switchLocale(locale: SupportedLocale) {
       </DropdownMenuContent>
     </DropdownMenuPortal>
   </DropdownMenuRoot>
-
-  <ImportCollectionDialog
-    v-if="collectionStore.currentCollectionId"
-    v-model:open="isImporting"
-    :collection-id="collectionStore.currentCollectionId"
-    @imported="handleImported"
-  />
 
   <SettingsDialog v-model:open="isSettingsOpen" />
 </template>

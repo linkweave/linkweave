@@ -14,7 +14,6 @@
   },
   "header": {
     "addBookmark": "Lesezeichen hinzufügen",
-    "importCollection": "Sammlung importieren",
     "logout": "Abmelden",
     "settings": "Einstellungen"
   },
@@ -24,7 +23,10 @@
     "theme": "Design",
     "themeLight": "Hell",
     "themeDark": "Dunkel",
-    "themeSystem": "System"
+    "themeSystem": "System",
+    "dataManagement": "Datenverwaltung",
+    "exportCollection": "Sammlung exportieren",
+    "importCollection": "Lesezeichen importieren"
   },
   "import": {
     "title": "Lesezeichen importieren",

@@ -1,11 +1,20 @@
 <script setup lang="ts">
-import { DialogCl } from '@/components/ui'
+import { DialogCl, ButtonCl } from '@/components/ui'
 import { useUiStore, type Theme } from '@/stores/ui'
+import { useCollectionStore } from '@/stores/collection'
+import { useBookmarkStore } from '@/stores/bookmark'
+import { useTagStore } from '@/stores/tag'
 import { useI18n } from 'vue-i18n'
-import { Sun, Moon, Monitor } from 'lucide-vue-next'
+import { Sun, Moon, Monitor, Upload, Download } from 'lucide-vue-next'
+import { ref } from 'vue'
+import ImportCollectionDialog from '@/components/bookmark/ImportCollectionDialog.vue'
+import { downloadBlobDirectly, extractFilenameFromContentDispositionHeader } from '@/utils/download'
 
 const { t } = useI18n()
 const ui = useUiStore()
+const collectionStore = useCollectionStore()
+const bookmarkStore = useBookmarkStore()
+const tagStore = useTagStore()
 
 interface Props {
   open?: boolean
@@ -19,18 +28,51 @@ const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
+const isImporting = ref(false)
+const isExporting = ref(false)
+
 const themes: { value: Theme; icon: typeof Sun; labelKey: string }[] = [
   { value: 'light', icon: Sun, labelKey: 'settings.themeLight' },
   { value: 'dark', icon: Moon, labelKey: 'settings.themeDark' },
   { value: 'system', icon: Monitor, labelKey: 'settings.themeSystem' },
 ]
+
+async function handleImported() {
+  if (collectionStore.currentCollectionId) {
+    await Promise.all([
+      bookmarkStore.fetchBookmarks(collectionStore.currentCollectionId),
+      tagStore.fetchTags(collectionStore.currentCollectionId)
+    ])
+  }
+}
+
+async function handleExport() {
+  if (!collectionStore.currentCollectionId) return
+
+  isExporting.value = true
+  try {
+    const response = await fetch(`/api/collections/${collectionStore.currentCollectionId}/export`, {
+      credentials: 'include',
+    })
+    if (!response.ok) throw new Error('Export failed')
+
+    const contentDisposition = response.headers.get('Content-Disposition')
+    const filename = extractFilenameFromContentDispositionHeader(contentDisposition) ?? 'bookmarks.html'
+    const blob = await response.blob()
+    downloadBlobDirectly(blob, filename)
+  } catch (error) {
+    console.error('Export failed:', error)
+  } finally {
+    isExporting.value = false
+  }
+}
 </script>
 
 <template>
   <DialogCl :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('settings.title') }}</template>
 
-    <div class="space-y-4">
+    <div class="space-y-6">
       <div>
         <h3 class="text-sm font-medium text-foreground mb-3">
           {{ t('settings.appearance') }}
@@ -55,6 +97,29 @@ const themes: { value: Theme; icon: typeof Sun; labelKey: string }[] = [
           </button>
         </div>
       </div>
+
+      <div v-if="collectionStore.currentCollectionId">
+        <h3 class="text-sm font-medium text-foreground mb-3">
+          {{ t('settings.dataManagement') }}
+        </h3>
+        <div class="flex flex-col gap-2">
+          <ButtonCl variant="outline" :disabled="isExporting" @click="handleExport">
+            <Download class="mr-2 h-4 w-4" />
+            {{ t('settings.exportCollection') }}
+          </ButtonCl>
+          <ButtonCl variant="outline" @click="isImporting = true">
+            <Upload class="mr-2 h-4 w-4" />
+            {{ t('settings.importCollection') }}
+          </ButtonCl>
+        </div>
+      </div>
     </div>
   </DialogCl>
+
+  <ImportCollectionDialog
+    v-if="collectionStore.currentCollectionId"
+    v-model:open="isImporting"
+    :collection-id="collectionStore.currentCollectionId"
+    @imported="handleImported"
+  />
 </template>
