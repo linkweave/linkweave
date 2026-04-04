@@ -1,6 +1,7 @@
 package org.chainlink.api.collection;
 
 import java.util.List;
+import java.util.Optional;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.AllArgsConstructor;
@@ -13,6 +14,16 @@ import org.jspecify.annotations.NonNull;
 @AllArgsConstructor
 public class CollectionRepo extends BaseRepo<Collection> {
 
+
+    @NonNull
+    public Optional<Collection> findDefaultByUser(@NonNull ID<User> userId) {
+        return db.selectFrom(QCollection.collection)
+            .leftJoin(QCollectionAccess.collectionAccess)
+            .on(QCollection.collection.id.eq(QCollectionAccess.collectionAccess.collection.id))
+            .where(QCollectionAccess.collectionAccess.user.id.eq(userId.getUUID()))
+            .where(QCollectionAccess.collectionAccess.isDefault.isTrue())
+            .fetchOne();
+    }
 
     @NonNull
     public List<Collection> findByOwner(@NonNull ID<User> ownerId) {

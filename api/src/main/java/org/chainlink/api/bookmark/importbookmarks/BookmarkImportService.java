@@ -111,7 +111,7 @@ public class BookmarkImportService {
             folder,
             parsed.getTitle(),
             parseUrl(parsed.getUrl()),
-            null,
+            parsed.getDescription(),
             new HashSet<>(Set.of(importTag))
         );
         bookmarkRepo.persist(bookmark);

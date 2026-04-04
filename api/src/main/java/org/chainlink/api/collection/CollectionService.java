@@ -28,13 +28,15 @@ public class CollectionService {
     private final CollectionInfoMapperService collectionInfoMapperService;
     private final BookmarkService bookmarkService;
 
-    public void autoProvisionForUser(@NonNull User user) {
-        if (collectionAccessRepo.existsByUser(user.getId())) {
-            return;
+    public Collection getDefaultCollectionOrAutoprovision(@NonNull User user) {
+
+        var optCollection = collectionRepo.findDefaultByUser(user.getId());
+        if (optCollection.isPresent()) {
+            return optCollection.get();
         }
 
         Collection collection = new Collection(DEFAULT_COLLECTION_NAME, user);
-        collectionRepo.persist(collection);
+        collectionRepo.persistAndFlush(collection);
 
         if (!collectionAccessRepo.existsByUser(user.getId())) {
             CollectionAccess access = new CollectionAccess(
@@ -43,8 +45,13 @@ public class CollectionService {
                 CollectionRole.OWNER,
                 true
             );
-            collectionAccessRepo.persist(access);
+            collectionAccessRepo.persistAndFlush(access);
         }
+        return collection;
+    }
+
+    public void saveCollection(@NonNull Collection collection) {
+        collectionRepo.persist(collection);
     }
 
     public CollectionInfoJson getCollectionInfoById(@NonNull ID<Collection> collectionID) {

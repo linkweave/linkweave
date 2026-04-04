@@ -15,7 +15,17 @@ import org.jspecify.annotations.NonNull;
 @AllArgsConstructor
 public class CollectionAccessRepo extends BaseRepo<CollectionAccess> {
 
+    @Override
+    public void persist(@NonNull CollectionAccess entity) {
 
+        if (entity.isDefault()) {
+            db.update(QCollectionAccess.collectionAccess)
+                .set(QCollectionAccess.collectionAccess.isDefault, false)
+                .where(QCollectionAccess.collectionAccess.isDefault.isTrue())
+                .execute();
+        }
+        super.persist(entity);
+    }
 
     @NonNull
     public List<CollectionAccess> findByUser(@NonNull ID<User> userId) {

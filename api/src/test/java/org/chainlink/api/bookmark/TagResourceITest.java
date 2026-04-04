@@ -1,20 +1,22 @@
 package org.chainlink.api.bookmark;
 
+import java.util.UUID;
+
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import org.chainlink.api.collection.Collection;
-import org.chainlink.api.collection.CollectionAccessRepo;
-import org.chainlink.api.collection.CollectionRepo;
 import org.chainlink.api.testutil.fixture.FixtureService;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 
 @QuarkusTest
 class TagResourceITest {
@@ -290,7 +292,7 @@ class TagResourceITest {
             .get("/bookmarks")
             .then()
             .statusCode(200)
-            .body("bookmarkList[0].data.tagIds", not(hasItem(tagId.toString())));
+            .body("bookmarkList[0].data.tagIds", not(hasItem(tagId)));
     }
 
     @Test

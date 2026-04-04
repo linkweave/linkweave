@@ -1,11 +1,14 @@
 package org.chainlink.api.collection;
 
+import java.util.UUID;
+
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
 import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.api.shared.user.User;
+import org.chainlink.api.testutil.fixture.FixtureService;
 import org.chainlink.infrastructure.db.DatabaseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +31,9 @@ class AutoProvisionITest {
     @Inject
     DatabaseService databaseService;
 
+    @Inject
+    FixtureService fixtureService;
+
     @BeforeEach
     void resetDatabase() {
         databaseService.resetDatabase();
@@ -36,20 +42,26 @@ class AutoProvisionITest {
     @Test
     @TestSecurity(
         user = "test@example.com",
-        roles = {"BOOKMARK_WRITE"}
+        roles = { "BOOKMARK_WRITE" }
     )
     void shouldAutoProvisionDefaultCollectionForNewUser() {
-        User user = currentUserService.currentUser();
+        User newuser = fixtureService.persistUser(userBuilder -> {
+            UUID uuid = UUID.randomUUID();
+            userBuilder
+                .withEmail(uuid + "@example.com")
+                .withVorname(uuid + "_vorname")
+                .withNachname(uuid + "_nachname");
+        });
 
-        collectionService.autoProvisionForUser(user);
+        collectionService.getDefaultCollectionOrAutoprovision(newuser);
 
-        var collections = collectionRepo.findByOwner(user.getId());
+        var collections = collectionRepo.findByOwner(newuser.getId());
         Assertions.assertThat(collections).hasSize(1);
         var created = collections.getFirst();
         Assertions.assertThat(created.getName()).isEqualTo("My Bookmarks");
-        Assertions.assertThat(created.getOwner().getId()).isEqualTo(user.getId());
+        Assertions.assertThat(created.getOwner().getId()).isEqualTo(newuser.getId());
 
-        var accessList = collectionAccessRepo.findByUser(user.getId());
+        var accessList = collectionAccessRepo.findByUser(newuser.getId());
         Assertions.assertThat(accessList).hasSize(1);
         var access = accessList.getFirst();
         Assertions.assertThat(access.getRole()).isEqualTo(CollectionRole.OWNER);
@@ -60,20 +72,27 @@ class AutoProvisionITest {
     @Test
     @TestSecurity(
         user = "test@example.com",
-        roles = {"BOOKMARK_WRITE"}
+        roles = { "BOOKMARK_WRITE" }
     )
     void shouldNotCreateDuplicateCollectionsOnSecondProvision() {
-        User user = currentUserService.currentUser();
 
-        collectionService.autoProvisionForUser(user);
-        collectionService.autoProvisionForUser(user);
+        User testusr = fixtureService.persistUser(userBuilder -> {
+            UUID uuid = UUID.randomUUID();
+            userBuilder
+                .withEmail(uuid + "@example.com")
+                .withVorname(uuid + "_vorname")
+                .withNachname(uuid + "_nachname");
+        });
 
-        var collections = collectionRepo.findByOwner(user.getId());
+        collectionService.getDefaultCollectionOrAutoprovision(testusr);
+        collectionService.getDefaultCollectionOrAutoprovision(testusr);
+
+        var collections = collectionRepo.findByOwner(testusr.getId());
         Assertions.assertThat(collections).hasSize(1);
         var created = collections.getFirst();
         Assertions.assertThat(created.getName()).isEqualTo("My Bookmarks");
 
-        var accessList = collectionAccessRepo.findByUser(user.getId());
+        var accessList = collectionAccessRepo.findByUser(testusr.getId());
         Assertions.assertThat(accessList).hasSize(1);
         Assertions.assertThat(accessList.getFirst().getCollection().getId()).isEqualTo(created.getId());
     }

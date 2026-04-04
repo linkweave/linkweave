@@ -5,14 +5,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.chainlink.infrastructure.errorhandling.AppValidationException;
+import org.chainlink.infrastructure.errorhandling.AppValidationMessage;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.chainlink.infrastructure.errorhandling.AppValidationException;
-import org.chainlink.infrastructure.errorhandling.AppValidationMessage;
 import org.jspecify.annotations.NonNull;
-
+import org.jspecify.annotations.Nullable;
 
 public class NetscapeBookmarkParser {
 
@@ -58,8 +58,19 @@ public class NetscapeBookmarkParser {
             } else if (firstChild != null && firstChild.tagName().equals("a")) {
                 String href = firstChild.attr("href");
                 String title = firstChild.text();
-                bookmarks.add(new ParsedBookmark(title, href));
+                String description = extractDescription(dt);
+                bookmarks.add(new ParsedBookmark(title, href, description));
             }
         }
+    }
+
+    @Nullable
+    private String extractDescription(@NonNull Element dt) {
+        Element nextSibling = dt.nextElementSibling();
+        if (nextSibling != null && nextSibling.tagName().equals("dd")) {
+            String text = nextSibling.text();
+            return text.isBlank() ? null : text;
+        }
+        return null;
     }
 }

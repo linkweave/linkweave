@@ -32,6 +32,7 @@ class NetscapeBookmarkParserTest {
             Assertions.assertThat(bookmarksBar.getBookmarks()).hasSize(1);
             Assertions.assertThat(bookmarksBar.getBookmarks().get(0).getTitle()).isEqualTo("Example Title");
             Assertions.assertThat(bookmarksBar.getBookmarks().get(0).getUrl()).isEqualTo("https://example.com/");
+            Assertions.assertThat(bookmarksBar.getBookmarks().get(0).getDescription()).isEqualTo("A sample description for the example bookmark");
 
             Assertions.assertThat(bookmarksBar.getFolders()).hasSize(1);
             ParsedFolder subfolder = bookmarksBar.getFolders().get(0);
@@ -39,6 +40,7 @@ class NetscapeBookmarkParserTest {
             Assertions.assertThat(subfolder.getBookmarks()).hasSize(1);
             Assertions.assertThat(subfolder.getBookmarks().get(0).getTitle()).isEqualTo("Another Title");
             Assertions.assertThat(subfolder.getBookmarks().get(0).getUrl()).isEqualTo("https://example.org");
+            Assertions.assertThat(subfolder.getBookmarks().get(0).getDescription()).isEqualTo("Description for another title");
         }
     }
 
@@ -49,7 +51,9 @@ class NetscapeBookmarkParserTest {
 
             Assertions.assertThat(result.rootBookmarks()).hasSize(2);
             Assertions.assertThat(result.rootBookmarks().get(0).getTitle()).isEqualTo("Root Bookmark 1");
+            Assertions.assertThat(result.rootBookmarks().get(0).getDescription()).isEqualTo("Root bookmark 1 description");
             Assertions.assertThat(result.rootBookmarks().get(1).getTitle()).isEqualTo("Root Bookmark 2");
+            Assertions.assertThat(result.rootBookmarks().get(1).getDescription()).isNull();
 
             Assertions.assertThat(result.rootFolders()).hasSize(1);
             Assertions.assertThat(result.rootFolders().get(0).getName()).isEqualTo("Folder A");

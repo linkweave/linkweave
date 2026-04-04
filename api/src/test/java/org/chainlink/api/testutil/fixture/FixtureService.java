@@ -18,8 +18,8 @@ import org.chainlink.api.bookmark.folder.FolderRepo;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.collection.CollectionAccess;
 import org.chainlink.api.collection.CollectionAccessRepo;
-import org.chainlink.api.collection.CollectionRepo;
 import org.chainlink.api.collection.CollectionRole;
+import org.chainlink.api.collection.CollectionService;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
@@ -34,7 +34,7 @@ public class FixtureService {
     UserRepo userRepo;
 
     @Inject
-    CollectionRepo collectionRepo;
+    CollectionService collectionService;
 
     @Inject
     CollectionAccessRepo collectionAccessRepo;
@@ -58,7 +58,7 @@ public class FixtureService {
     @NonNull
     public Collection persistCollection(Consumer<org.chainlink.api.testutil.builder.CollectionBuilder> block) {
         Collection collection = org.chainlink.api.testutil.builder.CollectionBuilder.build(block);
-        collectionRepo.persist(collection);
+        collectionService.saveCollection(collection);
         return collection;
     }
 
@@ -103,13 +103,13 @@ public class FixtureService {
             .withOwner(user)
             .withName("Test Collection")
         );
-        collectionRepo.persist(collection);
+        collectionService.saveCollection(collection);
 
         CollectionAccess access = org.chainlink.api.testutil.builder.CollectionAccessBuilder.build(b -> b
             .withCollection(collection)
             .withUser(user)
             .withRole(CollectionRole.OWNER)
-            .withDefault(true)
+            .withDefault(false)
         );
         collectionAccessRepo.persist(access);
 
