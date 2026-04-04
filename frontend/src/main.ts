@@ -20,9 +20,12 @@ async function initializeApp() {
   const collection = useCollectionStore()
 
   // Wait for auth to be initialized before mounting
-  const authenticated = await auth.fetchCurrentUser()
-  if (authenticated && auth.user?.defaultCollectionId) {
-    collection.setCurrentCollectionId(auth.user.defaultCollectionId)
+  // The router guard will also handle this if the router navigates early
+  if (!auth.initialized) {
+    const authenticated = await auth.fetchCurrentUser()
+    if (authenticated && auth.user?.defaultCollectionId) {
+      collection.setCurrentCollectionId(auth.user.defaultCollectionId)
+    }
   }
 
   app.mount('#app')

@@ -31,11 +31,20 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
+
+  // Wait for auth to be initialized before checking authentication
+  if (!auth.initialized) {
+    await auth.fetchCurrentUser()
+  }
 
   if (!auth.isAuthenticated && to.name !== 'login') {
     return { name: 'login' }
+  }
+
+  if (auth.isAuthenticated && to.name === 'login') {
+    return { name: 'home' }
   }
 })
 
