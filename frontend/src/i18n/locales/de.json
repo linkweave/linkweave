@@ -14,7 +14,29 @@
   },
   "header": {
     "addBookmark": "Lesezeichen hinzufügen",
-    "logout": "Abmelden"
+    "logout": "Abmelden",
+    "settings": "Einstellungen"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "appearance": "Erscheinungsbild",
+    "theme": "Design",
+    "themeLight": "Hell",
+    "themeDark": "Dunkel",
+    "themeSystem": "System",
+    "dataManagement": "Datenverwaltung",
+    "exportCollection": "Sammlung exportieren",
+    "exportError": "Sammlung konnte nicht exportiert werden.",
+    "importCollection": "Lesezeichen importieren"
+  },
+  "import": {
+    "title": "Lesezeichen importieren",
+    "description": "Laden Sie eine Lesezeichen-Datei im Netscape-HTML-Format hoch, um sie in diese Sammlung zu importieren. Alle Ordner und Lesezeichen werden auf der Stammebene erstellt.",
+    "file": "Lesezeichen-Datei",
+    "filePlaceholder": ".html-Datei auswählen...",
+    "submit": "Importieren",
+    "success": "{bookmarks} Lesezeichen und {folders} Ordner erfolgreich importiert.",
+    "error": "Lesezeichen konnten nicht importiert werden."
   },
   "sidebar": {
     "bookmarks": "Lesezeichen",
@@ -35,7 +57,8 @@
     "renameTitle": "Ordner umbenennen",
     "renameError": "Ordner konnte nicht umbenannt werden.",
     "deleteTitle": "Ordner löschen",
-    "deleteConfirm": "Möchten Sie diesen Ordner wirklich löschen? Alle Lesezeichen darin werden dauerhaft gelöscht."
+    "deleteConfirm": "Möchten Sie diesen Ordner wirklich löschen? Alle Lesezeichen darin werden dauerhaft gelöscht.",
+    "deleteError": "Ordner konnte nicht gelöscht werden."
   },
   "bookmark": {
     "createTitle": "Lesezeichen erstellen",
@@ -57,7 +80,8 @@
     "moveError": "Lesezeichen konnte nicht verschoben werden.",
     "moveToFolder": "In Ordner verschieben",
     "deleteTitle": "Lesezeichen löschen",
-    "deleteConfirm": "Möchten Sie dieses Lesezeichen wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+    "deleteConfirm": "Möchten Sie dieses Lesezeichen wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "deleteError": "Lesezeichen konnte nicht gelöscht werden."
   },
   "tag": {
     "none": "Noch keine Tags",
@@ -72,6 +96,7 @@
     "updateError": "Tag konnte nicht aktualisiert werden.",
     "deleteTitle": "Tag löschen",
     "deleteConfirm": "Möchten Sie diesen Tag wirklich löschen? Er wird von allen Lesezeichen entfernt.",
+    "deleteError": "Tag konnte nicht gelöscht werden.",
     "clearFilter": "Filter zurücksetzen"
   },
   "bookmarkList": {

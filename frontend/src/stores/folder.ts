@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { FolderResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import type { FolderJson, FolderSaveJson, FolderMoveJson } from '@/api/generated'
+import { useNotificationStore } from '@/stores/notification'
 
 const folderApi = new FolderResourceApi(config)
 
@@ -38,8 +39,10 @@ export const useFolderStore = defineStore('folder', () => {
         collectionId ? { collectionId } : undefined,
       )
       folders.value = result.folderList ?? []
-    } catch {
+    } catch (err) {
       folders.value = []
+      const notification = useNotificationStore()
+      notification.handleApiError(err, 'Failed to load folders')
     } finally {
       loading.value = false
     }

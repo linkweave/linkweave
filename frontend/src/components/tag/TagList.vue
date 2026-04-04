@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { Plus, Pencil, Trash2, X } from 'lucide-vue-next'
 import { useTagStore } from '@/stores/tag'
 import { useBookmarkStore } from '@/stores/bookmark'
+import { useNotificationStore } from '@/stores/notification'
 import CreateTagDialog from './CreateTagDialog.vue'
 import EditTagDialog from './EditTagDialog.vue'
 import { ConfirmDialog } from '@/components/ui'
@@ -12,6 +13,7 @@ import type { TagJson } from '@/api/generated'
 const { t } = useI18n()
 const tagStore = useTagStore()
 const bookmarkStore = useBookmarkStore()
+const notification = useNotificationStore()
 
 const bookmarkCountByTag = computed(() => {
   const counts = new Map<string, number>()
@@ -65,6 +67,8 @@ async function confirmDelete() {
   if (!deletingTag.value) return
   try {
     await tagStore.deleteTag(deletingTag.value.id)
+  } catch (err) {
+    void notification.handleApiError(err, t('tag.deleteError'))
   } finally {
     deletingTag.value = null
     showDeleteConfirm.value = false
@@ -82,6 +86,7 @@ async function confirmDelete() {
       <button
         v-for="tag in tagStore.tags"
         :key="tag.id"
+        :data-testid="`tag-row-${tag.data.name}`"
         class="group w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors text-left"
         :class="tagStore.selectedTagIds.has(tag.id)
           ? 'bg-accent text-accent-foreground'
@@ -96,12 +101,16 @@ async function confirmDelete() {
         <span v-if="(bookmarkCountByTag.get(tag.id) ?? 0) > 0" class="text-xs opacity-40 shrink-0">{{ bookmarkCountByTag.get(tag.id) }}</span>
         <span class="inline-flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
+            :aria-label="t('common.edit')"
+            data-testid="tag-edit-btn"
             class="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-primary hover:text-primary-foreground"
             @click.stop="handleEdit(tag)"
           >
             <Pencil class="h-3 w-3" />
           </button>
           <button
+            :aria-label="t('common.delete')"
+            data-testid="tag-delete-btn"
             class="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-destructive hover:text-destructive-foreground"
             @click.stop="handleDelete(tag)"
           >
@@ -122,6 +131,7 @@ async function confirmDelete() {
 
     <button
       v-if="props.collectionId"
+      data-testid="new-tag-btn"
       class="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors text-muted-foreground hover:text-foreground mt-1"
       @click="showCreateDialog = true"
     >

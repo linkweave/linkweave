@@ -1,20 +1,22 @@
 package org.chainlink.api.bookmark;
 
+import java.util.UUID;
+
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import org.chainlink.api.collection.Collection;
-import org.chainlink.api.collection.CollectionAccessRepo;
-import org.chainlink.api.collection.CollectionRepo;
 import org.chainlink.api.testutil.fixture.FixtureService;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 
 @QuarkusTest
 class TagResourceITest {
@@ -264,6 +266,33 @@ class TagResourceITest {
             .then()
             .statusCode(200)
             .body("bookmarkList", hasSize(1));
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldDeleteTagFromAllBookmarks() {
+        Collection collection = fixtureService.createTestCollection();
+        String collectionId = collection.getId().getUUID().toString();
+
+        String tagId = RestAssured.given().contentType(ContentType.JSON)
+            .body("{\"collectionId\":\"%s\",\"name\":\"DeleteMe\"}".formatted(collectionId))
+            .post("/tags").then().statusCode(200).extract().path("id");
+
+        RestAssured.given().contentType(ContentType.JSON)
+            .body("{\"collectionId\":\"%s\",\"title\":\"BM\",\"url\":\"https://x.com\",\"tagIds\":[\"%s\"]}".formatted(collectionId, tagId))
+            .post("/bookmarks").then().statusCode(200);
+
+        RestAssured.given()
+            .delete("/tags/" + tagId)
+            .then()
+            .statusCode(204);
+
+        RestAssured.given()
+            .queryParam("collectionId", collectionId)
+            .get("/bookmarks")
+            .then()
+            .statusCode(200)
+            .body("bookmarkList[0].data.tagIds", not(hasItem(tagId)));
     }
 
     @Test

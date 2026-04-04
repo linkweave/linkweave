@@ -2,8 +2,9 @@
 
 # Place .gitignore settings specific to your project here
 
-# Claude hooks
-.claude/hooks/
+# Claude and Junie agent state
+.claude/
+.junie/
 
 # Temporary output files
 token-usage-output.txt
@@ -46,6 +47,10 @@ bin/
 *.ipr
 *.iml
 *.iws
+
+# Generated sources from IntelliJ annotation processing
+**/src/main/generated/
+**/src/test/generated_test/
 
 # NetBeans
 nb-configuration.xml

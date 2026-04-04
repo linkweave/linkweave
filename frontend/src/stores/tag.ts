@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import { TagResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import type { TagJson, TagSaveJson } from '@/api/generated'
+import { useBookmarkStore } from '@/stores/bookmark'
+import { useNotificationStore } from '@/stores/notification'
 
 const tagApi = new TagResourceApi(config)
 
@@ -29,8 +31,10 @@ export const useTagStore = defineStore('tag', () => {
     try {
       const result = await tagApi.apiTagsGet({ collectionId })
       tags.value = result.tagList ?? []
-    } catch {
+    } catch (err) {
       tags.value = []
+      const notification = useNotificationStore()
+      notification.handleApiError(err, 'Failed to load tags')
     } finally {
       loading.value = false
     }
@@ -51,9 +55,17 @@ export const useTagStore = defineStore('tag', () => {
 
   async function deleteTag(tagId: string): Promise<void> {
     await tagApi.apiTagsTagIdDelete({ tagId })
+    const bookmarkStore = useBookmarkStore()
     tags.value = tags.value.filter(t => t.id !== tagId)
     selectedTagIds.value.delete(tagId)
     selectedTagIds.value = new Set(selectedTagIds.value)
+
+    // Remove the tag from all bookmarks in the store
+    for (const bookmark of bookmarkStore.bookmarks) {
+      if (bookmark.data.tagIds) {
+        bookmark.data.tagIds.delete(tagId)
+      }
+    }
   }
 
   return {

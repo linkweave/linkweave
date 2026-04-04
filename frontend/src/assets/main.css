@@ -1,24 +1,26 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-  --color-background: #ffffff;
-  --color-foreground: #171717;
+  --color-background: #f9fafb;
+  --color-foreground: #111827;
   --color-card: #ffffff;
-  --color-card-foreground: #171717;
+  --color-card-foreground: #111827;
   --color-primary: #2563eb;
   --color-primary-foreground: #ffffff;
-  --color-secondary: #f5f5f5;
-  --color-secondary-foreground: #171717;
-  --color-muted: #f5f5f5;
-  --color-muted-foreground: #737373;
-  --color-accent: #f5f5f5;
-  --color-accent-foreground: #171717;
+  --color-secondary: #f3f4f6;
+  --color-secondary-foreground: #111827;
+  --color-muted: #f3f4f6;
+  --color-muted-foreground: #6b7280;
+  --color-accent: #f3f4f6;
+  --color-accent-foreground: #111827;
   --color-destructive: #ef4444;
   --color-destructive-foreground: #ffffff;
   --color-popover: #ffffff;
-  --color-popover-foreground: #171717;
-  --color-border: #e5e5e5;
-  --color-input: #e5e5e5;
+  --color-popover-foreground: #111827;
+  --color-border: #e5e7eb;
+  --color-input: #e5e7eb;
   --color-ring: #2563eb;
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
@@ -29,28 +31,26 @@
   --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
-@media (prefers-color-scheme: dark) {
-  @theme {
-    --color-background: #1a1d23;
-    --color-foreground: #ededed;
-    --color-card: #1f2329;
-    --color-card-foreground: #ededed;
-    --color-primary: #3b82f6;
-    --color-primary-foreground: #ffffff;
-    --color-secondary: #252a32;
-    --color-secondary-foreground: #ededed;
-    --color-muted: #252a32;
-    --color-muted-foreground: #a3a3a3;
-    --color-accent: #252a32;
-    --color-accent-foreground: #ededed;
-    --color-destructive: #dc2626;
-    --color-destructive-foreground: #ffffff;
-    --color-popover: #1f2329;
-    --color-popover-foreground: #ededed;
-    --color-border: #2d333b;
-    --color-input: #252a32;
-    --color-ring: #3b82f6;
-  }
+.dark {
+  --color-background: #1a1d23;
+  --color-foreground: #ededed;
+  --color-card: #1f2329;
+  --color-card-foreground: #ededed;
+  --color-primary: #3b82f6;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #252a32;
+  --color-secondary-foreground: #ededed;
+  --color-muted: #252a32;
+  --color-muted-foreground: #a3a3a3;
+  --color-accent: #252a32;
+  --color-accent-foreground: #ededed;
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
+  --color-popover: #1f2329;
+  --color-popover-foreground: #ededed;
+  --color-border: #2d333b;
+  --color-input: #252a32;
+  --color-ring: #3b82f6;
 }
 
 * {

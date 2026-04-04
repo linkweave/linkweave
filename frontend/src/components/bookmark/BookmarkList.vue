@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useBookmarkStore } from '@/stores/bookmark'
+import { useNotificationStore } from '@/stores/notification'
 import BookmarkCard from './BookmarkCard.vue'
 import EditBookmarkDialog from './EditBookmarkDialog.vue'
 import MoveBookmarkDialog from './MoveBookmarkDialog.vue'
@@ -10,6 +11,7 @@ import type { BookmarkJson } from '@/api/generated'
 
 const { t } = useI18n()
 const bookmarkStore = useBookmarkStore()
+const notification = useNotificationStore()
 
 const editingBookmark = ref<BookmarkJson | null>(null)
 const showEditDialog = ref(false)
@@ -52,6 +54,8 @@ async function confirmDelete() {
   if (!deletingBookmark.value) return
   try {
     await bookmarkStore.deleteBookmark(deletingBookmark.value.id)
+  } catch (err) {
+    void notification.handleApiError(err, t('bookmark.deleteError'))
   } finally {
     deletingBookmark.value = null
     showDeleteConfirm.value = false

@@ -12,7 +12,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.collection.Collection;
-import org.chainlink.api.collection.CollectionAccessRepo;
 import org.chainlink.api.collection.CollectionService;
 import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.api.shared.user.User;
@@ -27,7 +26,6 @@ public class AuthResource {
     private final SecurityIdentity identity;
     private final CurrentUserService currentUserService;
     private final CollectionService collectionService;
-    private final CollectionAccessRepo collectionAccessRepo;
 
     @GET
     @Path("/me")
@@ -42,11 +40,9 @@ public class AuthResource {
             throw new AppAuthException();
         }
 
-        collectionService.autoProvisionForUser(user);
+        Collection collection = collectionService.getDefaultCollectionOrAutoprovision(user);
 
-        ID<Collection> defaultCollectionId = collectionAccessRepo
-            .getDefaultByUser(user.getId())
-            .getCollection().getId();
+        ID<Collection> defaultCollectionId = collection.getId();
 
         return new UserInfoJson(
             identity.getPrincipal().getName(),

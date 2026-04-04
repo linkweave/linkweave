@@ -1,6 +1,6 @@
 # UC-031: Import Browser Bookmarks — Implementation Plan
 
-**Related:** FR-031, UC-031 (use_cases.puml)
+**Related:** FR-031, [UC-031 Use Case Spec](use_cases/UC-031-import-browser-bookmarks.md), [UC-031 Diagram](use_cases.puml)
 **Priority:** Low
 **Complexity:** Medium-Low
 

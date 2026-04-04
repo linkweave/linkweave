@@ -1,16 +1,35 @@
 import './assets/main.css'
-
-import { createApp } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { useCollectionStore } from '@/stores/collection'
 import { createPinia } from 'pinia'
 
+import { createApp } from 'vue'
+
 import App from './App.vue'
-import router from './router'
 import i18n from './i18n'
+import router from './router'
 
-const app = createApp(App)
+async function initializeApp() {
+  const app = createApp(App)
 
-app.use(createPinia())
-app.use(router)
-app.use(i18n)
+  app.use(createPinia())
+  app.use(router)
+  app.use(i18n)
 
-app.mount('#app')
+  const auth = useAuthStore()
+  const collection = useCollectionStore()
+
+  // Wait for auth to be initialized before mounting
+  const authenticated = await auth.fetchCurrentUser()
+  if (authenticated && auth.user?.defaultCollectionId) {
+    collection.setCurrentCollectionId(auth.user.defaultCollectionId)
+  }
+
+  app.mount('#app')
+}
+
+try {
+  await initializeApp()
+} catch (e) {
+  console.error('Error initializing app:', e)
+}
