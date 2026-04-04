@@ -27,6 +27,10 @@ watch(() => collectionStore.currentCollectionId, loadBookmarks)
 
 <template>
   <MainLayout>
+    <template #header-title>
+      {{ collectionStore.collectionName ?? t('app.title') }}
+    </template>
+
     <template #header-actions>
       <ButtonCl size="sm" @click="isAddingBookmark = true">
         <Plus class="h-4 w-4 mr-2" />

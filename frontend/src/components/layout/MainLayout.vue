@@ -31,7 +31,7 @@ const closeSidebar = () => {
         </ButtonCl>
         <h1 class="text-xl font-semibold text-foreground flex items-center gap-2">
           <img :src="logoUrl" alt="" class="h-6 w-6" />
-          {{ t('app.title') }}
+          <slot name="header-title">{{ t('app.title') }}</slot>
         </h1>
       </div>
       <div class="flex items-center gap-2">
