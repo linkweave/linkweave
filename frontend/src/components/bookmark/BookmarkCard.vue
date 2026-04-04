@@ -9,8 +9,10 @@ import {
 } from 'radix-vue'
 import type { BookmarkJson } from '@/api/generated'
 import { useTagStore } from '@/stores/tag'
+import { useFolderStore } from '@/stores/folder'
 
 const tagStore = useTagStore()
+const folderStore = useFolderStore()
 
 const props = defineProps<{
   bookmark: BookmarkJson
@@ -40,10 +42,17 @@ function faviconUrl(url: string) {
 function getTagById(tagId: string) {
   return tagStore.tags.find(t => t.id === tagId)
 }
+
+function getFolderName(): string | null {
+  const folderId = props.bookmark.data.folderId
+  if (!folderId) return null
+  const folder = folderStore.folders.find(f => f.id === folderId)
+  return folder?.data.name ?? null
+}
 </script>
 
 <template>
-  <div class="group rounded-lg border border-border bg-card p-4 hover:shadow-sm transition-shadow text-muted-foreground hover:text-accent-foreground">
+  <div class="group rounded-lg border border-border bg-card p-4 hover:ring-2 hover:ring-primary/50 hover:border-primary/30 transition-all text-muted-foreground hover:text-accent-foreground">
     <DropdownMenuRoot>
       <div class="flex items-start gap-3">
         <img
@@ -86,7 +95,10 @@ function getTagById(tagId: string) {
             {{ props.bookmark.data.description }}
           </p>
 
-          <div v-if="props.bookmark.data.tagIds && props.bookmark.data.tagIds.size > 0" class="flex flex-wrap gap-1 mt-2">
+          <div v-if="props.bookmark.data.tagIds && props.bookmark.data.tagIds.size > 0 || getFolderName()" class="flex flex-wrap items-center gap-1 mt-2">
+            <span v-if="getFolderName()" class="text-xs text-muted-foreground">
+              in {{ getFolderName() }}
+            </span>
             <span
               v-for="tagId in props.bookmark.data.tagIds"
               :key="tagId"
