@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from 'radix-vue'
-import { ChevronDown, LogOut, Upload } from 'lucide-vue-next'
+import { ChevronDown, LogOut, Upload, Settings } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
 import { useCollectionStore } from '@/stores/collection'
@@ -16,6 +16,7 @@ import { useTagStore } from '@/stores/tag'
 import type { SupportedLocale } from '@/i18n'
 import { ref } from 'vue'
 import ImportCollectionDialog from '@/components/bookmark/ImportCollectionDialog.vue'
+import SettingsDialog from '@/components/ui/SettingsDialog.vue'
 
 const auth = useAuthStore()
 const localeStore = useLocaleStore()
@@ -24,6 +25,7 @@ const bookmarkStore = useBookmarkStore()
 const tagStore = useTagStore()
 
 const isImporting = ref(false)
+const isSettingsOpen = ref(false)
 
 async function handleImported() {
   if (collectionStore.currentCollectionId) {
@@ -84,6 +86,14 @@ function switchLocale(locale: SupportedLocale) {
         <DropdownMenuSeparator v-if="collectionStore.currentCollectionId" class="-mx-1 my-1 h-px bg-border" />
         <DropdownMenuItem
           class="relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+          @select="isSettingsOpen = true"
+        >
+          <Settings class="h-4 w-4" />
+          {{ $t('header.settings') }}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator class="-mx-1 my-1 h-px bg-border" />
+        <DropdownMenuItem
+          class="relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
           @select="auth.logout"
         >
           <LogOut class="h-4 w-4" />
@@ -99,4 +109,6 @@ function switchLocale(locale: SupportedLocale) {
     :collection-id="collectionStore.currentCollectionId"
     @imported="handleImported"
   />
+
+  <SettingsDialog v-model:open="isSettingsOpen" />
 </template>

@@ -15,7 +15,16 @@
   "header": {
     "addBookmark": "Add Bookmark",
     "importCollection": "Import Collection",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "settings": "Settings"
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
   },
   "import": {
     "title": "Import Bookmarks",
