@@ -31,19 +31,8 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach(async (to) => {
+router.beforeEach((to) => {
   const auth = useAuthStore()
-  const collection = useCollectionStore()
-
-  if (!auth.initialized) {
-    const authenticated = await auth.fetchCurrentUser()
-    if (!authenticated && to.name !== 'login') {
-      return { name: 'login' }
-    }
-    if (authenticated && auth.user?.defaultCollectionId) {
-      collection.setCurrentCollectionId(auth.user.defaultCollectionId)
-    }
-  }
 
   if (!auth.isAuthenticated && to.name !== 'login') {
     return { name: 'login' }

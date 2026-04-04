@@ -82,6 +82,7 @@ async function confirmDelete() {
       <button
         v-for="tag in tagStore.tags"
         :key="tag.id"
+        :data-testid="`tag-row-${tag.data.name}`"
         class="group w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors text-left"
         :class="tagStore.selectedTagIds.has(tag.id)
           ? 'bg-accent text-accent-foreground'
@@ -96,12 +97,16 @@ async function confirmDelete() {
         <span v-if="(bookmarkCountByTag.get(tag.id) ?? 0) > 0" class="text-xs opacity-40 shrink-0">{{ bookmarkCountByTag.get(tag.id) }}</span>
         <span class="inline-flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
+            :aria-label="t('common.edit')"
+            data-testid="tag-edit-btn"
             class="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-primary hover:text-primary-foreground"
             @click.stop="handleEdit(tag)"
           >
             <Pencil class="h-3 w-3" />
           </button>
           <button
+            :aria-label="t('common.delete')"
+            data-testid="tag-delete-btn"
             class="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-destructive hover:text-destructive-foreground"
             @click.stop="handleDelete(tag)"
           >
@@ -122,6 +127,7 @@ async function confirmDelete() {
 
     <button
       v-if="props.collectionId"
+      data-testid="new-tag-btn"
       class="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors text-muted-foreground hover:text-foreground mt-1"
       @click="showCreateDialog = true"
     >

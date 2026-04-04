@@ -41,6 +41,7 @@ function handleConfirm() {
       </ButtonCl>
       <ButtonCl
         type="button"
+        data-testid="confirm-dialog-submit"
         :variant="destructive ? 'destructive' : 'default'"
         @click="handleConfirm"
       >

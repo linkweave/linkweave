@@ -3,11 +3,13 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import { useCollectionStore } from '@/stores/collection'
 import { ButtonCl } from '@/components/ui'
 
 const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
+const collection = useCollectionStore()
 
 const email = ref('')
 const password = ref('')
@@ -33,7 +35,10 @@ async function handleLogin() {
     })
 
     if (response.status === 200) {
-      await auth.fetchCurrentUser()
+      const authenticated = await auth.fetchCurrentUser()
+      if (authenticated && auth.user?.defaultCollectionId) {
+        collection.setCurrentCollectionId(auth.user.defaultCollectionId)
+      }
       router.push('/')
     } else {
       error.value = true
