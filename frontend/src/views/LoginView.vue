@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
 import { ButtonCl } from '@/components/ui'
+import logoUrl from '@/assets/ChainlinkLogoTrResc.png'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -30,8 +31,8 @@ async function handleLogin() {
       body: formData,
       credentials: 'include',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
     })
 
     if (response.status === 200) {
@@ -52,9 +53,22 @@ async function handleLogin() {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-background">
+  <div
+    class="min-h-screen flex items-center justify-center bg-background"
+    style="
+      background: #2a7b9b;
+      background: linear-gradient(
+        90deg,
+        rgba(42, 123, 155, 1) 0%,
+        rgba(46, 130, 153, 1) 27%,
+        rgba(87, 199, 133, 1) 73%,
+        rgba(237, 221, 83, 1) 100%
+      );
+    "
+  >
     <div class="w-full max-w-sm space-y-8">
       <div class="text-center">
+        <img :src="logoUrl" alt="Chainlink" class="mx-auto h-32 w-32 mb-4" />
         <h1 class="text-2xl font-bold tracking-tight">{{ t('app.title') }}</h1>
       </div>
 

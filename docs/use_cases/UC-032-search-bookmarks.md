@@ -6,7 +6,7 @@
 **Use Case Name:** Search Bookmarks   
 **Primary Actor:** User   
 **Goal:** Find specific bookmarks by typing a search query that matches against title, URL, and tag name.   
-**Status:** Draft   
+**Status:** Done   
 
 ## Traceability
 
@@ -21,7 +21,7 @@
 
 ## Main Success Scenario
 
-1. User clicks on the search bar (or activates it via keyboard shortcut, e.g. ⌘E / Ctrl+E).
+1. User clicks on the search bar (or activates it via keyboard shortcut: ⌘K / Ctrl+K or /).
 2. User types a search query.
 3. System filters the bookmark list in real time to show only bookmarks where the query matches the bookmark's title, URL, or tag name (case-insensitive substring match).
 4. System highlights the active search in the UI.

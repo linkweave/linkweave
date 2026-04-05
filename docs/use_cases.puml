@@ -49,7 +49,7 @@ rectangle "Chainlink Bookmark Manager" {
     rectangle "Search & Filtering" {
         usecase "UC-021\nFilter Bookmarks\nby Tag" as UC021 <<implemented>>
         usecase "UC-022\nFilter Bookmarks\nby Folder" as UC022
-        usecase "UC-032\nSearch Bookmarks" as UC032
+        usecase "UC-032\nSearch Bookmarks" as UC032 <<implemented>>
     }
 
     rectangle "Navigation" {
