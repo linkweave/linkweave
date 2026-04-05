@@ -1,17 +1,22 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { BookmarkResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import type { BookmarkJson, BookmarkSaveJson, BookmarkMoveJson } from '@/api/generated'
+import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { useTagStore } from '@/stores/tag'
-import { useNotificationStore } from '@/stores/notification'
 
 const bookmarkApi = new BookmarkResourceApi(config)
 
 export const useBookmarkStore = defineStore('bookmark', () => {
-  const bookmarks = ref<BookmarkJson[]>([])
-  const loading = ref(false)
+  const collectionStore = useCollectionStore()
+
+  const bookmarks = computed<BookmarkJson[]>(() =>
+    collectionStore.collectionInfo?.bookmarks ?? []
+  )
+
+  const loading = computed(() => collectionStore.loading)
 
   const filteredBookmarks = computed(() => {
     const folderStore = useFolderStore()
@@ -36,23 +41,16 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     return result
   })
 
-  async function fetchBookmarks(collectionId: string) {
-    loading.value = true
-    try {
-      const result = await bookmarkApi.apiBookmarksGet({ collectionId })
-      bookmarks.value = result.bookmarkList ?? []
-    } catch (err) {
-      bookmarks.value = []
-      const notification = useNotificationStore()
-      void notification.handleApiError(err, 'Failed to load bookmarks')
-    } finally {
-      loading.value = false
+  function patchBookmarks(updater: (list: BookmarkJson[]) => BookmarkJson[]) {
+    const info = collectionStore.collectionInfo
+    if (info) {
+      info.bookmarks = updater(info.bookmarks ?? [])
     }
   }
 
   async function createBookmark(data: BookmarkSaveJson): Promise<BookmarkJson> {
     const bookmark = await bookmarkApi.apiBookmarksPost({ bookmarkSaveJson: data })
-    bookmarks.value.unshift(bookmark)
+    patchBookmarks(list => [bookmark, ...list])
     return bookmark
   }
 
@@ -61,14 +59,17 @@ export const useBookmarkStore = defineStore('bookmark', () => {
       bookmarkId,
       bookmarkSaveJson: data,
     })
-    const idx = bookmarks.value.findIndex(b => b.id === bookmarkId)
-    if (idx !== -1) bookmarks.value[idx] = updated
+    patchBookmarks(list => {
+      const idx = list.findIndex(b => b.id === bookmarkId)
+      if (idx !== -1) list[idx] = updated
+      return list
+    })
     return updated
   }
 
   async function deleteBookmark(bookmarkId: string): Promise<void> {
     await bookmarkApi.apiBookmarksBookmarkIdDelete({ bookmarkId })
-    bookmarks.value = bookmarks.value.filter(b => b.id !== bookmarkId)
+    patchBookmarks(list => list.filter(b => b.id !== bookmarkId))
   }
 
   async function moveBookmarkToFolder(bookmarkId: string, data: BookmarkMoveJson): Promise<BookmarkJson> {
@@ -76,8 +77,11 @@ export const useBookmarkStore = defineStore('bookmark', () => {
       bookmarkId,
       bookmarkMoveJson: data,
     })
-    const idx = bookmarks.value.findIndex(b => b.id === bookmarkId)
-    if (idx !== -1) bookmarks.value[idx] = updated
+    patchBookmarks(list => {
+      const idx = list.findIndex(b => b.id === bookmarkId)
+      if (idx !== -1) list[idx] = updated
+      return list
+    })
     return updated
   }
 
@@ -85,7 +89,6 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     bookmarks,
     loading,
     filteredBookmarks,
-    fetchBookmarks,
     createBookmark,
     updateBookmark,
     deleteBookmark,
