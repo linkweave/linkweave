@@ -62,10 +62,7 @@ const props = defineProps<Props>()
         variant="ghost"
         size="sm"
         class="w-full justify-start text-muted-foreground hover:text-foreground mt-2"
-        @click="
-          subfolderParentId = undefined
-          showCreateFolder = true
-        "
+        @click="subfolderParentId = undefined; showCreateFolder = true"
       >
         <Plus class="h-4 w-4 mr-2" />
         {{ t('sidebar.newFolder') }}

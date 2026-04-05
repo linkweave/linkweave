@@ -50,7 +50,8 @@
 | FR-029 | Navigate Folder Hierarchy        | As a User, I want to see a breadcrumb showing the path to the currently selected folder so that I can see where I am and quickly navigate to parent folders. | Medium   | Open   |
 | FR-030 | Search Bar Keyboard Shortcut      | As a User, I want to focus the search bar by pressing a keyboard shortcut (e.g. ⌘E on Mac, Ctrl+E on Windows/Linux) so that I can quickly start searching without reaching for the mouse. | Low      | Open   |
 | FR-031 | Import Browser Bookmarks          | As a User, I want to import bookmarks from Brave or Firefox so that I can easily migrate my existing bookmarks into Chainlink. | Low      | Open   |
-| FR-032 | Offline Mode                      | As a User, I want to browse and search my bookmarks while offline so that I can access my saved resources without an active network connection. The app should load all collection data in a single request and cache it client-side. Authentication handling for offline access needs to be investigated. | Low      | Open   |
+| FR-032 | Search Bookmarks               | As a User, I want to search bookmarks within my collection by title, URL, and tag name so that I can quickly find a specific bookmark. When tags are selected, only bookmarks matching all selected tags are shown. When a folder is selected, results are further limited to bookmarks within that folder. All three filters (search query, selected tags, selected folder) are combined as AND conditions. | High     | Open   |
+| FR-033 | Offline Mode                      | As a User, I want to browse and search my bookmarks while offline so that I can access my saved resources without an active network connection. The app should load all collection data in a single request and cache it client-side. Authentication handling for offline access needs to be investigated. | Low      | Open   |
 
 ---
 
