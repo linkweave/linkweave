@@ -37,54 +37,57 @@ const props = defineProps<Props>()
 
 <template>
   <div :class="['flex flex-col h-full', props.class]">
+    <!-- Folders Section -->
+    <div class="flex-1 min-h-0 flex flex-col">
+      <div class="overflow-y-auto p-2">
+        <div
 
+          class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors mb-1"
+          :class="
+            folderStore.selectedFolderId === null
+              ? 'bg-accent text-accent-foreground'
+              : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
+          "
+          @click="folderStore.selectFolder(null)"
+        >
+          <Folder class="h-4 w-4 text-primary" />
+          <span>{{ t('sidebar.allBookmarks') }}</span>
+        </div>
 
-    <div class="flex-1 overflow-y-auto p-2">
-      <div
-        class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors mb-1"
-        :class="
-          folderStore.selectedFolderId === null
-            ? 'bg-accent text-accent-foreground'
-            : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
-        "
-        @click="folderStore.selectFolder(null)"
-      >
-        <Folder class="h-4 w-4 text-primary" />
-        <span>{{ t('sidebar.allBookmarks') }}</span>
+        <FolderTree class-name="mt-2" @create-subfolder="handleCreateSubfolder" />
+
+        <ButtonCl
+          v-if="collectionId"
+          variant="ghost"
+          size="sm"
+
+          class="w-full justify-start text-muted-foreground hover:text-foreground mt-2"
+          @click="subfolderParentId = undefined; showCreateFolder = true"
+        >
+          <Plus class="h-4 w-4 mr-2" />
+          {{ t('sidebar.newFolder') }}
+        </ButtonCl>
+
+        <CreateFolderDialog
+          v-if="collectionId"
+          v-model:open="showCreateFolder"
+          :collection-id="collectionId"
+          :parent-id="subfolderParentId"
+        />
       </div>
-
-      <FolderTree class-name="mt-2" @create-subfolder="handleCreateSubfolder" />
-
-      <ButtonCl
-        v-if="collectionId"
-        variant="ghost"
-        size="sm"
-        class="w-full justify-start text-muted-foreground hover:text-foreground mt-2"
-        @click="subfolderParentId = undefined; showCreateFolder = true"
-      >
-        <Plus class="h-4 w-4 mr-2" />
-        {{ t('sidebar.newFolder') }}
-      </ButtonCl>
-
-      <CreateFolderDialog
-        v-if="collectionId"
-        v-model:open="showCreateFolder"
-        :collection-id="collectionId"
-        :parent-id="subfolderParentId"
-      />
     </div>
 
     <!-- Tags Section -->
-    <div class="border-t border-border">
-      <div class="p-3 flex items-center justify-between">
+    <div class="mt-auto min-h-0 flex flex-col border-t border-border max-h-[50%]">
+      <div class="p-3 flex items-center justify-between shrink-0">
         <span class="text-sm font-medium text-muted-foreground flex items-center gap-2">
           <Tag class="h-4 w-4" />
           {{ t('sidebar.tags') }}
         </span>
       </div>
-      <TagList class-name="px-2 pb-2" :collection-id="collectionId" />
+      <TagList class-name="px-2 pb-2 overflow-y-auto flex-1 min-h-0" :collection-id="collectionId" />
     </div>
-    <div class="border-t border-border">
+    <div class="border-t border-border shrink-0">
       <div class="p-3 flex items-center justify-between">
         <BuildversionCl />
       </div>
