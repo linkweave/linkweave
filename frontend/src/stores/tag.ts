@@ -1,64 +1,67 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { TagResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import type { TagJson, TagSaveJson } from '@/api/generated'
+import { useCollectionStore } from '@/stores/collection'
 import { useBookmarkStore } from '@/stores/bookmark'
-import { useNotificationStore } from '@/stores/notification'
 
 const tagApi = new TagResourceApi(config)
 
 export const useTagStore = defineStore('tag', () => {
-  const tags = ref<TagJson[]>([])
-  const loading = ref(false)
+  const collectionStore = useCollectionStore()
+
+  const tags = computed<TagJson[]>(() =>
+    collectionStore.collectionInfo?.tags ?? []
+  )
+
+  const loading = computed(() => collectionStore.loading)
+
   const selectedTagIds = ref<Set<string>>(new Set())
 
   function toggleTag(tagId: string) {
-    if (selectedTagIds.value.has(tagId)) {
-      selectedTagIds.value.delete(tagId)
+    const updated = new Set(selectedTagIds.value)
+    if (updated.has(tagId)) {
+      updated.delete(tagId)
     } else {
-      selectedTagIds.value.add(tagId)
+      updated.add(tagId)
     }
-    selectedTagIds.value = new Set(selectedTagIds.value)
+    selectedTagIds.value = updated
   }
 
   function clearTagFilter() {
     selectedTagIds.value = new Set()
   }
 
-  async function fetchTags(collectionId: string) {
-    loading.value = true
-    try {
-      const result = await tagApi.apiTagsGet({ collectionId })
-      tags.value = result.tagList ?? []
-    } catch (err) {
-      tags.value = []
-      const notification = useNotificationStore()
-      notification.handleApiError(err, 'Failed to load tags')
-    } finally {
-      loading.value = false
+  function patchTags(updater: (list: TagJson[]) => TagJson[]) {
+    const info = collectionStore.collectionInfo
+    if (info) {
+      info.tags = updater(info.tags ?? [])
     }
   }
 
   async function createTag(data: TagSaveJson): Promise<TagJson> {
     const tag = await tagApi.apiTagsPost({ tagSaveJson: data })
-    tags.value.push(tag)
+    patchTags(list => [...list, tag])
     return tag
   }
 
   async function updateTag(tagId: string, data: TagSaveJson): Promise<TagJson> {
     const updated = await tagApi.apiTagsTagIdPut({ tagId, tagSaveJson: data })
-    const idx = tags.value.findIndex(t => t.id === tagId)
-    if (idx !== -1) tags.value[idx] = updated
+    patchTags(list => {
+      const idx = list.findIndex(t => t.id === tagId)
+      if (idx !== -1) list[idx] = updated
+      return list
+    })
     return updated
   }
 
   async function deleteTag(tagId: string): Promise<void> {
     await tagApi.apiTagsTagIdDelete({ tagId })
     const bookmarkStore = useBookmarkStore()
-    tags.value = tags.value.filter(t => t.id !== tagId)
-    selectedTagIds.value.delete(tagId)
-    selectedTagIds.value = new Set(selectedTagIds.value)
+    patchTags((list) => list.filter((t) => t.id !== tagId))
+
+    selectedTagIds.value = new Set([...selectedTagIds.value].filter((id) => id !== tagId))
 
     // Remove the tag from all bookmarks in the store
     for (const bookmark of bookmarkStore.bookmarks) {
@@ -72,7 +75,6 @@ export const useTagStore = defineStore('tag', () => {
     tags,
     loading,
     selectedTagIds,
-    fetchTags,
     createTag,
     updateTag,
     deleteTag,

@@ -1,30 +1,21 @@
 <script setup lang="ts">
-import { FolderTree, CreateFolderDialog } from '@/components/folder'
+import { CreateFolderDialog, FolderTree } from '@/components/folder'
 import TagList from '@/components/tag/TagList.vue'
 import { ButtonCl } from '@/components/ui'
 import BuildversionCl from '@/components/ui/BuildversionCl.vue'
-import { Folder, Plus, Tag } from 'lucide-vue-next'
-import { useI18n } from 'vue-i18n'
 import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
-import { useTagStore } from '@/stores/tag'
+import { Folder, Plus, Tag } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
 const folderStore = useFolderStore()
-const tagStore = useTagStore()
 
 const collectionId = computed(() => collectionStore.currentCollectionId ?? '')
 const showCreateFolder = ref(false)
 const subfolderParentId = ref<string | undefined>(undefined)
-
-watch(collectionId, (id) => {
-  if (id) {
-    folderStore.fetchFolders()
-    tagStore.fetchTags(id)
-  }
-}, { immediate: true })
 
 watch(showCreateFolder, (open) => {
   if (!open) {
@@ -53,9 +44,11 @@ const props = defineProps<Props>()
     <div class="flex-1 overflow-y-auto p-2">
       <div
         class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors mb-1"
-        :class="folderStore.selectedFolderId === null
-          ? 'bg-accent text-accent-foreground'
-          : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'"
+        :class="
+          folderStore.selectedFolderId === null
+            ? 'bg-accent text-accent-foreground'
+            : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
+        "
         @click="folderStore.selectFolder(null)"
       >
         <Folder class="h-4 w-4 text-primary" />
@@ -69,7 +62,10 @@ const props = defineProps<Props>()
         variant="ghost"
         size="sm"
         class="w-full justify-start text-muted-foreground hover:text-foreground mt-2"
-        @click="subfolderParentId = undefined; showCreateFolder = true"
+        @click="
+          subfolderParentId = undefined
+          showCreateFolder = true
+        "
       >
         <Plus class="h-4 w-4 mr-2" />
         {{ t('sidebar.newFolder') }}

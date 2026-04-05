@@ -3,13 +3,19 @@ import { ref, computed } from 'vue'
 import { FolderResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import type { FolderJson, FolderSaveJson, FolderMoveJson } from '@/api/generated'
-import { useNotificationStore } from '@/stores/notification'
+import { useCollectionStore } from '@/stores/collection'
 
 const folderApi = new FolderResourceApi(config)
 
 export const useFolderStore = defineStore('folder', () => {
-  const folders = ref<FolderJson[]>([])
-  const loading = ref(false)
+  const collectionStore = useCollectionStore()
+
+  const folders = computed<FolderJson[]>(() =>
+    collectionStore.collectionInfo?.folders ?? []
+  )
+
+  const loading = computed(() => collectionStore.loading)
+
   const selectedFolderId = ref<string | null>(null)
 
   const selectedFolderPath = computed<FolderJson[]>(() => {
@@ -32,25 +38,16 @@ export const useFolderStore = defineStore('folder', () => {
     selectedFolderId.value = folderId
   }
 
-  async function fetchFolders(collectionId?: string) {
-    loading.value = true
-    try {
-      const result = await folderApi.apiFoldersGet(
-        collectionId ? { collectionId } : undefined,
-      )
-      folders.value = result.folderList ?? []
-    } catch (err) {
-      folders.value = []
-      const notification = useNotificationStore()
-      notification.handleApiError(err, 'Failed to load folders')
-    } finally {
-      loading.value = false
+  function patchFolders(updater: (list: FolderJson[]) => FolderJson[]) {
+    const info = collectionStore.collectionInfo
+    if (info) {
+      info.folders = updater(info.folders ?? [])
     }
   }
 
   async function createFolder(data: FolderSaveJson): Promise<FolderJson> {
     const folder = await folderApi.apiFoldersPost({ folderSaveJson: data })
-    folders.value.push(folder)
+    patchFolders(list => [...list, folder])
     return folder
   }
 
@@ -59,8 +56,11 @@ export const useFolderStore = defineStore('folder', () => {
       folderId,
       folderSaveJson: data,
     })
-    const idx = folders.value.findIndex(f => f.id === folderId)
-    if (idx !== -1) folders.value[idx] = updated
+    patchFolders(list => {
+      const idx = list.findIndex(f => f.id === folderId)
+      if (idx !== -1) list[idx] = updated
+      return list
+    })
     return updated
   }
 
@@ -69,14 +69,17 @@ export const useFolderStore = defineStore('folder', () => {
       folderId,
       folderMoveJson: data,
     })
-    const idx = folders.value.findIndex(f => f.id === folderId)
-    if (idx !== -1) folders.value[idx] = updated
+    patchFolders(list => {
+      const idx = list.findIndex(f => f.id === folderId)
+      if (idx !== -1) list[idx] = updated
+      return list
+    })
     return updated
   }
 
   async function deleteFolder(folderId: string): Promise<void> {
     await folderApi.apiFoldersFolderIdDelete({ folderId })
-    folders.value = folders.value.filter(f => f.id !== folderId)
+    patchFolders(list => list.filter(f => f.id !== folderId))
     if (selectedFolderId.value === folderId) {
       selectedFolderId.value = null
     }
@@ -87,7 +90,6 @@ export const useFolderStore = defineStore('folder', () => {
     loading,
     selectedFolderId,
     selectedFolderPath,
-    fetchFolders,
     createFolder,
     renameFolder,
     moveFolder,

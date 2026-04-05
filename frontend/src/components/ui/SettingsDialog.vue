@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import ImportCollectionDialog from '@/components/bookmark/ImportCollectionDialog.vue'
 import { ButtonCl, DialogCl } from '@/components/ui'
-import { useBookmarkStore } from '@/stores/bookmark'
 import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
-import { useTagStore } from '@/stores/tag'
-import { type Theme, useUiStore } from '@/stores/ui'
+import { useUiStore, type Theme } from '@/stores/ui'
 import { downloadBlobDirectly, extractFilenameFromContentDispositionHeader } from '@/utils/download'
 import { Download, Monitor, Moon, Sun, Upload } from 'lucide-vue-next'
 import { ref } from 'vue'
@@ -14,8 +12,6 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 const ui = useUiStore()
 const collectionStore = useCollectionStore()
-const bookmarkStore = useBookmarkStore()
-const tagStore = useTagStore()
 const notification = useNotificationStore()
 
 interface Props {
@@ -41,10 +37,7 @@ const themes: { value: Theme; icon: typeof Sun; labelKey: string }[] = [
 
 async function handleImported() {
   if (collectionStore.currentCollectionId) {
-    await Promise.all([
-      bookmarkStore.fetchBookmarks(collectionStore.currentCollectionId),
-      tagStore.fetchTags(collectionStore.currentCollectionId),
-    ])
+    await collectionStore.fetchCollectionInfo(collectionStore.currentCollectionId)
   }
 }
 
