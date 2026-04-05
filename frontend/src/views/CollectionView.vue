@@ -27,7 +27,9 @@ const isAddingBookmark = ref(false)
       </ButtonCl>
     </template>
 
-    <FolderBreadcrumbCl />
+    <div class="mb-3">
+      <FolderBreadcrumbCl />
+    </div>
 
     <BookmarkList />
 
