@@ -10,7 +10,8 @@
     "edit": "Edit",
     "create": "Create",
     "loading": "Loading...",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "all": "All"
   },
   "header": {
     "addBookmark": "Add Bookmark",
