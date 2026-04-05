@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Plus } from 'lucide-vue-next'
+import { BookmarkPlus } from 'lucide-vue-next'
 import { MainLayout } from '@/components/layout'
 import { ButtonCl } from '@/components/ui'
 import { BookmarkList } from '@/components/bookmark'
@@ -22,8 +22,8 @@ const isAddingBookmark = ref(false)
 
     <template #header-actions>
       <ButtonCl size="sm" @click="isAddingBookmark = true">
-        <Plus class="h-4 w-4 mr-2" />
-        {{ t('header.addBookmark') }}
+        <BookmarkPlus class="h-4 w-4 sm:mr-2" />
+        <span class="hidden sm:inline">{{ t('header.addBookmark') }}</span>
       </ButtonCl>
     </template>
 
