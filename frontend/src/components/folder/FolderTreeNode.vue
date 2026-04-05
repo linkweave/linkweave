@@ -46,6 +46,7 @@ function toggleExpand(folderId: string) {
     <li v-for="node in nodes" :key="node.folder.id">
       <DropdownMenuRoot>
         <div
+          :data-testid="`folder-node-${node.folder.data.name}`"
           class="group flex items-center gap-1 rounded-md py-1.5 pr-2 text-sm cursor-pointer transition-colors"
           :class="folderStore.selectedFolderId === node.folder.id
             ? 'bg-accent text-accent-foreground'
@@ -84,18 +85,21 @@ function toggleExpand(folderId: string) {
             :side-offset="4"
           >
             <DropdownMenuItem
+              data-testid="folder-create-subfolder-btn"
               class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
               @select="emit('createSubfolder', node.folder.id)"
             >
               {{ $t('folder.createSubfolder') }}
             </DropdownMenuItem>
             <DropdownMenuItem
+              data-testid="folder-rename-btn"
               class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
               @select="emit('rename', node.folder)"
             >
               {{ $t('common.edit') }}
             </DropdownMenuItem>
             <DropdownMenuItem
+              data-testid="folder-delete-btn"
               class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors text-destructive focus:text-destructive data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
               @select="emit('delete', node.folder)"
             >

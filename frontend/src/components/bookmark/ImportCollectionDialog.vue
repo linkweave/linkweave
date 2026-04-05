@@ -89,7 +89,7 @@ async function handleImport() {
       <ButtonCl variant="outline" @click="emits('update:open', false)">
         {{ t('common.cancel') }}
       </ButtonCl>
-      <ButtonCl :disabled="!selectedFile || isImporting" @click="handleImport">
+      <ButtonCl data-testid="import-submit-btn" :disabled="!selectedFile || isImporting" @click="handleImport">
         <Loader2 v-if="isImporting" class="mr-2 h-4 w-4 animate-spin" />
         {{ t('import.submit') }}
       </ButtonCl>

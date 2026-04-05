@@ -21,7 +21,7 @@ const isAddingBookmark = ref(false)
     </template>
 
     <template #header-actions>
-      <ButtonCl size="sm" @click="isAddingBookmark = true">
+      <ButtonCl size="sm" data-testid="add-bookmark-btn" @click="isAddingBookmark = true">
         <BookmarkPlus class="h-4 w-4 sm:mr-2" />
         <span class="hidden sm:inline">{{ t('header.addBookmark') }}</span>
       </ButtonCl>

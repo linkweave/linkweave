@@ -132,6 +132,7 @@ async function handleSubmit() {
           v-model="title"
           type="text"
           required
+          data-testid="create-bookmark-title"
           :placeholder="t('bookmark.titlePlaceholder')"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
@@ -146,6 +147,7 @@ async function handleSubmit() {
           v-model="url"
           type="url"
           required
+          data-testid="create-bookmark-url"
           :placeholder="t('bookmark.urlPlaceholder')"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
@@ -204,7 +206,7 @@ async function handleSubmit() {
         <ButtonCl type="button" variant="outline" @click="emit('update:open', false)">
           {{ t('common.cancel') }}
         </ButtonCl>
-        <ButtonCl type="submit" :disabled="loading">
+        <ButtonCl type="submit" data-testid="create-bookmark-submit" :disabled="loading">
           {{ loading ? t('common.loading') : t('common.create') }}
         </ButtonCl>
       </div>

@@ -69,6 +69,7 @@ async function handleSubmit() {
         <select
           id="move-bookmark-folder"
           v-model="selectedFolderId"
+          data-testid="move-bookmark-folder"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
           <option :value="undefined">{{ t('bookmark.noFolder') }}</option>
@@ -82,7 +83,7 @@ async function handleSubmit() {
         <ButtonCl type="button" variant="outline" @click="emit('update:open', false)">
           {{ t('common.cancel') }}
         </ButtonCl>
-        <ButtonCl type="submit" :disabled="loading">
+        <ButtonCl type="submit" data-testid="move-bookmark-submit" :disabled="loading">
           {{ loading ? t('common.loading') : t('common.save') }}
         </ButtonCl>
       </div>

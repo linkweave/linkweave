@@ -42,31 +42,32 @@ const props = defineProps<Props>()
       <div class="overflow-y-auto p-2">
         <div
 
-          class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors mb-1"
-          :class="
-            folderStore.selectedFolderId === null
-              ? 'bg-accent text-accent-foreground'
-              : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
-          "
-          @click="folderStore.selectFolder(null)"
-        >
-          <Folder class="h-4 w-4 text-primary" />
-          <span>{{ t('sidebar.allBookmarks') }}</span>
-        </div>
+          data-testid="all-bookmarks-btn"
+        class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors mb-1"
+        :class="
+          folderStore.selectedFolderId === null
+            ? 'bg-accent text-accent-foreground'
+            : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
+        "
+        @click="folderStore.selectFolder(null)"
+      >
+        <Folder class="h-4 w-4 text-primary" />
+        <span>{{ t('sidebar.allBookmarks') }}</span>
+      </div>
 
         <FolderTree class-name="mt-2" @create-subfolder="handleCreateSubfolder" />
 
-        <ButtonCl
-          v-if="collectionId"
-          variant="ghost"
-          size="sm"
-
-          class="w-full justify-start text-muted-foreground hover:text-foreground mt-2"
-          @click="subfolderParentId = undefined; showCreateFolder = true"
-        >
-          <Plus class="h-4 w-4 mr-2" />
-          {{ t('sidebar.newFolder') }}
-        </ButtonCl>
+      <ButtonCl
+        v-if="collectionId"
+        variant="ghost"
+        size="sm"
+        data-testid="new-folder-btn"
+        class="w-full justify-start text-muted-foreground hover:text-foreground mt-2"
+        @click="subfolderParentId = undefined; showCreateFolder = true"
+      >
+        <Plus class="h-4 w-4 mr-2" />
+        {{ t('sidebar.newFolder') }}
+      </ButtonCl>
 
         <CreateFolderDialog
           v-if="collectionId"

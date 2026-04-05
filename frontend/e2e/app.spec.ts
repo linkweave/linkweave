@@ -1,36 +1,24 @@
 import { expect, test } from '@playwright/test'
+import { LoginPageObject } from './models/LoginPageObject'
 
-test('homepage has title', async ({ page }) => {
-  await page.goto('/')
+test.describe('App Shell', () => {
+  test('should redirect to login page when unauthenticated', async ({ page }) => {
+    await page.goto('/')
+    await expect(page).toHaveURL(/\/login/)
+  })
 
-  await expect(page).toHaveTitle(/Chainlink/)
-})
+  test('should show app title on login page', async ({ page }) => {
+    const loginPage = new LoginPageObject(page)
+    await loginPage.goto()
+    await expect(loginPage.appTitle).toBeVisible()
+  })
 
-test('homepage shows empty state', async ({ page }) => {
-  await page.goto('/')
+  test('should show sidebar after login', async ({ page }) => {
+    const loginPage = new LoginPageObject(page)
+    await loginPage.goto()
+    await loginPage.login('alice@example.com', 'alice')
 
-  await expect(page.getByText('No bookmarks yet')).toBeVisible()
-})
-
-test('sidebar is visible on desktop', async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 720 })
-  await page.goto('/')
-
-  await expect(page.getByText('All Bookmarks')).toBeVisible()
-  await expect(page.locator('span').filter({ hasText: 'Tags' })).toBeVisible()
-})
-
-test('sidebar is off-screen on mobile', async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 667 })
-  await page.goto('/')
-
-  const sidebar = page.locator('aside')
-  await expect(sidebar).toBeVisible()
-})
-
-test('can click add bookmark button', async ({ page }) => {
-  await page.goto('/')
-
-  const button = page.getByRole('button', { name: /add bookmark/i })
-  await expect(button).toBeVisible()
+    await expect(page).toHaveURL(/\/collections\//)
+    await expect(page.getByTestId('all-bookmarks-btn')).toBeVisible()
+  })
 })

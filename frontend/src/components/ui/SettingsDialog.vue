@@ -103,7 +103,7 @@ async function handleExport() {
             <Download class="mr-2 h-4 w-4" />
             {{ t('settings.exportCollection') }}
           </ButtonCl>
-          <ButtonCl variant="outline" @click="isImporting = true">
+          <ButtonCl variant="outline" data-testid="import-btn" @click="isImporting = true">
             <Upload class="mr-2 h-4 w-4" />
             {{ t('settings.importCollection') }}
           </ButtonCl>

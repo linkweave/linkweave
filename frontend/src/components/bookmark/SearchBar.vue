@@ -43,6 +43,7 @@ onUnmounted(() => globalThis.removeEventListener('keydown', handleShortcut))
     <input
       ref="inputRef"
       type="text"
+      data-testid="search-input"
       :value="bookmarkStore.searchQuery"
       :placeholder="t('search.placeholder')"
       class="flex h-10 w-full rounded-md border border-border bg-secondary pl-10 pr-20 py-1 text-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"

@@ -1,25 +1,53 @@
-import { test } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import { TagsPageObject } from './models/TagsPageObject'
 
-test.describe('Tag Management', () => {
-  test('should add, edit, and remove a tag', async ({ page }) => {
+test.describe('UC-015: Create Tag', () => {
+  test('should create a new tag', async ({ page }) => {
     const tagsPage = new TagsPageObject(page)
-    const tagName = `test-tag-${Date.now()}`
-    const updatedTagName = `${tagName}-updated`
-
     await tagsPage.loginAndWaitForPage()
 
-    // 1. Add a tag
+    const tagName = `create-tag-${Date.now()}`
     await tagsPage.createTag(tagName)
     await tagsPage.expectTagVisible(tagName)
+  })
+})
 
-    // 2. Edit the tag
+test.describe('UC-016: View Tags', () => {
+  test('should display tags in the sidebar', async ({ page }) => {
+    const tagsPage = new TagsPageObject(page)
+    await tagsPage.loginAndWaitForPage()
+
+    const tagName = `view-tag-${Date.now()}`
+    await tagsPage.createTag(tagName)
+    await tagsPage.expectTagVisible(tagName)
+  })
+})
+
+test.describe('UC-017: Edit Tag', () => {
+  test('should edit a tag name', async ({ page }) => {
+    const tagsPage = new TagsPageObject(page)
+    await tagsPage.loginAndWaitForPage()
+
+    const tagName = `edit-tag-${Date.now()}`
+    const updatedTagName = `${tagName}-updated`
+
+    await tagsPage.createTag(tagName)
     await tagsPage.editTag(tagName, updatedTagName)
     await tagsPage.expectTagVisible(updatedTagName)
     await tagsPage.expectTagNotVisible(tagName)
+  })
+})
 
-    // 3. Remove the tag
-    await tagsPage.deleteTag(updatedTagName)
-    await tagsPage.expectTagNotVisible(updatedTagName)
+test.describe('UC-018: Delete Tag', () => {
+  test('should delete a tag', async ({ page }) => {
+    const tagsPage = new TagsPageObject(page)
+    await tagsPage.loginAndWaitForPage()
+
+    const tagName = `delete-tag-${Date.now()}`
+    await tagsPage.createTag(tagName)
+    await tagsPage.expectTagVisible(tagName)
+
+    await tagsPage.deleteTag(tagName)
+    await tagsPage.expectTagNotVisible(tagName)
   })
 })

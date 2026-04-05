@@ -52,7 +52,7 @@ function getFolderName(): string | null {
 </script>
 
 <template>
-  <div class="group rounded-lg border border-border bg-card p-4 hover:ring-2 hover:ring-primary/50 hover:border-primary/30 transition-all text-muted-foreground hover:text-accent-foreground">
+  <div :data-testid="`bookmark-card-${props.bookmark.data.title}`" class="group rounded-lg border border-border bg-card p-4 hover:ring-2 hover:ring-primary/50 hover:border-primary/30 transition-all text-muted-foreground hover:text-accent-foreground">
     <DropdownMenuRoot>
       <div class="flex items-start gap-3">
         <img
@@ -117,18 +117,21 @@ function getFolderName(): string | null {
           :side-offset="4"
         >
           <DropdownMenuItem
+            data-testid="bookmark-edit-btn"
             class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
             @select="emit('edit', props.bookmark)"
           >
             {{ $t('common.edit') }}
           </DropdownMenuItem>
           <DropdownMenuItem
+            data-testid="bookmark-move-btn"
             class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
             @select="emit('move', props.bookmark)"
           >
             {{ $t('bookmark.moveToFolder') }}
           </DropdownMenuItem>
           <DropdownMenuItem
+            data-testid="bookmark-delete-btn"
             class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors text-destructive focus:text-destructive data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
             @select="emit('delete', props.bookmark)"
           >
