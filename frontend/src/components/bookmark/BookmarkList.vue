@@ -72,7 +72,7 @@ async function confirmDelete() {
     <p class="text-muted-foreground">{{ t('bookmarkList.empty') }}</p>
   </div>
 
-  <div v-else class="max-w-4xl mx-auto space-y-3">
+  <div v-else class="space-y-3">
     <BookmarkCard
       v-for="bookmark in bookmarkStore.filteredBookmarks"
       :key="bookmark.id"

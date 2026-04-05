@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { BookmarkResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import type { BookmarkJson, BookmarkSaveJson, BookmarkMoveJson } from '@/api/generated'
@@ -18,6 +18,16 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 
   const loading = computed(() => collectionStore.loading)
 
+  const searchQuery = ref('')
+
+  function setSearchQuery(query: string) {
+    searchQuery.value = query
+  }
+
+  function clearSearchQuery() {
+    searchQuery.value = ''
+  }
+
   const filteredBookmarks = computed(() => {
     const folderStore = useFolderStore()
     const tagStore = useTagStore()
@@ -33,6 +43,23 @@ export const useBookmarkStore = defineStore('bookmark', () => {
         if (!tagIds) return false
         for (const selectedId of tagStore.selectedTagIds) {
           if (tagIds.has(selectedId)) return true
+        }
+        return false
+      })
+    }
+
+    if (searchQuery.value.length >= 2) {
+      const query = searchQuery.value.toLowerCase()
+      const tagsById = new Map(tagStore.tags.map(t => [t.id, t.data.name.toLowerCase()]))
+      result = result.filter(b => {
+        if (b.data.title?.toLowerCase().includes(query)) return true
+        if (b.data.url?.toLowerCase().includes(query)) return true
+        if (b.data.description?.toLowerCase().includes(query)) return true
+        if (b.data.tagIds) {
+          for (const tagId of b.data.tagIds) {
+            const tagName = tagsById.get(tagId)
+            if (tagName?.includes(query)) return true
+          }
         }
         return false
       })
@@ -88,7 +115,10 @@ export const useBookmarkStore = defineStore('bookmark', () => {
   return {
     bookmarks,
     loading,
+    searchQuery,
     filteredBookmarks,
+    setSearchQuery,
+    clearSearchQuery,
     createBookmark,
     updateBookmark,
     deleteBookmark,

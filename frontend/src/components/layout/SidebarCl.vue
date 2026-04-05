@@ -37,9 +37,7 @@ const props = defineProps<Props>()
 
 <template>
   <div :class="['flex flex-col h-full', props.class]">
-    <div class="p-4 border-b border-border">
-      <h2 class="text-lg font-semibold text-foreground">{{ t('sidebar.bookmarks') }}</h2>
-    </div>
+
 
     <div class="flex-1 overflow-y-auto p-2">
       <div

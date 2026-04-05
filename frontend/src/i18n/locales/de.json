@@ -104,6 +104,9 @@
     "empty": "Noch keine Lesezeichen. Klicken Sie auf 'Lesezeichen hinzufügen', um zu beginnen.",
     "loading": "Lesezeichen laden..."
   },
+  "search": {
+    "placeholder": "Lesezeichen nach Name, URL oder Tag suchen..."
+  },
   "language": {
     "en": "English",
     "de": "Deutsch",

@@ -104,6 +104,9 @@
     "empty": "No bookmarks yet. Click \"Add Bookmark\" to get started.",
     "loading": "Loading bookmarks..."
   },
+  "search": {
+    "placeholder": "Search bookmarks by name, URL, or tag..."
+  },
   "language": {
     "en": "English",
     "de": "Deutsch",

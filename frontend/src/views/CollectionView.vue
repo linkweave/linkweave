@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { BookmarkPlus } from 'lucide-vue-next'
 import { MainLayout } from '@/components/layout'
 import { ButtonCl } from '@/components/ui'
-import { BookmarkList } from '@/components/bookmark'
+import { BookmarkList, SearchBar } from '@/components/bookmark'
 import { FolderBreadcrumbCl } from '@/components/folder'
 import { useI18n } from 'vue-i18n'
 import { useCollectionStore } from '@/stores/collection'
@@ -27,11 +27,11 @@ const isAddingBookmark = ref(false)
       </ButtonCl>
     </template>
 
-    <div class="mb-3">
+    <div class="max-w-4xl mx-auto space-y-6">
       <FolderBreadcrumbCl />
+      <SearchBar />
+      <BookmarkList />
     </div>
-
-    <BookmarkList />
 
     <CreateBookmarkDialog
       v-if="collectionStore.currentCollectionId"
