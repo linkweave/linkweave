@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
 import io.quarkus.security.identity.SecurityIdentity;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.chainlink.api.benutzer.UserRepo;
 import org.chainlink.api.shared.auth.FachRolle;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.api.shared.util.EnumSetUtil;
+import org.hibernate.exception.ConstraintViolationException;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
 
@@ -63,8 +65,17 @@ public class EnsureUserService {
             null
         );
 
-        userRepo.provisionNewUser(newUser);
-        LOG.info("Created new user: {}", newUser.getEmail());
-        return newUser;
+        try {
+            userRepo.provisionNewUser(newUser);
+            LOG.info("Created new user: {}", newUser.getEmail());
+            return newUser;
+        } catch (PersistenceException e) {
+            if (e.getCause() instanceof ConstraintViolationException) {
+                LOG.info("User already created concurrently: {}", email);
+                return userRepo.findByEmail(EmailAddress.fromString(email))
+                    .orElseThrow(() -> e);
+            }
+            throw e;
+        }
     }
 }
