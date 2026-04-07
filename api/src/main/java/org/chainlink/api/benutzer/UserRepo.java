@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import ch.dvbern.dvbstarter.clock.AppClock;
+import ch.dvbern.dvbstarter.runas.RunAs;
 import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
 import ch.dvbern.dvbstarter.types.id.ID;
 import com.querydsl.core.types.Predicate;
@@ -20,6 +21,8 @@ import org.chainlink.infrastructure.db.BaseRepo;
 import org.chainlink.infrastructure.db.SmartJPAQuery;
 import org.chainlink.infrastructure.stereotypes.Repository;
 import org.jspecify.annotations.NonNull;
+
+import static org.chainlink.api.shared.auth.BerechtigungName.SYSTEM_ADMIN;
 
 @Repository
 @RequiredArgsConstructor
@@ -74,7 +77,7 @@ public class UserRepo extends BaseRepo<User> {
             return Optional.empty();
         }
 
-        return Optional.of(fetchedUsers.get(0));
+        return Optional.of(fetchedUsers.getFirst());
     }
 
     @NonNull
@@ -111,5 +114,11 @@ public class UserRepo extends BaseRepo<User> {
             throw new IllegalStateException("System admin not found");
         }
         return benutzer;
+    }
+
+    @Transactional(TxType.REQUIRES_NEW)
+    @RunAs(username = "sysadmin", roles = {SYSTEM_ADMIN})
+    public void provisionNewUser(@NonNull User newUser) {
+        this.db.persist(newUser);
     }
 }

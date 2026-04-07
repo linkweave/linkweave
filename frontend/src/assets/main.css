@@ -32,9 +32,9 @@
 }
 
 .dark {
-  --color-background: #1a1d23;
+  --color-background: #14161a;
   --color-foreground: #ededed;
-  --color-card: #1f2329;
+  --color-card: #1e2028;
   --color-card-foreground: #ededed;
   --color-primary: #3b82f6;
   --color-primary-foreground: #ffffff;
@@ -46,9 +46,9 @@
   --color-accent-foreground: #ededed;
   --color-destructive: #dc2626;
   --color-destructive-foreground: #ffffff;
-  --color-popover: #1f2329;
+  --color-popover: #1e2028;
   --color-popover-foreground: #ededed;
-  --color-border: #2d333b;
+  --color-border: #363d49;
   --color-input: #252a32;
   --color-ring: #3b82f6;
 }

@@ -18,29 +18,38 @@ export default defineConfig(({ command }) => {
     plugins: [vue(), vueDevTools(), tailwindcss()],
     resolve: {
       alias: {
-        '@': fileURLToPath(new URL('./src', import.meta.url))
-      }
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
+      },
     },
     server: {
       port: 5173,
-      ...(isDev ? {
-        https: {
-          cert: fs.readFileSync(certFile),
-          key: fs.readFileSync(keyFile)
-        }
-      } : {}),
+      ...(isDev
+        ? {
+            https: {
+              cert: fs.readFileSync(certFile),
+              key: fs.readFileSync(keyFile),
+            },
+          }
+        : {}),
       proxy: {
         '/api': {
-          target: 'https://local-chainlink.localhost:8443',
+          target: 'https://dev-chainlink.markushofstetter.com:8443',
           changeOrigin: true,
-          secure: false
-        }
-      }
+          secure: false,
+          configure: (proxy, _options) => {
+            proxy.on('proxyReq', (proxyReq, _req, _res) => {
+              proxyReq.setHeader('X-Forwarded-Host', 'dev-chainlink.markushofstetter.com')
+              proxyReq.setHeader('X-Forwarded-Proto', 'https')
+              proxyReq.setHeader('X-Forwarded-Port', '5173')
+            })
+          },
+        },
+      },
     },
     test: {
       globals: true,
       environment: 'node',
-      exclude: ['node_modules', 'dist', 'e2e/**']
-    }
+      exclude: ['node_modules', 'dist', 'e2e/**'],
+    },
   }
 })
