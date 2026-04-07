@@ -18,6 +18,10 @@ const email = ref('')
 const password = ref('')
 const loading = ref(false)
 
+function signInWithGoogle() {
+  window.location.href = '/api/auth/oidc-login'
+}
+
 async function handleLogin() {
   loading.value = true
 
@@ -71,6 +75,10 @@ async function handleLogin() {
         <img :src="logoUrl" alt="Chainlink" class="mx-auto h-32 w-32 mb-4" />
         <h1 class="text-2xl font-bold tracking-tight">{{ t('app.title') }}</h1>
       </div>
+
+      <ButtonCl class="w-full" @click="signInWithGoogle">
+        {{ t('login.google') }}
+      </ButtonCl>
 
       <form @submit.prevent="handleLogin" class="space-y-4">
         <div class="space-y-2">

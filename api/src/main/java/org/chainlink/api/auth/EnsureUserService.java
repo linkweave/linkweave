@@ -1,0 +1,70 @@
+package org.chainlink.api.auth;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+
+import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
+import io.quarkus.security.identity.SecurityIdentity;
+import jakarta.transaction.Transactional;
+import jakarta.transaction.Transactional.TxType;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.chainlink.api.benutzer.UserRepo;
+import org.chainlink.api.shared.auth.FachRolle;
+import org.chainlink.api.shared.user.User;
+import org.chainlink.api.shared.util.EnumSetUtil;
+import org.chainlink.infrastructure.stereotypes.Service;
+import org.jspecify.annotations.NonNull;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class EnsureUserService {
+
+    private final SecurityIdentity identity;
+    private final UserRepo userRepo;
+
+    @Transactional(TxType.NOT_SUPPORTED)
+    @NonNull
+    public User ensureUserExists() {
+
+        String email = identity.getPrincipal().getName();
+
+        Optional<User> existingUserOpt = userRepo.findByEmail(
+            EmailAddress.fromString(email));
+
+        if (existingUserOpt.isPresent()) {
+            LOG.debug("User already exists: {}", email);
+            return existingUserOpt.get();
+        }
+
+        LOG.info("Auto-provisioning new user from OIDC: {}", email);
+
+        Map<String, Object> attributes = identity.getAttributes();
+        String givenName = (String) attributes.get("given_name");
+        String familyName = (String) attributes.get("family_name");
+
+        String vorname = (givenName != null && !givenName.isBlank()) ? givenName : email.split("@")[0];
+        String nachname = (familyName != null && !familyName.isBlank()) ? familyName : "";
+
+        String keycloakId = (String) attributes.get("sub");
+
+        User newUser = new User(
+            keycloakId,
+            EmailAddress.fromString(email),
+            null,
+            nachname,
+            vorname,
+            null,
+            EnumSetUtil.toString(java.util.EnumSet.of(FachRolle.USER)),
+            HashSet.newHashSet(0),
+            true,
+            null
+        );
+
+        userRepo.provisionNewUser(newUser);
+        LOG.info("Created new user: {}", newUser.getEmail());
+        return newUser;
+    }
+}

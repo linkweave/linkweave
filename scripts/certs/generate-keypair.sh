@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 # Multiple domains separated by spaces
-domains="local-chainlink.localhost"
+domains="local-chainlink.localhost dev-chainlink.markushofstetter.com"
 # For now, use the first domain as the cert alias for backward compatibility
 cert_alias=$(echo ${domains} | cut -d' ' -f1)
 

@@ -116,6 +116,7 @@
     "email": "E-Mail",
     "password": "Passwort",
     "submit": "Anmelden",
+    "google": "Mit Google anmelden",
     "error": "Ungültige E-Mail oder Passwort."
   }
 }
