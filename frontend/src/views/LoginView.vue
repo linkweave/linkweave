@@ -112,6 +112,11 @@ async function handleLogin() {
           {{ loading ? t('common.loading') : t('login.submit') }}
         </ButtonCl>
       </form>
+
+      <p class="text-center text-sm">
+        {{ t('login.noAccount') }}
+        <router-link :to="{ name: 'register' }" class="underline hover:text-white/80">{{ t('login.register') }}</router-link>
+      </p>
     </div>
   </div>
 </template>

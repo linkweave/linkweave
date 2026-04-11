@@ -117,6 +117,28 @@
     "password": "Passwort",
     "submit": "Anmelden",
     "google": "Mit Google anmelden",
-    "error": "Ungültige E-Mail oder Passwort."
+    "error": "Ungültige E-Mail oder Passwort.",
+    "noAccount": "Noch kein Konto?",
+    "register": "Konto erstellen"
+  },
+  "register": {
+    "title": "Konto erstellen",
+    "firstName": "Vorname",
+    "firstNamePlaceholder": "Vorname eingeben",
+    "lastName": "Nachname",
+    "lastNamePlaceholder": "Nachname eingeben",
+    "email": "E-Mail",
+    "emailPlaceholder": "E-Mail eingeben",
+    "password": "Passwort",
+    "passwordPlaceholder": "Min. 8 Zeichen",
+    "confirmPassword": "Passwort bestätigen",
+    "confirmPasswordPlaceholder": "Passwort erneut eingeben",
+    "submit": "Konto erstellen",
+    "success": "Konto erfolgreich erstellt",
+    "error": "Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "passwordMismatch": "Passwörter stimmen nicht überein.",
+    "alreadyExists": "Diese E-Mail ist bereits registriert.",
+    "hasAccount": "Bereits ein Konto?",
+    "signIn": "Anmelden"
   }
 }

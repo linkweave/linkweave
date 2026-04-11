@@ -203,4 +203,10 @@ public class AppValidationMessage {
                 actualForeignKeys.toString()));
     }
 
+    public static @NonNull AppValidationMessage emailAlreadyRegistered(@NonNull String email) {
+        return of(
+            "EmailAlreadyRegistered",
+            I18nMessage.of("AppValidation.EMAIL_ALREADY_REGISTERED", "email", email)
+        );
+    }
 }

@@ -7,9 +7,11 @@ import io.quarkus.oidc.OidcSession;
 import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.vertx.http.runtime.security.FormAuthenticationMechanism;
+import jakarta.annotation.security.PermitAll;
 import jakarta.enterprise.inject.Instance;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -37,6 +39,7 @@ public class AuthResource {
     private final CollectionService collectionService;
     private final Instance<OidcSession> oidcSessionInstance;
     private final EnsureUserService ensureUserService;
+    private final RegistrationService registrationService;
 
     private final  UriInfo uriInfo;
 
@@ -79,16 +82,39 @@ public class AuthResource {
         return Response.seeOther(baseUri).build();
     }
 
+    @POST
+    @Path("/register")
+    @Transactional(TxType.NOT_SUPPORTED)
+    @PermitAll
+    public Response register(@Valid RegistrationRequestJson request) {
+        try {
+            registrationService.register(
+                request.email(),
+                request.password(),
+                request.vorname(),
+                request.nachname()
+            );
+            return Response.ok().build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.CONFLICT)
+                .entity(e.getMessage())
+                .build();
+        }
+    }
+
 
     @POST
     @Path("/logout")
     @Authenticated
     public Response logout() {
+        if (identity == null || identity.isAnonymous()) {
+            return Response.noContent().build();
+        }
         if (oidcSessionInstance.isResolvable()) {
             oidcSessionInstance.get().logout().await().indefinitely();
-        } else {
-            FormAuthenticationMechanism.logout(identity);
         }
+        FormAuthenticationMechanism.logout(identity);
+
         return Response.noContent().build();
     }
 }

@@ -1,4 +1,4 @@
--- Seed embedded users matching quarkus.security.users.embedded configuration
+-- Seed embedded users for form-based auth
 
 INSERT INTO User (id, timestampErstellt, timestampMutiert, userErstellt, userMutiert, version, aktiv, email, fachRollen, nachname, vorname)
 VALUES (

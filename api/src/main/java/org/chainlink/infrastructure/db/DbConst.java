@@ -16,6 +16,7 @@ public class DbConst {
     public static final int DB_UUID_LENGTH = 36;
     public static final int DB_ENUM_LENGTH = 30;
     public static final int DB_ENUM_LIST_LENGTH = 2000;
+    public static final int DB_BCRYPT_HASH_LENGTH = 60;
     public static final int DB_LONG_ENUM_LENGTH = 40;
     public static final int DB_FREITEXT_LENGTH = 32768;
     public static final int DB_DEFAULT_PRECISION = 30;

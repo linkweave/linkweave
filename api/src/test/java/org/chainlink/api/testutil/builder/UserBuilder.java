@@ -4,8 +4,10 @@ import java.util.EnumSet;
 import java.util.function.Consumer;
 
 import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
+import io.quarkus.elytron.security.common.BcryptUtil;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.shared.auth.FachRolle;
+import org.chainlink.api.shared.user.AuthProvider;
 import org.chainlink.api.shared.user.User;
 import org.jspecify.annotations.NonNull;
 
@@ -55,6 +57,24 @@ public class UserBuilder {
     @NonNull
     public UserBuilder withFachRollen(EnumSet<FachRolle> rollen) {
         user.setFachRollen(rollen);
+        return this;
+    }
+
+    @NonNull
+    public UserBuilder withAuthProvider(AuthProvider authProvider) {
+        user.setAuthProvider(authProvider);
+        return this;
+    }
+
+    @NonNull
+    public UserBuilder withPlaintextPassword(String plaintextPassword) {
+        user.setPassword(BcryptUtil.bcryptHash(plaintextPassword));
+        return this;
+    }
+
+    @NonNull
+    public UserBuilder withAktiv(boolean aktiv) {
+        user.setAktiv(aktiv);
         return this;
     }
 

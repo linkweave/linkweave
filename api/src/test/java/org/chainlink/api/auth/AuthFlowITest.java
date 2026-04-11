@@ -1,5 +1,7 @@
 package org.chainlink.api.auth;
 
+import java.util.List;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
@@ -53,12 +55,12 @@ class AuthFlowITest {
             .then()
             .statusCode(200)
             .extract()
-            .cookie("quarkus-credential");
+            .cookie("chainlink-credential");
 
         assertThat(sessionCookie).isNotBlank();
 
         String json = RestAssured.given()
-            .cookie("quarkus-credential", sessionCookie)
+            .cookie("chainlink-credential", sessionCookie)
             .get("/auth/me")
             .then()
             .statusCode(200)
@@ -68,7 +70,7 @@ class AuthFlowITest {
         UserInfoJson userInfoJson = objectMapper.readValue(json, UserInfoJson.class);
 
         assertThat(userInfoJson.email()).isEqualTo("test@example.com");
-        assertThat(userInfoJson.roles()).contains("USER");
+        assertThat(userInfoJson.roles()).containsAll(List.of("BOOKMARK_READ", "BOOKMARK_WRITE"));
         assertThat(userInfoJson.defaultCollectionId()).isNotNull();
     }
 
@@ -83,24 +85,24 @@ class AuthFlowITest {
             .then()
             .statusCode(200)
             .extract()
-            .cookie("quarkus-credential");
+            .cookie("chainlink-credential");
 
         assertThat(sessionCookie).isNotBlank();
 
         RestAssured.given()
-            .cookie("quarkus-credential", sessionCookie)
+            .cookie("chainlink-credential", sessionCookie)
             .get("/auth/me")
             .then()
             .statusCode(200);
 
         var logoutResponse = RestAssured.given()
-            .cookie("quarkus-credential", sessionCookie)
+            .cookie("chainlink-credential", sessionCookie)
             .post("/auth/logout")
             .then()
             .statusCode(204)
             .extract();
 
-        String clearedCookie = logoutResponse.cookie("quarkus-credential");
+        String clearedCookie = logoutResponse.cookie("chainlink-credential");
         assertThat(clearedCookie).isEmpty();
 
         RestAssured.given()

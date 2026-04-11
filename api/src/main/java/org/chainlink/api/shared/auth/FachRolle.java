@@ -18,7 +18,7 @@ public enum FachRolle {
         EnumSet.of(Permission.BOOKMARK_READ, Permission.BOOKMARK_WRITE)
     );
 
-    @Getter(AccessLevel.PACKAGE)
+    @Getter
     private final Set<Permission> permissions;
 
 }

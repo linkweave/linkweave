@@ -117,6 +117,28 @@
     "password": "Password",
     "submit": "Sign in",
     "google": "Sign in with Google",
-    "error": "Invalid email or password."
+    "error": "Invalid email or password.",
+    "noAccount": "Don't have an account?",
+    "register": "Create one"
+  },
+  "register": {
+    "title": "Create Account",
+    "firstName": "First Name",
+    "firstNamePlaceholder": "Enter your first name",
+    "lastName": "Last Name",
+    "lastNamePlaceholder": "Enter your last name",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
+    "password": "Password",
+    "passwordPlaceholder": "Min. 8 characters",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Re-enter your password",
+    "submit": "Create Account",
+    "success": "Account created successfully!",
+    "error": "Registration failed. Please try again.",
+    "passwordMismatch": "Passwords do not match.",
+    "alreadyExists": "This email is already registered.",
+    "hasAccount": "Already have an account?",
+    "signIn": "Sign in"
   }
 }
