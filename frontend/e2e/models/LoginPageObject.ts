@@ -12,7 +12,7 @@ export class LoginPageObject {
     this.page = page
     this.emailInput = page.getByLabel('Email')
     this.passwordInput = page.getByLabel('Password')
-    this.loginSubmitButton = page.getByRole('button', { name: /sign in/i })
+    this.loginSubmitButton = page.getByRole('button', { name: 'Sign in', exact: true })
     this.errorMessage = page.getByText('Invalid email or password.')
     this.appTitle = page.getByRole('heading', { name: 'Chainlink' })
   }

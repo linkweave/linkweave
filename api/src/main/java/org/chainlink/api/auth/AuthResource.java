@@ -1,12 +1,14 @@
 package org.chainlink.api.auth;
 
 import java.net.URI;
+import java.time.temporal.ChronoUnit;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.oidc.OidcSession;
 import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.vertx.http.runtime.security.FormAuthenticationMechanism;
+import io.smallrye.faulttolerance.api.RateLimit;
 import jakarta.annotation.security.PermitAll;
 import jakarta.enterprise.inject.Instance;
 import jakarta.transaction.Transactional;
@@ -86,6 +88,7 @@ public class AuthResource {
     @Path("/register")
     @Transactional(TxType.NOT_SUPPORTED)
     @PermitAll
+    @RateLimit(value = 5, window = 1, windowUnit = ChronoUnit.MINUTES)
     public Response register(@Valid RegistrationRequestJson request) {
         try {
             registrationService.register(
