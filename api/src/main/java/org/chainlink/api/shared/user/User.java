@@ -5,13 +5,20 @@ import java.time.OffsetDateTime;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
 import ch.dvbern.dvbstarter.types.id.ID;
+import io.quarkus.security.jpa.Password;
+import io.quarkus.security.jpa.Roles;
+import io.quarkus.security.jpa.UserDefinition;
+import io.quarkus.security.jpa.Username;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -52,6 +59,7 @@ import org.hibernate.envers.Audited;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
+@UserDefinition
 public class User extends AbstractEntity<User> {
 
     @Serial
@@ -89,12 +97,22 @@ public class User extends AbstractEntity<User> {
     @Column(nullable = false)
     private String vorname;
 
-
-
     @Valid
     @Embedded
     @Nullable
     private BenutzerLoginInfos loginInfos;
+
+    @Nullable
+    @Size(max = DbConst.DB_BCRYPT_HASH_LENGTH)
+    @Column(nullable = true, length = DbConst.DB_BCRYPT_HASH_LENGTH)
+    @ToString.Exclude
+    @Password
+    private String password;
+
+    @Nullable
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true, length = DbConst.DB_ENUM_LENGTH)
+    private AuthProvider authProvider;
 
     @Nullable
     @Size(max = DbConst.DB_ENUM_LIST_LENGTH)
@@ -119,6 +137,12 @@ public class User extends AbstractEntity<User> {
     @Column(nullable = true)
     private OffsetDateTime timestampLastManuallyActivated;
 
+    @Username
+    @Column(name = "email", insertable = false, updatable = false)
+    @Nullable
+    @ToString.Exclude
+    private String username;
+
     @NonNull
     public String getNameVorname() {
         return nachname + ' ' + vorname;
@@ -128,6 +152,16 @@ public class User extends AbstractEntity<User> {
     public String getVornameName() {
         return vorname + ' ' + nachname;
     }
+
+    @Roles
+    @NonNull
+    public String getSecurityRoles() {
+        return getFachRollen().stream()
+            .flatMap(fachRolle -> fachRolle.getPermissions().stream())
+            .map(Enum::name)
+            .collect(Collectors.joining(","));
+    }
+
 
     public void setFachRollen(@NonNull EnumSet<FachRolle> fachRollen) {
         this.fachRollen = EnumSetUtil.toString(fachRollen);

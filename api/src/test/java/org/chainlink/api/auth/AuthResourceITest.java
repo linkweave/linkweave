@@ -9,6 +9,7 @@ import io.restassured.RestAssured;
 import io.restassured.config.RedirectConfig;
 import jakarta.inject.Inject;
 import org.chainlink.api.benutzer.UserRepo;
+import org.chainlink.api.shared.user.AuthProvider;
 import org.chainlink.api.shared.user.User;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -56,6 +57,8 @@ class AuthResourceITest {
         assertThat(user.getNachname()).isEqualTo("fn_" + uuid);
         assertThat(user.getKeycloakId()).isEqualTo(uuid.toString());
         assertThat(user.isAktiv()).isTrue();
+        assertThat(user.getAuthProvider()).isEqualTo(AuthProvider.OIDC);
+        assertThat(user.getPassword()).isNull();
     }
 
     @Test
@@ -75,6 +78,7 @@ class AuthResourceITest {
         assertThat(user.getNachname()).isEqualTo("fn_" + uuid2);
         assertThat(user.getKeycloakId()).isEqualTo(uuid2.toString());
         assertThat(user.isAktiv()).isTrue();
+        assertThat(user.getAuthProvider()).isEqualTo(AuthProvider.OIDC);
     }
 
     @Test
@@ -96,5 +100,6 @@ class AuthResourceITest {
         assertThat(user3.getNachname()).isEqualTo("fn_" + uuid3);
         assertThat(user3.getKeycloakId()).isEqualTo(uuid3.toString());
         assertThat(user3.isAktiv()).isTrue();
+        assertThat(user3.getAuthProvider()).isEqualTo(AuthProvider.OIDC);
     }
 }

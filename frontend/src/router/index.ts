@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import CollectionView from '@/views/CollectionView.vue'
 import LoginView from '@/views/LoginView.vue'
+import RegisterView from '@/views/RegisterView.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCollectionStore } from '@/stores/collection'
 
@@ -27,6 +28,11 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('@/views/RegisterView.vue')
     }
   ]
 })
@@ -39,11 +45,11 @@ router.beforeEach(async (to) => {
     await auth.fetchCurrentUser()
   }
 
-  if (!auth.isAuthenticated && to.name !== 'login') {
+  if (!auth.isAuthenticated && to.name !== 'login' && to.name !== 'register') {
     return { name: 'login' }
   }
 
-  if (auth.isAuthenticated && to.name === 'login') {
+  if (auth.isAuthenticated && (to.name === 'login' || to.name === 'register')) {
     return { name: 'home' }
   }
 })

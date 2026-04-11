@@ -8,7 +8,7 @@ export class AppPageObject {
 
   constructor(page: Page) {
     this.page = page
-    this.userMenuButton = page.getByRole('button', { name: /Alice User/i })
+    this.userMenuButton = page.getByTestId('user-menu-trigger')
     this.signOutButton = page.getByRole('menuitem', { name: 'Sign out' })
     this.allBookmarksLabel = page.getByText('All Bookmarks')
   }

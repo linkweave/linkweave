@@ -15,12 +15,19 @@
 
 import * as runtime from '../runtime';
 import type {
+  RegistrationRequestJson,
   UserInfoJson,
 } from '../models/index';
 import {
+    RegistrationRequestJsonFromJSON,
+    RegistrationRequestJsonToJSON,
     UserInfoJsonFromJSON,
     UserInfoJsonToJSON,
 } from '../models/index';
+
+export interface AuthResourceApiApiAuthRegisterPostRequest {
+    registrationRequestJson: RegistrationRequestJson;
+}
 
 /**
  * 
@@ -102,6 +109,98 @@ export class AuthResourceApi extends runtime.BaseAPI {
      */
     async apiAuthMeGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserInfoJson> {
         const response = await this.apiAuthMeGetRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for apiAuthOidcLoginGet without sending the request
+     */
+    async apiAuthOidcLoginGetRequestOpts(): Promise<runtime.RequestOpts> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/api/auth/oidc-login`;
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * Oidc Login
+     */
+    async apiAuthOidcLoginGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+        const requestOptions = await this.apiAuthOidcLoginGetRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
+
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<any>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
+    }
+
+    /**
+     * Oidc Login
+     */
+    async apiAuthOidcLoginGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+        const response = await this.apiAuthOidcLoginGetRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for apiAuthRegisterPost without sending the request
+     */
+    async apiAuthRegisterPostRequestOpts(requestParameters: AuthResourceApiApiAuthRegisterPostRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['registrationRequestJson'] == null) {
+            throw new runtime.RequiredError(
+                'registrationRequestJson',
+                'Required parameter "registrationRequestJson" was null or undefined when calling apiAuthRegisterPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/auth/register`;
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RegistrationRequestJsonToJSON(requestParameters['registrationRequestJson']),
+        };
+    }
+
+    /**
+     * Register
+     */
+    async apiAuthRegisterPostRaw(requestParameters: AuthResourceApiApiAuthRegisterPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+        const requestOptions = await this.apiAuthRegisterPostRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<any>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
+    }
+
+    /**
+     * Register
+     */
+    async apiAuthRegisterPost(requestParameters: AuthResourceApiApiAuthRegisterPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+        const response = await this.apiAuthRegisterPostRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

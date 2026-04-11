@@ -37,17 +37,10 @@ public class FolderResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
-    public FolderListJson getAll(@QueryParam("collectionId") ID<Collection> collectionId) {
-        if (collectionId != null) {
-            authorizationService.requireCollectionAccess(collectionId);
-            return new FolderListJson(
-                folderService.getFoldersByCollection(collectionId).stream()
-                    .map(FolderMapper::toJson)
-                    .toList()
-            );
-        }
+    public FolderListJson getAll(@QueryParam("collectionId") @NotNull @NonNull ID<Collection> collectionId) {
+        authorizationService.requireCollectionAccess(collectionId);
         return new FolderListJson(
-            folderService.getAllFolders().stream()
+            folderService.getFoldersByCollection(collectionId).stream()
                 .map(FolderMapper::toJson)
                 .toList()
         );

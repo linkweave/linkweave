@@ -3,6 +3,7 @@ package org.chainlink.api.auth;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
 import io.quarkus.security.identity.SecurityIdentity;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.chainlink.api.benutzer.UserRepo;
 import org.chainlink.api.shared.auth.FachRolle;
+import org.chainlink.api.shared.user.AuthProvider;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.api.shared.util.EnumSetUtil;
 import org.hibernate.exception.ConstraintViolationException;
@@ -41,6 +43,11 @@ public class EnsureUserService {
             return existingUserOpt.get();
         }
 
+        return createUserFromOIDC(email);
+    }
+
+    private @NonNull User createUserFromOIDC(String email) {
+
         LOG.info("Auto-provisioning new user from OIDC: {}", email);
 
         Map<String, Object> attributes = identity.getAttributes();
@@ -59,10 +66,13 @@ public class EnsureUserService {
             nachname,
             vorname,
             null,
+            null,
+            AuthProvider.OIDC,
             EnumSetUtil.toString(java.util.EnumSet.of(FachRolle.USER)),
-            HashSet.newHashSet(0),
+            new HashSet<>(),
             true,
-            null
+            null,
+            email
         );
 
         try {
