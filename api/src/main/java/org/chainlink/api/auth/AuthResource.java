@@ -5,6 +5,7 @@ import java.time.temporal.ChronoUnit;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.oidc.OidcSession;
+import io.quarkus.oidc.runtime.OidcJwtCallerPrincipal;
 import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.vertx.http.runtime.security.FormAuthenticationMechanism;
@@ -25,10 +26,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.collection.CollectionService;
+import org.chainlink.api.shared.user.AuthProvider;
 import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.infrastructure.errorhandling.AppAuthException;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 @JaxResource
 @RequiredArgsConstructor
@@ -113,10 +116,13 @@ public class AuthResource {
         if (identity == null || identity.isAnonymous()) {
             return Response.noContent().build();
         }
-        if (oidcSessionInstance.isResolvable()) {
+
+        if (oidcSessionInstance.isResolvable()
+                && identity.getPrincipal() instanceof JsonWebToken) {
             oidcSessionInstance.get().logout().await().indefinitely();
+        } else {
+            FormAuthenticationMechanism.logout(identity);
         }
-        FormAuthenticationMechanism.logout(identity);
 
         return Response.noContent().build();
     }
