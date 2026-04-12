@@ -11,6 +11,11 @@ owner --|> user
 
 rectangle "Chainlink Bookmark Manager" {
 
+    rectangle "Authentication" {
+        usecase "UC-033\nLogin with Google" as UC033 <<implemented>>
+        usecase "UC-034\nRegister Account" as UC034 <<implemented>>
+    }
+
     rectangle "Collection Management" {
         usecase "UC-001\nAuto-Provision on\nFirst Login" as UC001 <<implemented>>
         usecase "UC-002\nAuto-Navigate\nto Collection" as UC002 <<implemented>>
@@ -64,6 +69,10 @@ rectangle "Chainlink Bookmark Manager" {
         end note
     }
 }
+
+' Authentication
+user --> UC033
+user --> UC034
 
 ' Collection Management
 user --> UC001

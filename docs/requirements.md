@@ -52,6 +52,8 @@
 | FR-031 | Import Browser Bookmarks          | As a User, I want to import bookmarks from Brave or Firefox so that I can easily migrate my existing bookmarks into Chainlink. | Low      | Open   |
 | FR-032 | Search Bookmarks               | As a User, I want to search bookmarks within my collection by title, URL, and tag name so that I can quickly find a specific bookmark. When tags are selected, only bookmarks matching all selected tags are shown. When a folder is selected, results are further limited to bookmarks within that folder. All three filters (search query, selected tags, selected folder) are combined as AND conditions. | High     | Done   |
 | FR-033 | Offline Mode                      | As a User, I want to browse and search my bookmarks while offline so that I can access my saved resources without an active network connection. The app should load all collection data in a single request and cache it client-side. Authentication handling for offline access needs to be investigated. | Low      | Open   |
+| FR-034 | Login with Google                | As a User, I want to sign in using my Google account so that I can access the application without creating separate credentials. The system should auto-provision a local user record from my Google profile on first login. | High     | Done   |
+| FR-035 | Register Account                 | As a User, I want to register an account with my email and password so that I can create credentials to access the application. Passwords must be hashed with bcrypt and the email must be unique. | High     | Done   |
 
 ---
 
@@ -76,7 +78,7 @@
 | C-002 | Frontend Framework | Frontend must be implemented using Vue.js with Pinia for state management. | Technical | High     | Open   |
 | C-003 | Single Database    | All collections, bookmarks, folders, tags, and access control must be stored in a single SQLite database file. Multi-tenancy is achieved via `collection_id` foreign keys. (Note: Multi-database architecture may be considered for future scaling.) | Technical | High     | Open   |
 | C-004 | Deployment Model   | The application must be deployable as a self-hosted installation without external cloud dependencies. | Technical | High     | Open   |
-| C-005 | User Identity      | Users must be identified by a stable, unique username. For this release, Quarkus form-based authentication with an in-memory user store is used. OIDC integration is planned for a future release. | Technical | High     | Open   |
+| C-005 | User Identity      | Users must be identified by a stable, unique username. Form-based authentication with bcrypt password hashing and Google OIDC are both supported. The `email` claim serves as the principal for both providers. | Technical | High     | Open   |
 | C-006 | Primary Keys       | All entity primary keys must be UUIDs generated server-side; auto-increment sequences must not be used. | Technical | High     | Open   |
 | C-007 | Out of Scope       | User management (creating, editing, deleting user accounts by an admin) is out of scope for this release. | Business  | High     | Open   |
 | C-008 | UI Layout          | The frontend must follow the layout and design system defined in [ui-layout.md](ui-layout.md), including the three-column desktop layout, sidebar components, and shadcn/vue component library with Tailwind CSS. | Technical | High     | Open   |
