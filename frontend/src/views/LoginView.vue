@@ -67,26 +67,28 @@ async function handleLogin() {
 
       <form @submit.prevent="handleLogin" class="space-y-4">
         <div class="space-y-2">
-          <label for="email" class="text-sm font-medium">{{ t('login.email') }}</label>
+          <label for="email" class="text-sm font-medium text-white">{{ t('login.email') }}</label>
           <input
             id="email"
             v-model="email"
             type="email"
             required
             autocomplete="email"
-            class="flex h-9 w-full rounded-md border border-white/30 bg-white/20 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-white/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/50"
+            class="flex h-9 w-full rounded-md bg-white/15 px-3 py-1 text-sm text-white transition-colors placeholder:text-white/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
+            style="border: 1px solid rgba(143, 149, 161, 0.25)"
           />
         </div>
 
         <div class="space-y-2">
-          <label for="password" class="text-sm font-medium">{{ t('login.password') }}</label>
+          <label for="password" class="text-sm font-medium text-white">{{ t('login.password') }}</label>
           <input
             id="password"
             v-model="password"
             type="password"
             required
             autocomplete="current-password"
-            class="flex h-9 w-full rounded-md border border-white/30 bg-white/20 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-white/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/50"
+            class="flex h-9 w-full rounded-md bg-white/15 px-3 py-1 text-sm text-white transition-colors placeholder:text-white/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
+            style="border: 1px solid rgba(143, 149, 161, 0.25)"
           />
         </div>
 
