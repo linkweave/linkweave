@@ -57,44 +57,47 @@ async function handleRegister() {
   <AuthLayout :title="t('register.title')">
     <form @submit.prevent="handleRegister" class="space-y-4">
       <div class="space-y-2">
-        <label for="firstName" class="text-sm font-medium">{{ t('register.firstName') }}</label>
+        <label for="firstName" class="text-sm font-medium text-white">{{ t('register.firstName') }}</label>
         <input
           id="firstName"
           v-model="firstName"
           type="text"
           required
-          class="flex h-9 w-full rounded-md border border-white/30 bg-white/20 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-white/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/50"
+          class="flex h-9 w-full rounded-md bg-white/15 px-3 py-1 text-sm text-white transition-colors placeholder:text-white/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
+          style="border: 1px solid rgba(143, 149, 161, 0.25)"
           :placeholder="t('register.firstNamePlaceholder')"
         />
       </div>
 
       <div class="space-y-2">
-        <label for="lastName" class="text-sm font-medium">{{ t('register.lastName') }}</label>
+        <label for="lastName" class="text-sm font-medium text-white">{{ t('register.lastName') }}</label>
         <input
           id="lastName"
           v-model="lastName"
           type="text"
           required
-          class="flex h-9 w-full rounded-md border border-white/30 bg-white/20 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-white/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/50"
+          class="flex h-9 w-full rounded-md bg-white/15 px-3 py-1 text-sm text-white transition-colors placeholder:text-white/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
+          style="border: 1px solid rgba(143, 149, 161, 0.25)"
           :placeholder="t('register.lastNamePlaceholder')"
         />
       </div>
 
       <div class="space-y-2">
-        <label for="email" class="text-sm font-medium">{{ t('register.email') }}</label>
+        <label for="email" class="text-sm font-medium text-white">{{ t('register.email') }}</label>
         <input
           id="email"
           v-model="email"
           type="email"
           required
           autocomplete="email"
-          class="flex h-9 w-full rounded-md border border-white/30 bg-white/20 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-white/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/50"
+          class="flex h-9 w-full rounded-md bg-white/15 px-3 py-1 text-sm text-white transition-colors placeholder:text-white/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
+          style="border: 1px solid rgba(143, 149, 161, 0.25)"
           :placeholder="t('register.emailPlaceholder')"
         />
       </div>
 
       <div class="space-y-2">
-        <label for="password" class="text-sm font-medium">{{ t('register.password') }}</label>
+        <label for="password" class="text-sm font-medium text-white">{{ t('register.password') }}</label>
         <input
           id="password"
           v-model="password"
@@ -102,13 +105,14 @@ async function handleRegister() {
           required
           minlength="8"
           autocomplete="new-password"
-          class="flex h-9 w-full rounded-md border border-white/30 bg-white/20 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-white/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/50"
+          class="flex h-9 w-full rounded-md bg-white/15 px-3 py-1 text-sm text-white transition-colors placeholder:text-white/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
+          style="border: 1px solid rgba(143, 149, 161, 0.25)"
           :placeholder="t('register.passwordPlaceholder')"
         />
       </div>
 
       <div class="space-y-2">
-        <label for="confirmPassword" class="text-sm font-medium">{{ t('register.confirmPassword') }}</label>
+        <label for="confirmPassword" class="text-sm font-medium text-white">{{ t('register.confirmPassword') }}</label>
         <input
           id="confirmPassword"
           v-model="confirmPassword"
@@ -116,7 +120,8 @@ async function handleRegister() {
           required
           minlength="8"
           autocomplete="new-password"
-          class="flex h-9 w-full rounded-md border border-white/30 bg-white/20 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-white/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/50"
+          class="flex h-9 w-full rounded-md bg-white/15 px-3 py-1 text-sm text-white transition-colors placeholder:text-white/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
+          style="border: 1px solid rgba(143, 149, 161, 0.25)"
           :class="{ 'border-red-500': passwordMismatch }"
           :placeholder="t('register.confirmPasswordPlaceholder')"
         />
