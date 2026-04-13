@@ -42,7 +42,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function updateDefaultCollectionId(id: string | undefined) {
+  function updateDefaultCollectionId(id: string) {
     if (user.value) {
       user.value = { ...user.value, defaultCollectionId: id }
     }

@@ -26,13 +26,13 @@ export interface CollectionSummaryJson {
      * @type {string}
      * @memberof CollectionSummaryJson
      */
-    id?: string;
+    id: string;
     /**
      *
      * @type {string}
      * @memberof CollectionSummaryJson
      */
-    name?: string;
+    name: string;
     /**
      *
      * @type {boolean}
@@ -44,7 +44,7 @@ export interface CollectionSummaryJson {
      * @type {CollectionRole}
      * @memberof CollectionSummaryJson
      */
-    role?: CollectionRole;
+    role: CollectionRole;
     /**
      *
      * @type {boolean}
@@ -59,6 +59,9 @@ export interface CollectionSummaryJson {
  * Check if a given object implements the CollectionSummaryJson interface.
  */
 export function instanceOfCollectionSummaryJson(value: object): value is CollectionSummaryJson {
+    if (!('id' in value) || value['id'] === undefined) return false;
+    if (!('name' in value) || value['name'] === undefined) return false;
+    if (!('role' in value) || value['role'] === undefined) return false;
     return true;
 }
 
@@ -72,10 +75,10 @@ export function CollectionSummaryJsonFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
 
-        'id': json['id'] == null ? undefined : json['id'],
-        'name': json['name'] == null ? undefined : json['name'],
+        'id': json['id'],
+        'name': json['name'],
         'isDefault': json['isDefault'] == null ? undefined : json['isDefault'],
-        'role': json['role'] == null ? undefined : CollectionRoleFromJSON(json['role']),
+        'role': CollectionRoleFromJSON(json['role']),
         'shared': json['shared'] == null ? undefined : json['shared'],
     };
 }

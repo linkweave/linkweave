@@ -23,13 +23,14 @@ export interface CollectionShareJson {
      * @type {string}
      * @memberof CollectionShareJson
      */
-    email?: string;
+    email: string;
 }
 
 /**
  * Check if a given object implements the CollectionShareJson interface.
  */
 export function instanceOfCollectionShareJson(value: object): value is CollectionShareJson {
+    if (!('email' in value) || value['email'] === undefined) return false;
     return true;
 }
 
@@ -43,7 +44,7 @@ export function CollectionShareJsonFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
 
-        'email': json['email'] == null ? undefined : json['email'],
+        'email': json['email'],
     };
 }
 
