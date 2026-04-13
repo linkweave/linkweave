@@ -68,6 +68,7 @@
     "deleteError": "Failed to delete collection.",
     "owner": "Owner",
     "default": "Default",
+    "shared": "Shared",
     "role": "Role",
     "noCollections": "No collections found.",
     "backToBookmarks": "Back to Bookmarks",

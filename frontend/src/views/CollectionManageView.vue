@@ -146,6 +146,13 @@ function goBack() {
             >
               {{ t('collectionManage.default') }}
             </span>
+            <span
+              v-if="col.shared"
+              class="text-[9px] bg-blue-500/25 text-blue-500 px-1.5 py-0.5 rounded inline-flex items-center gap-0.5 shrink-0"
+            >
+              <Users class="h-2.5 w-2.5" />
+              {{ t('collectionManage.shared') }}
+            </span>
           </div>
           <div class="text-xs text-muted-foreground mt-0.5">
             {{ t('collectionManage.role') }}: {{ col.role }}

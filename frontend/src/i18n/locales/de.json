@@ -68,6 +68,7 @@
     "deleteError": "Sammlung konnte nicht gelöscht werden.",
     "owner": "Besitzer",
     "default": "Standard",
+    "shared": "Geteilt",
     "role": "Rolle",
     "noCollections": "Keine Sammlungen gefunden.",
     "backToBookmarks": "Zurück zu Lesezeichen",
