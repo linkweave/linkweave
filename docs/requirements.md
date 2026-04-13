@@ -54,6 +54,9 @@
 | FR-033 | Offline Mode                      | As a User, I want to browse and search my bookmarks while offline so that I can access my saved resources without an active network connection. The app should load all collection data in a single request and cache it client-side. Authentication handling for offline access needs to be investigated. | Low      | Open   |
 | FR-034 | Login with Google                | As a User, I want to sign in using my Google account so that I can access the application without creating separate credentials. The system should auto-provision a local user record from my Google profile on first login. | High     | Done   |
 | FR-035 | Register Account                 | As a User, I want to register an account with my email and password so that I can create credentials to access the application. Passwords must be hashed with bcrypt and the email must be unique. | High     | Done   |
+| FR-036 | Create Collection                | As a User, I want to create a new collection with a name so that I can organize bookmarks in separate workspaces beyond the auto-provisioned default. | High     | Open   |
+| FR-037 | Edit Collection                  | As a Collection Owner, I want to rename my collection so that it accurately reflects its purpose. | Medium   | Open   |
+| FR-038 | Delete Collection                | As a Collection Owner, I want to delete a collection I own so that I can remove collections I no longer need. Deletion must require typing the collection name to confirm, cascade-remove all bookmarks, folders, tags, and access grants, and reassign the default if needed. | High     | Open   |
 
 ---
 

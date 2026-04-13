@@ -8,6 +8,7 @@ import { useFolderStore } from '@/stores/folder'
 import { Folder, Plus, Tag } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import CollectionSwitcher from './CollectionSwitcher.vue'
 
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
@@ -37,6 +38,8 @@ const props = defineProps<Props>()
 
 <template>
   <div :class="['flex flex-col h-full', props.class]">
+    <CollectionSwitcher />
+
     <!-- Folders Section -->
     <div class="flex-1 min-h-0 flex flex-col">
       <div class="overflow-y-auto p-2">

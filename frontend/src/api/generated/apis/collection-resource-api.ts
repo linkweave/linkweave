@@ -15,21 +15,172 @@
 
 import * as runtime from '../runtime';
 import type {
+  CollectionCreateJson,
   CollectionInfoJson,
+  CollectionSummaryJson,
+  CollectionUpdateJson,
 } from '../models/index';
 import {
+    CollectionCreateJsonFromJSON,
+    CollectionCreateJsonToJSON,
     CollectionInfoJsonFromJSON,
     CollectionInfoJsonToJSON,
+    CollectionSummaryJsonFromJSON,
+    CollectionSummaryJsonToJSON,
+    CollectionUpdateJsonFromJSON,
+    CollectionUpdateJsonToJSON,
 } from '../models/index';
+
+export interface CollectionResourceApiApiCollectionsIdDefaultPutRequest {
+    id: string;
+}
+
+export interface CollectionResourceApiApiCollectionsIdDeleteRequest {
+    id: string;
+}
 
 export interface CollectionResourceApiApiCollectionsIdGetRequest {
     id: string;
+}
+
+export interface CollectionResourceApiApiCollectionsIdPutRequest {
+    id: string;
+    collectionUpdateJson: CollectionUpdateJson;
+}
+
+export interface CollectionResourceApiApiCollectionsPostRequest {
+    collectionCreateJson: CollectionCreateJson;
 }
 
 /**
  * 
  */
 export class CollectionResourceApi extends runtime.BaseAPI {
+
+    /**
+     * Creates request options for apiCollectionsGet without sending the request
+     */
+    async apiCollectionsGetRequestOpts(): Promise<runtime.RequestOpts> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/api/collections`;
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * List Collections
+     */
+    async apiCollectionsGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<CollectionSummaryJson>>> {
+        const requestOptions = await this.apiCollectionsGetRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CollectionSummaryJsonFromJSON));
+    }
+
+    /**
+     * List Collections
+     */
+    async apiCollectionsGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<CollectionSummaryJson>> {
+        const response = await this.apiCollectionsGetRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for apiCollectionsIdDefaultPut without sending the request
+     */
+    async apiCollectionsIdDefaultPutRequestOpts(requestParameters: CollectionResourceApiApiCollectionsIdDefaultPutRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiCollectionsIdDefaultPut().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/api/collections/{id}/default`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        return {
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * Set Default Collection
+     */
+    async apiCollectionsIdDefaultPutRaw(requestParameters: CollectionResourceApiApiCollectionsIdDefaultPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.apiCollectionsIdDefaultPutRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Set Default Collection
+     */
+    async apiCollectionsIdDefaultPut(requestParameters: CollectionResourceApiApiCollectionsIdDefaultPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiCollectionsIdDefaultPutRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Creates request options for apiCollectionsIdDelete without sending the request
+     */
+    async apiCollectionsIdDeleteRequestOpts(requestParameters: CollectionResourceApiApiCollectionsIdDeleteRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiCollectionsIdDelete().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/api/collections/{id}`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        return {
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * Delete Collection
+     */
+    async apiCollectionsIdDeleteRaw(requestParameters: CollectionResourceApiApiCollectionsIdDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.apiCollectionsIdDeleteRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Delete Collection
+     */
+    async apiCollectionsIdDelete(requestParameters: CollectionResourceApiApiCollectionsIdDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiCollectionsIdDeleteRaw(requestParameters, initOverrides);
+    }
 
     /**
      * Creates request options for apiCollectionsIdGet without sending the request
@@ -73,6 +224,107 @@ export class CollectionResourceApi extends runtime.BaseAPI {
      */
     async apiCollectionsIdGet(requestParameters: CollectionResourceApiApiCollectionsIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CollectionInfoJson> {
         const response = await this.apiCollectionsIdGetRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for apiCollectionsIdPut without sending the request
+     */
+    async apiCollectionsIdPutRequestOpts(requestParameters: CollectionResourceApiApiCollectionsIdPutRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiCollectionsIdPut().'
+            );
+        }
+
+        if (requestParameters['collectionUpdateJson'] == null) {
+            throw new runtime.RequiredError(
+                'collectionUpdateJson',
+                'Required parameter "collectionUpdateJson" was null or undefined when calling apiCollectionsIdPut().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/collections/{id}`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        return {
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CollectionUpdateJsonToJSON(requestParameters['collectionUpdateJson']),
+        };
+    }
+
+    /**
+     * Update Collection
+     */
+    async apiCollectionsIdPutRaw(requestParameters: CollectionResourceApiApiCollectionsIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.apiCollectionsIdPutRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Update Collection
+     */
+    async apiCollectionsIdPut(requestParameters: CollectionResourceApiApiCollectionsIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiCollectionsIdPutRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Creates request options for apiCollectionsPost without sending the request
+     */
+    async apiCollectionsPostRequestOpts(requestParameters: CollectionResourceApiApiCollectionsPostRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['collectionCreateJson'] == null) {
+            throw new runtime.RequiredError(
+                'collectionCreateJson',
+                'Required parameter "collectionCreateJson" was null or undefined when calling apiCollectionsPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/collections`;
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CollectionCreateJsonToJSON(requestParameters['collectionCreateJson']),
+        };
+    }
+
+    /**
+     * Create Collection
+     */
+    async apiCollectionsPostRaw(requestParameters: CollectionResourceApiApiCollectionsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CollectionSummaryJson>> {
+        const requestOptions = await this.apiCollectionsPostRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CollectionSummaryJsonFromJSON(jsonValue));
+    }
+
+    /**
+     * Create Collection
+     */
+    async apiCollectionsPost(requestParameters: CollectionResourceApiApiCollectionsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CollectionSummaryJson> {
+        const response = await this.apiCollectionsPostRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

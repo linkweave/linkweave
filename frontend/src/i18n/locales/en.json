@@ -3,6 +3,15 @@
     "title": "Chainlink",
     "version": "version"
   },
+  "collectionSwitcher": {
+    "selectCollection": "Select Collection",
+    "collections": "Collections",
+    "default": "Default",
+    "activeCollection": "Active Collection",
+    "setAsDefault": "Set as Default",
+    "thisIsDefault": "This is your default",
+    "manageCollections": "Manage Collections"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",
