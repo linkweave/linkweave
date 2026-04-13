@@ -3,9 +3,7 @@ package org.chainlink.api.collection;
 import java.util.List;
 
 import ch.dvbern.dvbstarter.types.id.ID;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
+import jakarta.validation.constraints.NotNull;
 import lombok.Value;
 import org.chainlink.api.bookmark.folder.json.FolderJson;
 import org.chainlink.api.bookmark.json.BookmarkJson;
@@ -17,15 +15,15 @@ import org.jspecify.annotations.NonNull;
 @JaxDTO
 public class CollectionInfoJson {
 
-    @NonNull ID<Collection> id;
-    @NonNull String name;
+    @NotNull @NonNull ID<Collection> id;
+    @NotNull @NonNull String name;
     List<BookmarkJson> bookmarks;
     List<TagJson> tags;
     List<FolderJson> folders;
 
     public CollectionInfoJson(
-        @NonNull ID<Collection> id,
-        @NonNull String name,
+        @NotNull @NonNull ID<Collection> id,
+        @NotNull @NonNull String name,
         List<BookmarkJson> bookmarks,
         List<FolderJson> folders,
         List<TagJson> tags) {

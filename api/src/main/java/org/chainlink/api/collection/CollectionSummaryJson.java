@@ -5,6 +5,7 @@ import java.util.UUID;
 import ch.dvbern.dvbstarter.types.id.ID;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.querydsl.core.annotations.QueryProjection;
+import jakarta.validation.constraints.NotNull;
 import lombok.Value;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
 import org.jspecify.annotations.NonNull;
@@ -13,18 +14,18 @@ import org.jspecify.annotations.NonNull;
 @JaxDTO
 public class CollectionSummaryJson {
 
-    @NonNull ID<Collection> id;
-    @NonNull String name;
+    @NotNull @NonNull ID<Collection> id;
+    @NotNull @NonNull String name;
     @JsonProperty("isDefault")
     boolean isDefault;
-    @NonNull CollectionRole role;
+    @NotNull @NonNull CollectionRole role;
     boolean shared;
 
     CollectionSummaryJson(
-        @NonNull ID<Collection> id,
-        @NonNull String name,
+        @NotNull @NonNull ID<Collection> id,
+        @NotNull @NonNull String name,
         boolean isDefault,
-        @NonNull CollectionRole role,
+        @NotNull @NonNull CollectionRole role,
         boolean shared) {
         this.id = id;
         this.name = name;
@@ -35,10 +36,10 @@ public class CollectionSummaryJson {
 
     @QueryProjection
     public CollectionSummaryJson(
-        @NonNull UUID id,
-        @NonNull String name,
+        @NotNull @NonNull UUID id,
+        @NotNull @NonNull String name,
         boolean isDefault,
-        @NonNull CollectionRole role,
+        @NotNull @NonNull CollectionRole role,
         boolean shared) {
         this(ID.of(id, Collection.class), name, isDefault, role, shared);
     }

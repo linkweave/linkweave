@@ -77,6 +77,7 @@
 | NFR-007 | Architectural Enforcement | Architectural constraints (layering, naming conventions, transaction boundaries) must be automatically enforced via ArchUnit tests. | Maintainability | High | Open |
 | NFR-008 | Error Visibility        | 100% of failed API requests (HTTP 4xx/5xx) and network connectivity issues must be intercepted and reported to the user through a visible UI notification (e.g., toast). The system must specifically distinguish between login/authentication errors (401/403) and general backend problems (500+, network failures) to provide accurate feedback. | Usability | High | Open |
 | NFR-009 | State Isolation         | Upon logout or session change, 100% of Pinia stores and sensitive local/session storage entries must be cleared. It must be impossible for a new user to see data from the previous user's session without a fresh API fetch. | Security | High | Open |
+| NFR-010 | E2E Pipeline Execution | The Playwright E2E tests for the Chrome project must execute successfully as part of the continuous integration (CI) pipeline for every pull request and merge to the main branch. | Testability | High | Open |
 
 ---
 

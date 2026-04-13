@@ -26,25 +26,25 @@ export interface CollectionMemberJson {
      * @type {string}
      * @memberof CollectionMemberJson
      */
-    userId?: string;
+    userId: string;
     /**
      *
      * @type {string}
      * @memberof CollectionMemberJson
      */
-    email?: string;
+    email: string;
     /**
      *
      * @type {string}
      * @memberof CollectionMemberJson
      */
-    displayName?: string;
+    displayName: string;
     /**
      *
      * @type {CollectionRole}
      * @memberof CollectionMemberJson
      */
-    role?: CollectionRole;
+    role: CollectionRole;
 }
 
 
@@ -53,6 +53,10 @@ export interface CollectionMemberJson {
  * Check if a given object implements the CollectionMemberJson interface.
  */
 export function instanceOfCollectionMemberJson(value: object): value is CollectionMemberJson {
+    if (!('userId' in value) || value['userId'] === undefined) return false;
+    if (!('email' in value) || value['email'] === undefined) return false;
+    if (!('displayName' in value) || value['displayName'] === undefined) return false;
+    if (!('role' in value) || value['role'] === undefined) return false;
     return true;
 }
 
@@ -66,10 +70,10 @@ export function CollectionMemberJsonFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
 
-        'userId': json['userId'] == null ? undefined : json['userId'],
-        'email': json['email'] == null ? undefined : json['email'],
-        'displayName': json['displayName'] == null ? undefined : json['displayName'],
-        'role': json['role'] == null ? undefined : CollectionRoleFromJSON(json['role']),
+        'userId': json['userId'],
+        'email': json['email'],
+        'displayName': json['displayName'],
+        'role': CollectionRoleFromJSON(json['role']),
     };
 }
 
