@@ -134,4 +134,8 @@ public class BookmarkService {
             );
         }
     }
+
+    public void deleteByCollection(@NonNull ID<Collection> collectionId) {
+        bookmarkRepo.deleteByCollection(collectionId);
+    }
 }

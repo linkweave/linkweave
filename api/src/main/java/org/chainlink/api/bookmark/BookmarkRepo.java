@@ -65,4 +65,13 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             .where(QBookmark.bookmark.title.likeIgnoreCase("%" + searchTerm + "%"))
             .fetch();
     }
+
+    public void deleteByCollection(@NonNull ID<Collection> collectionId) {
+        var bookmarks = db.selectFrom(QBookmark.bookmark)
+            .where(QBookmark.bookmark.collection.id.eq(collectionId.getUUID()))
+            .fetch();
+        for (var bookmark : bookmarks) {
+            remove(bookmark.getId());
+        }
+    }
 }

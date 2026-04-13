@@ -80,4 +80,8 @@ public class TagService {
     public List<Tag> findByCollection(@NonNull ID<Collection> collectionID) {
         return  tagRepo.findByCollection(collectionID);
     }
+
+    public void deleteByCollection(@NonNull ID<Collection> collectionId) {
+        tagRepo.deleteByCollection(collectionId);
+    }
 }

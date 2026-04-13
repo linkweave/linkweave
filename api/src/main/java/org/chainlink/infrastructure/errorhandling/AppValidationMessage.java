@@ -209,4 +209,11 @@ public class AppValidationMessage {
             I18nMessage.of("AppValidation.EMAIL_ALREADY_REGISTERED", "email", email)
         );
     }
+
+    public static @NonNull AppValidationMessage cantDeleteLastCollection() {
+        return of(
+            "CanNotDeleteLastCollection",
+            I18nMessage.of("AppValidation.CANT_DELETE_LAST_COLLECTION")
+        );
+    }
 }

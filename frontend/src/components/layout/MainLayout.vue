@@ -1,15 +1,12 @@
 <script setup lang="ts">
-import {ButtonCl, UserMenuCl} from '@/components/ui'
+import {ButtonCl} from '@/components/ui'
 import {cn} from '@/lib/utils'
 import {Menu, X} from 'lucide-vue-next'
 import {ref} from 'vue'
-import {useI18n} from 'vue-i18n'
 import SidebarCl from './SidebarCl.vue'
-import {useAuthStore} from '@/stores/auth'
-import logoUrl from '@/assets/logo.png'
+import HeaderCl from './HeaderCl.vue'
+import CollectionSwitcher from './CollectionSwitcher.vue'
 
-const { t } = useI18n()
-const auth = useAuthStore()
 const sidebarOpen = ref(false)
 
 const toggleSidebar = () => {
@@ -23,22 +20,21 @@ const closeSidebar = () => {
 
 <template>
   <div class="flex flex-col h-screen bg-background">
-    <!-- Header (full width) -->
-    <header class="flex items-center justify-between gap-4 p-4 border-b border-border bg-card shrink-0">
-      <div class="flex items-center gap-3">
-        <ButtonCl variant="ghost" size="icon" class="lg:hidden" @click="toggleSidebar">
+    <HeaderCl>
+      <template #leading>
+        <ButtonCl variant="ghost" size="icon" class="lg:hidden" data-testid="mobile-sidebar-toggle" @click="toggleSidebar">
           <Menu class="h-5 w-5" />
         </ButtonCl>
-        <h1 class="text-xl font-semibold text-foreground flex items-center gap-2">
-          <img :src="logoUrl" alt="" class="h-6 w-6" />
-          <slot name="header-title">{{ t('app.title') }}</slot>
-        </h1>
-      </div>
-      <div class="flex items-center gap-2">
+      </template>
+      <template #title>
+        <slot name="header-title">
+          <CollectionSwitcher />
+        </slot>
+      </template>
+      <template #actions>
         <slot name="header-actions" />
-        <UserMenuCl v-if="auth.isAuthenticated" />
-      </div>
-    </header>
+      </template>
+    </HeaderCl>
 
     <!-- Body: Sidebar + Content -->
     <div class="flex flex-1 min-h-0">

@@ -1,6 +1,7 @@
 package org.chainlink.api.collection;
 
 import java.util.List;
+import java.util.Optional;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.RequiredArgsConstructor;
@@ -57,13 +58,12 @@ public class CollectionAccessRepo extends BaseRepo<CollectionAccess> {
     }
 
     @NonNull
-    public CollectionRole getRole(@NonNull ID<User> userId, @NonNull ID<Collection> collectionId) {
+    public Optional<CollectionRole> findRole(@NonNull ID<User> userId, @NonNull ID<Collection> collectionId) {
         return db.select(QCollectionAccess.collectionAccess.role)
             .from(QCollectionAccess.collectionAccess)
             .where(QCollectionAccess.collectionAccess.user.id.eq(userId.getUUID()))
             .where(QCollectionAccess.collectionAccess.collection.id.eq(collectionId.getUUID()))
-            .fetchOne()
-            .orElseThrow(() -> new AppFailureException(AppFailureMessage.entityNotFoundMsg(CollectionAccess.class, collectionId.getUUID().toString())));
+            .fetchOne();
     }
 
     public void setDefaultForUser(@NonNull ID<User> userId, @NonNull ID<Collection> collectionId) {

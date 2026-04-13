@@ -24,4 +24,18 @@ public class FolderRepo extends BaseRepo<Folder> {
             .where(QFolder.folder.collection.id.eq(collectionId.getUUID()))
             .fetch();
     }
+
+    public void deleteByCollection(@NonNull ID<Collection> collectionId) {
+        var folders = db.selectFrom(QFolder.folder)
+            .where(QFolder.folder.collection.id.eq(collectionId.getUUID()))
+            .fetch();
+        // Null out parent references first to avoid self-referential FK violations
+        for (var folder : folders) {
+            folder.setParent(null);
+        }
+        db.flush();
+        for (var folder : folders) {
+            remove(folder.getId());
+        }
+    }
 }

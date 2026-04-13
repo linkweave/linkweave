@@ -11,7 +11,9 @@
 
 ## Essential Commands
 
-All Maven commands must be run from the `api/` directory (or use `-f api/pom.xml` from root).
+Always make sure that at the end of your task you run a build for the relevant module (api or frontend)
+Verify that your changes don't break any existing tests.
+
 
 ```bash
 cd api && ./mvnw package            # Build
@@ -19,7 +21,8 @@ cd api && ./mvnw verify             # All tests (unit + integration)
 cd api && ./mvnw test -Dtest=ClassNameTest           # Specific class
 cd api && ./mvnw quarkus:dev        # Dev mode with hot reload, assume running
 cd frontend && npm run dev # frontend dev mode, assume running
-cd fontend && npm run type-check # frontend type checking
+cd frontend && npm run type-check # frontend type checkin
+npx playwright test --project=chromium  
 
 ```
 
@@ -40,7 +43,7 @@ All access checks are performed in the **Resource layer** using `AuthorizationSe
 ## Conventions
 
 - Use `@RequiredArgsConstructor` (Lombok) for constructor injection, or `requireNonNull()` manually
-- JPA entities have private fields made accessible using lombok @Getter and @Setter
+- JPA entities have private fields made accessible using lombok @Getter and @Setter, this may lead to lsp errors, you can ignore those
 - Specify field lengths of @Coolumns in entities using constants from `DbConst`
 - Serverside Architecture adheres to a 3 tiered architecture:
 - **Persistence**: JPA Entites and Repositories (naming convetion: `ClassNameRepo`)

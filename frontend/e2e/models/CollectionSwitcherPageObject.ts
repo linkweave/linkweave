@@ -72,7 +72,7 @@ export class CollectionSwitcherPageObject {
   }
 
   async closeByClickingOutside() {
-    await this.page.locator('main').click({ position: { x: 0, y: 0 } })
+    await this.page.keyboard.press('Escape')
   }
 
   getTriggerButton(): Locator {

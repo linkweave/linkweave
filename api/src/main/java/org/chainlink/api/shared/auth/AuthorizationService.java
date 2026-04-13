@@ -5,6 +5,7 @@ import ch.dvbern.oss.commons.i18nl10n.I18nMessage;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.collection.CollectionAccessRepo;
+import org.chainlink.api.collection.CollectionRole;
 import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.infrastructure.errorhandling.AppAuthorizationException;
 import org.chainlink.infrastructure.stereotypes.Service;
@@ -29,5 +30,15 @@ public class AuthorizationService {
     public boolean hasCollectionAccess(@NonNull ID<Collection> collectionId) {
         var currentUserId = currentUserService.currentUserID();
         return collectionAccessRepo.hasAccess(currentUserId, collectionId);
+    }
+
+    public void requireOwnerAccess(@NonNull ID<Collection> collectionId) {
+        var currentUserId = currentUserService.currentUserID();
+        var role = collectionAccessRepo.findRole(currentUserId, collectionId);
+        if (role.isEmpty() || role.get() != CollectionRole.OWNER) {
+            throw new AppAuthorizationException(
+                I18nMessage.of("AppAuthorization.NO_OWNER_ACCESS", "collectionId", collectionId.getUUID().toString())
+            );
+        }
     }
 }

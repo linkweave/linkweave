@@ -116,4 +116,8 @@ public class FolderService {
             current = current.getParent();
         }
     }
+
+    public void deleteByCollection(@NonNull ID<Collection> collectionId) {
+        folderRepo.deleteByCollection(collectionId);
+    }
 }

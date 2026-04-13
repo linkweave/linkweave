@@ -31,7 +31,7 @@ class CollectionResourceListAndDefaultITest {
         var col1 = fixtureService.createTestCollection();
         var owner = col1.getOwner();
 
-        var col2 = fixtureService.persistCollection(b -> b.withName("Work-List").withOwner(owner));
+        var col2 = fixtureService.persistCollection(b -> b.withName("Work").withOwner(owner));
         fixtureService.persistCollectionAccess(b -> b
             .withCollection(col2)
             .withUser(owner)
@@ -43,8 +43,8 @@ class CollectionResourceListAndDefaultITest {
             .get("/collections")
             .then()
             .statusCode(200)
-            .body("name", hasItems("Test Collection", "Work-List"))
-            .body("findAll { it.name == 'Work-List' }.size()", equalTo(1));
+            .body("id", hasItems(col1.getId().getUUID().toString(), col2.getId().getUUID().toString()))
+            .body("find { it.id == '" + col2.getId().getUUID() + "' }.name", equalTo("Work"));
     }
 
     @Test
@@ -86,7 +86,7 @@ class CollectionResourceListAndDefaultITest {
         var col1 = fixtureService.createTestCollection();
         var owner = col1.getOwner();
 
-        var col2 = fixtureService.persistCollection(b -> b.withName("Work-Default").withOwner(owner));
+        var col2 = fixtureService.persistCollection(b -> b.withName("Work").withOwner(owner));
         fixtureService.persistCollectionAccess(b -> b
             .withCollection(col2)
             .withUser(owner)

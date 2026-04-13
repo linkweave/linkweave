@@ -16,10 +16,6 @@ const isAddingBookmark = ref(false)
 
 <template>
   <MainLayout>
-    <template #header-title>
-      {{ collectionStore.collectionName ?? t('app.title') }}
-    </template>
-
     <template #header-actions>
       <ButtonCl size="sm" @click="isAddingBookmark = true">
         <BookmarkPlus class="h-4 w-4 sm:mr-2" />
