@@ -99,7 +99,7 @@ async function confirmDelete() {
         />
         <span class="truncate flex-1">{{ tag.data.name }}</span>
         <span v-if="(bookmarkCountByTag.get(tag.id) ?? 0) > 0" class="text-xs opacity-40 shrink-0">{{ bookmarkCountByTag.get(tag.id) }}</span>
-        <span class="inline-flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <span class="inline-flex gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
           <button
             :aria-label="t('common.edit')"
             data-testid="tag-edit-btn"
