@@ -5,6 +5,7 @@ import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
 import { ButtonCl, DialogCl } from '@/components/ui'
 import { ArrowLeft, Plus, Pencil, Trash2, Star } from 'lucide-vue-next'
+import { MainLayout } from '@/components/layout'
 import router from '@/router'
 
 const { t } = useI18n()
@@ -97,19 +98,25 @@ function goBack() {
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto">
-    <div class="flex items-center gap-3 mb-6">
-      <ButtonCl variant="ghost" size="icon" data-testid="collection-manage-back-btn" @click="goBack">
-        <ArrowLeft class="h-4 w-4" />
-      </ButtonCl>
-      <h2 class="text-xl font-semibold text-foreground flex-1">{{ t('collectionManage.title') }}</h2>
+  <MainLayout>
+    <template #header-title>
+      <div class="flex items-center gap-2">
+        <ButtonCl variant="ghost" size="icon" data-testid="collection-manage-back-btn" @click="goBack">
+          <ArrowLeft class="h-4 w-4" />
+        </ButtonCl>
+        <span class="text-xl font-semibold text-foreground truncate">{{ t('collectionManage.title') }}</span>
+      </div>
+    </template>
+
+    <template #header-actions>
       <ButtonCl data-testid="collection-manage-create-btn" @click="openCreate">
         <Plus class="h-4 w-4" />
         {{ t('common.create') }}
       </ButtonCl>
-    </div>
+    </template>
 
-    <div v-if="collections.length === 0" class="text-center py-8 text-muted-foreground">
+    <div class="max-w-2xl mx-auto">
+      <div v-if="collections.length === 0" class="text-center py-8 text-muted-foreground">
       {{ t('collectionManage.noCollections') }}
     </div>
 
@@ -256,5 +263,6 @@ function goBack() {
         </div>
       </form>
     </DialogCl>
-  </div>
+    </div>
+  </MainLayout>
 </template>
