@@ -21,9 +21,6 @@ export const useAuthStore = defineStore('auth', () => {
   let fetchPromise: Promise<boolean> | null = null
 
   async function fetchCurrentUser(): Promise<boolean> {
-    if (initialized.value) {
-      return user.value !== null
-    }
     if (fetchPromise) {
       return fetchPromise
     }
