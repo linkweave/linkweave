@@ -42,6 +42,12 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  function updateDefaultCollectionId(id: string | undefined) {
+    if (user.value) {
+      user.value = { ...user.value, defaultCollectionId: id }
+    }
+  }
+
   return {
     user,
     loading,
@@ -49,6 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     displayName,
     fetchCurrentUser,
-    logout
+    logout,
+    updateDefaultCollectionId
   }
 })

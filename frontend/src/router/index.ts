@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import CollectionView from '@/views/CollectionView.vue'
+import ManageCollectionsView from '@/views/ManageCollectionsView.vue'
 import LoginView from '@/views/LoginView.vue'
-import RegisterView from '@/views/RegisterView.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCollectionStore } from '@/stores/collection'
 
@@ -23,6 +23,11 @@ const router = createRouter({
       path: '/collections/:id',
       name: 'collection',
       component: CollectionView
+    },
+    {
+      path: '/manage-collections',
+      name: 'manage-collections',
+      component: ManageCollectionsView
     },
     {
       path: '/login',

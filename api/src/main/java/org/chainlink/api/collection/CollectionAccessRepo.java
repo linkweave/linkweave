@@ -3,7 +3,7 @@ package org.chainlink.api.collection;
 import java.util.List;
 
 import ch.dvbern.dvbstarter.types.id.ID;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.infrastructure.db.BaseRepo;
 import org.chainlink.infrastructure.errorhandling.AppFailureException;
@@ -12,7 +12,7 @@ import org.chainlink.infrastructure.stereotypes.Repository;
 import org.jspecify.annotations.NonNull;
 
 @Repository
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class CollectionAccessRepo extends BaseRepo<CollectionAccess> {
 
     @Override
@@ -21,6 +21,7 @@ public class CollectionAccessRepo extends BaseRepo<CollectionAccess> {
         if (entity.isDefault()) {
             db.update(QCollectionAccess.collectionAccess)
                 .set(QCollectionAccess.collectionAccess.isDefault, false)
+                .where(QCollectionAccess.collectionAccess.user.id.eq(entity.getUser().getId().getUUID()))
                 .where(QCollectionAccess.collectionAccess.isDefault.isTrue())
                 .execute();
         }
@@ -53,5 +54,32 @@ public class CollectionAccessRepo extends BaseRepo<CollectionAccess> {
             .where(QCollectionAccess.collectionAccess.user.id.eq(userId.getUUID()))
             .where(QCollectionAccess.collectionAccess.collection.id.eq(collectionId.getUUID()))
             .fetchFirst() != null;
+    }
+
+    @NonNull
+    public CollectionRole getRole(@NonNull ID<User> userId, @NonNull ID<Collection> collectionId) {
+        return db.select(QCollectionAccess.collectionAccess.role)
+            .from(QCollectionAccess.collectionAccess)
+            .where(QCollectionAccess.collectionAccess.user.id.eq(userId.getUUID()))
+            .where(QCollectionAccess.collectionAccess.collection.id.eq(collectionId.getUUID()))
+            .fetchOne()
+            .orElseThrow(() -> new AppFailureException(AppFailureMessage.entityNotFoundMsg(CollectionAccess.class, collectionId.getUUID().toString())));
+    }
+
+    public void setDefaultForUser(@NonNull ID<User> userId, @NonNull ID<Collection> collectionId) {
+        List<CollectionAccess> userAccesses = findByUser(userId);
+
+        for (var access : userAccesses) {
+            access.setDefault(access.getCollection().getId().equals(collectionId));
+        }
+
+        db.flush();
+    }
+
+    @NonNull
+    public List<CollectionAccess> findByCollection(@NonNull ID<Collection> collectionId) {
+        return db.selectFrom(QCollectionAccess.collectionAccess)
+            .where(QCollectionAccess.collectionAccess.collection.id.eq(collectionId.getUUID()))
+            .fetch();
     }
 }

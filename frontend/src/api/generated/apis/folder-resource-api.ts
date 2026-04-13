@@ -46,7 +46,7 @@ export interface FolderResourceApiApiFoldersFolderIdPutRequest {
 }
 
 export interface FolderResourceApiApiFoldersGetRequest {
-    collectionId?: string;
+    collectionId: string;
 }
 
 export interface FolderResourceApiApiFoldersPostRequest {
@@ -216,6 +216,13 @@ export class FolderResourceApi extends runtime.BaseAPI {
      * Creates request options for apiFoldersGet without sending the request
      */
     async apiFoldersGetRequestOpts(requestParameters: FolderResourceApiApiFoldersGetRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['collectionId'] == null) {
+            throw new runtime.RequiredError(
+                'collectionId',
+                'Required parameter "collectionId" was null or undefined when calling apiFoldersGet().'
+            );
+        }
+
         const queryParameters: any = {};
 
         if (requestParameters['collectionId'] != null) {
@@ -248,7 +255,7 @@ export class FolderResourceApi extends runtime.BaseAPI {
     /**
      * Get All
      */
-    async apiFoldersGet(requestParameters: FolderResourceApiApiFoldersGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FolderListJson> {
+    async apiFoldersGet(requestParameters: FolderResourceApiApiFoldersGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FolderListJson> {
         const response = await this.apiFoldersGetRaw(requestParameters, initOverrides);
         return await response.value();
     }
