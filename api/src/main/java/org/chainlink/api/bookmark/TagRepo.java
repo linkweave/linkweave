@@ -23,6 +23,15 @@ public class TagRepo extends BaseRepo<Tag> {
             .fetch();
     }
 
+    public void deleteByCollection(ID<Collection> collectionId) {
+        var tags = db.selectFrom(QTag.tag)
+            .where(QTag.tag.collection.id.eq(collectionId.getUUID()))
+            .fetch();
+        for (var tag : tags) {
+            remove(tag.getId());
+        }
+    }
+
     public Optional<Tag> findByName(String name) {
         return db.selectFrom(QTag.tag)
             .where(QTag.tag.name.eq(name))

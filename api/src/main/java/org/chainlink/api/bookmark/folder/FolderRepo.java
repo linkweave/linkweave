@@ -24,4 +24,13 @@ public class FolderRepo extends BaseRepo<Folder> {
             .where(QFolder.folder.collection.id.eq(collectionId.getUUID()))
             .fetch();
     }
+
+    public void deleteByCollection(@NonNull ID<Collection> collectionId) {
+        var folders = db.selectFrom(QFolder.folder)
+            .where(QFolder.folder.collection.id.eq(collectionId.getUUID()))
+            .fetch();
+        for (var folder : folders) {
+            remove(folder.getId());
+        }
+    }
 }

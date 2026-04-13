@@ -54,6 +54,35 @@
     "tags": "Tags",
     "newFolder": "Neuer Ordner"
   },
+  "collectionManage": {
+    "title": "Sammlungen verwalten",
+    "createTitle": "Sammlung erstellen",
+    "editTitle": "Sammlung bearbeiten",
+    "deleteTitle": "Sammlung löschen",
+    "name": "Sammlungsname",
+    "namePlaceholder": "Sammlungsnamen eingeben",
+    "nameRequired": "Sammlungsname ist erforderlich.",
+    "createError": "Sammlung konnte nicht erstellt werden.",
+    "updateError": "Sammlung konnte nicht aktualisiert werden.",
+    "deleteConfirm": "Möchten Sie diese Sammlung wirklich löschen? Alle Lesezeichen, Ordner und Tags darin werden dauerhaft gelöscht.",
+    "deleteError": "Sammlung konnte nicht gelöscht werden.",
+    "owner": "Besitzer",
+    "default": "Standard",
+    "role": "Rolle",
+    "noCollections": "Keine Sammlungen gefunden.",
+    "backToBookmarks": "Zurück zu Lesezeichen",
+    "typeToConfirm": "Geben Sie \"{name}\" ein, um zu bestätigen:",
+    "nameMismatchWarning": "Geben Sie \"{name}\" ein, um zu bestätigen"
+  },
+  "collectionSwitcher": {
+    "collections": "Sammlungen",
+    "activeCollection": "Aktive Sammlung",
+    "default": "Standard",
+    "setAsDefault": "Als Standard festlegen",
+    "thisIsDefault": "Dies ist der Standard",
+    "manageCollections": "Sammlungen verwalten",
+    "selectCollection": "Sammlung wählen"
+  },
   "folder": {
     "none": "Noch keine Ordner",
     "createTitle": "Ordner erstellen",

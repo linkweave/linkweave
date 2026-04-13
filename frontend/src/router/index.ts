@@ -1,9 +1,8 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import {useAuthStore} from '@/stores/auth'
+import {useCollectionStore} from '@/stores/collection'
 import CollectionView from '@/views/CollectionView.vue'
-import ManageCollectionsView from '@/views/ManageCollectionsView.vue'
 import LoginView from '@/views/LoginView.vue'
-import { useAuthStore } from '@/stores/auth'
-import { useCollectionStore } from '@/stores/collection'
+import {createRouter, createWebHistory} from 'vue-router'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -25,9 +24,9 @@ const router = createRouter({
       component: CollectionView
     },
     {
-      path: '/manage-collections',
+      path: '/manage/collections',
       name: 'manage-collections',
-      component: ManageCollectionsView
+      component: () => import('@/views/CollectionManageView.vue')
     },
     {
       path: '/login',

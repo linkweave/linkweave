@@ -101,10 +101,17 @@ export const useCollectionStore = defineStore('collection', () => {
   async function deleteCollection(collectionId: string): Promise<boolean> {
     try {
       await collectionApi.apiCollectionsIdDelete({ id: collectionId })
-      if (currentCollectionId.value === collectionId) {
+      const wasCurrentCollection = currentCollectionId.value === collectionId
+      if (wasCurrentCollection) {
         currentCollectionId.value = null
       }
       await fetchCollections()
+      if (wasCurrentCollection) {
+        const fallback = collections.value.find(c => c.isDefault) ?? collections.value[0]
+        if (fallback?.id) {
+          switchCollection(fallback.id)
+        }
+      }
       return true
     } catch (err) {
       console.error('Failed to delete collection:', err)

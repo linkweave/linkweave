@@ -4,6 +4,7 @@ import java.util.List;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.chainlink.api.bookmark.Bookmark;
 import org.chainlink.api.bookmark.BookmarkService;
 import org.chainlink.api.bookmark.Tag;
@@ -11,11 +12,14 @@ import org.chainlink.api.bookmark.TagService;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.bookmark.folder.FolderService;
 import org.chainlink.api.shared.user.User;
+import org.chainlink.infrastructure.errorhandling.AppValidationException;
+import org.chainlink.infrastructure.errorhandling.AppValidationMessage;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CollectionService {
 
     private static final String DEFAULT_COLLECTION_NAME = "My Bookmarks";
@@ -53,6 +57,7 @@ public class CollectionService {
     public void saveCollection(@NonNull Collection collection) {
         collectionRepo.persist(collection);
     }
+
 
     public List<CollectionSummaryJson> findCollectionsForUser(@NonNull User user) {
         return collectionAccessRepo.findByUser(user.getId()).stream()
@@ -101,6 +106,8 @@ public class CollectionService {
         collectionRepo.remove(id);
     }
 
+
+
     public CollectionInfoJson getCollectionInfoById(@NonNull ID<Collection> collectionID) {
 
         List<Bookmark> bookmarks = bookmarkService.getBookmarksByCollection(collectionID);
@@ -113,5 +120,66 @@ public class CollectionService {
             folders,
             tags
         );
+    }
+
+    @NonNull
+    public CollectionSummaryJson createCollection(@NonNull String name, @NonNull User owner) {
+        Collection collection = new Collection(name, owner);
+        collectionRepo.persistAndFlush(collection);
+
+        CollectionAccess access = new CollectionAccess(collection, owner, CollectionRole.OWNER, false);
+        collectionAccessRepo.persistAndFlush(access);
+
+        return new CollectionSummaryJson(
+            collection.getId(),
+            collection.getName(),
+            false,
+            CollectionRole.OWNER
+        );
+    }
+
+    @NonNull
+    public CollectionSummaryJson updateCollection(@NonNull ID<Collection> collectionId, @NonNull String name) {
+        Collection collection = collectionRepo.getById(collectionId);
+        collection.setName(name);
+        collectionRepo.persistAndFlush(collection);
+
+        return new CollectionSummaryJson(
+            collection.getId(),
+            collection.getName(),
+            false,
+            CollectionRole.OWNER
+        );
+    }
+
+    public void deleteCollection(@NonNull ID<Collection> collectionId, @NonNull User user) {
+        LOG.info("Deleting collection with ID: {}", collectionId);
+        var userAccesses = collectionAccessRepo.findByUser(user.getId());
+        boolean wasDefault = userAccesses.stream()
+            .anyMatch(a -> a.getCollection().getId().equals(collectionId) && a.isDefault());
+        var remainingCollectionIds = userAccesses.stream()
+            .filter(a -> !a.getCollection().getId().equals(collectionId))
+            .sorted(java.util.Comparator.comparing(a -> a.getCollection().getTimestampErstellt()))
+            .map(a -> a.getCollection().getId())
+            .toList();
+
+        bookmarkService.deleteByCollection(collectionId);
+        folderService.deleteByCollection(collectionId);
+        tagService.deleteByCollection(collectionId);
+
+        var allAccessesForCollection = collectionAccessRepo.findByCollection(collectionId);
+        for (var access : allAccessesForCollection) {
+            collectionAccessRepo.remove(access.getId());
+        }
+
+        collectionRepo.remove(collectionId);
+
+        if (wasDefault) {
+            if (remainingCollectionIds.isEmpty()) {
+                throw new AppValidationException(AppValidationMessage.cantDeleteLastCollection());
+            } else {
+                collectionAccessRepo.setDefaultForUser(user.getId(), remainingCollectionIds.getFirst());
+            }
+        }
     }
 }
