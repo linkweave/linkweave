@@ -6,6 +6,7 @@ skinparam usecaseBorderColor<<implemented>> #4CAF50
 
 actor "User" as user
 actor "Collection Owner" as owner
+actor "Developer" as developer
 
 owner --|> user
 
@@ -71,11 +72,17 @@ rectangle "Chainlink Bookmark Manager" {
           for implementation plan
         end note
     }
+
+    rectangle "Architecture & Quality Control" {
+        usecase "UC-030\nRobust Error Handling" as UC030
+        usecase "UC-035\nAdd ArchUnit Tests" as UC035
+    }
 }
 
 ' Authentication
 user --> UC033
 user --> UC034
+user --> UC030
 
 ' Collection Management
 user --> UC001
@@ -121,6 +128,9 @@ user --> UC029
 
 ' Import
 user --> UC031
+
+' Architecture & Quality
+developer --> UC035
 
 legend right
   |<#E8F5E9>| Implemented |

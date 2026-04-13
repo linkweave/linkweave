@@ -1,11 +1,11 @@
-import { defineStore } from 'pinia'
-import { ref, computed, watch } from 'vue'
-import { CollectionResourceApi } from '@/api/generated'
-import { config } from '@/api'
-import type { CollectionInfoJson, CollectionSummaryJson } from '@/api/generated'
-import { useNotificationStore } from '@/stores/notification'
-import { useAuthStore } from '@/stores/auth'
+import {config} from '@/api'
+import type {CollectionInfoJson, CollectionMemberJson, CollectionSummaryJson} from '@/api/generated'
+import {CollectionResourceApi} from '@/api/generated'
 import router from '@/router'
+import {useAuthStore} from '@/stores/auth'
+import {useNotificationStore} from '@/stores/notification'
+import {defineStore} from 'pinia'
+import {computed, ref, watch} from 'vue'
 
 const collectionApi = new CollectionResourceApi(config)
 
@@ -138,6 +138,38 @@ export const useCollectionStore = defineStore('collection', () => {
     }
   }, { immediate: true })
 
+  async function fetchMembers(collectionId: string): Promise<CollectionMemberJson[]> {
+    try {
+      return await collectionApi.apiCollectionsIdMembersGet({ id: collectionId })
+    } catch (err) {
+      console.error('Failed to fetch members:', err)
+      const notification = useNotificationStore()
+      notification.handleApiError(err, 'Failed to load members')
+      return []
+    }
+  }
+
+  async function shareWithUser(collectionId: string, email: string): Promise<CollectionMemberJson | null> {
+    try {
+      return await collectionApi.apiCollectionsIdMembersPost({
+        id: collectionId,
+        collectionShareJson: { email },
+      })
+    } catch (err) {
+      console.error('Failed to share collection:', err)
+      throw err
+    }
+  }
+
+  async function revokeAccess(collectionId: string, userId: string): Promise<void> {
+    try {
+      await collectionApi.apiCollectionsIdMembersUserIdDelete({ id: collectionId, userId })
+    } catch (err) {
+      console.error('Failed to revoke access:', err)
+      throw err
+    }
+  }
+
   return {
     currentCollectionId,
     collectionInfo,
@@ -153,5 +185,8 @@ export const useCollectionStore = defineStore('collection', () => {
     updateCollection,
     deleteCollection,
     switchCollection,
+    fetchMembers,
+    shareWithUser,
+    revokeAccess,
   }
 })

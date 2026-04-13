@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import ch.dvbern.dvbstarter.types.id.ID;
+import com.querydsl.core.types.dsl.Expressions;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.infrastructure.db.BaseRepo;
@@ -80,6 +81,25 @@ public class CollectionAccessRepo extends BaseRepo<CollectionAccess> {
     public List<CollectionAccess> findByCollection(@NonNull ID<Collection> collectionId) {
         return db.selectFrom(QCollectionAccess.collectionAccess)
             .where(QCollectionAccess.collectionAccess.collection.id.eq(collectionId.getUUID()))
+            .fetch();
+    }
+
+    @NonNull
+    public List<CollectionSummaryJson> findCollectionSummariesForUser(@NonNull ID<User> userId) {
+        var ca = QCollectionAccess.collectionAccess;
+
+        return db.select(new QCollectionSummaryJson(
+            ca.collection.id,
+            ca.collection.name,
+            ca.isDefault,
+            ca.role,
+            Expressions.booleanTemplate(
+                "(SELECT COUNT(ca2) FROM CollectionAccess ca2 WHERE ca2.collection.id = {0}) > 1",
+                ca.collection.id
+            )
+        ))
+            .from(ca)
+            .where(ca.user.id.eq(userId.getUUID()))
             .fetch();
     }
 }

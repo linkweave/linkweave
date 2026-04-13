@@ -2,9 +2,11 @@ package org.chainlink.api.collection;
 
 import java.util.List;
 
+import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
 import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.chainlink.api.benutzer.UserRepo;
 import org.chainlink.api.bookmark.Bookmark;
 import org.chainlink.api.bookmark.BookmarkService;
 import org.chainlink.api.bookmark.Tag;
@@ -28,9 +30,9 @@ public class CollectionService {
     private final CollectionAccessRepo collectionAccessRepo;
     private final FolderService folderService;
     private final TagService tagService;
-
     private final CollectionInfoMapperService collectionInfoMapperService;
     private final BookmarkService bookmarkService;
+    private final UserRepo userRepo;
 
     public Collection getDefaultCollectionOrAutoprovision(@NonNull User user) {
 
@@ -60,14 +62,7 @@ public class CollectionService {
 
 
     public List<CollectionSummaryJson> findCollectionsForUser(@NonNull User user) {
-        return collectionAccessRepo.findByUser(user.getId()).stream()
-            .map(access -> new CollectionSummaryJson(
-                access.getCollection().getId(),
-                access.getCollection().getName(),
-                access.isDefault(),
-                access.getRole()
-            ))
-            .toList();
+        return collectionAccessRepo.findCollectionSummariesForUser(user.getId());
     }
 
     public void setDefaultCollection(@NonNull ID<Collection> collectionId, @NonNull User user) {
@@ -100,7 +95,8 @@ public class CollectionService {
             collection.getId(),
             collection.getName(),
             false,
-            CollectionRole.OWNER
+            CollectionRole.OWNER,
+            false
         );
     }
 
@@ -115,11 +111,14 @@ public class CollectionService {
             .findFirst()
             .orElseThrow();
 
+        boolean shared = collectionAccessRepo.findByCollection(collectionId).size() > 1;
+
         return new CollectionSummaryJson(
             collection.getId(),
             collection.getName(),
             access.isDefault(),
-            access.getRole()
+            access.getRole(),
+            shared
         );
     }
 
@@ -152,5 +151,58 @@ public class CollectionService {
         if (wasDefault) {
             collectionAccessRepo.setDefaultForUser(user.getId(), remainingCollectionIds.getFirst());
         }
+    }
+
+    @NonNull
+    public List<CollectionMemberJson> listMembers(@NonNull ID<Collection> collectionId) {
+        return collectionAccessRepo.findByCollection(collectionId).stream()
+            .map(access -> new CollectionMemberJson(
+                access.getUser().getId(),
+                access.getUser().getEmail().getAddress(),
+                access.getUser().getVornameName(),
+                access.getRole()
+            ))
+            .toList();
+    }
+
+    @NonNull
+    public CollectionMemberJson shareWithUser(
+        @NonNull ID<Collection> collectionId,
+        @NonNull EmailAddress targetEmail,
+        @NonNull User currentUser
+    ) {
+
+        if (targetEmail.equals(currentUser.getEmail())) {
+            throw new AppValidationException(AppValidationMessage.shareCannotShareWithSelf());
+        }
+
+        var targetUser = userRepo.findByEmail(targetEmail)
+            .orElseThrow(() -> new AppValidationException(AppValidationMessage.shareUserNotFound(targetEmail.toString())));
+
+        boolean alreadyHasAccess = collectionAccessRepo.hasAccess(targetUser.getId(), collectionId);
+        if (alreadyHasAccess) {
+            throw new AppValidationException(AppValidationMessage.shareAlreadyHasAccess());
+        }
+
+        CollectionAccess access = new CollectionAccess(
+            collectionRepo.getById(collectionId),
+            targetUser,
+            CollectionRole.MEMBER,
+            false
+        );
+        collectionAccessRepo.persistAndFlush(access);
+
+        return new CollectionMemberJson(
+            targetUser.getId(),
+            targetUser.getEmail().getAddress(),
+            targetUser.getVornameName(),
+            CollectionRole.MEMBER
+        );
+    }
+
+    public void revokeAccess(@NonNull ID<Collection> collectionId, @NonNull ID<User> targetUserId) {
+        collectionAccessRepo.findByCollection(collectionId).stream()
+            .filter(a -> a.getUser().getId().equals(targetUserId))
+            .forEach(a -> collectionAccessRepo.remove(a.getId()));
     }
 }

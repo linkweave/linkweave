@@ -1,19 +1,12 @@
 package org.chainlink.infrastructure.errorhandling;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import ch.dvbern.oss.commons.i18nl10n.I18nMessage;
-
-
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Value;
-import org.chainlink.api.shared.abstractentity.AbstractEntity;
-import org.chainlink.infrastructure.types.IgnoreForIdClassTest;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -214,6 +207,27 @@ public class AppValidationMessage {
         return of(
             "CanNotDeleteLastCollection",
             I18nMessage.of("AppValidation.CANT_DELETE_LAST_COLLECTION")
+        );
+    }
+
+    public static @NonNull AppValidationMessage shareUserNotFound(@NonNull String email) {
+        return of(
+            "ShareUserNotFound",
+            I18nMessage.of("AppValidation.SHARE_USER_NOT_FOUND", "email", email)
+        );
+    }
+
+    public static @NonNull AppValidationMessage shareCannotShareWithSelf() {
+        return of(
+            "ShareCannotShareWithSelf",
+            I18nMessage.of("AppValidation.SHARE_CANNOT_SHARE_WITH_SELF")
+        );
+    }
+
+    public static @NonNull AppValidationMessage shareAlreadyHasAccess() {
+        return of(
+            "ShareAlreadyHasAccess",
+            I18nMessage.of("AppValidation.SHARE_ALREADY_HAS_ACCESS")
         );
     }
 }

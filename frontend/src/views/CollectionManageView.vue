@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useCollectionStore } from '@/stores/collection'
-import { useNotificationStore } from '@/stores/notification'
-import { ButtonCl, DialogCl } from '@/components/ui'
-import { ArrowLeft, Plus, Pencil, Trash2, Star } from 'lucide-vue-next'
-import { MainLayout } from '@/components/layout'
+import ShareCollectionDialog from '@/components/collection/ShareCollectionDialog.vue'
+import {MainLayout} from '@/components/layout'
+import {ButtonCl, DialogCl} from '@/components/ui'
 import router from '@/router'
+import {useCollectionStore} from '@/stores/collection'
+import {useNotificationStore} from '@/stores/notification'
+import {ArrowLeft, Pencil, Plus, Star, Trash2, Users} from 'lucide-vue-next'
+import {computed, onMounted, ref} from 'vue'
+import {useI18n} from 'vue-i18n'
 
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
@@ -22,6 +23,9 @@ const deletingId = ref<string | null>(null)
 const deletingName = ref('')
 const confirmName = ref('')
 const loading = ref(false)
+const shareOpen = ref(false)
+const sharingCollectionId = ref('')
+const sharingCollectionName = ref('')
 
 onMounted(async () => {
   await collectionStore.fetchCollections()
@@ -71,6 +75,12 @@ function openDelete(id: string, collectionName: string) {
   deletingName.value = collectionName
   confirmName.value = ''
   deleteOpen.value = true
+}
+
+function openShare(id: string, collectionName: string) {
+  sharingCollectionId.value = id
+  sharingCollectionName.value = collectionName
+  shareOpen.value = true
 }
 
 async function handleDelete() {
@@ -152,6 +162,16 @@ function goBack() {
             @click="handleSetDefault(col.id!)"
           >
             <Star class="h-4 w-4" />
+          </ButtonCl>
+          <ButtonCl
+            v-if="col.role === 'OWNER'"
+            variant="ghost"
+            size="icon"
+            :data-testid="`collection-share-btn-${col.id}`"
+            :title="t('collectionManage.shareTitle')"
+            @click="openShare(col.id!, col.name ?? '')"
+          >
+            <Users class="h-4 w-4" />
           </ButtonCl>
           <ButtonCl
             v-if="col.role === 'OWNER'"
@@ -263,6 +283,13 @@ function goBack() {
         </div>
       </form>
     </DialogCl>
+
+    <ShareCollectionDialog
+      :open="shareOpen"
+      :collection-id="sharingCollectionId"
+      :collection-name="sharingCollectionName"
+      @update:open="shareOpen = $event"
+    />
     </div>
   </MainLayout>
 </template>
