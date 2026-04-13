@@ -99,11 +99,11 @@ function goBack() {
 <template>
   <div class="max-w-2xl mx-auto">
     <div class="flex items-center gap-3 mb-6">
-      <ButtonCl variant="ghost" size="icon" @click="goBack">
+      <ButtonCl variant="ghost" size="icon" data-testid="collection-manage-back-btn" @click="goBack">
         <ArrowLeft class="h-4 w-4" />
       </ButtonCl>
       <h2 class="text-xl font-semibold text-foreground flex-1">{{ t('collectionManage.title') }}</h2>
-      <ButtonCl @click="openCreate">
+      <ButtonCl data-testid="collection-manage-create-btn" @click="openCreate">
         <Plus class="h-4 w-4" />
         {{ t('common.create') }}
       </ButtonCl>
@@ -117,6 +117,7 @@ function goBack() {
       <div
         v-for="col in collections"
         :key="col.id"
+        :data-testid="`collection-row-${col.id}`"
         class="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
       >
         <div class="flex-1 min-w-0">
@@ -139,6 +140,7 @@ function goBack() {
             v-if="!col.isDefault"
             variant="ghost"
             size="icon"
+            :data-testid="`collection-set-default-btn-${col.id}`"
             :title="t('collectionSwitcher.setAsDefault')"
             @click="handleSetDefault(col.id!)"
           >
@@ -148,6 +150,7 @@ function goBack() {
             v-if="col.role === 'OWNER'"
             variant="ghost"
             size="icon"
+            :data-testid="`collection-edit-btn-${col.id}`"
             :title="t('common.edit')"
             @click="openEdit(col.id!, col.name ?? '')"
            >
@@ -157,6 +160,7 @@ function goBack() {
              v-if="col.role === 'OWNER'"
              variant="ghost"
              size="icon"
+             :data-testid="`collection-delete-btn-${col.id}`"
              :title="t('common.delete')"
              @click="openDelete(col.id!, col.name ?? '')"
           >
@@ -186,7 +190,7 @@ function goBack() {
           <ButtonCl type="button" variant="outline" @click="createOpen = false">
             {{ t('common.cancel') }}
           </ButtonCl>
-          <ButtonCl type="submit" :disabled="loading">
+          <ButtonCl type="submit" data-testid="collection-create-submit-btn" :disabled="loading">
             {{ loading ? t('common.loading') : t('common.create') }}
           </ButtonCl>
         </div>
@@ -213,7 +217,7 @@ function goBack() {
           <ButtonCl type="button" variant="outline" @click="editOpen = false">
             {{ t('common.cancel') }}
           </ButtonCl>
-          <ButtonCl type="submit" :disabled="loading">
+          <ButtonCl type="submit" data-testid="collection-edit-submit-btn" :disabled="loading">
             {{ loading ? t('common.loading') : t('common.save') }}
           </ButtonCl>
         </div>
@@ -244,6 +248,7 @@ function goBack() {
           <ButtonCl
             type="submit"
             variant="destructive"
+            data-testid="collection-delete-submit-btn"
             :disabled="loading || confirmName !== deletingName"
           >
             {{ loading ? t('common.loading') : t('common.delete') }}

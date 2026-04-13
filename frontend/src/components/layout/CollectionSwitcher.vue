@@ -58,16 +58,15 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="switcherRef" class="relative px-3 py-2.5 border-b border-border">
+  <div ref="switcherRef" class="relative">
     <button
       data-testid="collection-switcher-trigger"
-      class="flex items-center gap-1.5 w-full rounded-md px-2 py-1.5 text-xs font-medium text-foreground bg-accent/50 border border-border cursor-pointer transition-colors hover:bg-accent"
+      class="flex items-center gap-1.5 text-xl font-semibold text-foreground cursor-pointer rounded-md px-1.5 py-0.5 transition-colors hover:bg-accent/50"
       @click="toggleDropdown"
     >
-      <LayoutGrid class="h-3.5 w-3.5 shrink-0 opacity-50" />
-      <span class="flex-1 truncate text-left">{{ collectionStore.collectionName ?? t('collectionSwitcher.selectCollection') }}</span>
+      <span class="truncate max-w-[120px] sm:max-w-[200px] md:max-w-[300px]">{{ collectionStore.collectionName ?? t('app.title') }}</span>
       <ChevronDown
-        class="h-3 w-3 shrink-0 opacity-50 transition-transform duration-150"
+        class="h-4 w-4 shrink-0 opacity-50 transition-transform duration-150"
         :class="{ 'rotate-180': isOpen }"
       />
     </button>
@@ -82,7 +81,7 @@ onUnmounted(() => {
     >
       <div
         v-if="isOpen"
-        class="absolute left-3 right-3 top-full mt-1 z-50 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg overflow-hidden"
+        class="absolute left-0 top-full mt-2 z-50 w-64 sm:w-72 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg overflow-hidden"
       >
         <div class="p-1.5">
           <div class="px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50">
@@ -137,6 +136,7 @@ onUnmounted(() => {
           </button>
 
           <button
+            data-testid="collection-manage-btn"
             class="flex items-center gap-2 w-full px-2 py-1.5 rounded text-xs text-muted-foreground hover:bg-accent hover:text-foreground cursor-pointer transition-colors"
             @click="closeDropdown(); router.push({ name: 'manage-collections' })"
           >
