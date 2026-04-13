@@ -166,3 +166,16 @@
 
 - `docs/requirements.md` - Added FR-041 and NFR-009.
 - `CHANGELOG.md` - Added Step 8.
+
+### Added - Step 9: E2E Testing Pipeline Requirement
+
+- **Requirements**:
+  - `NFR-010`: Mandated Playwright E2E tests for Chrome to run in the CI pipeline for every change.
+- **Vision**:
+  - Updated quality goals to include continuous integration of E2E tests.
+
+### Files Changed
+
+- `docs/requirements.md` - Added NFR-010.
+- `docs/vision.md` - Updated Quality Goals.
+- `CHANGELOG.md` - Added Step 9.

@@ -1,6 +1,5 @@
 package org.chainlink.infrastructure.errorhandling.json;
 
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -9,8 +8,8 @@ import org.chainlink.infrastructure.errorhandling.ExceptionId;
 import org.chainlink.infrastructure.errorhandling.FailureType;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
 import org.chainlink.infrastructure.types.IgnoreForIdClassTest;
-import org.jspecify.annotations.NonNull;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.jspecify.annotations.NonNull;
 
 @Getter
 @JaxDTO
@@ -25,6 +24,7 @@ public class AppFailureErrorJson extends AppErrorJson {
     private final ExceptionId id;
 
     @NonNull
+    @NotNull
     @NotEmpty
     @Schema(required = true)
     private final String summary;

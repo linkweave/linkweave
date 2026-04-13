@@ -1,5 +1,6 @@
 package org.chainlink.api.bookmark.importbookmarks;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -12,6 +13,7 @@ import org.jspecify.annotations.NonNull;
 @JaxDTO
 public class ImportSummaryJson {
 
+    @NotNull
     @NonNull
     String importTag;
 

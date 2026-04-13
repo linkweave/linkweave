@@ -57,6 +57,7 @@ Out of scope:
 * Clear and testable behavior
 * Simple architecture that supports change
 * Nice Developer Experience
+* Continuous Integration: Chrome E2E tests must run in the pipeline for every change
 
 
 ## Techstack
