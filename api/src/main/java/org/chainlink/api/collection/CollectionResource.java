@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.chainlink.api.shared.auth.AuthorizationService;
 import org.chainlink.api.shared.user.CurrentUserService;
+import org.chainlink.api.shared.user.User;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
@@ -80,6 +81,36 @@ public class CollectionResource {
         authorizationService.requireOwnerAccess(id);
         var currentUser = currentUserService.currentUser();
         collectionService.deleteCollection(id, currentUser);
+    }
+
+    @GET
+    @Path("{id}/members")
+    @NonNull
+    public List<CollectionMemberJson> listMembers(@PathParam("id") ID<Collection> id) {
+        authorizationService.requireOwnerAccess(id);
+        return collectionService.listMembers(id);
+    }
+
+    @POST
+    @Path("{id}/members")
+    @NonNull
+    public CollectionMemberJson shareWithUser(
+        @PathParam("id") ID<Collection> id,
+        @Valid CollectionShareJson collectionShareJson
+    ) {
+        authorizationService.requireOwnerAccess(id);
+        var currentUser = currentUserService.currentUser();
+        return collectionService.shareWithUser(id, collectionShareJson.getEmail(), currentUser);
+    }
+
+    @DELETE
+    @Path("{id}/members/{userId}")
+    public void revokeAccess(
+        @PathParam("id") ID<Collection> id,
+        @PathParam("userId") ID<User> userId
+    ) {
+        authorizationService.requireOwnerAccess(id);
+        collectionService.revokeAccess(id, userId);
     }
 
 }

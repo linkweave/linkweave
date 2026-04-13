@@ -2,7 +2,7 @@
 
 **Project:** Chainlink Bookmark Manager
 **Source:** [vision.md](vision.md)
-**Date:** 2026-03-26
+**Date:** 2026-04-13
 
 ---
 
@@ -54,9 +54,13 @@
 | FR-033 | Offline Mode                      | As a User, I want to browse and search my bookmarks while offline so that I can access my saved resources without an active network connection. The app should load all collection data in a single request and cache it client-side. Authentication handling for offline access needs to be investigated. | Low      | Open   |
 | FR-034 | Login with Google                | As a User, I want to sign in using my Google account so that I can access the application without creating separate credentials. The system should auto-provision a local user record from my Google profile on first login. | High     | Done   |
 | FR-035 | Register Account                 | As a User, I want to register an account with my email and password so that I can create credentials to access the application. Passwords must be hashed with bcrypt and the email must be unique. | High     | Done   |
-| FR-036 | Create Collection                | As a User, I want to create a new collection with a name so that I can organize bookmarks in separate workspaces beyond the auto-provisioned default. | High     | Open   |
-| FR-037 | Edit Collection                  | As a Collection Owner, I want to rename my collection so that it accurately reflects its purpose. | Medium   | Open   |
-| FR-038 | Delete Collection                | As a Collection Owner, I want to delete a collection I own so that I can remove collections I no longer need. Deletion must require typing the collection name to confirm, cascade-remove all bookmarks, folders, tags, and access grants, and reassign the default if needed. | High     | Open   |
+| FR-036 | Create Collection                | As a User, I want to create a new collection with a name so that I can organize bookmarks in separate workspaces beyond the auto-provisioned default. | High     | Done   |
+| FR-037 | Edit Collection                  | As a Collection Owner, I want to rename my collection so that it accurately reflects its purpose. | Medium   | Done   |
+| FR-038 | Delete Collection                | As a Collection Owner, I want to delete a collection I own so that I can remove collections I no longer need. Deletion must require typing the collection name to confirm, cascade-remove all bookmarks, folders, tags, and access grants, and reassign the default if needed. | High     | Done   |
+| FR-039 | Add ArchUnit Tests               | As a Developer, I want to have automated ArchUnit tests that verify the project follows defined architectural rules (layering, naming, transactions) to prevent technical debt. | High     | In Progress |
+| FR-040 | Error Feedback             | As a User, I want to receive clear and immediate feedback when an operation fails, distinguishing between authentication/session issues and general backend or network problems (e.g., backend unavailable, server error, validation error), so that I am informed about the root cause and can take appropriate action. | High     | Open |
+| FR-041 | Session Data Cleanup       | As a User, I want the application to completely reset all internal state and cached data when I log out or switch accounts so that no information is leaked between different users sharing the same browser session. | High     | Open |
+
 
 ---
 
@@ -70,6 +74,9 @@
 | NFR-004 | Audit Coverage          | All create, update, and delete operations on Bookmark, Folder, and Tag entities must be automatically tracked using Hibernate Envers; no custom audit table is required. | Auditability | Low      | Open   |
 | NFR-005 | Code Coverage           | Service and repository classes must maintain a minimum of 80% line coverage as measured by the CI test run. | Testability  | Medium   | Open   |
 | NFR-006 | Use Case Test Coverage  | Every functional requirement must be traceable to at least one automated integration test that verifies the main success scenario. | Testability  | Medium   | Open   |
+| NFR-007 | Architectural Enforcement | Architectural constraints (layering, naming conventions, transaction boundaries) must be automatically enforced via ArchUnit tests. | Maintainability | High | Open |
+| NFR-008 | Error Visibility        | 100% of failed API requests (HTTP 4xx/5xx) and network connectivity issues must be intercepted and reported to the user through a visible UI notification (e.g., toast). The system must specifically distinguish between login/authentication errors (401/403) and general backend problems (500+, network failures) to provide accurate feedback. | Usability | High | Open |
+| NFR-009 | State Isolation         | Upon logout or session change, 100% of Pinia stores and sensitive local/session storage entries must be cleared. It must be impossible for a new user to see data from the previous user's session without a fresh API fetch. | Security | High | Open |
 
 ---
 

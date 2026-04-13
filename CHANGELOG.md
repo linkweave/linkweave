@@ -127,3 +127,42 @@
 - Cache invalidation on logout
 - Additional folder management features
 - Tag management UI
+
+## [1.0.2] - 2026-04-13
+
+### Added - Step 6: Architecture & Quality
+
+- **Use Cases**:
+  - `UC-035`: Add ArchUnit Tests - Specification for automated architectural and coding standard enforcement based on the `esc` project rules.
+
+- **Requirements**:
+  - `FR-039`: Functional requirement for automated ArchUnit tests.
+  - `NFR-007`: Non-functional requirement for architectural enforcement.
+
+### Files Changed
+
+- `docs/use_cases/UC-035-add-archunit-tests.md` - New use case specification.
+- `docs/use_cases.puml` - Updated with new section and Developer actor.
+- `docs/requirements.md` - Added FR-039 and NFR-007.
+
+### Added - Step 7: Error Handling Specifications
+
+- **Requirements**:
+  - `FR-040`: Functional requirement for user feedback on failed operations.
+  - `NFR-008`: Non-functional requirement for robust, centralized error handling and visibility.
+
+### Files Changed
+
+- `docs/requirements.md` - Added FR-040 and NFR-008, updated document date.
+- `CHANGELOG.md` - Added Step 7.
+
+### Added - Step 8: Session Security and Data Isolation
+
+- **Requirements**:
+  - `FR-041`: Functional requirement for complete session data cleanup.
+  - `NFR-009`: Non-functional requirement for state isolation between user sessions.
+
+### Files Changed
+
+- `docs/requirements.md` - Added FR-041 and NFR-009.
+- `CHANGELOG.md` - Added Step 8.

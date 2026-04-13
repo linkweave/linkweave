@@ -12,24 +12,23 @@
  * Do not edit the class manually.
  */
 
-
-import * as runtime from '../runtime';
 import type {
   CollectionCreateJson,
   CollectionInfoJson,
+  CollectionMemberJson,
+  CollectionShareJson,
   CollectionSummaryJson,
   CollectionUpdateJson,
 } from '../models/index';
 import {
-    CollectionCreateJsonFromJSON,
-    CollectionCreateJsonToJSON,
-    CollectionInfoJsonFromJSON,
-    CollectionInfoJsonToJSON,
-    CollectionSummaryJsonFromJSON,
-    CollectionSummaryJsonToJSON,
-    CollectionUpdateJsonFromJSON,
-    CollectionUpdateJsonToJSON,
+  CollectionCreateJsonToJSON,
+  CollectionInfoJsonFromJSON,
+  CollectionMemberJsonFromJSON,
+  CollectionShareJsonToJSON,
+  CollectionSummaryJsonFromJSON,
+  CollectionUpdateJsonToJSON,
 } from '../models/index';
+import * as runtime from '../runtime';
 
 export interface CollectionResourceApiApiCollectionsIdDefaultPutRequest {
     id: string;
@@ -41,6 +40,20 @@ export interface CollectionResourceApiApiCollectionsIdDeleteRequest {
 
 export interface CollectionResourceApiApiCollectionsIdGetRequest {
     id: string;
+}
+
+export interface CollectionResourceApiApiCollectionsIdMembersGetRequest {
+    id: string;
+}
+
+export interface CollectionResourceApiApiCollectionsIdMembersPostRequest {
+    id: string;
+    collectionShareJson: CollectionShareJson;
+}
+
+export interface CollectionResourceApiApiCollectionsIdMembersUserIdDeleteRequest {
+    id: string;
+    userId: string;
 }
 
 export interface CollectionResourceApiApiCollectionsIdPutRequest {
@@ -225,6 +238,158 @@ export class CollectionResourceApi extends runtime.BaseAPI {
     async apiCollectionsIdGet(requestParameters: CollectionResourceApiApiCollectionsIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CollectionInfoJson> {
         const response = await this.apiCollectionsIdGetRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Creates request options for apiCollectionsIdMembersGet without sending the request
+     */
+    async apiCollectionsIdMembersGetRequestOpts(requestParameters: CollectionResourceApiApiCollectionsIdMembersGetRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiCollectionsIdMembersGet().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/api/collections/{id}/members`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * List Members
+     */
+    async apiCollectionsIdMembersGetRaw(requestParameters: CollectionResourceApiApiCollectionsIdMembersGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<CollectionMemberJson>>> {
+        const requestOptions = await this.apiCollectionsIdMembersGetRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CollectionMemberJsonFromJSON));
+    }
+
+    /**
+     * List Members
+     */
+    async apiCollectionsIdMembersGet(requestParameters: CollectionResourceApiApiCollectionsIdMembersGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<CollectionMemberJson>> {
+        const response = await this.apiCollectionsIdMembersGetRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for apiCollectionsIdMembersPost without sending the request
+     */
+    async apiCollectionsIdMembersPostRequestOpts(requestParameters: CollectionResourceApiApiCollectionsIdMembersPostRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiCollectionsIdMembersPost().'
+            );
+        }
+
+        if (requestParameters['collectionShareJson'] == null) {
+            throw new runtime.RequiredError(
+                'collectionShareJson',
+                'Required parameter "collectionShareJson" was null or undefined when calling apiCollectionsIdMembersPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/collections/{id}/members`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CollectionShareJsonToJSON(requestParameters['collectionShareJson']),
+        };
+    }
+
+    /**
+     * Share With User
+     */
+    async apiCollectionsIdMembersPostRaw(requestParameters: CollectionResourceApiApiCollectionsIdMembersPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CollectionMemberJson>> {
+        const requestOptions = await this.apiCollectionsIdMembersPostRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CollectionMemberJsonFromJSON(jsonValue));
+    }
+
+    /**
+     * Share With User
+     */
+    async apiCollectionsIdMembersPost(requestParameters: CollectionResourceApiApiCollectionsIdMembersPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CollectionMemberJson> {
+        const response = await this.apiCollectionsIdMembersPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for apiCollectionsIdMembersUserIdDelete without sending the request
+     */
+    async apiCollectionsIdMembersUserIdDeleteRequestOpts(requestParameters: CollectionResourceApiApiCollectionsIdMembersUserIdDeleteRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiCollectionsIdMembersUserIdDelete().'
+            );
+        }
+
+        if (requestParameters['userId'] == null) {
+            throw new runtime.RequiredError(
+                'userId',
+                'Required parameter "userId" was null or undefined when calling apiCollectionsIdMembersUserIdDelete().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/api/collections/{id}/members/{userId}`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+        urlPath = urlPath.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId'])));
+
+        return {
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * Revoke Access
+     */
+    async apiCollectionsIdMembersUserIdDeleteRaw(requestParameters: CollectionResourceApiApiCollectionsIdMembersUserIdDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.apiCollectionsIdMembersUserIdDeleteRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Revoke Access
+     */
+    async apiCollectionsIdMembersUserIdDelete(requestParameters: CollectionResourceApiApiCollectionsIdMembersUserIdDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiCollectionsIdMembersUserIdDeleteRaw(requestParameters, initOverrides);
     }
 
     /**

@@ -2,18 +2,18 @@ package ch.dvbern.dvbstarter.types.emailaddress;
 
 import java.io.Serializable;
 
-import org.chainlink.infrastructure.errorhandling.AppValidationException;
 import ch.dvbern.dvbstarter.openapi.OpenApiConst.Format;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
-import org.jspecify.annotations.Nullable;
+import org.chainlink.infrastructure.errorhandling.AppValidationException;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.jspecify.annotations.Nullable;
 
-import static org.chainlink.infrastructure.errorhandling.AppValidationMessage.invalidEmail;
 import static java.util.Objects.requireNonNull;
+import static org.chainlink.infrastructure.errorhandling.AppValidationMessage.invalidEmail;
 
 @Getter
 @Schema(type = SchemaType.STRING, format = Format.EMAIL)
