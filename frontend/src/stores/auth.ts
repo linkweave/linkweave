@@ -18,17 +18,29 @@ export const useAuthStore = defineStore('auth', () => {
     return `${user.value.firstName} ${user.value.lastName}`
   })
 
+  let fetchPromise: Promise<boolean> | null = null
+
   async function fetchCurrentUser(): Promise<boolean> {
-    try {
-      user.value = await authApi.apiAuthMeGet()
-      return true
-    } catch {
-      user.value = null
-      return false
-    } finally {
-      loading.value = false
-      initialized.value = true
+    if (initialized.value) {
+      return user.value !== null
     }
+    if (fetchPromise) {
+      return fetchPromise
+    }
+    fetchPromise = (async () => {
+      try {
+        user.value = await authApi.apiAuthMeGet()
+        return true
+      } catch {
+        user.value = null
+        return false
+      } finally {
+        loading.value = false
+        initialized.value = true
+        fetchPromise = null
+      }
+    })()
+    return fetchPromise
   }
 
   async function logout() {
