@@ -34,8 +34,8 @@ public class AuthorizationService {
 
     public void requireOwnerAccess(@NonNull ID<Collection> collectionId) {
         var currentUserId = currentUserService.currentUserID();
-        var role = collectionAccessRepo.getRole(currentUserId, collectionId);
-        if (role != CollectionRole.OWNER) {
+        var role = collectionAccessRepo.findRole(currentUserId, collectionId);
+        if (role.isEmpty() || role.get() != CollectionRole.OWNER) {
             throw new AppAuthorizationException(
                 I18nMessage.of("AppAuthorization.NO_OWNER_ACCESS", "collectionId", collectionId.getUUID().toString())
             );

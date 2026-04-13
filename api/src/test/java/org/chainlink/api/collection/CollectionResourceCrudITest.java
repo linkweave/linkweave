@@ -100,6 +100,35 @@ class CollectionResourceCrudITest {
 
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldUpdateCollection_returnsCorrectIsDefault() {
+        var col = fixtureService.createTestCollection();
+        String colId = col.getId().getUUID().toString();
+
+        // Mark the collection as default first
+        RestAssured.given()
+            .pathParam("id", colId)
+            .put("/collections/{id}/default")
+            .then()
+            .statusCode(204);
+
+        String newName = "DefaultRenamed_" + UUID.randomUUID();
+        String body = """
+            {"name":"%s"}
+            """.formatted(newName);
+        RestAssured.given()
+            .contentType("application/json")
+            .body(body)
+            .pathParam("id", colId)
+            .put("/collections/{id}")
+            .then()
+            .statusCode(200)
+            .body("name", equalTo(newName))
+            .body("isDefault", equalTo(true))
+            .body("role", equalTo("OWNER"));
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldUpdateCollection() {
         var col = fixtureService.createTestCollection();
         String colId = col.getId().getUUID().toString();
@@ -213,7 +242,7 @@ class CollectionResourceCrudITest {
             .get("/collections")
             .then()
             .statusCode(200)
-            .body("findAll { it.isDefault == true }.size()", greaterThanOrEqualTo(1));
+            .body("findAll { it.isDefault == true }.size()", equalTo(1));
     }
 }
 

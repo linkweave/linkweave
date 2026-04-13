@@ -26,7 +26,7 @@ public class CollectionService {
 
     private final CollectionRepo collectionRepo;
     private final CollectionAccessRepo collectionAccessRepo;
-    private  final FolderService folderService;
+    private final FolderService folderService;
     private final TagService tagService;
 
     private final CollectionInfoMapperService collectionInfoMapperService;
@@ -74,40 +74,6 @@ public class CollectionService {
         collectionAccessRepo.setDefaultForUser(user.getId(), collectionId);
     }
 
-    public CollectionSummaryJson createCollection(@NonNull CollectionCreateJson json, @NonNull User user) {
-        Collection collection = new Collection(json.getName(), user);
-        collectionRepo.persist(collection);
-
-        CollectionAccess access = new CollectionAccess(
-            collection,
-            user,
-            CollectionRole.OWNER,
-            false
-        );
-        collectionAccessRepo.persistAndFlush(access);
-
-        return new CollectionSummaryJson(
-            collection.getId(),
-            collection.getName(),
-            access.isDefault(),
-            access.getRole()
-        );
-    }
-
-    public void updateCollection(@NonNull ID<Collection> id, @NonNull CollectionUpdateJson json) {
-        Collection collection = collectionRepo.getById(id);
-        collection.setName(json.getName());
-    }
-
-    public void deleteCollection(@NonNull ID<Collection> id) {
-        // To keep it simple, we just delete the collection.
-        // The foreign keys in the database will prevent deletion if there are still dependencies.
-        // But for this "fix" it should be enough to have the endpoint.
-        collectionRepo.remove(id);
-    }
-
-
-
     public CollectionInfoJson getCollectionInfoById(@NonNull ID<Collection> collectionID) {
 
         List<Bookmark> bookmarks = bookmarkService.getBookmarksByCollection(collectionID);
@@ -139,16 +105,21 @@ public class CollectionService {
     }
 
     @NonNull
-    public CollectionSummaryJson updateCollection(@NonNull ID<Collection> collectionId, @NonNull String name) {
+    public CollectionSummaryJson updateCollection(@NonNull ID<Collection> collectionId, @NonNull String name, @NonNull User user) {
         Collection collection = collectionRepo.getById(collectionId);
         collection.setName(name);
         collectionRepo.persistAndFlush(collection);
 
+        CollectionAccess access = collectionAccessRepo.findByUser(user.getId()).stream()
+            .filter(a -> a.getCollection().getId().equals(collectionId))
+            .findFirst()
+            .orElseThrow();
+
         return new CollectionSummaryJson(
             collection.getId(),
             collection.getName(),
-            false,
-            CollectionRole.OWNER
+            access.isDefault(),
+            access.getRole()
         );
     }
 
@@ -163,6 +134,10 @@ public class CollectionService {
             .map(a -> a.getCollection().getId())
             .toList();
 
+        if (wasDefault && remainingCollectionIds.isEmpty()) {
+            throw new AppValidationException(AppValidationMessage.cantDeleteLastCollection());
+        }
+
         bookmarkService.deleteByCollection(collectionId);
         folderService.deleteByCollection(collectionId);
         tagService.deleteByCollection(collectionId);
@@ -175,11 +150,7 @@ public class CollectionService {
         collectionRepo.remove(collectionId);
 
         if (wasDefault) {
-            if (remainingCollectionIds.isEmpty()) {
-                throw new AppValidationException(AppValidationMessage.cantDeleteLastCollection());
-            } else {
-                collectionAccessRepo.setDefaultForUser(user.getId(), remainingCollectionIds.getFirst());
-            }
+            collectionAccessRepo.setDefaultForUser(user.getId(), remainingCollectionIds.getFirst());
         }
     }
 }

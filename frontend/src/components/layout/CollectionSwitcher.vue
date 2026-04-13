@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { computed } from 'vue'
+import {
+  DropdownMenuRoot,
+  DropdownMenuTrigger,
+  DropdownMenuPortal,
+  DropdownMenuContent,
+} from 'radix-vue'
 import { useCollectionStore } from '@/stores/collection'
 import { ChevronDown, LayoutGrid, Star, Settings } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
@@ -7,8 +13,6 @@ import router from '@/router'
 
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
-const isOpen = ref(false)
-const switcherRef = ref<HTMLElement | null>(null)
 
 const collections = computed(() => collectionStore.collections)
 const currentCollectionId = computed(() => collectionStore.currentCollectionId)
@@ -16,17 +20,8 @@ const isCurrentDefault = computed(() =>
   collections.value.find(c => c.id === currentCollectionId.value)?.isDefault ?? false
 )
 
-function toggleDropdown() {
-  isOpen.value = !isOpen.value
-}
-
-function closeDropdown() {
-  isOpen.value = false
-}
-
 function selectCollection(id: string) {
   collectionStore.switchCollection(id)
-  closeDropdown()
 }
 
 async function setAsDefault() {
@@ -34,54 +29,28 @@ async function setAsDefault() {
   await collectionStore.setDefaultCollection(currentCollectionId.value)
 }
 
-function handleClickOutside(event: MouseEvent) {
-  if (switcherRef.value && !switcherRef.value.contains(event.target as Node)) {
-    closeDropdown()
-  }
+function goToManage() {
+  router.push({ name: 'manage-collections' })
 }
-
-function handleKeyDown(event: KeyboardEvent) {
-  if (event.key === 'Escape') {
-    closeDropdown()
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside, true)
-  document.addEventListener('keydown', handleKeyDown)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside, true)
-  document.removeEventListener('keydown', handleKeyDown)
-})
 </script>
 
 <template>
-  <div ref="switcherRef" class="relative">
-    <button
-      data-testid="collection-switcher-trigger"
-      class="flex items-center gap-1.5 text-xl font-semibold text-foreground cursor-pointer rounded-md px-1.5 py-0.5 transition-colors hover:bg-accent/50"
-      @click="toggleDropdown"
-    >
-      <span class="truncate max-w-[120px] sm:max-w-[200px] md:max-w-[300px]">{{ collectionStore.collectionName ?? t('app.title') }}</span>
-      <ChevronDown
-        class="h-4 w-4 shrink-0 opacity-50 transition-transform duration-150"
-        :class="{ 'rotate-180': isOpen }"
-      />
-    </button>
+  <DropdownMenuRoot>
+    <DropdownMenuTrigger as-child>
+      <button
+        data-testid="collection-switcher-trigger"
+        class="flex items-center gap-1.5 text-xl font-semibold text-foreground cursor-pointer rounded-md px-1.5 py-0.5 transition-colors hover:bg-accent/50"
+      >
+        <span class="truncate max-w-[120px] sm:max-w-[200px] md:max-w-[300px]">{{ collectionStore.collectionName ?? t('app.title') }}</span>
+        <ChevronDown class="h-4 w-4 shrink-0 opacity-50 transition-transform duration-150" />
+      </button>
+    </DropdownMenuTrigger>
 
-    <Transition
-      enter-active-class="transition duration-150 ease-out"
-      enter-from-class="opacity-0 scale-95"
-      enter-to-class="opacity-100 scale-100"
-      leave-active-class="transition duration-100 ease-in"
-      leave-from-class="opacity-100 scale-100"
-      leave-to-class="opacity-0 scale-95"
-    >
-      <div
-        v-if="isOpen"
-        class="absolute left-0 top-full mt-2 z-50 w-64 sm:w-72 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg overflow-hidden"
+    <DropdownMenuPortal>
+      <DropdownMenuContent
+        class="z-[100] w-64 sm:w-72 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+        align="start"
+        :side-offset="8"
       >
         <div class="p-1.5">
           <div class="px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50">
@@ -138,13 +107,13 @@ onUnmounted(() => {
           <button
             data-testid="collection-manage-btn"
             class="flex items-center gap-2 w-full px-2 py-1.5 rounded text-xs text-muted-foreground hover:bg-accent hover:text-foreground cursor-pointer transition-colors"
-            @click="closeDropdown(); router.push({ name: 'manage-collections' })"
+            @click="goToManage"
           >
             <Settings class="h-3.5 w-3.5 shrink-0" />
             <span>{{ t('collectionSwitcher.manageCollections') }}</span>
           </button>
         </div>
-      </div>
-    </Transition>
-  </div>
+      </DropdownMenuContent>
+    </DropdownMenuPortal>
+  </DropdownMenuRoot>
 </template>

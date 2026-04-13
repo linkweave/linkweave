@@ -69,15 +69,14 @@ public class CollectionResource {
         @PathParam("id") ID<Collection> id,
         @Valid CollectionUpdateJson json
     ) {
-        authorizationService.requireCollectionAccess(id);
         authorizationService.requireOwnerAccess(id);
-        return collectionService.updateCollection(id, json.getName());
+        var currentUser = currentUserService.currentUser();
+        return collectionService.updateCollection(id, json.getName(), currentUser);
     }
 
     @DELETE
     @Path("{id}")
     public void deleteCollection(@PathParam("id") ID<Collection> id) {
-        authorizationService.requireCollectionAccess(id);
         authorizationService.requireOwnerAccess(id);
         var currentUser = currentUserService.currentUser();
         collectionService.deleteCollection(id, currentUser);

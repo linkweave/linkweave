@@ -9,6 +9,7 @@ import org.chainlink.infrastructure.db.BaseRepo;
 import org.chainlink.infrastructure.errorhandling.AppFailureException;
 import org.chainlink.infrastructure.errorhandling.AppFailureMessage;
 import org.chainlink.infrastructure.stereotypes.Repository;
+import org.jspecify.annotations.NonNull;
 
 @Repository
 public class TagRepo extends BaseRepo<Tag> {
@@ -23,7 +24,7 @@ public class TagRepo extends BaseRepo<Tag> {
             .fetch();
     }
 
-    public void deleteByCollection(ID<Collection> collectionId) {
+    public void deleteByCollection(@NonNull ID<Collection> collectionId) {
         var tags = db.selectFrom(QTag.tag)
             .where(QTag.tag.collection.id.eq(collectionId.getUUID()))
             .fetch();
