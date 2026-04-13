@@ -6,7 +6,7 @@
 **Use Case Name:** Create Collection   
 **Primary Actor:** User   
 **Goal:** Create a new collection so that the user can organize bookmarks in a separate workspace.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

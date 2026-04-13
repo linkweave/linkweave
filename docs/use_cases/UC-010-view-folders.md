@@ -6,7 +6,7 @@
 **Use Case Name:** View Folders   
 **Primary Actor:** User   
 **Goal:** See all folders in a collection to understand the organizational structure.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

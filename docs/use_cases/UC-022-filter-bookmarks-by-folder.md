@@ -6,7 +6,7 @@
 **Use Case Name:** Filter Bookmarks by Folder   
 **Primary Actor:** User   
 **Goal:** View only bookmarks that are in a specific folder.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

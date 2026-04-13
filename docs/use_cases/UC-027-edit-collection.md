@@ -6,7 +6,7 @@
 **Use Case Name:** Edit Collection   
 **Primary Actor:** User   
 **Goal:** Change a collection's name so that it accurately reflects its purpose.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 
