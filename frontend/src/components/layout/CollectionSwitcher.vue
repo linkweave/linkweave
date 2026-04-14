@@ -52,11 +52,13 @@ function goToManage() {
         align="start"
         :side-offset="8"
       >
-        <div class="p-1.5">
+        <div class="px-1.5 pt-1.5">
           <div class="px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50">
             {{ t('collectionSwitcher.collections') }}
           </div>
+        </div>
 
+        <div class="max-h-[60vh] overflow-y-auto px-1.5">
           <button
             v-for="col in collections"
             :key="col.id"
