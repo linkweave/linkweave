@@ -21,13 +21,13 @@ rectangle "Chainlink Bookmark Manager" {
         usecase "UC-001\nAuto-Provision on\nFirst Login" as UC001 <<implemented>>
         usecase "UC-002\nAuto-Navigate\nto Collection" as UC002 <<implemented>>
         usecase "UC-003\nList Collections" as UC003 <<implemented>>
-        usecase "UC-004\nSet Default Collection" as UC004
-        usecase "UC-023\nShare Collection" as UC023
-        usecase "UC-024\nAccess Shared Collection" as UC024
-        usecase "UC-025\nRevoke Collection\nAccess" as UC025
-        usecase "UC-026\nCreate Collection" as UC026
-        usecase "UC-027\nEdit Collection" as UC027
-        usecase "UC-028\nDelete Collection" as UC028
+        usecase "UC-004\nSet Default Collection" as UC004 <<implemented>>
+        usecase "UC-023\nShare Collection" as UC023 <<implemented>>
+        usecase "UC-024\nAccess Shared Collection" as UC024 <<implemented>>
+        usecase "UC-025\nRevoke Collection\nAccess" as UC025 <<implemented>>
+        usecase "UC-026\nCreate Collection" as UC026 <<implemented>>
+        usecase "UC-027\nEdit Collection" as UC027 <<implemented>>
+        usecase "UC-028\nDelete Collection" as UC028 <<implemented>>
     }
 
     rectangle "Bookmark Management" {
@@ -57,12 +57,12 @@ rectangle "Chainlink Bookmark Manager" {
 
     rectangle "Search & Filtering" {
         usecase "UC-021\nFilter Bookmarks\nby Tag" as UC021 <<implemented>>
-        usecase "UC-022\nFilter Bookmarks\nby Folder" as UC022
+        usecase "UC-022\nFilter Bookmarks\nby Folder" as UC022 <<implemented>>
         usecase "UC-032\nSearch Bookmarks" as UC032 <<implemented>>
     }
 
     rectangle "Navigation" {
-        usecase "UC-029\nNavigate Folder\nHierarchy" as UC029
+        usecase "UC-029\nNavigate Folder\nHierarchy" as UC029 <<implemented>>
     }
 
     rectangle "Import" {
@@ -76,6 +76,9 @@ rectangle "Chainlink Bookmark Manager" {
     rectangle "Architecture & Quality Control" {
         usecase "UC-030\nRobust Error Handling" as UC030
         usecase "UC-035\nAdd ArchUnit Tests" as UC035
+        usecase "UC-036\nAdopt Form Library\nwith Zod Schemas" as UC036
+        usecase "UC-037\nProvide Browser\nExtension" as UC037
+        usecase "UC-038\nOffline Mode" as UC038
     }
 }
 
@@ -131,6 +134,14 @@ user --> UC031
 
 ' Architecture & Quality
 developer --> UC035
+developer --> UC036
+user --> UC037
+user --> UC038
+
+note right of UC037
+  See browser-extension.md
+  for architecture plan
+end note
 
 legend right
   |<#E8F5E9>| Implemented |
