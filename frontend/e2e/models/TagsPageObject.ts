@@ -25,6 +25,7 @@ export class TagsPageObject {
     await loginPage.goto()
     await loginPage.login(email, password)
     await expect(this.page).toHaveURL(/\/collections\//)
+    await expect(this.createTagButton).toBeVisible()
   }
 
   async createTag(name: string) {

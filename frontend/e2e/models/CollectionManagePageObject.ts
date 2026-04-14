@@ -26,6 +26,8 @@ export class CollectionManagePageObject {
 
     await this.page.goto('/manage/collections')
     await expect(this.page).toHaveURL(/\/manage\/collections/)
+    await this.page.locator('[data-testid^="collection-row-"], :text("noCollections")').waitFor({ state: 'visible' }).catch(() => {})
+    await expect(this.createButton).toBeVisible()
   }
 
   async getCollectionIdByName(name: string): Promise<string> {
