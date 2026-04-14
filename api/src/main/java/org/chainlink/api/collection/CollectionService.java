@@ -1,6 +1,8 @@
 package org.chainlink.api.collection;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
 import ch.dvbern.dvbstarter.types.id.ID;
@@ -60,7 +62,6 @@ public class CollectionService {
         collectionRepo.persist(collection);
     }
 
-
     public List<CollectionSummaryJson> findCollectionsForUser(@NonNull User user) {
         return collectionAccessRepo.findCollectionSummariesForUser(user.getId());
     }
@@ -101,7 +102,10 @@ public class CollectionService {
     }
 
     @NonNull
-    public CollectionSummaryJson updateCollection(@NonNull ID<Collection> collectionId, @NonNull String name, @NonNull User user) {
+    public CollectionSummaryJson updateCollection(
+        @NonNull ID<Collection> collectionId,
+        @NonNull String name,
+        @NonNull User user) {
         Collection collection = collectionRepo.getById(collectionId);
         collection.setName(name);
         collectionRepo.persistAndFlush(collection);
@@ -201,8 +205,16 @@ public class CollectionService {
     }
 
     public void revokeAccess(@NonNull ID<Collection> collectionId, @NonNull ID<User> targetUserId) {
-        collectionAccessRepo.findByCollection(collectionId).stream()
-            .filter(a -> a.getUser().getId().equals(targetUserId))
-            .forEach(a -> collectionAccessRepo.remove(a.getId()));
+        CollectionAccess accessToRevoke = collectionAccessRepo.findByUserAndCollection(targetUserId, collectionId);
+
+        if (accessToRevoke.isDefault()) {
+            var userAccesses = collectionAccessRepo.findByUser(targetUserId);
+            userAccesses.stream()
+                .filter(a -> !a.getCollection().getId().equals(collectionId))
+                .min(Comparator.comparing(a -> a.getCollection().getTimestampErstellt()))
+                .ifPresent(next -> collectionAccessRepo.setDefaultForUser(targetUserId, next.getCollection().getId()));
+        }
+        collectionAccessRepo.remove(accessToRevoke.getId());
     }
 }
+

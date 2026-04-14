@@ -38,6 +38,14 @@ public class CollectionAccessRepo extends BaseRepo<CollectionAccess> {
     }
 
     @NonNull
+    public CollectionAccess findByUserAndCollection(@NonNull ID<User> userId, @NonNull ID<Collection> collectionId) {
+        return db.selectFrom(QCollectionAccess.collectionAccess)
+            .where(QCollectionAccess.collectionAccess.user.id.eq(userId.getUUID()))
+            .where(QCollectionAccess.collectionAccess.collection.id.eq(collectionId.getUUID()))
+            .fetchOne().orElseThrow(() -> new AppFailureException(AppFailureMessage.entityNotFoundMsg( CollectionAccess.class, "no collection access for user and collection")));
+    }
+
+    @NonNull
     public CollectionAccess getDefaultByUser(@NonNull ID<User> userId) {
         return db.selectFrom(QCollectionAccess.collectionAccess)
             .where(QCollectionAccess.collectionAccess.user.id.eq(userId.getUUID()))
@@ -68,14 +76,22 @@ public class CollectionAccessRepo extends BaseRepo<CollectionAccess> {
     }
 
     public void setDefaultForUser(@NonNull ID<User> userId, @NonNull ID<Collection> collectionId) {
-        List<CollectionAccess> userAccesses = findByUser(userId);
+        // Two-step bulk update to avoid momentarily having two defaults (which would
+        // violate the partial unique index on (user_id) WHERE isDefault = 1).
+        // Note: bulk updates bypass the Hibernate L1 cache — callers must not read
+        // isDefault from already-managed entities after this call within the same session.
+        db.update(QCollectionAccess.collectionAccess)
+            .set(QCollectionAccess.collectionAccess.isDefault, false)
+            .where(QCollectionAccess.collectionAccess.user.id.eq(userId.getUUID()))
+            .execute();
 
-        for (var access : userAccesses) {
-            access.setDefault(access.getCollection().getId().equals(collectionId));
-        }
-
-        db.flush();
+        db.update(QCollectionAccess.collectionAccess)
+            .set(QCollectionAccess.collectionAccess.isDefault, true)
+            .where(QCollectionAccess.collectionAccess.user.id.eq(userId.getUUID()))
+            .where(QCollectionAccess.collectionAccess.collection.id.eq(collectionId.getUUID()))
+            .execute();
     }
+
 
     @NonNull
     public List<CollectionAccess> findByCollection(@NonNull ID<Collection> collectionId) {
