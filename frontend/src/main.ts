@@ -1,6 +1,4 @@
 import './assets/main.css'
-import { useAuthStore } from '@/stores/auth'
-import { useCollectionStore } from '@/stores/collection'
 import { createPinia } from 'pinia'
 
 import { createApp } from 'vue'
@@ -16,18 +14,8 @@ async function initializeApp() {
   app.use(router)
   app.use(i18n)
 
-  const auth = useAuthStore()
-  const collection = useCollectionStore()
-
-  // Wait for auth to be initialized before mounting
-  // The router guard will also handle this if the router navigates early
-  if (!auth.initialized) {
-    const authenticated = await auth.fetchCurrentUser()
-    if (authenticated && auth.user?.defaultCollectionId) {
-      collection.setCurrentCollectionId(auth.user.defaultCollectionId)
-    }
-  }
-
+  // Auth and collection initialization is handled by the router guard
+  // before any navigation proceeds, so we can mount immediately
   app.mount('#app')
 }
 

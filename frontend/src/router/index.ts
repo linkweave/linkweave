@@ -1,3 +1,4 @@
+import {initializeSession} from '@/composables/useSessionInit'
 import {useAuthStore} from '@/stores/auth'
 import {useCollectionStore} from '@/stores/collection'
 import CollectionView from '@/views/CollectionView.vue'
@@ -10,13 +11,9 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      redirect: () => {
-        const collection = useCollectionStore()
-        if (collection.currentCollectionId) {
-          return { name: 'collection', params: { id: collection.currentCollectionId } }
-        }
-        return { name: 'login' }
-      }
+      // Not a real page — beforeEach redirects to the appropriate destination
+      // after initialization (collection view, or manage-collections as fallback)
+      component: CollectionView
     },
     {
       path: '/collections/:id',
@@ -31,30 +28,37 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
+      meta: { public: true },
       component: LoginView
     },
     {
       path: '/register',
       name: 'register',
+      meta: { public: true },
       component: () => import('@/views/RegisterView.vue')
     }
   ]
 })
 
 router.beforeEach(async (to) => {
+  await initializeSession()
+
   const auth = useAuthStore()
+  const collection = useCollectionStore()
 
-  // Wait for auth to be initialized before checking authentication
-  if (!auth.initialized) {
-    await auth.fetchCurrentUser()
-  }
-
-  if (!auth.isAuthenticated && to.name !== 'login' && to.name !== 'register') {
+  if (!auth.isAuthenticated && !to.meta.public) {
     return { name: 'login' }
   }
 
-  if (auth.isAuthenticated && (to.name === 'login' || to.name === 'register')) {
+  if (auth.isAuthenticated && to.meta.public) {
     return { name: 'home' }
+  }
+
+  if (auth.isAuthenticated && to.name === 'home') {
+    if (collection.currentCollectionId) {
+      return { name: 'collection', params: { id: collection.currentCollectionId } }
+    }
+    return { name: 'manage-collections' }
   }
 })
 
