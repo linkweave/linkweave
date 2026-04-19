@@ -49,18 +49,18 @@ const closeSidebar = () => {
       <aside
         :class="
           cn(
-            'fixed inset-y-0 left-0 z-50 w-60 bg-background border-r border-border transform transition-transform lg:relative lg:translate-x-0',
+            'fixed inset-y-0 left-0 z-50 w-60 bg-background border-r border-border transform transition-transform lg:relative lg:translate-x-0 flex flex-col',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           )
         "
       >
-        <div class="flex items-center justify-between p-4 lg:hidden">
+        <div class="flex items-center justify-between p-4 lg:hidden shrink-0">
           <span class="font-semibold">Menu</span>
           <ButtonCl variant="ghost" size="icon" @click="closeSidebar">
             <X class="h-5 w-5" />
           </ButtonCl>
         </div>
-        <SidebarCl class="h-full" />
+        <SidebarCl class="flex-1 min-h-0" />
       </aside>
 
       <!-- Main content -->

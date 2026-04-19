@@ -1,11 +1,19 @@
 import './assets/main.css'
 import { createPinia } from 'pinia'
+import { configure } from 'vee-validate'
 
 import { createApp } from 'vue'
 
 import App from './App.vue'
 import i18n from './i18n'
 import router from './router'
+
+configure({
+  validateOnBlur: true,
+  validateOnChange: true,
+  validateOnInput: false,
+  validateOnModelUpdate: false,
+})
 
 async function initializeApp() {
   const app = createApp(App)

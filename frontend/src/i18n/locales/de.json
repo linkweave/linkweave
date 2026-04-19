@@ -196,5 +196,17 @@
     "alreadyExists": "Diese E-Mail ist bereits registriert.",
     "hasAccount": "Bereits ein Konto?",
     "signIn": "Anmelden"
+  },
+  "validation": {
+    "required": "{field} ist erforderlich",
+    "email": "Ungültige E-Mail-Adresse",
+    "url": "Muss eine gültige URL sein",
+    "urlScheme": "URL muss mit http:// oder https:// beginnen",
+    "minLength": "{field} muss mindestens {min} Zeichen haben",
+    "maxLength": "{field} darf maximal {max} Zeichen haben",
+    "passwordMismatch": "Passwörter stimmen nicht überein.",
+    "nameMismatch": "Name stimmt nicht überein",
+    "colorHex": "Muss ein gültiger Hex-Farbwert sein (z.B. #ef4444)",
+    "collectionIdRequired": "collectionId ist erforderlich"
   }
 }
