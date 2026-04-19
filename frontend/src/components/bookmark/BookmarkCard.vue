@@ -10,10 +10,12 @@ import {
 import type { BookmarkJson } from '@/api/generated'
 import { useTagStore } from '@/stores/tag'
 import { useFolderStore } from '@/stores/folder'
+import { useBookmarkStore } from '@/stores/bookmark'
 import { DRAG_TYPE_BOOKMARK, setDraggingBookmark } from '@/composables/useDragState'
 
 const tagStore = useTagStore()
 const folderStore = useFolderStore()
+const bookmarkStore = useBookmarkStore()
 
 const props = defineProps<{
   bookmark: BookmarkJson
@@ -100,6 +102,7 @@ function getFolderName(): string | null {
             target="_blank"
             rel="noopener noreferrer"
             class="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors mt-0.5"
+            @click="bookmarkStore.trackClick(props.bookmark.id)"
           >
             <span class="truncate">{{ props.bookmark.data.url }}</span>
             <ExternalLink class="h-3 w-3 shrink-0" />

@@ -1,5 +1,7 @@
 package org.chainlink.api.bookmark.json;
 
+import java.time.OffsetDateTime;
+
 import ch.dvbern.dvbstarter.types.id.ID;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -10,6 +12,7 @@ import org.chainlink.infrastructure.json.EntityInfoJson;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 @Value
 @AllArgsConstructor
@@ -32,4 +35,13 @@ public class BookmarkJson {
     @Valid
     @Schema(required = true)
     BookmarkSaveJson data;
+
+    @NotNull
+    @NonNull
+    @Schema(required = true)
+    Integer clickCount;
+
+    @Nullable
+    @Schema(required = false)
+    OffsetDateTime lastClickedAt;
 }

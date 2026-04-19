@@ -28,7 +28,9 @@ public class BookmarkMapper {
                 bookmark.getTags().stream()
                     .map(Tag::getId)
                     .collect(Collectors.toSet())
-            )
+            ),
+            bookmark.getClickCount(),
+            bookmark.getLastClickedAt()
         );
     }
 }

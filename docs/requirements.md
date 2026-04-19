@@ -64,6 +64,10 @@
 | FR-043 | Browser Extension          | As a User, I want a Chrome/Firefox browser extension that lets me save the current page as a bookmark to my Chainlink collection with a single click, choosing collection, folder, and tags from a popup. | Medium   | Open |
 | FR-044 | Offline Mode               | As a User, I want to browse and search my bookmarks while offline. The app already loads all collection data in a single request (`GET /collections/{id}`) and caches it client-side in Pinia stores. A service worker should cache the app shell and API responses so the app is usable without a network connection. | Low      | Open |
 | FR-045 | Drag and Drop Reorganization | As a User, I want to drag and drop folders and bookmarks (excluding the root folder) to reorganize them within my collection, so that I can intuitively move items between folders, nest folders inside other folders, and reorder items without using context menus. | Medium   | Open |
+| FR-046 | Trashbin for Deleted Items   | As a User, I want deleted bookmarks and folders to be moved to a trashbin instead of being permanently removed, so that I can recover accidentally deleted items. Deleting a folder also moves all its contained bookmarks and subfolders to the trashbin. | High     | Open   |
+| FR-047 | View Trashbin                | As a User, I want to access the trashbin through the user menu so that I can see all my soft-deleted bookmarks and folders and decide whether to restore or permanently delete them. | High     | Open   |
+| FR-048 | Restore from Trashbin        | As a User, I want to restore a deleted bookmark or folder from the trashbin to its original location so that I can recover items I accidentally deleted. | Medium   | Open   |
+| FR-049 | Permanently Delete from Trashbin | As a User, I want to permanently delete individual items from the trashbin or empty the entire trashbin so that I can free up space and irreversibly remove items I no longer need. | Medium   | Open   |
 
 
 ---

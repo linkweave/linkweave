@@ -93,4 +93,14 @@ public class BookmarkResource {
         authorizationService.requireCollectionAccess(bookmark.getCollection().getId());
         bookmarkService.removeBookmark(bookmarkId);
     }
+
+    @POST
+    @Path("/{bookmarkId}/track-click")
+    public void trackClick(
+        @PathParam("bookmarkId") @NotNull @NonNull ID<Bookmark> bookmarkId
+    ) {
+        Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
+        authorizationService.requireCollectionAccess(bookmark.getCollection().getId());
+        bookmarkService.trackClick(bookmarkId);
+    }
 }

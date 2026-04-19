@@ -3,6 +3,7 @@ package org.chainlink.api.bookmark;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -137,5 +138,12 @@ public class BookmarkService {
 
     public void deleteByCollection(@NonNull ID<Collection> collectionId) {
         bookmarkRepo.deleteByCollection(collectionId);
+    }
+
+    public void trackClick(@NonNull ID<Bookmark> bookmarkId) {
+        Bookmark bookmark = bookmarkRepo.getById(bookmarkId);
+        bookmark.setClickCount(bookmark.getClickCount() + 1);
+        bookmark.setLastClickedAt(OffsetDateTime.now());
+        bookmarkRepo.persist(bookmark);
     }
 }
