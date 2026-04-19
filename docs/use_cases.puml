@@ -74,6 +74,10 @@ rectangle "Chainlink Bookmark Manager" {
         end note
     }
 
+    rectangle "Cleanup" {
+        usecase "UC-044\nReview Cleanup\nSuggestions" as UC044
+    }
+
     rectangle "Architecture & Quality Control" {
         usecase "UC-030\nRobust Error Handling" as UC030
         usecase "UC-035\nAdd ArchUnit Tests" as UC035
@@ -141,6 +145,9 @@ developer --> UC036
 developer --> UC039
 user --> UC037
 user --> UC038
+
+' Cleanup
+user --> UC044
 
 note right of UC037
   See browser-extension.md
