@@ -25,7 +25,7 @@ const collectionStore = useCollectionStore()
 const notification = useNotificationStore()
 
 const { defineField, handleSubmit, errors, resetForm, isSubmitting } = useForm({
-  validationSchema: toTypedSchema(collectionDeleteSchema),
+  validationSchema: toTypedSchema(collectionDeleteSchema(t)),
   initialValues: { confirmName: '', expectedName: '' },
 })
 

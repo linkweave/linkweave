@@ -28,7 +28,7 @@ const emit = defineEmits<{
 }>()
 
 const { defineField, handleSubmit, errors, resetForm, isSubmitting } = useForm({
-  validationSchema: toTypedSchema(folderSaveSchema),
+  validationSchema: toTypedSchema(folderSaveSchema(t)),
   initialValues: {
     collectionId: props.collectionId,
     parentId: props.parentId,

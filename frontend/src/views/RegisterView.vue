@@ -16,7 +16,7 @@ const router = useRouter()
 const notification = useNotificationStore()
 
 const { defineField, handleSubmit, errors, isSubmitting } = useForm({
-  validationSchema: toTypedSchema(registrationSchema),
+  validationSchema: toTypedSchema(registrationSchema(t)),
   initialValues: {
     vorname: '',
     nachname: '',

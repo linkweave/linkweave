@@ -1,11 +1,16 @@
 import { z } from 'zod'
 import { colorHexSchema } from './shared'
-import { v } from './validation-messages'
+import type { TFunction } from './types'
 
-export const tagSaveSchema = z.object({
-  collectionId: z.string().min(1, v.collectionIdRequired()),
-  name: z.string().min(1, v.required('Name')).max(50, v.maxLength('Name', 50)).trim(),
-  color: colorHexSchema,
-})
+export const tagSaveSchema = (t: TFunction) =>
+  z.object({
+    collectionId: z.string().min(1, t('validation.collectionIdRequired')),
+    name: z
+      .string()
+      .min(1, t('validation.required', { field: 'Name' }))
+      .max(50, t('validation.maxLength', { field: 'Name', max: 50 }))
+      .trim(),
+    color: colorHexSchema(t),
+  })
 
-export type TagSaveInput = z.infer<typeof tagSaveSchema>
+export type TagSaveInput = z.infer<ReturnType<typeof tagSaveSchema>>

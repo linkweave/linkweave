@@ -16,7 +16,7 @@ const collection = useCollectionStore()
 const notification = useNotificationStore()
 
 const { defineField, handleSubmit, errors, isSubmitting } = useForm({
-  validationSchema: toTypedSchema(loginSchema),
+  validationSchema: toTypedSchema(loginSchema(t)),
   initialValues: { email: '', password: '' },
 })
 

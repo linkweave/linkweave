@@ -31,7 +31,7 @@ const loadingMembers = ref(false)
 const revokingUserId = ref<string | null>(null)
 
 const { defineField, handleSubmit, errors, resetForm, isSubmitting } = useForm({
-  validationSchema: toTypedSchema(collectionShareSchema),
+  validationSchema: toTypedSchema(collectionShareSchema(t)),
   initialValues: {
     email: '',
   },

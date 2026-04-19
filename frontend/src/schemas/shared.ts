@@ -1,21 +1,23 @@
 import { z } from 'zod'
-import { v } from './validation-messages'
+import type { TFunction } from './types'
 
-export const httpUrlSchema = z
-  .string()
-  .min(1, v.required('URL'))
-  .trim()
-  .url(v.url())
-  .refine(
-    (val) => val.startsWith('http://') || val.startsWith('https://'),
-    v.urlScheme(),
-  )
+export const httpUrlSchema = (t: TFunction) =>
+  z
+    .string()
+    .min(1, t('validation.required', { field: 'URL' }))
+    .trim()
+    .url(t('validation.url'))
+    .refine(
+      (val) => val.startsWith('http://') || val.startsWith('https://'),
+      t('validation.urlScheme'),
+    )
 
-export const colorHexSchema = z
-  .string()
-  .trim()
-  .refine(
-    (val) => val === '' || /^#[0-9a-fA-F]{6}$/.test(val),
-    v.colorHex(),
-  )
-  .optional()
+export const colorHexSchema = (t: TFunction) =>
+  z
+    .string()
+    .trim()
+    .refine(
+      (val) => val === '' || /^#[0-9a-fA-F]{6}$/.test(val),
+      t('validation.colorHex'),
+    )
+    .optional()

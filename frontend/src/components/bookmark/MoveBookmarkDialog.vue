@@ -30,7 +30,7 @@ const emit = defineEmits<{
 }>()
 
 const { defineField, handleSubmit, resetForm, isSubmitting } = useForm({
-  validationSchema: toTypedSchema(bookmarkMoveSchema),
+  validationSchema: toTypedSchema(bookmarkMoveSchema(t)),
   initialValues: { collectionId: '' },
 })
 
