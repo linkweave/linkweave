@@ -3,9 +3,28 @@ import { ref, computed } from 'vue'
 import { AuthResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import type { UserInfoJson } from '@/api/generated'
+import { useCollectionStore } from '@/stores/collection'
+import { useBookmarkStore } from '@/stores/bookmark'
+import { useFolderStore } from '@/stores/folder'
+import { useTagStore } from '@/stores/tag'
 import router from '@/router'
 
 const authApi = new AuthResourceApi(config)
+
+function resetAllStores() {
+  const collection = useCollectionStore()
+  const bookmark = useBookmarkStore()
+  const folder = useFolderStore()
+  const tag = useTagStore()
+
+  collection.currentCollectionId = null
+  collection.collectionInfo = null
+  collection.collections = []
+  collection.collectionsFetched = false
+  bookmark.searchQuery = ''
+  folder.selectedFolderId = null
+  tag.selectedTagIds = new Set()
+}
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<UserInfoJson | null>(null)
@@ -46,7 +65,11 @@ export const useAuthStore = defineStore('auth', () => {
     } catch {
       // cookie is cleared by server, ignore errors
     } finally {
+      resetAllStores()
       user.value = null
+      loading.value = true
+      initialized.value = false
+      fetchPromise = null
       router.push({ name: 'login' })
     }
   }
