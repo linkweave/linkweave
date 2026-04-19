@@ -61,6 +61,11 @@ body {
   background-color: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans), serif;
+  color-scheme: light;
+}
+
+.dark body {
+  color-scheme: dark;
 }
 
 /* Custom Scrollbar Styles */

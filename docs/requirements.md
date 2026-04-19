@@ -68,6 +68,7 @@
 | FR-047 | View Trashbin                | As a User, I want to access the trashbin through the user menu so that I can see all my soft-deleted bookmarks and folders and decide whether to restore or permanently delete them. | High     | Open   |
 | FR-048 | Restore from Trashbin        | As a User, I want to restore a deleted bookmark or folder from the trashbin to its original location so that I can recover items I accidentally deleted. | Medium   | Open   |
 | FR-049 | Permanently Delete from Trashbin | As a User, I want to permanently delete individual items from the trashbin or empty the entire trashbin so that I can free up space and irreversibly remove items I no longer need. | Medium   | Open   |
+| FR-050 | Review Cleanup Suggestions | As a User, I want to see a list of bookmarks I haven't used in over X months and be able to move selected ones to the trashbin or dismiss suggestions, so that I can declutter my collection based on actual usage data. Dismissed suggestions will not reappear for the same duration as the inactivity threshold. | Medium   | Open   |
 
 
 ---
