@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import type {CollectionMemberJson} from '@/api/generated'
 import {ResponseError} from '@/api/generated'
-import {ButtonCl, DialogCl} from '@/components/ui'
+import {toTypedSchema} from '@vee-validate/zod'
+import {useForm} from 'vee-validate'
+import {ButtonCl, DialogCl, FormFieldCl} from '@/components/ui'
 import {useCollectionStore} from '@/stores/collection'
 import {useNotificationStore} from '@/stores/notification'
+import {collectionShareSchema} from '@/schemas/collection'
+import {useFormDialog} from '@/composables/useFormDialog'
 import {Crown, Loader2, User, UserPlus, X} from 'lucide-vue-next'
-import {ref, watch} from 'vue'
+import {ref, toRef} from 'vue'
 import {useI18n} from 'vue-i18n'
 
 const props = defineProps<{
@@ -24,19 +28,21 @@ const collectionStore = useCollectionStore()
 
 const members = ref<CollectionMemberJson[]>([])
 const loadingMembers = ref(false)
-const inviteEmail = ref('')
-const inviteLoading = ref(false)
 const revokingUserId = ref<string | null>(null)
 
-watch(
-  () => props.open,
-  async (isOpen) => {
-    if (isOpen) {
-      inviteEmail.value = ''
-      await loadMembers()
-    }
+const { defineField, handleSubmit, errors, resetForm, isSubmitting } = useForm({
+  validationSchema: toTypedSchema(collectionShareSchema),
+  initialValues: {
+    email: '',
   },
-)
+})
+
+const [inviteEmail, inviteEmailAttrs] = defineField('email')
+
+useFormDialog(toRef(props, 'open'), async () => {
+  resetForm({ values: { email: '' } })
+  await loadMembers()
+})
 
 async function loadMembers() {
   loadingMembers.value = true
@@ -49,17 +55,13 @@ async function loadMembers() {
   }
 }
 
-async function handleInvite() {
-  const email = inviteEmail.value.trim()
-  if (!email) return
-
-  inviteLoading.value = true
+const handleInvite = handleSubmit(async (values) => {
   try {
-    const newMember = await collectionStore.shareWithUser(props.collectionId, email)
+    const newMember = await collectionStore.shareWithUser(props.collectionId, values.email)
     if (newMember) {
       members.value = [...members.value, newMember]
     }
-    inviteEmail.value = ''
+    resetForm({ values: { email: '' } })
     notification.success(t('collectionManage.shareSuccess'))
   } catch (err: unknown) {
     if (err instanceof ResponseError) {
@@ -81,10 +83,8 @@ async function handleInvite() {
     } else {
       notification.error(t('collectionManage.shareInviteError'))
     }
-  } finally {
-    inviteLoading.value = false
   }
-}
+})
 
 async function handleRevoke(member: CollectionMemberJson) {
   if (!member.userId) return
@@ -188,30 +188,32 @@ function nonOwnerMembers() {
 
       <div class="border-t border-border" />
 
-      <div class="space-y-2">
-        <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {{ t('collectionManage.shareInvite') }}
-        </p>
-        <form class="flex gap-2" @submit.prevent="handleInvite">
-          <input
-            v-model="inviteEmail"
-            type="email"
-            autocomplete="off"
-            data-testid="share-email-input"
-            :placeholder="t('collectionManage.shareEmailPlaceholder')"
-            class="flex h-9 flex-1 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
+      <form class="flex gap-2 items-start" @submit.prevent="handleInvite">
+        <div class="flex-1">
+          <FormFieldCl :label="t('collectionManage.shareInvite')" for-id="share-email-input" :error="errors.email">
+            <input
+              id="share-email-input"
+              v-model="inviteEmail"
+              v-bind="inviteEmailAttrs"
+              type="email"
+              autocomplete="off"
+              data-testid="share-email-input"
+              :placeholder="t('collectionManage.shareEmailPlaceholder')"
+              class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+          </FormFieldCl>
+        </div>
           <ButtonCl
             type="submit"
             data-testid="share-invite-btn"
-            :disabled="inviteLoading || !inviteEmail.trim()"
+            class="mt-[1.625rem]"
+            :disabled="isSubmitting || !inviteEmail?.trim()"
           >
-            <Loader2 v-if="inviteLoading" class="h-4 w-4 animate-spin" />
+            <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
             <UserPlus v-else class="h-4 w-4" />
             {{ t('collectionManage.shareInviteBtn') }}
           </ButtonCl>
         </form>
-      </div>
     </div>
   </DialogCl>
 </template>

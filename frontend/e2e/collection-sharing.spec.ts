@@ -52,6 +52,19 @@ test.describe('Collection Sharing', () => {
     await expect(share.inviteBtn).toBeEnabled()
   })
 
+  test('should show email validation error on invalid email', async ({ page }) => {
+    const manage = new CollectionManagePageObject(page)
+    const share = new ShareCollectionPageObject(page)
+
+    await manage.loginAndNavigate()
+    await share.openShareDialog(collectionId)
+
+    await share.emailInput.fill('not-an-email')
+    await share.emailInput.blur()
+
+    await expect(page.getByText(/invalid email/i)).toBeVisible()
+  })
+
   test('should clean up: delete test collection', async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
     await manage.loginAndNavigate()

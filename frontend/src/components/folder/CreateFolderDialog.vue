@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { DialogCl, ButtonCl } from '@/components/ui'
+import { toTypedSchema } from '@vee-validate/zod'
+import { useForm } from 'vee-validate'
+import { DialogCl, ButtonCl, FormFieldCl } from '@/components/ui'
 import { useFolderStore } from '@/stores/folder'
 import { useNotificationStore } from '@/stores/notification'
-import type { FolderSaveJson } from '@/api/generated'
+import { folderSaveSchema } from '@/schemas/folder'
+import { useFormDialog } from '@/composables/useFormDialog'
+import { toRef } from 'vue'
 
 const { t } = useI18n()
 const folderStore = useFolderStore()
@@ -23,72 +27,60 @@ const emit = defineEmits<{
   created: []
 }>()
 
-const name = ref('')
-const selectedParentId = ref<string | undefined>(undefined)
-const loading = ref(false)
+const { defineField, handleSubmit, errors, resetForm, isSubmitting } = useForm({
+  validationSchema: toTypedSchema(folderSaveSchema),
+  initialValues: {
+    collectionId: props.collectionId,
+    parentId: props.parentId,
+    name: '',
+  },
+})
+
+const [name, nameAttrs] = defineField('name')
+const [parentId, parentIdAttrs] = defineField('parentId')
 
 const parentOptions = computed(() =>
   folderStore.folders.map(f => ({ id: f.id, name: f.data.name }))
 )
 
-watch(() => props.open, (val) => {
-  if (val) {
-    name.value = ''
-    selectedParentId.value = props.parentId ?? undefined
-  }
-})
+useFormDialog(toRef(props, 'open'), () =>
+  resetForm({
+    values: { collectionId: props.collectionId, parentId: props.parentId, name: '' },
+  }),
+)
 
-async function handleSubmit() {
-  if (!name.value.trim()) {
-    notification.warning(t('folder.nameRequired'))
-    return
-  }
-
-  loading.value = true
-
-  const data: FolderSaveJson = {
-    collectionId: props.collectionId,
-    name: name.value.trim(),
-  }
-
-  if (selectedParentId.value) {
-    data.parentId = selectedParentId.value
-  }
-
+const onSubmit = handleSubmit(async (values) => {
   try {
-    await folderStore.createFolder(data)
+    await folderStore.createFolder(values)
     emit('update:open', false)
     emit('created')
   } catch (err) {
     notification.handleApiError(err, t('folder.createError'))
-  } finally {
-    loading.value = false
   }
-}
+})
 </script>
 
 <template>
   <DialogCl :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('folder.createTitle') }}</template>
 
-    <form @submit.prevent="handleSubmit" class="space-y-4">
-      <div class="space-y-2">
-        <label for="folder-name" class="text-sm font-medium">{{ t('folder.name') }}</label>
+    <form @submit.prevent="onSubmit" class="space-y-4">
+      <FormFieldCl :label="t('folder.name')" for-id="folder-name" :error="errors.name" required>
         <input
           id="folder-name"
           v-model="name"
+          v-bind="nameAttrs"
           type="text"
-          required
           :placeholder="t('folder.namePlaceholder')"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
-      </div>
+      </FormFieldCl>
 
-      <div class="space-y-2">
-        <label for="folder-parent" class="text-sm font-medium">{{ t('folder.parentFolder') }}</label>
+      <FormFieldCl :label="t('folder.parentFolder')" for-id="folder-parent">
         <select
           id="folder-parent"
-          v-model="selectedParentId"
+          v-model="parentId"
+          v-bind="parentIdAttrs"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
           <option :value="undefined">{{ t('folder.noParent') }}</option>
@@ -96,14 +88,14 @@ async function handleSubmit() {
             {{ opt.name }}
           </option>
         </select>
-      </div>
+      </FormFieldCl>
 
       <div class="flex justify-end gap-2">
         <ButtonCl type="button" variant="outline" @click="emit('update:open', false)">
           {{ t('common.cancel') }}
         </ButtonCl>
-        <ButtonCl type="submit" :disabled="loading">
-          {{ loading ? t('common.loading') : t('common.create') }}
+        <ButtonCl type="submit" :disabled="isSubmitting">
+          {{ isSubmitting ? t('common.loading') : t('common.create') }}
         </ButtonCl>
       </div>
     </form>

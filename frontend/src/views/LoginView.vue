@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { toTypedSchema } from '@vee-validate/zod'
+import { useForm } from 'vee-validate'
 import { useAuthStore } from '@/stores/auth'
 import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
-import { AuthLayout, ButtonCl } from '@/components/ui'
+import { AuthLayout, ButtonCl, FormFieldCl } from '@/components/ui'
+import { loginSchema } from '@/schemas/auth'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -13,21 +15,23 @@ const auth = useAuthStore()
 const collection = useCollectionStore()
 const notification = useNotificationStore()
 
-const email = ref('')
-const password = ref('')
-const loading = ref(false)
+const { defineField, handleSubmit, errors, isSubmitting } = useForm({
+  validationSchema: toTypedSchema(loginSchema),
+  initialValues: { email: '', password: '' },
+})
+
+const [email, emailAttrs] = defineField('email')
+const [password, passwordAttrs] = defineField('password')
 
 function signInWithGoogle() {
   window.location.href = '/api/auth/oidc-login'
 }
 
-async function handleLogin() {
-  loading.value = true
-
+const onSubmit = handleSubmit(async (values) => {
   try {
     const formData = new URLSearchParams()
-    formData.append('j_username', email.value)
-    formData.append('j_password', password.value)
+    formData.append('j_username', values.email)
+    formData.append('j_password', values.password)
 
     const response = await fetch('/api/j_security_check', {
       method: 'POST',
@@ -49,10 +53,8 @@ async function handleLogin() {
     }
   } catch {
     notification.error(t('login.error'))
-  } finally {
-    loading.value = false
   }
-}
+})
 </script>
 
 <template>
@@ -65,35 +67,33 @@ async function handleLogin() {
         {{ t('login.google') }}
       </ButtonCl>
 
-      <form @submit.prevent="handleLogin" class="space-y-4">
-        <div class="space-y-2">
-          <label for="email" class="text-sm font-medium text-white">{{ t('login.email') }}</label>
+      <form @submit.prevent="onSubmit" class="space-y-4">
+        <FormFieldCl :label="t('login.email')" for-id="login-email" :error="errors.email">
           <input
-            id="email"
+            id="login-email"
             v-model="email"
+            v-bind="emailAttrs"
             type="email"
-            required
             autocomplete="email"
             class="flex h-9 w-full rounded-md bg-white/15 px-3 py-1 text-sm text-white transition-colors placeholder:text-white/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
             style="border: 1px solid rgba(143, 149, 161, 0.25)"
           />
-        </div>
+        </FormFieldCl>
 
-        <div class="space-y-2">
-          <label for="password" class="text-sm font-medium text-white">{{ t('login.password') }}</label>
+        <FormFieldCl :label="t('login.password')" for-id="login-password" :error="errors.password">
           <input
-            id="password"
+            id="login-password"
             v-model="password"
+            v-bind="passwordAttrs"
             type="password"
-            required
             autocomplete="current-password"
             class="flex h-9 w-full rounded-md bg-white/15 px-3 py-1 text-sm text-white transition-colors placeholder:text-white/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
             style="border: 1px solid rgba(143, 149, 161, 0.25)"
           />
-        </div>
+        </FormFieldCl>
 
-        <ButtonCl type="submit" class="w-full" :disabled="loading">
-          {{ loading ? t('common.loading') : t('login.submit') }}
+        <ButtonCl type="submit" class="w-full" :disabled="isSubmitting">
+          {{ isSubmitting ? t('common.loading') : t('login.submit') }}
         </ButtonCl>
       </form>
     </div>

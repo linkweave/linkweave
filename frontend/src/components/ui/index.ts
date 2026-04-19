@@ -1,6 +1,7 @@
 export { default as ButtonCl } from './ButtonCl.vue'
 export { default as DialogCl } from './DialogCl.vue'
 export { default as ConfirmDialog } from './ConfirmDialog.vue'
+export { default as FormFieldCl } from './FormFieldCl.vue'
 export { default as LanguageSwitcherCl } from './LanguageSwitcherCl.vue'
 export { default as SettingsDialog } from './SettingsDialog.vue'
 export { default as AuthLayout } from './AuthLayout.vue'

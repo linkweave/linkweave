@@ -196,5 +196,17 @@
     "alreadyExists": "This email is already registered.",
     "hasAccount": "Already have an account?",
     "signIn": "Sign in"
+  },
+  "validation": {
+    "required": "{field} is required",
+    "email": "Invalid email address",
+    "url": "Must be a valid URL",
+    "urlScheme": "URL must start with http:// or https://",
+    "minLength": "{field} must be at least {min} characters",
+    "maxLength": "{field} must not exceed {max} characters",
+    "passwordMismatch": "Passwords do not match.",
+    "nameMismatch": "Name does not match",
+    "colorHex": "Must be a valid hex color (e.g. #ef4444)",
+    "collectionIdRequired": "collectionId is required"
   }
 }

@@ -19,8 +19,20 @@ test.describe('Registration Flow', () => {
     await registerPage.emailInput.fill('mismatch@example.com')
     await registerPage.passwordInput.fill('password123')
     await registerPage.confirmPasswordInput.fill('different456')
+    await registerPage.confirmPasswordInput.blur()
 
     await expect(registerPage.passwordMismatchError).toBeVisible()
+  })
+
+  test('should show required field errors on submit with empty fields', async ({ page }) => {
+    const registerPage = new RegisterPageObject(page)
+    await registerPage.goto()
+
+    await registerPage.submitButton.click()
+
+    await expect(page.getByText('First name is required', { exact: true })).toBeVisible()
+    await expect(page.getByText('Email is required', { exact: true })).toBeVisible()
+    await expect(page.getByText('Password is required', { exact: true })).toBeVisible()
   })
 
   test('should navigate to login page via sign in link', async ({ page }) => {
