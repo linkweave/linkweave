@@ -160,13 +160,13 @@ function nonOwnerMembers() {
               <p class="text-sm font-medium leading-none truncate">{{ member.displayName }}</p>
               <p class="text-xs text-muted-foreground truncate mt-0.5">{{ member.email }}</p>
             </div>
-            <span class="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded border border-border shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+            <span class="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded border border-border shrink-0 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
               {{ t('collectionManage.shareMemberBadge') }}
             </span>
             <ButtonCl
               variant="ghost"
               size="icon"
-              class="h-7 w-7 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+              class="h-7 w-7 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
               :disabled="revokingUserId === member.userId"
               :title="t('collectionManage.shareRevokeBtn')"
               :data-testid="`share-revoke-btn-${member.userId}`"

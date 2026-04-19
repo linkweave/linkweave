@@ -63,6 +63,7 @@
 | FR-042 | Adopt Form Library with Zod Schemas | As a Developer, I want to replace manual form validation with VeeValidate v4 backed by Zod schemas so that form handling is consistent, type-safe, and less error-prone across the frontend. All 12 forms have been migrated to use VeeValidate composables (`useForm`/`defineField`/`handleSubmit`) with `toTypedSchema`, unified `FormFieldCl` component for label+input+error display, `useFormDialog` composable for dialog lifecycle, i18n-aware validation messages via `v()` helper, and 82 unit tests covering all schemas. | Medium   | Done |
 | FR-043 | Browser Extension          | As a User, I want a Chrome/Firefox browser extension that lets me save the current page as a bookmark to my Chainlink collection with a single click, choosing collection, folder, and tags from a popup. | Medium   | Open |
 | FR-044 | Offline Mode               | As a User, I want to browse and search my bookmarks while offline. The app already loads all collection data in a single request (`GET /collections/{id}`) and caches it client-side in Pinia stores. A service worker should cache the app shell and API responses so the app is usable without a network connection. | Low      | Open |
+| FR-045 | Drag and Drop Reorganization | As a User, I want to drag and drop folders and bookmarks (excluding the root folder) to reorganize them within my collection, so that I can intuitively move items between folders, nest folders inside other folders, and reorder items without using context menus. | Medium   | Open |
 
 
 ---

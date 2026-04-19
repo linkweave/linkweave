@@ -63,6 +63,7 @@ rectangle "Chainlink Bookmark Manager" {
 
     rectangle "Navigation" {
         usecase "UC-029\nNavigate Folder\nHierarchy" as UC029 <<implemented>>
+        usecase "UC-039\nReorganize Items\nvia Drag and Drop" as UC039
     }
 
     rectangle "Import" {
@@ -128,6 +129,7 @@ user --> UC032
 
 ' Navigation
 user --> UC029
+user --> UC039
 
 ' Import
 user --> UC031

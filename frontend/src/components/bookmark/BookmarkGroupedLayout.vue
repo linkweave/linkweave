@@ -3,7 +3,14 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFolderStore } from '@/stores/folder'
 import type { BookmarkJson, FolderJson } from '@/api/generated'
-import BookmarkCard from './BookmarkCard.vue'
+import { Folder, FolderOpen, MoreHorizontal } from 'lucide-vue-next'
+import {
+  DropdownMenuRoot,
+  DropdownMenuTrigger,
+  DropdownMenuPortal,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from 'radix-vue'
 
 const { t } = useI18n()
 const folderStore = useFolderStore()
@@ -18,58 +25,203 @@ const emit = defineEmits<{
   move: [bookmark: BookmarkJson]
 }>()
 
-function getTopmostFolder(folderId: string | null | undefined): FolderJson | null {
-  if (!folderId) return null
-  let current = folderStore.folders.find(f => f.id === folderId)
-  while (current?.data.parentId) {
-    const parent = folderStore.folders.find(f => f.id === current!.data.parentId)
-    if (!parent) break
-    current = parent
-  }
-  return current ?? null
-}
-
-interface Group {
+// A section is one folder's direct bookmarks within a group card.
+// isSubfolder=true means it should be visually separated from the section above it.
+interface Section {
   folder: FolderJson | null
   bookmarks: BookmarkJson[]
+  isSubfolder: boolean
 }
 
-const groups = computed<Group[]>(() => {
-  const map = new Map<string | null, Group>()
+interface GroupCard {
+  rootFolder: FolderJson | null
+  sections: Section[]
+  totalBookmarks: number
+}
 
+function buildMaps() {
+  // bookmarksByFolder: folderId (null = unfiled) → bookmarks placed directly in that folder
+  const bookmarksByFolder = new Map<string | null, BookmarkJson[]>()
+  bookmarksByFolder.set(null, [])
+  for (const folder of folderStore.folders) {
+    bookmarksByFolder.set(folder.id, [])
+  }
   for (const bookmark of props.bookmarks) {
-    const topFolder = getTopmostFolder(bookmark.data.folderId)
-    const key = topFolder?.id ?? null
-    if (!map.has(key)) {
-      map.set(key, { folder: topFolder, bookmarks: [] })
-    }
-    map.get(key)!.bookmarks.push(bookmark)
+    const folderId = bookmark.data.folderId ?? null
+    // Fall back to unfiled if folder is no longer in the store
+    const key = bookmarksByFolder.has(folderId) ? folderId : null
+    bookmarksByFolder.get(key)!.push(bookmark)
   }
 
-  return [...map.values()].sort((a, b) => {
-    if (a.folder === null) return 1
-    if (b.folder === null) return -1
-    return a.folder.data.name.localeCompare(b.folder.data.name)
-  })
+  // foldersByParent: parentId (null = root level) → child folders
+  const foldersByParent = new Map<string | null, FolderJson[]>()
+  foldersByParent.set(null, [])
+  for (const folder of folderStore.folders) {
+    const parentId = folder.data.parentId ?? null
+    if (!foldersByParent.has(parentId)) {
+      foldersByParent.set(parentId, [])
+    }
+    foldersByParent.get(parentId)!.push(folder)
+  }
+
+  return { bookmarksByFolder, foldersByParent }
+}
+
+function buildSections(
+  folder: FolderJson | null,
+  bookmarksByFolder: Map<string | null, BookmarkJson[]>,
+  foldersByParent: Map<string | null, FolderJson[]>,
+  isSubfolder: boolean,
+): Section[] {
+  const folderId = folder?.id ?? null
+  const direct = bookmarksByFolder.get(folderId) ?? []
+  const children = (foldersByParent.get(folderId) ?? [])
+    .slice()
+    .sort((a, b) => a.data.name.localeCompare(b.data.name))
+
+  const sections: Section[] = []
+  if (direct.length > 0) {
+    sections.push({ folder, bookmarks: direct, isSubfolder })
+  }
+  for (const child of children) {
+    sections.push(...buildSections(child, bookmarksByFolder, foldersByParent, true))
+  }
+  return sections
+}
+
+const groups = computed<GroupCard[]>(() => {
+  const { bookmarksByFolder, foldersByParent } = buildMaps()
+
+  const rootFolders = (foldersByParent.get(null) ?? [])
+    .slice()
+    .sort((a, b) => a.data.name.localeCompare(b.data.name))
+
+  const cards: GroupCard[] = []
+
+  for (const folder of rootFolders) {
+    const sections = buildSections(folder, bookmarksByFolder, foldersByParent, false)
+    const totalBookmarks = sections.reduce((sum, s) => sum + s.bookmarks.length, 0)
+    if (totalBookmarks > 0) {
+      cards.push({ rootFolder: folder, sections, totalBookmarks })
+    }
+  }
+
+  // Unfiled: only bookmarks with folderId === null, no folder hierarchy
+  const unfiledBookmarks = bookmarksByFolder.get(null) ?? []
+  if (unfiledBookmarks.length > 0) {
+    cards.push({
+      rootFolder: null,
+      sections: [{ folder: null, bookmarks: unfiledBookmarks, isSubfolder: false }],
+      totalBookmarks: unfiledBookmarks.length,
+    })
+  }
+
+  return cards
 })
+
+function faviconUrl(url: string): string {
+  try {
+    const hostname = new URL(url).hostname
+    return hostname ? `https://icons.duckduckgo.com/ip3/${hostname}.ico` : ''
+  } catch {
+    return ''
+  }
+}
 </script>
 
 <template>
-  <div class="space-y-8">
-    <div v-for="group in groups" :key="group.folder?.id ?? 'unfiled'">
-      <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-        <span>{{ group.folder?.data.name ?? t('bookmarkList.unfiled') }}</span>
-        <span class="text-xs font-normal opacity-60">({{ group.bookmarks.length }})</span>
-      </h2>
-      <div class="space-y-3">
-        <BookmarkCard
-          v-for="bookmark in group.bookmarks"
-          :key="bookmark.id"
-          :bookmark="bookmark"
-          @edit="emit('edit', bookmark)"
-          @delete="emit('delete', bookmark)"
-          @move="emit('move', bookmark)"
-        />
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+    <div
+      v-for="group in groups"
+      :key="group.rootFolder?.id ?? 'unfiled'"
+      class="rounded-lg border border-border bg-card overflow-hidden flex flex-col"
+    >
+      <!-- Card header -->
+      <div class="px-4 py-3 border-b border-border bg-muted/30 flex items-center gap-2 shrink-0">
+        <Folder class="h-4 w-4 text-primary shrink-0" />
+        <span class="font-medium text-sm text-foreground truncate flex-1">
+          {{ group.rootFolder?.data.name ?? t('bookmarkList.unfiled') }}
+        </span>
+        <span class="text-xs text-muted-foreground shrink-0">{{ group.totalBookmarks }}</span>
+      </div>
+
+      <!-- Sections -->
+      <div class="p-2 overflow-y-auto max-h-96">
+        <template
+          v-for="(section, sectionIndex) in group.sections"
+          :key="section.folder?.id ?? ('unfiled-' + sectionIndex)"
+        >
+          <!-- Subfolder heading, with divider only when preceded by another section -->
+          <div
+            v-if="section.isSubfolder"
+            class="flex items-center gap-1.5 px-1 py-1"
+            :class="sectionIndex > 0 ? 'mt-1 border-t border-border/50 pt-2' : ''"
+          >
+            <FolderOpen class="h-3 w-3 text-muted-foreground shrink-0" />
+            <span class="text-xs text-muted-foreground font-medium truncate">{{ section.folder?.data.name }}</span>
+          </div>
+
+          <!-- Compact bookmark rows -->
+          <div
+            v-for="bookmark in section.bookmarks"
+            :key="bookmark.id"
+            class="group/row flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-accent/50 min-w-0"
+          >
+            <img
+              v-if="faviconUrl(bookmark.data.url)"
+              :src="faviconUrl(bookmark.data.url)"
+              alt=""
+              class="w-4 h-4 shrink-0 rounded-sm"
+              loading="lazy"
+              @error="($event.target as HTMLImageElement).style.display = 'none'"
+            />
+            <a
+              :href="bookmark.data.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex-1 text-sm truncate text-foreground hover:text-primary transition-colors min-w-0"
+            >
+              {{ bookmark.data.title }}
+            </a>
+
+            <DropdownMenuRoot>
+              <DropdownMenuTrigger as-child>
+                <button
+                  class="shrink-0 h-6 w-6 inline-flex items-center justify-center rounded transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100 hover:bg-primary hover:text-primary-foreground"
+                  @click.stop
+                >
+                  <MoreHorizontal class="h-3.5 w-3.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuPortal>
+                <DropdownMenuContent
+                  class="min-w-[160px] z-50 rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+                  align="end"
+                  :side-offset="4"
+                >
+                  <DropdownMenuItem
+                    class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                    @select="emit('edit', bookmark)"
+                  >
+                    {{ $t('common.edit') }}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                    @select="emit('move', bookmark)"
+                  >
+                    {{ $t('bookmark.moveToFolder') }}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors text-destructive focus:text-destructive data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                    @select="emit('delete', bookmark)"
+                  >
+                    {{ $t('common.delete') }}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenuPortal>
+            </DropdownMenuRoot>
+          </div>
+        </template>
       </div>
     </div>
   </div>

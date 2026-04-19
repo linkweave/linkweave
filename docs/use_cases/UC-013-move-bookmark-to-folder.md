@@ -49,9 +49,12 @@
 1. System accepts the selection (no change is a valid operation).
 2. Use case continues at step 6.
 
-### A3: Drag and Drop
+### A3: Drag and Drop (Superseded by UC-039)
 
 **Trigger:** User drags a bookmark onto a folder (alternative to step 1-4).
+
+> **Note:** This interaction is now fully covered by [UC-039: Reorganize Items via Drag and Drop](UC-039-reorganize-via-drag-and-drop.md).
+
 **Flow:**
 
 1. User drags the bookmark onto a target folder.

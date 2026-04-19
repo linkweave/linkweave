@@ -262,7 +262,6 @@ See individual use cases for endpoint details and request/response formats.
 
 ## Future Considerations
 
-- Drag & drop for folder/bookmark reorganization
 - Bulk actions (select multiple, delete, move)
 - Export/import bookmarks
 - Keyboard shortcuts

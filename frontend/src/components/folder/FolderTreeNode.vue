@@ -70,7 +70,7 @@ function toggleExpand(folderId: string) {
           <span class="flex-1 truncate">{{ node.folder.data.name }}</span>
           <DropdownMenuTrigger as-child>
             <button
-              class="ml-auto h-6 w-6 shrink-0 inline-flex items-center justify-center rounded-md sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-primary hover:text-primary-foreground"
+              class="ml-auto h-6 w-6 shrink-0 inline-flex items-center justify-center rounded-md transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground"
               @click.stop
             >
               <MoreHorizontal class="h-3.5 w-3.5" />
