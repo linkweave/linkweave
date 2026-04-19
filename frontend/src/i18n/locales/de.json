@@ -20,7 +20,12 @@
     "create": "Erstellen",
     "loading": "Laden...",
     "confirm": "Bestätigen",
-    "all": "Alle"
+    "all": "Alle",
+    "undo": "Rückgängig"
+  },
+  "dnd": {
+    "bookmarkMoved": "Lesezeichen verschoben.",
+    "folderMoved": "Ordner verschoben."
   },
   "header": {
     "addBookmark": "Lesezeichen hinzufügen",
@@ -54,7 +59,7 @@
   },
   "sidebar": {
     "bookmarks": "Lesezeichen",
-    "allBookmarks": "Alle Lesezeichen",
+    "allBookmarks": "{name}",
     "tags": "Tags",
     "newFolder": "Neuer Ordner"
   },
@@ -119,7 +124,9 @@
     "renameError": "Ordner konnte nicht umbenannt werden.",
     "deleteTitle": "Ordner löschen",
     "deleteConfirm": "Möchten Sie diesen Ordner wirklich löschen? Alle Lesezeichen darin werden dauerhaft gelöscht.",
-    "deleteError": "Ordner konnte nicht gelöscht werden."
+    "deleteError": "Ordner konnte nicht gelöscht werden.",
+    "moveError": "Ordner konnte nicht verschoben werden.",
+    "dropToRoot": "Hier ablegen, um auf die Stammebene zu verschieben"
   },
   "bookmark": {
     "createTitle": "Lesezeichen erstellen",

@@ -10,6 +10,7 @@ import {
 import type { BookmarkJson } from '@/api/generated'
 import { useTagStore } from '@/stores/tag'
 import { useFolderStore } from '@/stores/folder'
+import { DRAG_TYPE_BOOKMARK, setDraggingBookmark } from '@/composables/useDragState'
 
 const tagStore = useTagStore()
 const folderStore = useFolderStore()
@@ -43,6 +44,17 @@ function getTagById(tagId: string) {
   return tagStore.tags.find(t => t.id === tagId)
 }
 
+function onBookmarkDragStart(event: DragEvent) {
+  if (!event.dataTransfer) return
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData(DRAG_TYPE_BOOKMARK, props.bookmark.id)
+  setDraggingBookmark(true)
+}
+
+function onBookmarkDragEnd() {
+  setDraggingBookmark(false)
+}
+
 function getFolderName(): string | null {
   const folderId = props.bookmark.data.folderId
   if (!folderId) return null
@@ -52,7 +64,12 @@ function getFolderName(): string | null {
 </script>
 
 <template>
-  <div class="group rounded-lg border border-border bg-card p-4 hover:ring-2 hover:ring-primary/50 hover:border-primary/30 transition-all text-muted-foreground hover:text-accent-foreground">
+  <div
+    draggable="true"
+    class="group rounded-lg border border-border bg-card p-4 hover:ring-2 hover:ring-primary/50 hover:border-primary/30 transition-all text-muted-foreground hover:text-accent-foreground cursor-grab active:cursor-grabbing"
+    @dragstart="onBookmarkDragStart"
+    @dragend="onBookmarkDragEnd"
+  >
     <DropdownMenuRoot>
       <div class="flex items-start gap-3">
         <img

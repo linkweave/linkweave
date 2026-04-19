@@ -34,7 +34,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     let result = bookmarks.value
 
     if (folderStore.selectedFolderId !== null) {
-      result = result.filter(b => b.data.folderId === folderStore.selectedFolderId)
+      result = result.filter(b => b.data.folderId != null && folderStore.selectedFolderIds.has(b.data.folderId))
     }
 
     if (tagStore.selectedTagIds.size > 0) {

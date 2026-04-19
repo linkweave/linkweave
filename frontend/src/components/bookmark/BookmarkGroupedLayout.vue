@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFolderStore } from '@/stores/folder'
 import type { BookmarkJson, FolderJson } from '@/api/generated'
 import { Folder, FolderOpen, MoreHorizontal } from 'lucide-vue-next'
+import { DRAG_TYPE_BOOKMARK, isDraggingBookmark, setDraggingBookmark } from '@/composables/useDragState'
+import { useDndMove } from '@/composables/useDndMove'
 import {
   DropdownMenuRoot,
   DropdownMenuTrigger,
@@ -14,6 +16,7 @@ import {
 
 const { t } = useI18n()
 const folderStore = useFolderStore()
+const { moveBookmarkWithUndo } = useDndMove()
 
 const props = defineProps<{
   bookmarks: BookmarkJson[]
@@ -119,6 +122,49 @@ const groups = computed<GroupCard[]>(() => {
   return cards
 })
 
+function onBookmarkDragStart(event: DragEvent, bookmark: BookmarkJson) {
+  if (!event.dataTransfer) return
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData(DRAG_TYPE_BOOKMARK, bookmark.id)
+  setDraggingBookmark(true)
+}
+
+function onBookmarkDragEnd() {
+  setDraggingBookmark(false)
+}
+
+// ── Card header drop targets ─────────────────────────────────────────────────
+
+const dragOverCardId = ref<string | null>(null) // rootFolder.id or 'unfiled'
+
+function cardKey(group: GroupCard): string {
+  return group.rootFolder?.id ?? 'unfiled'
+}
+
+function onHeaderDragOver(event: DragEvent, group: GroupCard) {
+  const types = event.dataTransfer?.types ?? []
+  if (!types.includes(DRAG_TYPE_BOOKMARK)) return
+  event.preventDefault()
+  event.stopPropagation()
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+  dragOverCardId.value = cardKey(group)
+}
+
+function onHeaderDragLeave(event: DragEvent, group: GroupCard) {
+  const related = event.relatedTarget as Node | null
+  const el = event.currentTarget as HTMLElement
+  if (related && el.contains(related)) return
+  if (dragOverCardId.value === cardKey(group)) dragOverCardId.value = null
+}
+
+async function onHeaderDrop(event: DragEvent, group: GroupCard) {
+  event.preventDefault()
+  dragOverCardId.value = null
+
+  const bookmarkId = event.dataTransfer?.getData(DRAG_TYPE_BOOKMARK)
+  if (bookmarkId) await moveBookmarkWithUndo(bookmarkId, group.rootFolder?.id)
+}
+
 function faviconUrl(url: string): string {
   try {
     const hostname = new URL(url).hostname
@@ -136,8 +182,16 @@ function faviconUrl(url: string): string {
       :key="group.rootFolder?.id ?? 'unfiled'"
       class="rounded-lg border border-border bg-card overflow-hidden flex flex-col"
     >
-      <!-- Card header -->
-      <div class="px-4 py-3 border-b border-border bg-muted/30 flex items-center gap-2 shrink-0">
+      <!-- Card header (drop target) -->
+      <div
+        class="px-4 py-3 border-b border-border bg-muted/30 flex items-center gap-2 shrink-0 transition-colors"
+        :class="dragOverCardId === cardKey(group)
+          ? 'bg-primary/15 border-primary/40 ring-2 ring-primary/40 ring-inset'
+          : isDraggingBookmark ? 'bg-primary/5 border-primary/20' : ''"
+        @dragover="onHeaderDragOver($event, group)"
+        @dragleave="onHeaderDragLeave($event, group)"
+        @drop="onHeaderDrop($event, group)"
+      >
         <Folder class="h-4 w-4 text-primary shrink-0" />
         <span class="font-medium text-sm text-foreground truncate flex-1">
           {{ group.rootFolder?.data.name ?? t('bookmarkList.unfiled') }}
@@ -165,7 +219,10 @@ function faviconUrl(url: string): string {
           <div
             v-for="bookmark in section.bookmarks"
             :key="bookmark.id"
-            class="group/row flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-accent/50 min-w-0"
+            draggable="true"
+            class="group/row flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-accent/50 min-w-0 cursor-grab active:cursor-grabbing"
+            @dragstart="onBookmarkDragStart($event, bookmark)"
+            @dragend="onBookmarkDragEnd"
           >
             <img
               v-if="faviconUrl(bookmark.data.url)"

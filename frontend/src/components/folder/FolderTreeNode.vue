@@ -9,10 +9,21 @@ import {
   DropdownMenuItem,
 } from 'radix-vue'
 import type { FolderJson } from '@/api/generated'
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { useFolderStore } from '@/stores/folder'
+import {
+  DRAG_TYPE_BOOKMARK,
+  DRAG_TYPE_FOLDER,
+  draggingFolderId,
+  getDraggingFolderId,
+  isDraggingBookmark,
+  isDraggingFolder,
+  setDraggingFolderId,
+} from '@/composables/useDragState'
+import { useDndMove } from '@/composables/useDndMove'
 
 const folderStore = useFolderStore()
+const { moveBookmarkWithUndo, moveFolderWithUndo } = useDndMove()
 
 withDefaults(defineProps<{
   nodes: FolderNode[]
@@ -31,6 +42,7 @@ interface FolderNode {
 }
 
 const expanded = reactive<Record<string, boolean>>({})
+const dragOverFolderId = ref<string | null>(null)
 
 function isExpanded(folderId: string): boolean {
   return expanded[folderId] ?? true
@@ -39,6 +51,92 @@ function isExpanded(folderId: string): boolean {
 function toggleExpand(folderId: string) {
   expanded[folderId] = !isExpanded(folderId)
 }
+
+// ── Available drop target indicator ─────────────────────────────────────────
+
+function isAvailableTarget(folderId: string): boolean {
+  if (isDraggingBookmark.value) return true
+  if (isDraggingFolder.value) return draggingFolderId.value !== folderId
+  return false
+}
+
+// ── Drag source (folder being dragged) ──────────────────────────────────────
+
+function onFolderDragStart(event: DragEvent, folder: FolderJson) {
+  if (!event.dataTransfer) return
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData(DRAG_TYPE_FOLDER, folder.id)
+  setDraggingFolderId(folder.id)
+  event.stopPropagation()
+}
+
+function onFolderDragEnd() {
+  setDraggingFolderId(null)
+}
+
+// ── Drop target helpers ──────────────────────────────────────────────────────
+
+function isDescendant(ancestorId: string, targetId: string): boolean {
+  // Returns true if targetId is ancestorId or any descendant of ancestorId
+  if (targetId === ancestorId) return true
+  const folder = folderStore.folders.find(f => f.id === targetId)
+  if (!folder?.data.parentId) return false
+  return isDescendant(ancestorId, folder.data.parentId)
+}
+
+function isDragAccepted(event: DragEvent, targetFolderId: string): boolean {
+  const types = event.dataTransfer?.types ?? []
+  if (types.includes(DRAG_TYPE_BOOKMARK)) return true
+  if (types.includes(DRAG_TYPE_FOLDER)) {
+    const draggingId = getDraggingFolderId()
+    // Prevent dropping a folder onto itself or one of its descendants
+    if (!draggingId) return false
+    if (draggingId === targetFolderId) return false
+    if (isDescendant(draggingId, targetFolderId)) return false
+    return true
+  }
+  return false
+}
+
+function onDragOver(event: DragEvent, folder: FolderJson) {
+  if (!isDragAccepted(event, folder.id)) return
+  event.preventDefault()
+  event.stopPropagation()
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+  dragOverFolderId.value = folder.id
+}
+
+function onDragLeave(event: DragEvent, folder: FolderJson) {
+  // Only clear highlight when leaving the element entirely, not entering a child
+  const related = event.relatedTarget as Node | null
+  const el = event.currentTarget as HTMLElement
+  if (related && el.contains(related)) return
+  if (dragOverFolderId.value === folder.id) {
+    dragOverFolderId.value = null
+  }
+}
+
+async function onDrop(event: DragEvent, targetFolder: FolderJson) {
+  event.preventDefault()
+  event.stopPropagation()
+  dragOverFolderId.value = null
+
+  const types = event.dataTransfer?.types ?? []
+
+  if (types.includes(DRAG_TYPE_BOOKMARK)) {
+    const bookmarkId = event.dataTransfer!.getData(DRAG_TYPE_BOOKMARK)
+    if (bookmarkId) await moveBookmarkWithUndo(bookmarkId, targetFolder.id)
+    return
+  }
+
+  if (types.includes(DRAG_TYPE_FOLDER)) {
+    const folderId = event.dataTransfer!.getData(DRAG_TYPE_FOLDER)
+    if (!folderId) return
+    if (folderId === targetFolder.id) return
+    if (isDescendant(folderId, targetFolder.id)) return
+    await moveFolderWithUndo(folderId, targetFolder.id)
+  }
+}
 </script>
 
 <template>
@@ -46,12 +144,23 @@ function toggleExpand(folderId: string) {
     <li v-for="node in nodes" :key="node.folder.id">
       <DropdownMenuRoot>
         <div
+          draggable="true"
           class="group flex items-center gap-1 rounded-md py-1.5 pr-2 text-sm cursor-pointer transition-colors"
-          :class="folderStore.selectedFolderId === node.folder.id
-            ? 'bg-accent text-accent-foreground'
-            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
+          :class="[
+            folderStore.selectedFolderId === node.folder.id
+              ? 'bg-accent text-accent-foreground'
+              : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+            dragOverFolderId === node.folder.id
+              ? 'ring-2 ring-primary ring-inset'
+              : isAvailableTarget(node.folder.id) ? 'ring-1 ring-primary/30' : '',
+          ]"
           :style="{ paddingLeft: `${requireValue(depth) * 16 + 8}px` }"
           @click="folderStore.selectFolder(node.folder.id)"
+          @dragstart="onFolderDragStart($event, node.folder)"
+          @dragend="onFolderDragEnd"
+          @dragover="onDragOver($event, node.folder)"
+          @dragleave="onDragLeave($event, node.folder)"
+          @drop="onDrop($event, node.folder)"
         >
           <button
             class="p-0.5 rounded transition-transform"

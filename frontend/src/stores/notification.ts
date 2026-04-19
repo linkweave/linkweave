@@ -22,6 +22,21 @@ export const useNotificationStore = defineStore('notification', () => {
     toast.info(message)
   }
 
+  function successWithUndo(message: string, undoLabel: string, onUndo: () => void | Promise<void>) {
+    toast.success(message, {
+      action: {
+        label: undoLabel,
+        onClick: async () => {
+          try {
+            await onUndo()
+          } catch {
+            toast.error('Undo failed')
+          }
+        },
+      },
+    })
+  }
+
   async function handleApiError(err: unknown, fallbackMessage = 'An unexpected error occurred') {
     if (err instanceof ResponseError) {
       try {
@@ -47,6 +62,7 @@ export const useNotificationStore = defineStore('notification', () => {
     error,
     warning,
     info,
+    successWithUndo,
     handleApiError,
   }
 })

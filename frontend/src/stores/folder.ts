@@ -18,6 +18,20 @@ export const useFolderStore = defineStore('folder', () => {
 
   const selectedFolderId = ref<string | null>(null)
 
+  const selectedFolderIds = computed<Set<string>>(() => {
+    if (selectedFolderId.value === null) return new Set()
+    const result = new Set<string>()
+    const queue = [selectedFolderId.value]
+    while (queue.length > 0) {
+      const id = queue.pop()!
+      result.add(id)
+      for (const f of folders.value) {
+        if (f.data.parentId === id) queue.push(f.id)
+      }
+    }
+    return result
+  })
+
   const selectedFolderPath = computed<FolderJson[]>(() => {
     if (selectedFolderId.value === null) return []
     const path: FolderJson[] = []
@@ -89,6 +103,7 @@ export const useFolderStore = defineStore('folder', () => {
     folders,
     loading,
     selectedFolderId,
+    selectedFolderIds,
     selectedFolderPath,
     createFolder,
     renameFolder,

@@ -20,7 +20,12 @@
     "create": "Create",
     "loading": "Loading...",
     "confirm": "Confirm",
-    "all": "All"
+    "all": "All",
+    "undo": "Undo"
+  },
+  "dnd": {
+    "bookmarkMoved": "Bookmark moved.",
+    "folderMoved": "Folder moved."
   },
   "header": {
     "addBookmark": "Add Bookmark",
@@ -54,7 +59,7 @@
   },
   "sidebar": {
     "bookmarks": "Bookmarks",
-    "allBookmarks": "All Bookmarks",
+    "allBookmarks": "{name}",
     "tags": "Tags",
     "newFolder": "New Folder"
   },
@@ -119,7 +124,9 @@
     "renameError": "Failed to rename folder.",
     "deleteTitle": "Delete Folder",
     "deleteConfirm": "Are you sure you want to delete this folder? All bookmarks inside will be permanently deleted.",
-    "deleteError": "Failed to delete folder."
+    "deleteError": "Failed to delete folder.",
+    "moveError": "Failed to move folder.",
+    "dropToRoot": "Drop here to move to root level"
   },
   "bookmark": {
     "createTitle": "Create Bookmark",
