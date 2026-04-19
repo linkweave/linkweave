@@ -3,7 +3,9 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useNotificationStore } from '@/stores/notification'
+import { useUiStore } from '@/stores/ui'
 import BookmarkCard from './BookmarkCard.vue'
+import BookmarkGroupedLayout from './BookmarkGroupedLayout.vue'
 import EditBookmarkDialog from './EditBookmarkDialog.vue'
 import MoveBookmarkDialog from './MoveBookmarkDialog.vue'
 import { ConfirmDialog } from '@/components/ui'
@@ -12,6 +14,7 @@ import type { BookmarkJson } from '@/api/generated'
 const { t } = useI18n()
 const bookmarkStore = useBookmarkStore()
 const notification = useNotificationStore()
+const ui = useUiStore()
 
 const editingBookmark = ref<BookmarkJson | null>(null)
 const showEditDialog = ref(false)
@@ -72,7 +75,7 @@ async function confirmDelete() {
     <p class="text-muted-foreground">{{ t('bookmarkList.empty') }}</p>
   </div>
 
-  <div v-else class="space-y-3">
+  <div v-else-if="ui.bookmarkLayout === 'list'" class="space-y-3">
     <BookmarkCard
       v-for="bookmark in bookmarkStore.filteredBookmarks"
       :key="bookmark.id"
@@ -82,6 +85,25 @@ async function confirmDelete() {
       @move="handleMove"
     />
   </div>
+
+  <div v-else-if="ui.bookmarkLayout === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <BookmarkCard
+      v-for="bookmark in bookmarkStore.filteredBookmarks"
+      :key="bookmark.id"
+      :bookmark="bookmark"
+      @edit="handleEdit"
+      @delete="handleDelete"
+      @move="handleMove"
+    />
+  </div>
+
+  <BookmarkGroupedLayout
+    v-else
+    :bookmarks="bookmarkStore.filteredBookmarks"
+    @edit="handleEdit"
+    @delete="handleDelete"
+    @move="handleMove"
+  />
 
   <EditBookmarkDialog
     :bookmark="editingBookmark"

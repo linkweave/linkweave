@@ -37,7 +37,11 @@
     "dataManagement": "Data Management",
     "exportCollection": "Export Collection",
     "exportError": "Failed to export collection.",
-    "importCollection": "Import Bookmarks"
+    "importCollection": "Import Bookmarks",
+    "layout": "Bookmark Layout",
+    "layoutList": "List",
+    "layoutGrid": "Grid",
+    "layoutGrouped": "Grouped"
   },
   "import": {
     "title": "Import Bookmarks",
@@ -158,7 +162,8 @@
   },
   "bookmarkList": {
     "empty": "No bookmarks yet. Click \"Add Bookmark\" to get started.",
-    "loading": "Loading bookmarks..."
+    "loading": "Loading bookmarks...",
+    "unfiled": "Unfiled"
   },
   "search": {
     "placeholder": "Search bookmarks by name, URL, or tag..."

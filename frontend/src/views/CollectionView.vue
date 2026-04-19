@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { BookmarkPlus } from 'lucide-vue-next'
 import { MainLayout } from '@/components/layout'
 import { ButtonCl } from '@/components/ui'
@@ -7,11 +7,17 @@ import { BookmarkList, SearchBar } from '@/components/bookmark'
 import { FolderBreadcrumbCl } from '@/components/folder'
 import { useI18n } from 'vue-i18n'
 import { useCollectionStore } from '@/stores/collection'
+import { useUiStore } from '@/stores/ui'
 import CreateBookmarkDialog from '@/components/bookmark/CreateBookmarkDialog.vue'
 
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
+const ui = useUiStore()
 const isAddingBookmark = ref(false)
+
+const containerClass = computed(() =>
+  ui.bookmarkLayout === 'grouped' ? 'max-w-7xl' : 'max-w-4xl'
+)
 </script>
 
 <template>
@@ -23,7 +29,7 @@ const isAddingBookmark = ref(false)
       </ButtonCl>
     </template>
 
-    <div class="max-w-4xl mx-auto space-y-6">
+    <div :class="[containerClass, 'mx-auto space-y-6']">
       <FolderBreadcrumbCl />
       <SearchBar />
       <BookmarkList />

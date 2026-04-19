@@ -37,7 +37,11 @@
     "dataManagement": "Datenverwaltung",
     "exportCollection": "Sammlung exportieren",
     "exportError": "Sammlung konnte nicht exportiert werden.",
-    "importCollection": "Lesezeichen importieren"
+    "importCollection": "Lesezeichen importieren",
+    "layout": "Lesezeichen-Layout",
+    "layoutList": "Liste",
+    "layoutGrid": "Raster",
+    "layoutGrouped": "Gruppiert"
   },
   "import": {
     "title": "Lesezeichen importieren",
@@ -158,7 +162,8 @@
   },
   "bookmarkList": {
     "empty": "Noch keine Lesezeichen. Klicken Sie auf 'Lesezeichen hinzufügen', um zu beginnen.",
-    "loading": "Lesezeichen laden..."
+    "loading": "Lesezeichen laden...",
+    "unfiled": "Ohne Ordner"
   },
   "search": {
     "placeholder": "Lesezeichen nach Name, URL oder Tag suchen..."

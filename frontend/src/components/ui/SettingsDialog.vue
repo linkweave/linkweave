@@ -3,9 +3,9 @@ import ImportCollectionDialog from '@/components/bookmark/ImportCollectionDialog
 import { ButtonCl, DialogCl } from '@/components/ui'
 import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
-import { useUiStore, type Theme } from '@/stores/ui'
+import { useUiStore, type Theme, type BookmarkLayout } from '@/stores/ui'
 import { downloadBlobDirectly, extractFilenameFromContentDispositionHeader } from '@/utils/download'
-import { Download, Monitor, Moon, Sun, Upload } from 'lucide-vue-next'
+import { Download, LayoutGrid, LayoutList, Monitor, Moon, Sun, Upload, Layers } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -33,6 +33,12 @@ const themes: { value: Theme; icon: typeof Sun; labelKey: string }[] = [
   { value: 'light', icon: Sun, labelKey: 'settings.themeLight' },
   { value: 'dark', icon: Moon, labelKey: 'settings.themeDark' },
   { value: 'system', icon: Monitor, labelKey: 'settings.themeSystem' },
+]
+
+const layouts: { value: BookmarkLayout; icon: typeof LayoutList; labelKey: string }[] = [
+  { value: 'list', icon: LayoutList, labelKey: 'settings.layoutList' },
+  { value: 'grid', icon: LayoutGrid, labelKey: 'settings.layoutGrid' },
+  { value: 'grouped', icon: Layers, labelKey: 'settings.layoutGrouped' },
 ]
 
 async function handleImported() {
@@ -87,6 +93,28 @@ async function handleExport() {
                 : 'border-border bg-card text-muted-foreground hover:bg-accent'
             "
             @click="ui.setTheme(option.value)"
+          >
+            <component :is="option.icon" class="h-5 w-5" />
+            {{ t(option.labelKey) }}
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="text-sm font-medium text-foreground mb-3">
+          {{ t('settings.layout') }}
+        </h3>
+        <div class="flex gap-2">
+          <button
+            v-for="option in layouts"
+            :key="option.value"
+            class="flex flex-1 flex-col items-center gap-2 rounded-md border px-4 py-3 text-sm transition-colors"
+            :class="
+              ui.bookmarkLayout === option.value
+                ? 'border-primary bg-primary/10 text-foreground'
+                : 'border-border bg-card text-muted-foreground hover:bg-accent'
+            "
+            @click="ui.setBookmarkLayout(option.value)"
           >
             <component :is="option.icon" class="h-5 w-5" />
             {{ t(option.labelKey) }}
