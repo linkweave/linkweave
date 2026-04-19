@@ -77,6 +77,7 @@ rectangle "Chainlink Bookmark Manager" {
         usecase "UC-030\nRobust Error Handling" as UC030
         usecase "UC-035\nAdd ArchUnit Tests" as UC035
         usecase "UC-036\nAdopt Form Library\nwith Zod Schemas" as UC036 <<implemented>>
+        usecase "UC-039\nSession Data Cleanup" as UC039 <<implemented>>
         usecase "UC-037\nProvide Browser\nExtension" as UC037
         usecase "UC-038\nOffline Mode" as UC038
     }
@@ -135,6 +136,7 @@ user --> UC031
 ' Architecture & Quality
 developer --> UC035
 developer --> UC036
+developer --> UC039
 user --> UC037
 user --> UC038
 

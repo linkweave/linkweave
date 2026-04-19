@@ -188,5 +188,6 @@ export const useCollectionStore = defineStore('collection', () => {
     fetchMembers,
     shareWithUser,
     revokeAccess,
+    collectionsFetched,
   }
 })
