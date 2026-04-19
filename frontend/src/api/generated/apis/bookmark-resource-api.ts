@@ -45,6 +45,10 @@ export interface BookmarkResourceApiApiBookmarksBookmarkIdPutRequest {
     bookmarkSaveJson: BookmarkSaveJson;
 }
 
+export interface BookmarkResourceApiApiBookmarksBookmarkIdTrackClickPostRequest {
+    bookmarkId: string;
+}
+
 export interface BookmarkResourceApiApiBookmarksGetRequest {
     collectionId: string;
 }
@@ -210,6 +214,50 @@ export class BookmarkResourceApi extends runtime.BaseAPI {
     async apiBookmarksBookmarkIdPut(requestParameters: BookmarkResourceApiApiBookmarksBookmarkIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BookmarkJson> {
         const response = await this.apiBookmarksBookmarkIdPutRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Creates request options for apiBookmarksBookmarkIdTrackClickPost without sending the request
+     */
+    async apiBookmarksBookmarkIdTrackClickPostRequestOpts(requestParameters: BookmarkResourceApiApiBookmarksBookmarkIdTrackClickPostRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['bookmarkId'] == null) {
+            throw new runtime.RequiredError(
+                'bookmarkId',
+                'Required parameter "bookmarkId" was null or undefined when calling apiBookmarksBookmarkIdTrackClickPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/api/bookmarks/{bookmarkId}/track-click`;
+        urlPath = urlPath.replace(`{${"bookmarkId"}}`, encodeURIComponent(String(requestParameters['bookmarkId'])));
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * Track Click
+     */
+    async apiBookmarksBookmarkIdTrackClickPostRaw(requestParameters: BookmarkResourceApiApiBookmarksBookmarkIdTrackClickPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.apiBookmarksBookmarkIdTrackClickPostRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Track Click
+     */
+    async apiBookmarksBookmarkIdTrackClickPost(requestParameters: BookmarkResourceApiApiBookmarksBookmarkIdTrackClickPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiBookmarksBookmarkIdTrackClickPostRaw(requestParameters, initOverrides);
     }
 
     /**

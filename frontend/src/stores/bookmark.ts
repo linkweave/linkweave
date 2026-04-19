@@ -112,6 +112,14 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     return updated
   }
 
+  function trackClick(bookmarkId: string): void {
+    fetch(`/api/bookmarks/${bookmarkId}/track-click`, {
+      method: 'POST',
+      keepalive: true,
+      credentials: 'include',
+    }).catch(() => {})
+  }
+
   return {
     bookmarks,
     loading,
@@ -123,5 +131,6 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     updateBookmark,
     deleteBookmark,
     moveBookmarkToFolder,
+    trackClick,
   }
 })

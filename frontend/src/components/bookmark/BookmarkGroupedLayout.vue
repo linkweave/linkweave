@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFolderStore } from '@/stores/folder'
 import type { BookmarkJson, FolderJson } from '@/api/generated'
+import { useBookmarkStore } from '@/stores/bookmark'
 import { Folder, FolderOpen, MoreHorizontal } from 'lucide-vue-next'
 import { DRAG_TYPE_BOOKMARK, isDraggingBookmark, setDraggingBookmark } from '@/composables/useDragState'
 import { useDndMove } from '@/composables/useDndMove'
@@ -16,6 +17,7 @@ import {
 
 const { t } = useI18n()
 const folderStore = useFolderStore()
+const bookmarkStore = useBookmarkStore()
 const { moveBookmarkWithUndo } = useDndMove()
 
 const props = defineProps<{
@@ -237,6 +239,7 @@ function faviconUrl(url: string): string {
               target="_blank"
               rel="noopener noreferrer"
               class="flex-1 text-sm truncate text-foreground hover:text-primary transition-colors min-w-0"
+              @click="bookmarkStore.trackClick(bookmark.id)"
             >
               {{ bookmark.data.title }}
             </a>

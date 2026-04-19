@@ -1,6 +1,7 @@
 package org.chainlink.api.bookmark;
 
 import java.net.URL;
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -76,5 +77,12 @@ public class Bookmark extends AbstractEntity<Bookmark> {
         }
     )
     private Set<Tag> tags = new HashSet<>();
+
+    @Column(name = "click_count", nullable = false)
+    private int clickCount = 0;
+
+    @Nullable
+    @Column(name = "last_clicked_at", nullable = true)
+    private OffsetDateTime lastClickedAt;
 
 }

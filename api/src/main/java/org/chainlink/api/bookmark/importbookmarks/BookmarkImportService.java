@@ -124,7 +124,9 @@ public class BookmarkImportService {
             parsed.getTitle(),
             url.get(),
             parsed.getDescription(),
-            new HashSet<>(Set.of(importTag))
+            new HashSet<>(Set.of(importTag)),
+            0,
+            null
         );
         bookmarkRepo.persist(bookmark);
         return true;

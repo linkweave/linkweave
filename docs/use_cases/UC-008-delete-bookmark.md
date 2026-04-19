@@ -5,12 +5,12 @@
 **Use Case ID:** UC-008   
 **Use Case Name:** Delete Bookmark   
 **Primary Actor:** User   
-**Goal:** Remove a bookmark that is no longer needed from the collection.   
-**Status:** Implemented   
+**Goal:** Move a bookmark that is no longer needed to the trashbin so it can be restored later or permanently deleted.
+**Status:** Draft
 
 ## Traceability
 
-**Maps to:** FR-008
+**Maps to:** FR-008, FR-046
 
 ---
 
@@ -27,7 +27,7 @@
 3. System prompts for confirmation.
 4. User confirms the deletion.
 5. System removes all tag associations from the bookmark.
-6. System deletes the bookmark.
+6. System moves the bookmark to the trashbin (soft delete), recording the original folder location.
 7. System updates the bookmark list to remove the deleted bookmark.
 
 ## Alternative Flows
@@ -51,7 +51,7 @@
 3. System prompts for confirmation showing the count of bookmarks to delete.
 4. User confirms the deletion.
 5. System removes all tag associations from all selected bookmarks.
-6. System deletes all selected bookmarks.
+6. System moves all selected bookmarks to the trashbin (soft delete), recording their original folder locations.
 7. System updates the bookmark list.
 8. Use case ends.
 
@@ -59,9 +59,10 @@
 
 ### Success Postconditions
 
-- The bookmark no longer exists in the collection.
+- The bookmark is moved to the trashbin and no longer visible in the collection.
 - All tag associations for the bookmark are removed.
 - The bookmark is removed from any folder it was in.
+- The bookmark can be restored from the trashbin (UC-041) or permanently deleted (UC-042).
 
 ### Failure Postconditions
 
@@ -74,6 +75,6 @@
 
 Deleting a bookmark removes all associations with tags; the tags themselves remain in the collection.
 
-### BR-050: Undo Not Supported
+### BR-050: Soft Delete
 
-Bookmark deletion is permanent; there is no undo functionality.
+Deleting a bookmark moves it to the trashbin. The bookmark can be restored from the trashbin (UC-041) or permanently deleted from there (UC-042).
