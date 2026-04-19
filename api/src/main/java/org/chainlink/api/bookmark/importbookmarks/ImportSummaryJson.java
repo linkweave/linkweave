@@ -21,11 +21,17 @@ public class ImportSummaryJson {
 
     int bookmarksCreated;
 
+    int bookmarksSkipped;
+
     public void incrementFoldersCreated() {
         foldersCreated++;
     }
 
     public void incrementBookmarksCreated() {
         bookmarksCreated++;
+    }
+
+    public void incrementBookmarksSkipped() {
+        bookmarksSkipped++;
     }
 }

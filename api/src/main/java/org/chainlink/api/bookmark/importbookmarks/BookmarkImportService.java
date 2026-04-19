@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import ch.dvbern.dvbstarter.types.id.ID;
@@ -20,8 +21,6 @@ import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.bookmark.folder.FolderRepo;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.collection.CollectionRepo;
-import org.chainlink.infrastructure.errorhandling.AppFailureException;
-import org.chainlink.infrastructure.errorhandling.AppFailureMessage;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -47,8 +46,11 @@ public class BookmarkImportService {
         ImportSummaryJson summary = new ImportSummaryJson(importTag.getName());
 
         for (ParsedBookmark rootBookmark : importDTO.rootBookmarks()) {
-            createBookmark(rootBookmark, collection, null, importTag);
-            summary.incrementBookmarksCreated();
+            if (createBookmark(rootBookmark, collection, null, importTag)) {
+                summary.incrementBookmarksCreated();
+            } else {
+                summary.incrementBookmarksSkipped();
+            }
         }
 
         for (ParsedFolder parsedFolder : importDTO.rootFolders()) {
@@ -91,8 +93,11 @@ public class BookmarkImportService {
         summary.incrementFoldersCreated();
 
         for (ParsedBookmark parsedBookmark : parsedFolder.getBookmarks()) {
-            createBookmark(parsedBookmark, collection, folder, importTag);
-            summary.incrementBookmarksCreated();
+            if (createBookmark(parsedBookmark, collection, folder, importTag)) {
+                summary.incrementBookmarksCreated();
+            } else {
+                summary.incrementBookmarksSkipped();
+            }
         }
 
         for (ParsedFolder child : parsedFolder.getFolders()) {
@@ -100,29 +105,36 @@ public class BookmarkImportService {
         }
     }
 
-    private void createBookmark(
+    /**
+     * @return true if the bookmark was created, false if it was skipped due to an invalid URL
+     */
+    private boolean createBookmark(
         @NonNull ParsedBookmark parsed,
         @NonNull Collection collection,
         @Nullable Folder folder,
         @NonNull Tag importTag
     ) {
+        Optional<URL> url = parseUrl(parsed.getUrl());
+        if (url.isEmpty()) {
+            return false;
+        }
         Bookmark bookmark = new Bookmark(
             collection,
             folder,
             parsed.getTitle(),
-            parseUrl(parsed.getUrl()),
+            url.get(),
             parsed.getDescription(),
             new HashSet<>(Set.of(importTag))
         );
         bookmarkRepo.persist(bookmark);
+        return true;
     }
 
-    private URL parseUrl(@NonNull String urlString) {
+    private Optional<URL> parseUrl(@NonNull String urlString) {
         try {
-            return URI.create(urlString).toURL();
+            return Optional.of(URI.create(urlString).toURL());
         } catch (Exception _) {
-            throw new AppFailureException(
-                AppFailureMessage.internalError("Invalid URL in import file: " + urlString));
+            return Optional.empty();
         }
     }
 }
