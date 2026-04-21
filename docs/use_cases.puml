@@ -74,8 +74,19 @@ rectangle "Chainlink Bookmark Manager" {
         end note
     }
 
+    rectangle "Trashbin" {
+        usecase "UC-040\nView Trashbin" as UC040
+        usecase "UC-041\nRestore Deleted Item" as UC041
+        usecase "UC-042\nPermanently Delete\nfrom Trashbin" as UC042
+        usecase "UC-043\nEmpty Trashbin" as UC043
+    }
+
     rectangle "Cleanup" {
         usecase "UC-044\nReview Cleanup\nSuggestions" as UC044
+    }
+
+    rectangle "Auto-Tagging" {
+        usecase "UC-045\nAuto-Tag Bookmark\nby URL Pattern" as UC045
     }
 
     rectangle "Architecture & Quality Control" {
@@ -148,6 +159,15 @@ user --> UC038
 
 ' Cleanup
 user --> UC044
+
+' Trashbin
+user --> UC040
+user --> UC041
+user --> UC042
+user --> UC043
+
+' Auto-Tagging
+user --> UC045
 
 note right of UC037
   See browser-extension.md

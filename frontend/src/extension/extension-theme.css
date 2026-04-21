@@ -1,0 +1,12 @@
+/* Softer dark theme for the extension popup/options.
+   Imported AFTER main.css so these override the base .dark variables. */
+.dark {
+  --color-background: #222530;
+  --color-card: #2a2e3d;
+  --color-secondary: #303446;
+  --color-muted: #303446;
+  --color-accent: #303446;
+  --color-popover: #2a2e3d;
+  --color-border: #424760;
+  --color-input: #303446;
+}

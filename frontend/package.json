@@ -18,7 +18,9 @@
     "test:e2e:debug": "playwright test --debug",
     "generate-api": "tsx scripts/generate-api.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "dev:extension": "vite build --watch --config vite.config.extension.ts --mode extension.development",
+    "build:extension": "vite build --config vite.config.extension.ts --mode extension.production"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",
@@ -58,7 +60,8 @@
     "vite": "^7.3.1",
     "vite-plugin-vue-devtools": "^8.0.7",
     "vitest": "^4.1.2",
-    "vue-tsc": "^3.2.5"
+    "vue-tsc": "^3.2.5",
+    "@types/chrome": "^0.0.287"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"

@@ -1,0 +1,23 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "include": [
+    "src/extension/**/*",
+    "src/extension/**/*.vue",
+    "src/api/**/*",
+    "src/lib/**/*",
+    "src/assets/**/*",
+    "src/components/ui/**/*.vue"
+  ],
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/**/__tests__/**"
+  ],
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": true,
+    "types": ["chrome", "vite/client"],
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.extension.tsbuildinfo"
+  }
+}
