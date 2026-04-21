@@ -135,7 +135,7 @@ jobs:
         run: npm run package:extension
 
       - name: Upload extension artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: chainlink-extension-${{ steps.version.outputs.VERSION }}
           path: frontend/chainlink-extension.zip
