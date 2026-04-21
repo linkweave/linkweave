@@ -99,6 +99,47 @@ jobs:
             org.opencontainers.image.title=Chainlink Frontend
             org.opencontainers.image.description=Vue.js frontend for Chainlink
 
+  build-extension:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Generate version from timestamp
+        id: version
+        run: |
+          # Format: YYYY.MMDD.HHMM — always increasing, fits Chrome Web Store constraints
+          VERSION="$(date -u +'%Y.%-m%d.%-H%M')"
+          echo "VERSION=$VERSION" >> $GITEA_OUTPUT
+          echo "Extension version: $VERSION"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Stamp version in manifest
+        working-directory: frontend/extension-public
+        run: |
+          sed -i 's/"version": ".*"/"version": "${{ steps.version.outputs.VERSION }}"/' manifest.json
+          echo "Manifest version:"
+          grep '"version"' manifest.json
+
+      - name: Build extension
+        working-directory: frontend
+        run: npm run package:extension
+
+      - name: Upload extension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chainlink-extension-${{ steps.version.outputs.VERSION }}
+          path: frontend/chainlink-extension.zip
+
   deploy:
     needs: [build, build-frontend]
     if: gitea.event_name == 'push' && gitea.ref == 'refs/heads/main'

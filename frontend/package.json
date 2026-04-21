@@ -20,7 +20,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "dev:extension": "vite build --watch --config vite.config.extension.ts --mode extension.development",
-    "build:extension": "vite build --config vite.config.extension.ts --mode extension.production"
+    "build:extension": "vite build --config vite.config.extension.ts --mode extension.production",
+    "package:extension": "npm run build:extension && cd dist-extension && zip -r ../chainlink-extension.zip . -x '.*'"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",
