@@ -2,7 +2,7 @@
 import { useExtensionStore } from '../stores/extension'
 import BookmarkItem from '../components/BookmarkItem.vue'
 import TagSelect from '../components/TagSelect.vue'
-import FolderSelect from '../components/FolderSelect.vue'
+import { FolderSelectCl } from '@/components/ui'
 import { Search, X } from 'lucide-vue-next'
 
 const store = useExtensionStore()
@@ -54,7 +54,7 @@ function onFolderChange(val: string | undefined) {
         />
       </div>
       <div v-if="store.folders.length > 0" :class="store.tags.length > 0 ? 'w-36 shrink-0' : 'flex-1'">
-        <FolderSelect
+        <FolderSelectCl
           :folders="store.folders"
           :model-value="folderModelValue(store.selectedFolderId)"
           direction="down"

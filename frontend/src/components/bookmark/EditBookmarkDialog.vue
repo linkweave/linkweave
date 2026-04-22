@@ -3,7 +3,7 @@ import { computed, toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
-import { DialogCl, ButtonCl, FormFieldCl } from '@/components/ui'
+import { DialogCl, ButtonCl, FormFieldCl, FolderSelectCl } from '@/components/ui'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useFolderStore } from '@/stores/folder'
 import { useTagStore } from '@/stores/tag'
@@ -45,12 +45,10 @@ const { defineField, handleSubmit, errors, resetForm, isSubmitting } = useForm({
 const [title, titleAttrs] = defineField('title')
 const [url, urlAttrs] = defineField('url')
 const [description, descriptionAttrs] = defineField('description')
-const [folderId, folderIdAttrs] = defineField('folderId')
+const [folderId] = defineField('folderId')
 const [tagIds] = defineField('tagIds')
 
-const folderOptions = computed(() =>
-  folderStore.folders.map(f => ({ id: f.id, name: f.data.name }))
-)
+const folders = computed(() => folderStore.folders)
 
 useFormDialog(toRef(props, 'open'), () => {
   if (props.bookmark) {
@@ -130,17 +128,13 @@ const onSubmit = handleSubmit(async (values) => {
       </FormFieldCl>
 
       <FormFieldCl :label="t('bookmark.folder')" for-id="edit-bookmark-folder" :error="errors.folderId">
-        <select
+        <FolderSelectCl
           id="edit-bookmark-folder"
           v-model="folderId"
-          v-bind="folderIdAttrs"
-          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        >
-          <option :value="undefined">{{ t('bookmark.noFolder') }}</option>
-          <option v-for="opt in folderOptions" :key="opt.id" :value="opt.id">
-            {{ opt.name }}
-          </option>
-        </select>
+          :folders="folders"
+          :placeholder="t('bookmark.noFolder')"
+          direction="down"
+        />
       </FormFieldCl>
 
       <div class="space-y-2">
