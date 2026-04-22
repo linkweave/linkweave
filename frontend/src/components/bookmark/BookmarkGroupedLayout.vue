@@ -194,7 +194,11 @@ function faviconUrl(url: string): string {
         @dragleave="onHeaderDragLeave($event, group)"
         @drop="onHeaderDrop($event, group)"
       >
-        <Folder class="h-4 w-4 text-primary shrink-0" />
+        <Folder
+          class="h-4 w-4 shrink-0"
+          :class="group.rootFolder?.data.color ? '' : 'text-primary'"
+          :style="group.rootFolder?.data.color ? { color: group.rootFolder.data.color } : undefined"
+        />
         <span class="font-medium text-sm text-foreground truncate flex-1">
           {{ group.rootFolder?.data.name ?? t('bookmarkList.unfiled') }}
         </span>
@@ -213,7 +217,11 @@ function faviconUrl(url: string): string {
             class="flex items-center gap-1.5 px-1 py-1"
             :class="sectionIndex > 0 ? 'mt-1 border-t border-border/50 pt-2' : ''"
           >
-            <FolderOpen class="h-3 w-3 text-muted-foreground shrink-0" />
+            <FolderOpen
+              class="h-3 w-3 shrink-0"
+              :class="section.folder?.data.color ? '' : 'text-muted-foreground'"
+              :style="section.folder?.data.color ? { color: section.folder.data.color } : undefined"
+            />
             <span class="text-xs text-muted-foreground font-medium truncate">{{ section.folder?.data.name }}</span>
           </div>
 

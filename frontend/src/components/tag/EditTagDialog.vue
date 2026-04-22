@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
-import { DialogCl, ButtonCl, FormFieldCl } from '@/components/ui'
+import { DialogCl, ButtonCl, FormFieldCl, ColorInputCl } from '@/components/ui'
 import { useTagStore } from '@/stores/tag'
 import { useNotificationStore } from '@/stores/notification'
 import { tagSaveSchema } from '@/schemas/tag'
@@ -78,22 +78,12 @@ const onSubmit = handleSubmit(async (values) => {
       </FormFieldCl>
 
       <FormFieldCl :label="t('tag.color')" for-id="edit-tag-color" :error="errors.color">
-        <div class="flex items-center gap-2">
-          <input
-            id="edit-tag-color"
-            v-model="color"
-            v-bind="colorAttrs"
-            type="text"
-            maxlength="7"
-            placeholder="#ef4444"
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
-          <span
-            v-if="color"
-            class="h-9 w-9 shrink-0 rounded-md border border-input"
-            :style="{ backgroundColor: color }"
-          />
-        </div>
+        <ColorInputCl
+          :model-value="color"
+          :attrs="colorAttrs"
+          input-id="edit-tag-color"
+          @update:model-value="color = $event"
+        />
       </FormFieldCl>
 
       <div class="flex justify-end gap-2">

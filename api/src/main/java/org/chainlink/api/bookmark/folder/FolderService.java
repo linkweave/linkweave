@@ -20,10 +20,7 @@ public class FolderService {
     private final FolderRepo folderRepo;
     private final CollectionRepo collectionRepo;
 
-    @NonNull
-    public List<Folder> getAllFolders() {
-        return folderRepo.findAll();
-    }
+
 
     @NonNull
     public Folder createFolder(@NonNull FolderSaveJson json) {
@@ -32,6 +29,7 @@ public class FolderService {
         Folder folder = new Folder();
         folder.setCollection(collectionRepo.referenceById(collectionId));
         folder.setName(json.getName());
+        folder.setColor(json.getColor());
 
         ID<Folder> parentId = json.getParentId();
         if (parentId != null) {
@@ -71,6 +69,7 @@ public class FolderService {
 
         folder.setCollection(collectionRepo.referenceById(collectionId));
         folder.setName(json.getName());
+        folder.setColor(json.getColor());
 
         folderRepo.persist(folder);
         return folder;

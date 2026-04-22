@@ -1,4 +1,5 @@
 import './assets/main.css'
+import 'vue-color/style.css'
 import { createPinia } from 'pinia'
 import { configure } from 'vee-validate'
 

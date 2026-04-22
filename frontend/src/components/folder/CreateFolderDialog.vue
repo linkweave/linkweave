@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
-import { DialogCl, ButtonCl, FormFieldCl, FolderSelectCl } from '@/components/ui'
+import { DialogCl, ButtonCl, FormFieldCl, FolderSelectCl, ColorInputCl } from '@/components/ui'
 import { useFolderStore } from '@/stores/folder'
 import { useNotificationStore } from '@/stores/notification'
 import { folderSaveSchema } from '@/schemas/folder'
@@ -33,23 +33,25 @@ const { defineField, handleSubmit, errors, resetForm, isSubmitting } = useForm({
     collectionId: props.collectionId,
     parentId: props.parentId,
     name: '',
+    color: '',
   },
 })
 
 const [name, nameAttrs] = defineField('name')
 const [parentId] = defineField('parentId')
+const [color, colorAttrs] = defineField('color')
 
 const folders = computed(() => folderStore.folders)
 
 useFormDialog(toRef(props, 'open'), () =>
   resetForm({
-    values: { collectionId: props.collectionId, parentId: props.parentId, name: '' },
+    values: { collectionId: props.collectionId, parentId: props.parentId, name: '', color: '' },
   }),
 )
 
 const onSubmit = handleSubmit(async (values) => {
   try {
-    await folderStore.createFolder(values)
+    await folderStore.createFolder({ ...values, color: values.color || undefined })
     emit('update:open', false)
     emit('created')
   } catch (err) {
@@ -81,6 +83,15 @@ const onSubmit = handleSubmit(async (values) => {
           :folders="folders"
           :placeholder="t('folder.noParent')"
           direction="down"
+        />
+      </FormFieldCl>
+
+      <FormFieldCl :label="t('folder.color')" for-id="folder-color" :error="errors.color">
+        <ColorInputCl
+          :model-value="color"
+          :attrs="colorAttrs"
+          input-id="folder-color"
+          @update:model-value="color = $event"
         />
       </FormFieldCl>
 

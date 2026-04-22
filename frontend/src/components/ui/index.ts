@@ -1,4 +1,5 @@
 export { default as ButtonCl } from './ButtonCl.vue'
+export { default as ColorInputCl } from './ColorInputCl.vue'
 export { default as DialogCl } from './DialogCl.vue'
 export { default as ConfirmDialog } from './ConfirmDialog.vue'
 export { default as FolderSelectCl } from './FolderSelectCl.vue'

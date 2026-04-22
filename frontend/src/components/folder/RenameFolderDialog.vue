@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
-import { DialogCl, ButtonCl, FormFieldCl, FolderSelectCl } from '@/components/ui'
+import { DialogCl, ButtonCl, FormFieldCl, FolderSelectCl, ColorInputCl } from '@/components/ui'
 import { useFolderStore } from '@/stores/folder'
 import { useNotificationStore } from '@/stores/notification'
 import { folderSaveSchema } from '@/schemas/folder'
@@ -29,11 +29,12 @@ const emit = defineEmits<{
 
 const { defineField, handleSubmit, errors, resetForm, isSubmitting } = useForm({
   validationSchema: toTypedSchema(folderSaveSchema(t)),
-  initialValues: { collectionId: '', name: '' },
+  initialValues: { collectionId: '', name: '', color: '' },
 })
 
 const [name, nameAttrs] = defineField('name')
 const [parentId] = defineField('parentId')
+const [color, colorAttrs] = defineField('color')
 
 function getDescendantIds(folderId: string): Set<string> {
   const ids = new Set<string>()
@@ -62,6 +63,7 @@ useFormDialog(toRef(props, 'open'), () => {
         collectionId: props.folder.data.collectionId,
         name: props.folder.data.name,
         parentId: props.folder.data.parentId ?? undefined,
+        color: props.folder.data.color ?? '',
       },
     })
   }
@@ -71,7 +73,7 @@ const onSubmit = handleSubmit(async (values) => {
   if (!props.folder) return
 
   try {
-    await folderStore.renameFolder(props.folder.id, values)
+    await folderStore.renameFolder(props.folder.id, { ...values, color: values.color || undefined })
     emit('update:open', false)
     emit('saved')
   } catch (err) {
@@ -104,6 +106,15 @@ const onSubmit = handleSubmit(async (values) => {
           :exclude-ids="excludeIds"
           :placeholder="t('folder.noParent')"
           direction="down"
+        />
+      </FormFieldCl>
+
+      <FormFieldCl :label="t('folder.color')" for-id="rename-folder-color" :error="errors.color">
+        <ColorInputCl
+          :model-value="color"
+          :attrs="colorAttrs"
+          input-id="rename-folder-color"
+          @update:model-value="color = $event"
         />
       </FormFieldCl>
 

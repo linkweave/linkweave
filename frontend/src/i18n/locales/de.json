@@ -21,7 +21,8 @@
     "loading": "Laden...",
     "confirm": "Bestätigen",
     "all": "Alle",
-    "undo": "Rückgängig"
+    "undo": "Rückgängig",
+    "reset": "Zurücksetzen"
   },
   "dnd": {
     "bookmarkMoved": "Lesezeichen verschoben.",
@@ -126,7 +127,8 @@
     "deleteConfirm": "Möchten Sie diesen Ordner wirklich löschen? Alle Lesezeichen darin werden dauerhaft gelöscht.",
     "deleteError": "Ordner konnte nicht gelöscht werden.",
     "moveError": "Ordner konnte nicht verschoben werden.",
-    "dropToRoot": "Hier ablegen, um auf die Stammebene zu verschieben"
+    "dropToRoot": "Hier ablegen, um auf die Stammebene zu verschieben",
+    "color": "Farbe"
   },
   "bookmark": {
     "createTitle": "Lesezeichen erstellen",

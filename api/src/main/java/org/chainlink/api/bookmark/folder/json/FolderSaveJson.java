@@ -2,6 +2,7 @@ package org.chainlink.api.bookmark.folder.json;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.chainlink.api.bookmark.folder.Folder;
@@ -29,4 +30,9 @@ public class FolderSaveJson {
     @NonNull
     @Schema(required = true)
     String name;
+
+    @Nullable
+    @Size(max = 7)
+    @Schema(required = false)
+    String color;
 }

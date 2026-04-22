@@ -174,7 +174,9 @@ async function onDrop(event: DragEvent, targetFolder: FolderJson) {
           </button>
           <component
             :is="isExpanded(node.folder.id) && node.children.length > 0 ? FolderOpen : Folder"
-            class="h-4 w-4 shrink-0 text-primary"
+            class="h-4 w-4 shrink-0"
+            :class="node.folder.data.color ? '' : 'text-primary'"
+            :style="node.folder.data.color ? { color: node.folder.data.color } : undefined"
           />
           <span class="flex-1 truncate">{{ node.folder.data.name }}</span>
           <DropdownMenuTrigger as-child>
