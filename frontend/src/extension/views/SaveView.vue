@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useExtensionStore } from '../stores/extension'
-import FolderSelect from '../components/FolderSelect.vue'
+import { FolderSelectCl } from '@/components/ui'
 import TagSelect from '../components/TagSelect.vue'
 import ButtonCl from '@/components/ui/ButtonCl.vue'
 
@@ -175,7 +175,7 @@ function saveAnother() {
     <!-- Folder -->
     <div class="space-y-1.5">
       <label class="text-xs font-medium">Folder</label>
-      <FolderSelect v-model="folderId" :folders="store.folders" />
+      <FolderSelectCl v-model="folderId" :folders="store.folders" />
     </div>
 
     <!-- Tags -->

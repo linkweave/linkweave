@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
-import { DialogCl, ButtonCl, FormFieldCl } from '@/components/ui'
+import { DialogCl, ButtonCl, FormFieldCl, FolderSelectCl } from '@/components/ui'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useFolderStore } from '@/stores/folder'
 import { useNotificationStore } from '@/stores/notification'
@@ -34,11 +34,9 @@ const { defineField, handleSubmit, resetForm, isSubmitting } = useForm({
   initialValues: { collectionId: '' },
 })
 
-const [folderId, folderIdAttrs] = defineField('folderId')
+const [folderId] = defineField('folderId')
 
-const folderOptions = computed(() =>
-  folderStore.folders.map(f => ({ id: f.id, name: f.data.name }))
-)
+const folders = computed(() => folderStore.folders)
 
 useFormDialog(toRef(props, 'open'), () => {
   if (props.bookmark) {
@@ -70,17 +68,13 @@ const onSubmit = handleSubmit(async (values) => {
 
     <form @submit.prevent="onSubmit" class="space-y-4">
       <FormFieldCl :label="t('bookmark.folder')" for-id="move-bookmark-folder">
-        <select
+        <FolderSelectCl
           id="move-bookmark-folder"
           v-model="folderId"
-          v-bind="folderIdAttrs"
-          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        >
-          <option :value="undefined">{{ t('bookmark.noFolder') }}</option>
-          <option v-for="opt in folderOptions" :key="opt.id" :value="opt.id">
-            {{ opt.name }}
-          </option>
-        </select>
+          :folders="folders"
+          :placeholder="t('bookmark.noFolder')"
+          direction="down"
+        />
       </FormFieldCl>
 
       <div class="flex justify-end gap-2">
