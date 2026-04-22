@@ -21,7 +21,8 @@
     "loading": "Laden...",
     "confirm": "Bestätigen",
     "all": "Alle",
-    "undo": "Rückgängig"
+    "undo": "Rückgängig",
+    "reset": "Zurücksetzen"
   },
   "dnd": {
     "bookmarkMoved": "Lesezeichen verschoben.",

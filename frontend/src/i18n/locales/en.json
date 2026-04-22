@@ -21,7 +21,8 @@
     "loading": "Loading...",
     "confirm": "Confirm",
     "all": "All",
-    "undo": "Undo"
+    "undo": "Undo",
+    "reset": "Reset"
   },
   "dnd": {
     "bookmarkMoved": "Bookmark moved.",
