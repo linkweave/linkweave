@@ -19,7 +19,8 @@ public class FolderMapper {
             new FolderSaveJson(
                 folder.getCollection().getId(),
                 folder.getParent() != null ? folder.getParent().getId() : null,
-                folder.getName()
+                folder.getName(),
+                folder.getColor()
             )
         );
     }

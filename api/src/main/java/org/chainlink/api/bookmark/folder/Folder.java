@@ -45,4 +45,9 @@ public class Folder extends AbstractEntity<Folder> {
     @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH)
     @Column(nullable = false, length = DbConst.DB_DEFAULT_MAX_LENGTH)
     private String name;
+
+    @Nullable
+    @Size(max = 7)
+    @Column(length = 7)
+    private String color;
 }

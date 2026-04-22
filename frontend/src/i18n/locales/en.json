@@ -126,7 +126,8 @@
     "deleteConfirm": "Are you sure you want to delete this folder? All bookmarks inside will be permanently deleted.",
     "deleteError": "Failed to delete folder.",
     "moveError": "Failed to move folder.",
-    "dropToRoot": "Drop here to move to root level"
+    "dropToRoot": "Drop here to move to root level",
+    "color": "Color"
   },
   "bookmark": {
     "createTitle": "Create Bookmark",

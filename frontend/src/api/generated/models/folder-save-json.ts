@@ -37,6 +37,12 @@ export interface FolderSaveJson {
      * @memberof FolderSaveJson
      */
     name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof FolderSaveJson
+     */
+    color?: string;
 }
 
 /**
@@ -61,6 +67,7 @@ export function FolderSaveJsonFromJSONTyped(json: any, ignoreDiscriminator: bool
         'collectionId': json['collectionId'],
         'parentId': json['parentId'] == null ? undefined : json['parentId'],
         'name': json['name'],
+        'color': json['color'] == null ? undefined : json['color'],
     };
 }
 
@@ -78,6 +85,7 @@ export function FolderSaveJsonToJSONTyped(value?: FolderSaveJson | null, ignoreD
         'collectionId': value['collectionId'],
         'parentId': value['parentId'],
         'name': value['name'],
+        'color': value['color'],
     };
 }
 

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Folder } from 'lucide-vue-next'
 import type { FolderJson } from '@/api/generated'
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 
@@ -24,9 +25,9 @@ interface FolderOption {
   id: string
   label: string
   depth: number
-  /** Per-level guide: true = draw │ (has more siblings), false = blank (last sibling) */
   guides: boolean[]
   isLast: boolean
+  color?: string
 }
 
 function buildOptions(parentId: string | null | undefined, depth: number, guides: boolean[]): FolderOption[] {
@@ -36,7 +37,7 @@ function buildOptions(parentId: string | null | undefined, depth: number, guides
   return siblings.flatMap((f, i) => {
     const isLast = i === siblings.length - 1
     return [
-      { id: f.id, label: f.data.name, depth, guides: [...guides], isLast },
+      { id: f.id, label: f.data.name, depth, guides: [...guides], isLast, color: f.data.color },
       ...buildOptions(f.id, depth + 1, [...guides, !isLast]),
     ]
   })
@@ -125,6 +126,11 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', handleOutsideCli
           </span>
         </template>
         <span v-else class="w-3 shrink-0"></span>
+        <Folder
+          class="h-4 w-4 shrink-0 mr-1"
+          :class="opt.color ? '' : 'text-primary'"
+          :style="opt.color ? { color: opt.color } : undefined"
+        />
         <span class="truncate flex items-center">{{ opt.label }}</span>
       </div>
     </div>
