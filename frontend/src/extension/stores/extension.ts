@@ -15,6 +15,7 @@ import { loadExtensionConfig, createApiConfig } from '../api/client'
 import type { ExtensionConfig } from '../api/client'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { parseSearchQuery, bookmarkMatchesTerms } from '@/utils/search'
 
 export const useExtensionStore = defineStore('extension', () => {
   // --- Config (loaded async from chrome.storage.sync) ---
@@ -81,19 +82,11 @@ export const useExtensionStore = defineStore('extension', () => {
     }
 
     if (searchQuery.value.length >= 2) {
-      const q = searchQuery.value.toLowerCase()
-      const tagNamesById = new Map(tags.value.map((t) => [t.id, t.data.name.toLowerCase()]))
-      result = result.filter((b) => {
-        if (b.data.title?.toLowerCase().includes(q)) return true
-        if (b.data.url?.toLowerCase().includes(q)) return true
-        if (b.data.description?.toLowerCase().includes(q)) return true
-        if (b.data.tagIds) {
-          for (const tagId of b.data.tagIds) {
-            if (tagNamesById.get(tagId)?.includes(q)) return true
-          }
-        }
-        return false
-      })
+      const terms = parseSearchQuery(searchQuery.value)
+      if (terms.length > 0) {
+        const tagNamesById = new Map(tags.value.map((t) => [t.id, t.data.name.toLowerCase()]))
+        result = result.filter(b => bookmarkMatchesTerms(b, terms, tagNamesById))
+      }
     }
 
     return result

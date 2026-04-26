@@ -175,7 +175,7 @@
     "unfiled": "Unfiled"
   },
   "search": {
-    "placeholder": "Search bookmarks by name, URL, or tag..."
+    "placeholder": "Search bookmarks (use spaces for multiple terms, e.g. prod foobar)..."
   },
   "language": {
     "en": "English",
