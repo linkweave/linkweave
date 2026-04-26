@@ -175,7 +175,7 @@
     "unfiled": "Ohne Ordner"
   },
   "search": {
-    "placeholder": "Lesezeichen nach Name, URL oder Tag suchen..."
+    "placeholder": "Lesezeichen suchen (Leerzeichen für mehrere Begriffe, z.B. prod foobar)..."
   },
   "language": {
     "en": "English",

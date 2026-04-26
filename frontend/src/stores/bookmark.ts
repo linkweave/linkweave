@@ -6,6 +6,7 @@ import type { BookmarkJson, BookmarkSaveJson, BookmarkMoveJson } from '@/api/gen
 import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { useTagStore } from '@/stores/tag'
+import { parseSearchQuery, bookmarkMatchesTerms } from '@/utils/search'
 
 const bookmarkApi = new BookmarkResourceApi(config)
 
@@ -49,20 +50,11 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     }
 
     if (searchQuery.value.length >= 2) {
-      const query = searchQuery.value.toLowerCase()
-      const tagsById = new Map(tagStore.tags.map(t => [t.id, t.data.name.toLowerCase()]))
-      result = result.filter(b => {
-        if (b.data.title?.toLowerCase().includes(query)) return true
-        if (b.data.url?.toLowerCase().includes(query)) return true
-        if (b.data.description?.toLowerCase().includes(query)) return true
-        if (b.data.tagIds) {
-          for (const tagId of b.data.tagIds) {
-            const tagName = tagsById.get(tagId)
-            if (tagName?.includes(query)) return true
-          }
-        }
-        return false
-      })
+      const terms = parseSearchQuery(searchQuery.value)
+      if (terms.length > 0) {
+        const tagsById = new Map(tagStore.tags.map(t => [t.id, t.data.name.toLowerCase()]))
+        result = result.filter(b => bookmarkMatchesTerms(b, terms, tagsById))
+      }
     }
 
     return result
