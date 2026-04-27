@@ -16,7 +16,7 @@ const ui = useUiStore()
 const isAddingBookmark = ref(false)
 
 const containerClass = computed(() =>
-  ui.bookmarkLayout === 'grouped' ? 'max-w-7xl' : 'max-w-4xl'
+  ui.bookmarkLayout === 'grouped' || ui.bookmarkLayout === 'grid' ? 'max-w-7xl' : 'max-w-4xl'
 )
 </script>
 

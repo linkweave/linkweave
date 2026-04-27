@@ -86,7 +86,7 @@ async function confirmDelete() {
     />
   </div>
 
-  <div v-else-if="ui.bookmarkLayout === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  <div v-else-if="ui.bookmarkLayout === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
     <BookmarkCard
       v-for="bookmark in bookmarkStore.filteredBookmarks"
       :key="bookmark.id"
