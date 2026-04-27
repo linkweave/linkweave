@@ -1,4 +1,8 @@
 {
+  "error": {
+    "network": "Server nicht erreichbar. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+    "server": "Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut."
+  },
   "app": {
     "title": "Chainlink",
     "version": "Version"

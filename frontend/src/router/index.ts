@@ -46,7 +46,7 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  await initializeSession()
+  await initializeSession(to)
 
   const auth = useAuthStore()
   const collection = useCollectionStore()

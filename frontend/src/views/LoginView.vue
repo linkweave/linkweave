@@ -8,6 +8,7 @@ import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
 import { AuthLayout, ButtonCl, FormFieldCl } from '@/components/ui'
 import { loginSchema } from '@/schemas/auth'
+import { isNetworkError, extractResponseError } from '@/api/error-utils'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -49,10 +50,21 @@ const onSubmit = handleSubmit(async (values) => {
       }
       router.push('/')
     } else {
+      const extracted = await extractResponseError(response)
+      if (extracted) {
+        notification.error(extracted.message)
+      } else if (response.status >= 500) {
+        notification.error(t('error.server'))
+      } else {
+        notification.error(t('login.error'))
+      }
+    }
+  } catch (e) {
+    if (isNetworkError(e)) {
+      notification.error(t('error.network'))
+    } else {
       notification.error(t('login.error'))
     }
-  } catch {
-    notification.error(t('login.error'))
   }
 })
 </script>

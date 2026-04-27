@@ -1,4 +1,8 @@
 {
+  "error": {
+    "network": "Unable to reach the server. Please check your connection and try again.",
+    "server": "A server error occurred. Please try again later."
+  },
   "app": {
     "title": "Chainlink",
     "version": "version"
