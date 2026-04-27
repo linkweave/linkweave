@@ -7,19 +7,31 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from 'radix-vue'
-import { ChevronDown, LogOut, Settings } from 'lucide-vue-next'
+import { ChevronDown, LogOut, Settings, Trash2 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
 import { useCollectionStore } from '@/stores/collection'
+import { useTrashbinStore } from '@/stores/trashbin'
 import type { SupportedLocale } from '@/i18n'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import SettingsDialog from '@/components/ui/SettingsDialog.vue'
 
 const auth = useAuthStore()
 const localeStore = useLocaleStore()
 const collectionStore = useCollectionStore()
+const trashbinStore = useTrashbinStore()
+const routerInstance = useRouter()
 
 const isSettingsOpen = ref(false)
+
+onMounted(() => {
+  trashbinStore.refreshCount().catch(() => {})
+})
+
+function openTrashbin() {
+  routerInstance.push({ name: 'trashbin' })
+}
 
 function switchLocale(locale: SupportedLocale) {
   localeStore.setLocale(locale)
@@ -61,6 +73,20 @@ function switchLocale(locale: SupportedLocale) {
           </button>
         </div>
         <DropdownMenuSeparator class="-mx-1 my-1 h-px bg-border" />
+        <DropdownMenuItem
+          class="relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+          data-testid="user-menu-trashbin"
+          @select="openTrashbin"
+        >
+          <Trash2 class="h-4 w-4" />
+          <span class="flex-1">{{ $t('header.trashbin') }}</span>
+          <span
+            v-if="trashbinStore.count > 0"
+            class="ml-auto inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-muted px-1.5 text-xs font-medium text-muted-foreground"
+          >
+            {{ trashbinStore.count }}
+          </span>
+        </DropdownMenuItem>
         <DropdownMenuItem
           class="relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
           @select="isSettingsOpen = true"

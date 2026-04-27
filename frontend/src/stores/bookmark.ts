@@ -89,6 +89,8 @@ export const useBookmarkStore = defineStore('bookmark', () => {
   async function deleteBookmark(bookmarkId: string): Promise<void> {
     await bookmarkApi.apiBookmarksBookmarkIdDelete({ bookmarkId })
     patchBookmarks(list => list.filter(b => b.id !== bookmarkId))
+    const { useTrashbinStore } = await import('@/stores/trashbin')
+    useTrashbinStore().refreshCount().catch(() => {})
   }
 
   async function moveBookmarkToFolder(bookmarkId: string, data: BookmarkMoveJson): Promise<BookmarkJson> {

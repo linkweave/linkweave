@@ -6,7 +6,7 @@
 **Use Case Name:** Permanently Delete from Trashbin
 **Primary Actor:** User
 **Goal:** Permanently remove a bookmark or folder from the trashbin so that it can no longer be restored.
-**Status:** Draft
+**Status:** Implemented
 
 ## Traceability
 

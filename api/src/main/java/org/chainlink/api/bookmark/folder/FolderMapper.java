@@ -21,7 +21,8 @@ public class FolderMapper {
                 folder.getParent() != null ? folder.getParent().getId() : null,
                 folder.getName(),
                 folder.getColor()
-            )
+            ),
+            folder.getDeletedAt()
         );
     }
 }

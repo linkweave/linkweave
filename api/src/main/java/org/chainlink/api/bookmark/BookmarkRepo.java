@@ -3,6 +3,7 @@ package org.chainlink.api.bookmark;
 import java.util.List;
 
 import ch.dvbern.dvbstarter.types.id.ID;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.infrastructure.db.BaseRepo;
@@ -13,16 +14,28 @@ import org.jspecify.annotations.Nullable;
 @Repository
 public class BookmarkRepo extends BaseRepo<Bookmark> {
 
+    private static BooleanExpression notDeleted() {
+        return QBookmark.bookmark.deletedAt.isNull();
+    }
+
+    private static BooleanExpression deleted() {
+        return QBookmark.bookmark.deletedAt.isNotNull();
+    }
+
     @NonNull
     public List<Bookmark> findAll() {
-        return db.findAll(QBookmark.bookmark);
+        return db.selectFrom(QBookmark.bookmark)
+            .where(notDeleted())
+            .fetch();
     }
 
     @NonNull
     public List<Bookmark> findByFolder(@Nullable Folder folder) {
-        var query = db.selectFrom(QBookmark.bookmark);
+        var query = db.selectFrom(QBookmark.bookmark).where(notDeleted());
         if (folder != null) {
             query.where(QBookmark.bookmark.folder.eq(folder));
+        } else {
+            query.where(QBookmark.bookmark.folder.isNull());
         }
         return query.fetch();
     }
@@ -30,13 +43,20 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
     @NonNull
     public List<Bookmark> findByFolderId(ID<Folder> folderId) {
         return db.selectFrom(QBookmark.bookmark)
+            .where(QBookmark.bookmark.folder.id.eq(folderId.getUUID()).and(notDeleted()))
+            .fetch();
+    }
+
+    @NonNull
+    public List<Bookmark> findAllByFolderIncludingDeleted(@NonNull ID<Folder> folderId) {
+        return db.selectFrom(QBookmark.bookmark)
             .where(QBookmark.bookmark.folder.id.eq(folderId.getUUID()))
             .fetch();
     }
 
     @NonNull
     public List<Bookmark> findByTag(@Nullable Tag tag) {
-        var query = db.selectFrom(QBookmark.bookmark);
+        var query = db.selectFrom(QBookmark.bookmark).where(notDeleted());
         if (tag != null) {
             query.where(QBookmark.bookmark.tags.contains(tag));
         }
@@ -46,7 +66,7 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
     @NonNull
     public List<Bookmark> findByTagId(ID<Tag> tagId) {
         return db.selectFrom(QBookmark.bookmark)
-            .where(QBookmark.bookmark.tags.any().id.eq(tagId.getUUID()))
+            .where(QBookmark.bookmark.tags.any().id.eq(tagId.getUUID()).and(notDeleted()))
             .fetch();
     }
 
@@ -54,15 +74,40 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
     public List<Bookmark> findByCollection(@NonNull ID<Collection> collectionId) {
         return db.selectFrom(QBookmark.bookmark)
             .leftJoin(QBookmark.bookmark.tags).fetchJoin()
-            .where(QBookmark.bookmark.collection.id.eq(collectionId.getUUID()))
+            .where(QBookmark.bookmark.collection.id.eq(collectionId.getUUID()).and(notDeleted()))
             .orderBy(QBookmark.bookmark.timestampErstellt.desc())
             .fetch();
     }
 
     @NonNull
+    public List<Bookmark> findDeletedByCollections(@NonNull List<ID<Collection>> collectionIds) {
+        if (collectionIds.isEmpty()) {
+            return List.of();
+        }
+        var uuids = collectionIds.stream().map(ID::getUUID).toList();
+        return db.selectFrom(QBookmark.bookmark)
+            .leftJoin(QBookmark.bookmark.tags).fetchJoin()
+            .where(QBookmark.bookmark.collection.id.in(uuids).and(deleted()))
+            .orderBy(QBookmark.bookmark.deletedAt.desc())
+            .fetch();
+    }
+
+    public long countDeletedByCollections(@NonNull List<ID<Collection>> collectionIds) {
+        if (collectionIds.isEmpty()) {
+            return 0L;
+        }
+        var uuids = collectionIds.stream().map(ID::getUUID).toList();
+        Long count = db.select(QBookmark.bookmark.id.count())
+            .from(QBookmark.bookmark)
+            .where(QBookmark.bookmark.collection.id.in(uuids).and(deleted()))
+            .fetchFirst();
+        return count != null ? count : 0L;
+    }
+
+    @NonNull
     public List<Bookmark> searchByTitle(String searchTerm) {
         return db.selectFrom(QBookmark.bookmark)
-            .where(QBookmark.bookmark.title.likeIgnoreCase("%" + searchTerm + "%"))
+            .where(QBookmark.bookmark.title.likeIgnoreCase("%" + searchTerm + "%").and(notDeleted()))
             .fetch();
     }
 

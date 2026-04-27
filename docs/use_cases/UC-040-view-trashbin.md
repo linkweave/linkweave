@@ -6,7 +6,7 @@
 **Use Case Name:** View Trashbin
 **Primary Actor:** User
 **Goal:** View all soft-deleted bookmarks and folders in the trashbin so the user can decide whether to restore or permanently delete them.
-**Status:** Draft
+**Status:** Implemented
 
 ## Traceability
 

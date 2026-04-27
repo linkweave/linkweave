@@ -4,6 +4,7 @@ import { FolderResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import type { FolderJson, FolderSaveJson, FolderMoveJson } from '@/api/generated'
 import { useCollectionStore } from '@/stores/collection'
+import { useTrashbinStore } from '@/stores/trashbin'
 
 const folderApi = new FolderResourceApi(config)
 
@@ -96,6 +97,10 @@ export const useFolderStore = defineStore('folder', () => {
     patchFolders(list => list.filter(f => f.id !== folderId))
     if (selectedFolderId.value === folderId) {
       selectedFolderId.value = null
+    }
+    void useTrashbinStore().refreshCount()
+    if (collectionStore.currentCollectionId) {
+      void collectionStore.fetchCollectionInfo(collectionStore.currentCollectionId)
     }
   }
 

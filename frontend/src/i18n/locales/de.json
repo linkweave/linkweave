@@ -22,7 +22,8 @@
     "confirm": "Bestätigen",
     "all": "Alle",
     "undo": "Rückgängig",
-    "reset": "Zurücksetzen"
+    "reset": "Zurücksetzen",
+    "back": "Zurück"
   },
   "dnd": {
     "bookmarkMoved": "Lesezeichen verschoben.",
@@ -31,7 +32,24 @@
   "header": {
     "addBookmark": "Lesezeichen hinzufügen",
     "logout": "Abmelden",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "trashbin": "Papierkorb"
+  },
+  "trashbin": {
+    "title": "Papierkorb",
+    "empty": "Der Papierkorb ist leer.",
+    "restore": "Wiederherstellen",
+    "deletePermanently": "Endgültig löschen",
+    "emptyTrashbin": "Papierkorb leeren",
+    "confirmPurge": "Dieses Lesezeichen endgültig löschen? Dies kann nicht rückgängig gemacht werden.",
+    "confirmPurgeFolder": "Diesen Ordner und seinen gesamten Inhalt endgültig löschen? Dies kann nicht rückgängig gemacht werden.",
+    "confirmEmpty": "Alle Elemente im Papierkorb endgültig löschen? Dies kann nicht rückgängig gemacht werden.",
+    "folderItem": "Ordner",
+    "deletedAt": "Gelöscht",
+    "restored": "Element wiederhergestellt.",
+    "restoredToRoot": "\"{name}\" wurde in den Stamm der Sammlung verschoben, da der ursprüngliche übergeordnete Ordner noch im Papierkorb liegt.",
+    "purged": "Element endgültig gelöscht.",
+    "emptied": "Papierkorb geleert."
   },
   "settings": {
     "title": "Einstellungen",

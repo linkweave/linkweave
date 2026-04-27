@@ -1,5 +1,7 @@
 package org.chainlink.api.bookmark.folder;
 
+import java.time.OffsetDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ForeignKey;
@@ -50,4 +52,8 @@ public class Folder extends AbstractEntity<Folder> {
     @Size(max = 7)
     @Column(length = 7)
     private String color;
+
+    @Nullable
+    @Column(name = "deleted_at", nullable = true)
+    private OffsetDateTime deletedAt;
 }
