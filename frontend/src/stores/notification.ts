@@ -1,5 +1,4 @@
-import { FailureType } from '@/api/generated'
-import { ResponseError } from '@/api/generated/runtime'
+import { extractErrorSummary, isNetworkError } from '@/api/error-utils'
 import { defineStore } from 'pinia'
 import { toast } from 'vue-sonner'
 
@@ -38,23 +37,12 @@ export const useNotificationStore = defineStore('notification', () => {
   }
 
   async function handleApiError(err: unknown, fallbackMessage = 'An unexpected error occurred') {
-    if (err instanceof ResponseError) {
-      try {
-        const body = await err.response.json()
-        if (body.type === FailureType.Validation && Array.isArray(body.violations)) {
-          const messages = body.violations.map((v: { message: string }) => v.message).join(', ')
-          toast.error(messages)
-        } else if (body.type === FailureType.Failure && body.summary) {
-          toast.error(body.summary)
-        } else {
-          toast.error(fallbackMessage)
-        }
-      } catch {
-        toast.error(fallbackMessage)
-      }
-    } else {
+    if (isNetworkError(err)) {
       toast.error(fallbackMessage)
+      return
     }
+    const message = await extractErrorSummary(err, fallbackMessage)
+    toast.error(message)
   }
 
   return {
