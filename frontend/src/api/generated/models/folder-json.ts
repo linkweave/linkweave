@@ -52,6 +52,12 @@ export interface FolderJson {
      * @memberof FolderJson
      */
     data: FolderSaveJson;
+    /**
+     * 
+     * @type {Date}
+     * @memberof FolderJson
+     */
+    deletedAt?: Date;
 }
 
 /**
@@ -77,6 +83,7 @@ export function FolderJsonFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'id': json['id'],
         'entityInfo': EntityInfoJsonFromJSON(json['entityInfo']),
         'data': FolderSaveJsonFromJSON(json['data']),
+        'deletedAt': json['deletedAt'] == null ? undefined : (new Date(json['deletedAt'])),
     };
 }
 
@@ -94,6 +101,7 @@ export function FolderJsonToJSONTyped(value?: FolderJson | null, ignoreDiscrimin
         'id': value['id'],
         'entityInfo': EntityInfoJsonToJSON(value['entityInfo']),
         'data': FolderSaveJsonToJSON(value['data']),
+        'deletedAt': value['deletedAt'] == null ? value['deletedAt'] : value['deletedAt'].toISOString(),
     };
 }
 

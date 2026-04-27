@@ -26,6 +26,11 @@ const router = createRouter({
       component: () => import('@/views/CollectionManageView.vue')
     },
     {
+      path: '/trashbin',
+      name: 'trashbin',
+      component: () => import('@/views/TrashbinView.vue')
+    },
+    {
       path: '/login',
       name: 'login',
       meta: { public: true },

@@ -30,7 +30,8 @@ public class BookmarkMapper {
                     .collect(Collectors.toSet())
             ),
             bookmark.getClickCount(),
-            bookmark.getLastClickedAt()
+            bookmark.getLastClickedAt(),
+            bookmark.getDeletedAt()
         );
     }
 }

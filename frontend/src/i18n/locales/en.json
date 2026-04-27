@@ -22,7 +22,8 @@
     "confirm": "Confirm",
     "all": "All",
     "undo": "Undo",
-    "reset": "Reset"
+    "reset": "Reset",
+    "back": "Back"
   },
   "dnd": {
     "bookmarkMoved": "Bookmark moved.",
@@ -31,7 +32,24 @@
   "header": {
     "addBookmark": "Add Bookmark",
     "logout": "Sign out",
-    "settings": "Settings"
+    "settings": "Settings",
+    "trashbin": "Trashbin"
+  },
+  "trashbin": {
+    "title": "Trashbin",
+    "empty": "The trashbin is empty.",
+    "restore": "Restore",
+    "deletePermanently": "Delete permanently",
+    "emptyTrashbin": "Empty trashbin",
+    "confirmPurge": "Permanently delete this bookmark? This cannot be undone.",
+    "confirmPurgeFolder": "Permanently delete this folder and all its contents? This cannot be undone.",
+    "confirmEmpty": "Permanently delete all items in the trashbin? This cannot be undone.",
+    "folderItem": "Folder",
+    "deletedAt": "Deleted",
+    "restored": "Item restored.",
+    "restoredToRoot": "\"{name}\" was restored to the collection root because its original parent folder is still in the trashbin.",
+    "purged": "Item permanently deleted.",
+    "emptied": "Trashbin emptied."
   },
   "settings": {
     "title": "Settings",

@@ -24,5 +24,7 @@ export * from './registration-request-json';
 export * from './tag-json';
 export * from './tag-list-json';
 export * from './tag-save-json';
+export * from './trashbin-count-json';
+export * from './trashbin-json';
 export * from './user-info-json';
 export * from './violation-json';

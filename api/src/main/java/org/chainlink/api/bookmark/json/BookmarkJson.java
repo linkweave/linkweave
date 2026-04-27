@@ -44,4 +44,8 @@ public class BookmarkJson {
     @Nullable
     @Schema(required = false)
     OffsetDateTime lastClickedAt;
+
+    @Nullable
+    @Schema(required = false)
+    OffsetDateTime deletedAt;
 }

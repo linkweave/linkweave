@@ -64,6 +64,12 @@ export interface BookmarkJson {
      * @memberof BookmarkJson
      */
     lastClickedAt?: Date;
+    /**
+     * 
+     * @type {Date}
+     * @memberof BookmarkJson
+     */
+    deletedAt?: Date;
 }
 
 /**
@@ -92,6 +98,7 @@ export function BookmarkJsonFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'data': BookmarkSaveJsonFromJSON(json['data']),
         'clickCount': json['clickCount'],
         'lastClickedAt': json['lastClickedAt'] == null ? undefined : (new Date(json['lastClickedAt'])),
+        'deletedAt': json['deletedAt'] == null ? undefined : (new Date(json['deletedAt'])),
     };
 }
 
@@ -111,6 +118,7 @@ export function BookmarkJsonToJSONTyped(value?: BookmarkJson | null, ignoreDiscr
         'data': BookmarkSaveJsonToJSON(value['data']),
         'clickCount': value['clickCount'],
         'lastClickedAt': value['lastClickedAt'] == null ? value['lastClickedAt'] : value['lastClickedAt'].toISOString(),
+        'deletedAt': value['deletedAt'] == null ? value['deletedAt'] : value['deletedAt'].toISOString(),
     };
 }
 

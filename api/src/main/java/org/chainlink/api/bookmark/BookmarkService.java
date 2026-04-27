@@ -88,7 +88,43 @@ public class BookmarkService {
     }
 
     public void removeBookmark(@NonNull ID<Bookmark> id) {
+        Bookmark bookmark = bookmarkRepo.getById(id);
+        bookmark.setDeletedAt(OffsetDateTime.now());
+        bookmarkRepo.persist(bookmark);
+    }
+
+    @NonNull
+    public List<Bookmark> getDeletedByCollections(@NonNull List<ID<Collection>> collectionIds) {
+        return bookmarkRepo.findDeletedByCollections(collectionIds);
+    }
+
+    public long countDeletedByCollections(@NonNull List<ID<Collection>> collectionIds) {
+        return bookmarkRepo.countDeletedByCollections(collectionIds);
+    }
+
+    @NonNull
+    public Bookmark restoreBookmark(@NonNull ID<Bookmark> id) {
+        Bookmark bookmark = bookmarkRepo.getById(id);
+        if (bookmark.getDeletedAt() == null) {
+            return bookmark;
+        }
+        Folder folder = bookmark.getFolder();
+        if (folder != null && folder.getDeletedAt() != null) {
+            bookmark.setFolder(null);
+        }
+        bookmark.setDeletedAt(null);
+        bookmarkRepo.persist(bookmark);
+        return bookmark;
+    }
+
+    public void purgeBookmark(@NonNull ID<Bookmark> id) {
         bookmarkRepo.remove(id);
+    }
+
+    public void emptyTrashbin(@NonNull List<ID<Collection>> collectionIds) {
+        for (Bookmark bookmark : bookmarkRepo.findDeletedByCollections(collectionIds)) {
+            bookmarkRepo.remove(bookmark.getId());
+        }
     }
 
     @NonNull

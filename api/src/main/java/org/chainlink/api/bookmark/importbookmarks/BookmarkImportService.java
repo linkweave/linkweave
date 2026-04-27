@@ -88,7 +88,7 @@ public class BookmarkImportService {
         @NonNull Tag importTag,
         @NonNull ImportSummaryJson summary
     ) {
-        Folder folder = new Folder(collection, parent, parsedFolder.getName(), null);
+        Folder folder = new Folder(collection, parent, parsedFolder.getName(), null, null);
         folderRepo.persist(folder);
         summary.incrementFoldersCreated();
 
@@ -126,6 +126,7 @@ public class BookmarkImportService {
             parsed.getDescription(),
             new HashSet<>(Set.of(importTag)),
             0,
+            null,
             null
         );
         bookmarkRepo.persist(bookmark);
