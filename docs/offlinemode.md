@@ -135,6 +135,76 @@ Offline mode enables read-only access to cached bookmarks, folders, and tags whe
 
 ---
 
+## Error Classification
+
+The offline middleware must only serve cached data for genuine network failures — never for HTTP errors, CORS issues, or application-level failures. This classification is critical: serving stale cache on a 401 (session expired) would let the user see data they no longer have access to.
+
+### Error Flow in the Generated Runtime
+
+The OpenAPI-generated runtime (`src/api/generated/runtime.ts`) has a two-phase error model:
+
+```
+fetch(url, init)
+    │
+    ├── throws TypeError ────────────► onError middleware hook fires
+    │   (DNS failure, connection       (THIS is where we intercept)
+    │    refused, network unreachable)
+    │
+    ├── throws AbortError ───────────► onError middleware hook fires
+    │   (request timed out /           (we do NOT intercept this)
+    │    was aborted)
+    │
+    └── returns Response ────────────► post middleware hook fires
+        │                              then request() checks status
+        │
+        ├── status 200-299 ──────────► success, returned to caller
+        │
+        └── status 401/403/500/etc ──► throws ResponseError
+                                         (onError is NOT called)
+```
+
+### Classification Rules
+
+| Error Type | Example | Offline Fallback? | Why |
+|---|---|---|---|
+| `TypeError` from `fetch()` + `!navigator.onLine` | DNS failure, connection refused, network cable unplugged | ✅ **Yes** | Genuine network outage |
+| `TypeError` from `fetch()` + `navigator.onLine` | CORS misconfig, mixed-content block, self-signed cert rejected | ❌ **No** | Server is running but rejecting requests — serving stale cache masks a real config problem |
+| `AbortError` | Request timeout, manual abort | ❌ **No** | Network exists but request was cancelled; server may be slow but reachable |
+| `ResponseError` (HTTP 401) | Session expired | ❌ **No** | User's session is gone — redirect to login |
+| `ResponseError` (HTTP 403) | Access revoked | ❌ **No** | User lost access to resource |
+| `ResponseError` (HTTP 500) | Server crash | ❌ **No** | Server is running but errored; may recover quickly |
+| Any non-GET request | POST, PUT, DELETE, PATCH | ❌ **No** | Write operations never serve cached data |
+| Unknown URL pattern | `/api/bookmarks/123/track-click` | ❌ **No** | Only the 3 cacheable endpoints are intercepted |
+
+### Decision Logic
+
+```
+onError fires with (error, url, init)
+    │
+    ├── error is NOT TypeError? ────────────► return undefined (let it propagate)
+    │
+    ├── init.method is NOT 'GET'? ──────────► return undefined
+    │
+    ├── navigator.onLine is true? ──────────► return undefined
+    │   (browser thinks network is available — this is likely
+    │    a CORS/cert issue, not a real outage)
+    │
+    ├── url does NOT match a cacheable endpoint? ► return undefined
+    │   (only /api/auth/me, /api/collections,
+    │    /api/collections/{id})
+    │
+    └── ALL checks pass ────────────────────► serve from IndexedDB cache
+```
+
+### Why `navigator.onLine` Matters
+
+- `navigator.onLine === false` → browser detected no network (WiFi disconnected, cable unplugged). **Trust this** — serve cache.
+- `navigator.onLine === true` → browser thinks it has network, but `fetch()` threw `TypeError`. This means something else is wrong (CORS, cert, DNS pointing to wrong place). **Do NOT serve cache** — let the error surface so the user or admin can fix it.
+
+This is a conservative approach: we only serve stale data when we're confident the issue is a genuine network outage. False negatives (not serving cache when we could) are acceptable; false positives (serving cache when the server is actually reachable) are not.
+
+---
+
 ## Component Design
 
 ### 1. Service Worker — `vite-plugin-pwa`
@@ -214,17 +284,47 @@ Plugs into the existing `Middleware.onError` hook in the generated API client ru
 ```typescript
 import type { Middleware } from '@/api/generated/runtime'
 
+/**
+ * Cacheable API endpoints — only these GET paths trigger offline fallback.
+ * All other endpoints are ignored, even on network failure.
+ */
+const CACHEABLE_PATHS = {
+  AUTH_ME: '/api/auth/me',
+  COLLECTIONS: '/api/collections',
+  COLLECTION_BY_ID: /^\/api\/collections\/([^/]+)$/,
+} as const
+
 export function createOfflineMiddleware(): Middleware {
   return {
     onError: async (context) => {
-      // Only intercept network errors (TypeError) on GET requests
+      // ── Error Classification ─────────────────────────────────
+      // Rule 1: Only intercept TypeError (network-level failures from fetch())
+      // AbortError, DOMException, etc. are NOT network outages.
       if (!(context.error instanceof TypeError)) return undefined
+
+      // Rule 2: Only intercept GET requests — never serve cache for writes
       if (context.init.method !== 'GET') return undefined
 
+      // Rule 3: Only intercept when the browser reports no network.
+      // If navigator.onLine is true, the TypeError is likely CORS/cert/mixed-content
+      // — NOT a real outage. Serving stale cache would mask a real problem.
+      if (navigator.onLine) return undefined
+
+      // Rule 4: Only intercept known cacheable API endpoints
       const url = new URL(context.url)
+      if (!isCacheablePath(url.pathname)) return undefined
+
+      // ── Serve from Cache ─────────────────────────────────────
       return tryServeFromCache(url)
     }
   }
+}
+
+function isCacheablePath(pathname: string): boolean {
+  if (pathname === CACHEABLE_PATHS.AUTH_ME) return true
+  if (pathname === CACHEABLE_PATHS.COLLECTIONS) return true
+  if (CACHEABLE_PATHS.COLLECTION_BY_ID.test(pathname)) return true
+  return false
 }
 
 async function tryServeFromCache(url: URL): Promise<Response | undefined> {

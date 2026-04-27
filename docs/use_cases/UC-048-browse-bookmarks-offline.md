@@ -21,10 +21,10 @@
 1. User opens or refreshes the Chainlink application in the browser while the server is unreachable.
 2. Service worker serves the app shell from the Cache Storage.
 3. Vue application boots; the router guard triggers `initializeSession()`.
-4. System detects that the network request to `GET /api/auth/me` failed (TypeError: network error).
+4. System detects that `GET /api/auth/me` failed with a `TypeError` (network-level failure) and `navigator.onLine === false` (browser confirms no network). The offline middleware classifies this as a genuine network outage (see BR-048-8).
 5. System loads the cached `UserInfoJson` from IndexedDB (key `{email}:user-info`) and populates the auth store. The email from this cached record becomes the user identity for all subsequent cache lookups.
 6. Router guard recognizes the user as authenticated and proceeds to the default collection route.
-7. System detects that the network request to `GET /api/collections/{id}` failed.
+7. System detects that `GET /api/collections/{id}` failed with `TypeError` and `navigator.onLine === false`. The offline middleware confirms this is a cacheable endpoint and proceeds with fallback.
 8. Offline middleware intercepts the failure, constructs the user-scoped key `{email}:collection-info:{collectionId}`, and loads `CollectionInfoJson` from IndexedDB. The middleware validates that the email in the cache key matches the cached user identity before serving data.
 9. Collection store populates with cached bookmarks, folders, and tags.
 10. System sets the offline state to `isOffline = true`.
@@ -61,7 +61,24 @@ This covers three sub-scenarios:
 - **Explicitly logged out before the outage**: Logout purged the `{email}:*` keys from IndexedDB (FR-060).
 - **Different browser**: Offline cache is per-browser (same-origin + IndexedDB scope). Logging in on Chrome does not create a cache in Firefox.
 
-### A3: User Attempts a Write Operation
+### A3: Error Not Classified as Network Outage
+
+**Trigger:** A fetch fails but the error does not meet the offline classification criteria (step 4 or 7)
+**Flow:**
+
+1. The fetch threw an error, but one of these is true:
+   - Error is not a `TypeError` (e.g., `AbortError` from a timeout)
+   - `navigator.onLine === true` (browser detects network — error is likely CORS/cert/mixed-content)
+   - The URL is not a cacheable endpoint (e.g., `/api/bookmarks/123/track-click`)
+   - The request method is not GET
+2. The offline middleware returns `undefined` — it does NOT serve cached data.
+3. The error propagates normally to the store's error handler.
+4. The notification store displays the standard error toast (existing behavior).
+5. The user sees the normal error UI — no offline banner, no cached data.
+
+This prevents the offline fallback from masking real problems like CORS misconfiguration, expired certificates, or server errors that should be visible to the user.
+
+### A4: User Attempts a Write Operation
 
 **Trigger:** User clicks a disabled write button (e.g., "Add Bookmark") (step 12)
 **Flow:**
@@ -69,18 +86,18 @@ This covers three sub-scenarios:
 1. The button is visually disabled and non-interactive (grayed out, `pointer-events: none`).
 2. If the user somehow triggers a write action (e.g., via keyboard shortcut), the system displays a toast: "This action is not available while offline."
 
-### A4: User Switches Collections While Offline
+### A5: User Switches Collections While Offline
 
 **Trigger:** User selects a different collection from the collection switcher (between step 12 and 14)
 **Flow:**
 
 1. System updates `currentCollectionId` in the collection store.
 2. Collection store watcher triggers `fetchCollectionInfo()` for the new collection ID.
-3. Network request fails → offline middleware loads `CollectionInfoJson` from IndexedDB for the new collection ID.
+3. Network request fails with TypeError + navigator.onLine === false → offline middleware loads `CollectionInfoJson` from IndexedDB for the new collection ID.
 4. If cached data exists for that collection, the view updates with the new collection's bookmarks, folders, and tags.
 5. If no cached data exists, the collection view shows the empty state (see A1).
 
-### A5: User Searches Bookmarks While Offline
+### A6: User Searches Bookmarks While Offline
 
 **Trigger:** User types a search query into the search bar (between step 12 and 14)
 **Flow:**
@@ -89,7 +106,7 @@ This covers three sub-scenarios:
 2. Search results update reactively as the user types, matching against cached bookmark titles, URLs, descriptions, and tag names.
 3. No network request is needed — search is purely local.
 
-### A6: Partial Data (Only Some Collections Cached)
+### A7: Partial Data (Only Some Collections Cached)
 
 **Trigger:** User navigates to a collection that was visited online but another collection was not (step 8)
 **Flow:**
@@ -98,7 +115,7 @@ This covers three sub-scenarios:
 2. If found, returns the cached data — use case proceeds normally.
 3. If not found, the collection shows empty state — see A1.
 
-### A7: Cross-User Cache Mismatch (Failed Purge)
+### A8: Cross-User Cache Mismatch (Failed Purge)
 
 **Trigger:** A different user previously logged in on the same browser and their data was not fully purged on logout (step 5)
 **Flow:**
@@ -108,7 +125,7 @@ This covers three sub-scenarios:
 3. Even if another user's data (e.g., `bob@example.com:*`) exists in IndexedDB from a failed purge, it is never accessed because the keys are different.
 4. Use case proceeds normally with the correct user's data.
 
-### A8: Tab-Close Without Logout (Accepted Edge Case)
+### A9: Tab-Close Without Logout (Accepted Edge Case)
 
 **Trigger:** User A closes the browser tab without logging out, and User B later opens the app on the same browser while the server is down (step 5)
 **Flow:**
@@ -168,3 +185,22 @@ All cache reads are scoped by the cached user's email address. The offline middl
 ### BR-048-7: Offline Auth Trust Model
 
 Offline authentication does not re-validate credentials or session cookies. The system trusts the browser's IndexedDB cache as evidence of a prior successful login. This means: (1) at least one online login must have occurred in this browser, (2) the user must not have explicitly logged out (which purges the cache), (3) there is no way to distinguish a different person opening the same browser after a tab-close without logout. This trade-off is accepted because the data is read-only and represents what the user already saw on screen during their last online session. See C-009.
+
+### BR-048-8: Error Classification for Offline Fallback
+
+The offline middleware must classify errors before serving cached data. Only genuine network outages trigger the fallback. The classification rules are:
+
+**MUST trigger offline fallback (all conditions required):**
+- Error is `TypeError` (thrown by `fetch()` for DNS failure, connection refused, network unreachable)
+- Request method is `GET`
+- URL matches a known cacheable endpoint (`/api/auth/me`, `/api/collections`, `/api/collections/{id}`)
+- `navigator.onLine === false` (browser confirms no network connectivity)
+
+**MUST NOT trigger offline fallback:**
+- `ResponseError` (HTTP 401, 403, 500, etc.) — server is running, propagate error normally
+- `TypeError` when `navigator.onLine === true` — likely CORS/cert/mixed-content issue, not a real outage
+- `AbortError` — request was cancelled or timed out, network may exist
+- Any non-GET request (POST, PUT, DELETE, PATCH)
+- Any URL not in the cacheable endpoint list
+
+This conservative approach ensures stale cache is only served when the system is confident the issue is a genuine network outage. False negatives (not serving cache when we could) are acceptable; false positives (serving cache when the server is actually reachable) are not. See FR-062.
