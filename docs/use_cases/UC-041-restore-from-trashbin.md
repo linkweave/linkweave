@@ -6,7 +6,7 @@
 **Use Case Name:** Restore Deleted Item
 **Primary Actor:** User
 **Goal:** Restore a soft-deleted bookmark or folder from the trashbin back to its original location in the collection.
-**Status:** Draft
+**Status:** Implemented
 
 ## Traceability
 

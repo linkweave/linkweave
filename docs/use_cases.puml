@@ -75,10 +75,10 @@ rectangle "Chainlink Bookmark Manager" {
     }
 
     rectangle "Trashbin" {
-        usecase "UC-040\nView Trashbin" as UC040
-        usecase "UC-041\nRestore Deleted Item" as UC041
-        usecase "UC-042\nPermanently Delete\nfrom Trashbin" as UC042
-        usecase "UC-043\nEmpty Trashbin" as UC043
+        usecase "UC-040\nView Trashbin" as UC040 <<implemented>>
+        usecase "UC-041\nRestore Deleted Item" as UC041 <<implemented>>
+        usecase "UC-042\nPermanently Delete\nfrom Trashbin" as UC042 <<implemented>>
+        usecase "UC-043\nEmpty Trashbin" as UC043 <<implemented>>
     }
 
     rectangle "Cleanup" {

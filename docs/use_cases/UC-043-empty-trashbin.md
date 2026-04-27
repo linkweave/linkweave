@@ -6,7 +6,7 @@
 **Use Case Name:** Empty Trashbin
 **Primary Actor:** User
 **Goal:** Permanently delete all items in the trashbin at once so that the user can quickly free up space and remove all soft-deleted items they no longer need.
-**Status:** Draft
+**Status:** Implemented
 
 ## Traceability
 
