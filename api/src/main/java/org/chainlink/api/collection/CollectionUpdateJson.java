@@ -8,6 +8,7 @@ import lombok.Value;
 import org.chainlink.infrastructure.db.DbConst;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 @Value
 @JaxDTO
@@ -18,4 +19,7 @@ public class CollectionUpdateJson {
     @NotNull
     @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH)
     @NonNull String name;
+
+    @Size(max = DbConst.DB_TEXTAREA_MAX_LENGTH_2000)
+    @Nullable String faviconAllowlist;
 }

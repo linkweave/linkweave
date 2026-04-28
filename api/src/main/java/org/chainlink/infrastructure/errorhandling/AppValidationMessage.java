@@ -230,4 +230,11 @@ public class AppValidationMessage {
             I18nMessage.of("AppValidation.SHARE_ALREADY_HAS_ACCESS")
         );
     }
+
+    public static @NonNull AppValidationMessage faviconAllowlistInvalidPattern(@NonNull String pattern) {
+        return of(
+            "FaviconAllowlistInvalidPattern",
+            I18nMessage.of("AppValidation.FAVICON_ALLOWLIST_INVALID_PATTERN", "pattern", pattern)
+        );
+    }
 }

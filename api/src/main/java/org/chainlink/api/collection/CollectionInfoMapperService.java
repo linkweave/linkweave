@@ -26,6 +26,7 @@ public class CollectionInfoMapperService {
         return new CollectionInfoJson(
             collection.getId(),
             collection.getName(),
+            collection.getFaviconAllowlist(),
             bookmarks.stream().map(BookmarkMapper::toJson).toList(),
             folders.stream().map(FolderMapper::toJson).toList(),
             tags.stream().map(TagMapper::toJson).toList()
