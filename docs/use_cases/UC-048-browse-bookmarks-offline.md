@@ -6,7 +6,22 @@
 **Use Case Name:** Browse Bookmarks Offline
 **Primary Actor:** User
 **Goal:** Access, browse, search, and filter cached bookmarks when the server is unreachable
-**Status:** Draft
+**Status:** Implemented
+
+**Implementation Notes:**
+- Main success scenario (steps 1–14) fully implemented
+- Offline banner (`OfflineBanner.vue`) with last-synced timestamp
+- Write buttons disabled when offline (`CollectionView.vue`, `SidebarCl.vue`)
+- Error classification (BR-048-8) implemented in `src/lib/offline-middleware.ts` with 4-gate check
+- A1 (no cached data) — works, shows empty state
+- A2 (no cached user info) — works, redirects to login via `tryRestoreFromCache()` in `useSessionInit.ts`
+- A3 (non-network errors) — works, middleware returns `undefined` for non-TypeError/online/non-GET/non-cacheable
+- A4 (write disabled) — works, buttons are disabled
+- A5 (switch collections) — works, middleware serves cached `CollectionInfoJson` for any previously visited collection
+- A6 (search offline) — works, search is client-side
+- A7 (partial data) — works, per-collection caching
+- A8 (cross-user isolation) — works, user-scoped keys
+- A9 (tab-close edge case) — accepted as documented (C-009)
 
 **Traces to:** FR-054, FR-055, FR-056, FR-057, FR-058, FR-061
 

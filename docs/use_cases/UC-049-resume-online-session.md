@@ -6,7 +6,19 @@
 **Use Case Name:** Resume Online Session
 **Primary Actor:** User
 **Goal:** Automatically detect restored network connectivity, refresh cached data from the server, and transition out of offline mode seamlessly
-**Status:** Draft
+**Status:** Implemented
+
+**Implementation Notes:**
+- Main success scenario (steps 1–10) implemented in `src/stores/offline.ts`
+- `setupListeners()` registers debounced (2s) `online`/`offline` event listeners
+- `onBackOnline()` calls `fetchCollections()` and `fetchCollectionInfo()`, updates `lastSyncedAt`
+- Offline banner auto-dismisses when `isOffline` becomes `false`
+- Write buttons re-enable automatically (reactive `offline.isOffline` binding)
+- A1 (server still unreachable) — NOT specifically handled; fetch errors show standard error toast
+- A2 (session expired) — handled by existing auth flow (401 → redirect to login, cache purged on logout)
+- A3 (data changed) — seamless, server data replaces stale cache
+- A4 (login page) — N/A, offline banner only shown inside `MainLayout` (authenticated routes)
+- A5 (debouncing) — implemented with 2-second debounce in `offline.ts`
 
 **Traces to:** FR-059, FR-060, FR-061
 

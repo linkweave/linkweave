@@ -6,7 +6,13 @@
 **Use Case Name:** Manage Offline Cache
 **Primary Actor:** User
 **Goal:** Control whether the app caches collection data locally for offline access (enabled by default, can be disabled)
-**Status:** Draft
+**Status:** Implemented
+
+**Implementation Notes:**
+- Always-on caching is implemented — no user opt-out toggle yet (backend `User` entity change deferred due to `@AllArgsConstructor` cascading build issue; will use a separate `UserSettings` entity when revisited)
+- A1/A2 (disable/re-enable) are NOT implemented — caching is always active
+- A3/A4 (SW not supported / IndexedDB not available) are handled gracefully — cache writes fail with `console.error`
+- Main success scenario is fully implemented in `src/lib/offline-cache.ts` + store hooks in `auth.ts` and `collection.ts`
 
 **Traces to:** FR-052, FR-053, FR-061
 
