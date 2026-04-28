@@ -244,5 +244,11 @@
     "nameMismatch": "Name stimmt nicht überein",
     "colorHex": "Muss ein gültiger Hex-Farbwert sein (z.B. #ef4444)",
     "collectionIdRequired": "collectionId ist erforderlich"
+  },
+  "offline": {
+    "banner": "Sie sind offline. Cachedaten werden angezeigt.",
+    "bannerNoCache": "Sie sind offline. Keine Cachedaten verfügbar.",
+    "lastSynced": "Zuletzt synchronisiert {time}",
+    "writeDisabled": "Diese Aktion ist offline nicht verfügbar."
   }
 }

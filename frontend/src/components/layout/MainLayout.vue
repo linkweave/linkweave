@@ -1,15 +1,24 @@
 <script setup lang="ts">
 import {ButtonCl} from '@/components/ui'
+import OfflineBanner from '@/components/ui/OfflineBanner.vue'
 import {cn} from '@/lib/utils'
 import {Menu, X} from 'lucide-vue-next'
+import {onMounted} from 'vue'
 import {ref} from 'vue'
 import SidebarCl from './SidebarCl.vue'
 import HeaderCl from './HeaderCl.vue'
 import CollectionSwitcher from './CollectionSwitcher.vue'
+import {useOfflineStore} from '@/stores/offline'
 
 withDefaults(defineProps<{ hideSidebar?: boolean }>(), { hideSidebar: false })
 
 const sidebarOpen = ref(false)
+const offline = useOfflineStore()
+
+onMounted(() => {
+  offline.setupListeners()
+  offline.loadLastSyncTime()
+})
 
 const toggleSidebar = () => {
   sidebarOpen.value = !sidebarOpen.value
@@ -22,6 +31,7 @@ const closeSidebar = () => {
 
 <template>
   <div class="flex flex-col h-screen bg-background">
+    <OfflineBanner />
     <HeaderCl>
       <template #leading>
         <ButtonCl v-if="!hideSidebar" variant="ghost" size="icon" class="lg:hidden" data-testid="mobile-sidebar-toggle" @click="toggleSidebar">

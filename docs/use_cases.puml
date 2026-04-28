@@ -95,7 +95,12 @@ rectangle "Chainlink Bookmark Manager" {
         usecase "UC-036\nAdopt Form Library\nwith Zod Schemas" as UC036 <<implemented>>
         usecase "UC-039\nSession Data Cleanup" as UC039 <<implemented>>
         usecase "UC-037\nProvide Browser\nExtension" as UC037
-        usecase "UC-038\nOffline Mode" as UC038
+    }
+
+    rectangle "Offline Mode" {
+        usecase "UC-047\nManage Offline Cache\n(always-on, opt-out)" as UC047
+        usecase "UC-048\nBrowse Bookmarks Offline" as UC048
+        usecase "UC-049\nResume Online Session" as UC049
     }
 }
 
@@ -155,7 +160,14 @@ developer --> UC035
 developer --> UC036
 developer --> UC039
 user --> UC037
-user --> UC038
+
+' Offline Mode
+user --> UC047
+user --> UC048
+user --> UC049
+
+UC047 ..> UC048 : <<include>>
+UC048 ..> UC049 : <<extend>>
 
 ' Cleanup
 user --> UC044
@@ -174,9 +186,15 @@ note right of UC037
   for architecture plan
 end note
 
+note right of UC048
+  Offline mode is read-only.
+  Cache keys are scoped per user
+  ({email}:...) for data isolation.
+end note
+
 legend right
   |<#E8F5E9>| Implemented |
-  |<#FFFFFF>| Not started |
+  |<#FFFFFF>| Not started / Draft |
 endlegend
 
 @enduml
