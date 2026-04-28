@@ -5,6 +5,7 @@ import { ButtonCl } from '@/components/ui'
 import BuildversionCl from '@/components/ui/BuildversionCl.vue'
 import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
+import { useOfflineStore } from '@/stores/offline'
 import { Folder, Plus, Tag } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -20,6 +21,7 @@ import { useDndMove } from '@/composables/useDndMove'
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
 const folderStore = useFolderStore()
+const offline = useOfflineStore()
 const { moveBookmarkWithUndo, moveFolderWithUndo } = useDndMove()
 
 const collectionId = computed(() => collectionStore.currentCollectionId ?? '')
@@ -126,6 +128,7 @@ async function onAllBookmarksDrop(event: DragEvent) {
           v-if="collectionId"
           variant="ghost"
           size="sm"
+          :disabled="offline.isOffline"
           class="w-full justify-start text-muted-foreground hover:text-foreground mt-2"
           @click="subfolderParentId = undefined; showCreateFolder = true"
         >

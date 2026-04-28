@@ -8,11 +8,13 @@ import { FolderBreadcrumbCl } from '@/components/folder'
 import { useI18n } from 'vue-i18n'
 import { useCollectionStore } from '@/stores/collection'
 import { useUiStore } from '@/stores/ui'
+import { useOfflineStore } from '@/stores/offline'
 import CreateBookmarkDialog from '@/components/bookmark/CreateBookmarkDialog.vue'
 
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
 const ui = useUiStore()
+const offline = useOfflineStore()
 const isAddingBookmark = ref(false)
 
 const containerClass = computed(() =>
@@ -23,7 +25,7 @@ const containerClass = computed(() =>
 <template>
   <MainLayout>
     <template #header-actions>
-      <ButtonCl size="sm" @click="isAddingBookmark = true">
+      <ButtonCl size="sm" :disabled="offline.isOffline" @click="isAddingBookmark = true">
         <BookmarkPlus class="h-4 w-4 sm:mr-2" />
         <span class="hidden sm:inline">{{ t('header.addBookmark') }}</span>
       </ButtonCl>

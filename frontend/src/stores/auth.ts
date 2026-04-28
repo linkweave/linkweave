@@ -7,6 +7,7 @@ import { useCollectionStore } from '@/stores/collection'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useFolderStore } from '@/stores/folder'
 import { useTagStore } from '@/stores/tag'
+import * as offlineCache from '@/lib/offline-cache'
 import router from '@/router'
 
 const authApi = new AuthResourceApi(config)
@@ -46,6 +47,9 @@ export const useAuthStore = defineStore('auth', () => {
     fetchPromise = (async () => {
       try {
         user.value = await authApi.apiAuthMeGet()
+        if (user.value) {
+          offlineCache.saveUserInfo(user.value.email, user.value).catch(err => console.error('Failed to cache user info for offline use:', err))
+        }
         return true
       } catch {
         user.value = null
@@ -65,11 +69,15 @@ export const useAuthStore = defineStore('auth', () => {
     } catch {
       // cookie is cleared by server, ignore errors
     } finally {
+      const email = user.value?.email
       resetAllStores()
       user.value = null
       loading.value = true
       initialized.value = false
       fetchPromise = null
+      if (email) {
+        offlineCache.purgeForUser(email).catch(err => console.error('Failed to purge offline cache on logout:', err))
+      }
       router.push({ name: 'login' })
     }
   }

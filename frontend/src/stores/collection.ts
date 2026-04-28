@@ -1,6 +1,8 @@
 import {config} from '@/api'
 import type {CollectionInfoJson, CollectionMemberJson, CollectionSummaryJson} from '@/api/generated'
 import {CollectionResourceApi} from '@/api/generated'
+import * as offlineCache from '@/lib/offline-cache'
+import { toSerializable } from '@/lib/to-serializable'
 import router from '@/router'
 import {useAuthStore} from '@/stores/auth'
 import {useNotificationStore} from '@/stores/notification'
@@ -29,6 +31,10 @@ export const useCollectionStore = defineStore('collection', () => {
   async function fetchCollections() {
     try {
       collections.value = await collectionApi.apiCollectionsGet()
+      const auth = useAuthStore()
+      if (auth.user?.email) {
+        offlineCache.saveCollections(auth.user.email, toSerializable(collections.value)).catch(err => console.error('Failed to cache collections for offline use:', err))
+      }
     } catch (err) {
       console.error('Failed to fetch collections:', err)
       const notification = useNotificationStore()
@@ -45,6 +51,10 @@ export const useCollectionStore = defineStore('collection', () => {
     loading.value = true
     try {
       collectionInfo.value = await collectionApi.apiCollectionsIdGet({ id: collectionId })
+      const auth = useAuthStore()
+      if (auth.user?.email && collectionInfo.value) {
+        offlineCache.saveCollectionInfo(auth.user.email, toSerializable(collectionInfo.value)).catch(err => console.error('Failed to cache collection info for offline use:', err))
+      }
     } catch (err) {
       console.error('Failed to fetch collection info:', err)
       collectionInfo.value = null

@@ -6,6 +6,7 @@ import path from 'node:path'
 import {fileURLToPath, URL} from 'node:url'
 import {defineConfig} from 'vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
+import {VitePWA} from 'vite-plugin-pwa'
 
 export default defineConfig(({ command }) => {
   const isDev = command === 'serve'
@@ -15,7 +16,37 @@ export default defineConfig(({ command }) => {
   const keyFile = path.join(certsDir, 'local-chainlink.localhost.key')
 
   return {
-    plugins: [vue(), vueDevTools(), tailwindcss()],
+    plugins: [
+      vue(),
+      vueDevTools(),
+      tailwindcss(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        workbox: {
+          navigateFallback: 'index.html',
+          navigateFallbackDenylist: [/^\/api/],
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/.*\.(js|css|png|svg|ico|woff2)$/,
+              handler: 'CacheFirst',
+              options: { cacheName: 'chainlink-assets' },
+            },
+          ],
+        },
+        manifest: {
+          name: 'Chainlink - Bookmark Manager',
+          short_name: 'Chainlink',
+          description: 'Self-hosted bookmark manager',
+          theme_color: '#2563eb',
+          background_color: '#ffffff',
+          display: 'standalone',
+          icons: [
+            { src: '/chainlink-favicon.png', sizes: '192x192', type: 'image/png' },
+            { src: '/chainlink-favicon.png', sizes: '512x512', type: 'image/png' },
+          ],
+        },
+      }),
+    ],
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
