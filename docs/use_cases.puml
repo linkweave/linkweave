@@ -89,6 +89,10 @@ rectangle "Chainlink Bookmark Manager" {
         usecase "UC-045\nAuto-Tag Bookmark\nby URL Pattern" as UC045
     }
 
+    rectangle "Favicons" {
+        usecase "UC-050\nFetch Bookmark\nFavicons" as UC050
+    }
+
     rectangle "Architecture & Quality Control" {
         usecase "UC-030\nRobust Error Handling" as UC030
         usecase "UC-035\nAdd ArchUnit Tests" as UC035
@@ -180,6 +184,10 @@ user --> UC043
 
 ' Auto-Tagging
 user --> UC045
+
+' Favicons
+user --> UC050
+owner --> UC050
 
 note right of UC037
   See browser-extension.md
