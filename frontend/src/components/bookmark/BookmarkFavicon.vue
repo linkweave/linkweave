@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useCollectionStore } from '@/stores/collection'
 import { hostnameOf, matchesAllowlist, parseAllowlist } from '@/lib/favicon-allowlist'
+import { Globe } from 'lucide-vue-next'
 
 const props = defineProps<{
   bookmarkId: string
@@ -40,5 +41,10 @@ const px = computed(() => `${props.size ?? 16}px`)
     :style="{ width: px, height: px }"
     class="rounded-sm shrink-0"
     @error="failed = true"
+  />
+  <Globe
+    v-else
+    :size="size ?? 16"
+    class="shrink-0 text-muted-foreground"
   />
 </template>

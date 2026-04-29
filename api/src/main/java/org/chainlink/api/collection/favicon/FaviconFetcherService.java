@@ -255,7 +255,11 @@ public class FaviconFetcherService {
 
     static @NonNull String canonicalOrigin(@NonNull URL url) {
         String scheme = url.getProtocol().toLowerCase();
-        String host = url.getHost().toLowerCase();
+        String host = url.getHost();
+        if (host == null || host.isEmpty()) {
+            throw new IllegalArgumentException("URL has no host: " + url);
+        }
+        host = host.toLowerCase();
         int port = url.getPort();
         String defaultPort = "https".equals(scheme) ? "443" : "80";
         if (port == -1 || String.valueOf(port).equals(defaultPort)) {

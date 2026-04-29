@@ -8,14 +8,14 @@ import { collectionUpdateSchema } from '@/schemas/collection'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { CollectionResourceApi } from '@/api/generated'
-import { CollectionResourceApi as CollectionApi } from '@/api/generated'
+import { CollectionResourceApi } from '@/api/generated'
 import { config } from '@/api'
 
 const props = defineProps<{
   open: boolean
   collectionId: string
   currentName: string
+  isOwner?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -26,7 +26,7 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
 const notification = useNotificationStore()
-const collectionApi: CollectionResourceApi = new CollectionApi(config)
+const collectionApi = new CollectionResourceApi(config)
 
 const { defineField, handleSubmit, errors, resetForm, isSubmitting } = useForm({
   validationSchema: toTypedSchema(collectionUpdateSchema(t)),
@@ -47,7 +47,8 @@ useFormDialog(toRef(props, 'open'), async () => {
         faviconAllowlist: info.faviconAllowlist ?? '',
       },
     })
-  } catch {
+  } catch (err) {
+    console.error('Failed to load collection allowlist:', err)
     // keep defaults; backend errors surface on submit
   }
 })
@@ -79,6 +80,7 @@ const onSubmit = handleSubmit(async (values) => {
         />
       </FormFieldCl>
       <FormFieldCl
+        v-if="props.isOwner"
         :label="t('collectionManage.faviconAllowlist')"
         for-id="edit-collection-favicon-allowlist"
         :error="errors.faviconAllowlist"

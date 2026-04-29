@@ -6,15 +6,11 @@
 **Use Case Name:** Favicon Cache Cleanup Job
 **Primary Actor:** System (Scheduler)
 **Goal:** Keep the on-disk favicon cache (UC-050) within an operator-defined size budget by periodically evicting cache entries belonging to the oldest bookmarks across all collections, so that long-running deployments do not accumulate unbounded disk usage.
-**Status:** Draft
+**Status:** Implemented
 
 ## Traceability
 
 **Maps to:** FR-064
-
-## Assumptions
-
-- "Delete bookmarks" in the original requirement is interpreted as "evict the *cached favicon entry* keyed by that bookmark's origin." The job never deletes bookmark rows or any user data — only files under the favicon cache directory. If the original intent really was to delete user-owned bookmarks because the cache filled up, this use case must be rewritten.
 
 ---
 

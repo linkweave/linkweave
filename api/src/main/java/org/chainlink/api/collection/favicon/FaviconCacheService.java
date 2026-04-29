@@ -132,6 +132,33 @@ public class FaviconCacheService {
         return cacheDir.resolve(sha256(origin) + suffix);
     }
 
+    public @NonNull Path getCacheDir() {
+        return cacheDir;
+    }
+
+    /**
+     * Deletes the {@code .bin} and {@code .meta} files for the given origin if present
+     * and returns the number of bytes freed. Per UC-051 BR-113 individual I/O failures
+     * are logged and treated as zero-bytes-freed so a single bad file does not abort
+     * the cleanup run.
+     */
+    public long deleteForOrigin(@NonNull String origin) {
+        long freed = 0L;
+        for (String suffix : new String[] { SUFFIX_PAYLOAD, SUFFIX_META }) {
+            Path file = filePath(origin, suffix);
+            try {
+                if (Files.exists(file)) {
+                    long size = Files.size(file);
+                    Files.delete(file);
+                    freed += size;
+                }
+            } catch (IOException e) {
+                LOG.warn("Failed to delete favicon cache file {}: {}", file, e.getMessage());
+            }
+        }
+        return freed;
+    }
+
     static @NonNull String sha256(@NonNull String input) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
