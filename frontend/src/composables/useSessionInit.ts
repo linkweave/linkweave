@@ -27,6 +27,7 @@ export async function initializeSession(to?: { name?: string | symbol | null; pa
 
 async function tryRestoreFromCache(auth: ReturnType<typeof useAuthStore>): Promise<boolean> {
   if (!('indexedDB' in window)) return false
+  if (navigator.onLine) return false
 
   try {
     const cached = await offlineCache.loadUserInfo()
