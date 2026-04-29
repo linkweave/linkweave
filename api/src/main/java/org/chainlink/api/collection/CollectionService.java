@@ -2,7 +2,6 @@ package org.chainlink.api.collection;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
 import ch.dvbern.dvbstarter.types.id.ID;
@@ -15,11 +14,13 @@ import org.chainlink.api.bookmark.Tag;
 import org.chainlink.api.bookmark.TagService;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.bookmark.folder.FolderService;
+import org.chainlink.api.collection.favicon.FaviconAllowlist;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.infrastructure.errorhandling.AppValidationException;
 import org.chainlink.infrastructure.errorhandling.AppValidationMessage;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 @Service
 @RequiredArgsConstructor
@@ -105,9 +106,12 @@ public class CollectionService {
     public CollectionSummaryJson updateCollection(
         @NonNull ID<Collection> collectionId,
         @NonNull String name,
+        @Nullable String faviconAllowlist,
         @NonNull User user) {
         Collection collection = collectionRepo.getById(collectionId);
         collection.setName(name);
+        FaviconAllowlist parsed = FaviconAllowlist.parse(faviconAllowlist);
+        collection.setFaviconAllowlist(parsed.patterns().isEmpty() ? null : String.join("\n", parsed.patterns()));
         collectionRepo.persistAndFlush(collection);
 
         CollectionAccess access = collectionAccessRepo.findByUser(user.getId()).stream()

@@ -72,7 +72,7 @@ public class CollectionResource {
     ) {
         authorizationService.requireOwnerAccess(id);
         var currentUser = currentUserService.currentUser();
-        return collectionService.updateCollection(id, json.getName(), currentUser);
+        return collectionService.updateCollection(id, json.getName(), json.getFaviconAllowlist(), currentUser);
     }
 
     @DELETE

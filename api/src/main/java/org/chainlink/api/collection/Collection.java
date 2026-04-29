@@ -37,4 +37,13 @@ public class Collection extends AbstractEntity<Collection> {
     @ManyToOne(optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "fk_collection_owner"), nullable = false)
     private User owner;
+
+    @Size(max = DbConst.DB_TEXTAREA_MAX_LENGTH_2000)
+    @Column(length = DbConst.DB_TEXTAREA_MAX_LENGTH_2000)
+    private String faviconAllowlist;
+
+    public Collection(@NotBlank String name, @NonNull User owner) {
+        this.name = name;
+        this.owner = owner;
+    }
 }

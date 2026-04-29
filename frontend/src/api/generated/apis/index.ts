@@ -4,6 +4,7 @@ export * from './auth-resource-api';
 export * from './bookmark-resource-api';
 export * from './collection-resource-api';
 export * from './export-resource-api';
+export * from './favicon-resource-api';
 export * from './folder-resource-api';
 export * from './import-resource-api';
 export * from './tag-resource-api';

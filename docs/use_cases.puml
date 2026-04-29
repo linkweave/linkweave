@@ -7,6 +7,8 @@ skinparam usecaseBorderColor<<implemented>> #4CAF50
 actor "User" as user
 actor "Collection Owner" as owner
 actor "Developer" as developer
+actor "Operator" as operator
+actor "Scheduler" as scheduler
 
 owner --|> user
 
@@ -87,6 +89,11 @@ rectangle "Chainlink Bookmark Manager" {
 
     rectangle "Auto-Tagging" {
         usecase "UC-045\nAuto-Tag Bookmark\nby URL Pattern" as UC045
+    }
+
+    rectangle "Favicons" {
+        usecase "UC-050\nFetch Bookmark\nFavicons" as UC050
+        usecase "UC-051\nFavicon Cache\nCleanup Job" as UC051
     }
 
     rectangle "Architecture & Quality Control" {
@@ -180,6 +187,12 @@ user --> UC043
 
 ' Auto-Tagging
 user --> UC045
+
+' Favicons
+user --> UC050
+owner --> UC050
+scheduler --> UC051
+operator --> UC051
 
 note right of UC037
   See browser-extension.md

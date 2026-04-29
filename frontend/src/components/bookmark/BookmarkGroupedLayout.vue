@@ -7,6 +7,7 @@ import { useBookmarkStore } from '@/stores/bookmark'
 import { Folder, FolderOpen, MoreHorizontal } from 'lucide-vue-next'
 import { DRAG_TYPE_BOOKMARK, isDraggingBookmark, setDraggingBookmark } from '@/composables/useDragState'
 import { useDndMove } from '@/composables/useDndMove'
+import BookmarkFavicon from '@/components/bookmark/BookmarkFavicon.vue'
 import {
   DropdownMenuRoot,
   DropdownMenuTrigger,
@@ -167,14 +168,6 @@ async function onHeaderDrop(event: DragEvent, group: GroupCard) {
   if (bookmarkId) await moveBookmarkWithUndo(bookmarkId, group.rootFolder?.id)
 }
 
-function faviconUrl(url: string): string {
-  try {
-    const hostname = new URL(url).hostname
-    return hostname ? `https://icons.duckduckgo.com/ip3/${hostname}.ico` : ''
-  } catch {
-    return ''
-  }
-}
 </script>
 
 <template>
@@ -234,13 +227,10 @@ function faviconUrl(url: string): string {
             @dragstart="onBookmarkDragStart($event, bookmark)"
             @dragend="onBookmarkDragEnd"
           >
-            <img
-              v-if="faviconUrl(bookmark.data.url)"
-              :src="faviconUrl(bookmark.data.url)"
-              alt=""
-              class="w-4 h-4 shrink-0 rounded-sm"
-              loading="lazy"
-              @error="($event.target as HTMLImageElement).style.display = 'none'"
+            <BookmarkFavicon
+              :bookmark-id="bookmark.id"
+              :url="bookmark.data.url"
+              :size="16"
             />
             <a
               :href="bookmark.data.url"
