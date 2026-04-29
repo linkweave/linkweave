@@ -12,10 +12,6 @@
 
 **Maps to:** FR-064
 
-## Assumptions
-
-- "Delete bookmarks" in the original requirement is interpreted as "evict the *cached favicon entry* keyed by that bookmark's origin." The job never deletes bookmark rows or any user data — only files under the favicon cache directory. If the original intent really was to delete user-owned bookmarks because the cache filled up, this use case must be rewritten.
-
 ---
 
 ## Preconditions

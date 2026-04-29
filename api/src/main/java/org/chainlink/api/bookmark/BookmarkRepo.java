@@ -111,6 +111,14 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             .fetch();
     }
 
+    @NonNull
+    public List<Bookmark> findAllOldestFirstNotDeleted() {
+        return db.selectFrom(QBookmark.bookmark)
+            .where(notDeleted())
+            .orderBy(QBookmark.bookmark.timestampErstellt.asc())
+            .fetch();
+    }
+
     public void deleteByCollection(@NonNull ID<Collection> collectionId) {
         var bookmarks = db.selectFrom(QBookmark.bookmark)
             .where(QBookmark.bookmark.collection.id.eq(collectionId.getUUID()))
