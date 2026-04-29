@@ -4,10 +4,13 @@ import { useForm } from 'vee-validate'
 import { DialogCl, ButtonCl, FormFieldCl } from '@/components/ui'
 import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
-import { collectionCreateSchema } from '@/schemas/collection'
+import { collectionUpdateSchema } from '@/schemas/collection'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
+import type { CollectionResourceApi } from '@/api/generated'
+import { CollectionResourceApi as CollectionApi } from '@/api/generated'
+import { config } from '@/api'
 
 const props = defineProps<{
   open: boolean
@@ -23,18 +26,35 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
 const notification = useNotificationStore()
+const collectionApi: CollectionResourceApi = new CollectionApi(config)
 
 const { defineField, handleSubmit, errors, resetForm, isSubmitting } = useForm({
-  validationSchema: toTypedSchema(collectionCreateSchema(t)),
-  initialValues: { name: '' },
+  validationSchema: toTypedSchema(collectionUpdateSchema(t)),
+  initialValues: { name: '', faviconAllowlist: '' },
 })
 
 const [name, nameAttrs] = defineField('name')
+const [faviconAllowlist, faviconAllowlistAttrs] = defineField('faviconAllowlist')
 
-useFormDialog(toRef(props, 'open'), () => resetForm({ values: { name: props.currentName } }))
+useFormDialog(toRef(props, 'open'), async () => {
+  resetForm({ values: { name: props.currentName, faviconAllowlist: '' } })
+  if (!props.collectionId) return
+  try {
+    const info = await collectionApi.apiCollectionsIdGet({ id: props.collectionId })
+    resetForm({
+      values: {
+        name: info.name ?? props.currentName,
+        faviconAllowlist: info.faviconAllowlist ?? '',
+      },
+    })
+  } catch {
+    // keep defaults; backend errors surface on submit
+  }
+})
 
 const onSubmit = handleSubmit(async (values) => {
-  const ok = await collectionStore.updateCollection(props.collectionId, values.name)
+  const allowlist = values.faviconAllowlist.trim() ? values.faviconAllowlist : ''
+  const ok = await collectionStore.updateCollection(props.collectionId, values.name, allowlist)
   if (ok) {
     emit('update:open', false)
     notification.success(t('collectionManage.editTitle'))
@@ -57,6 +77,23 @@ const onSubmit = handleSubmit(async (values) => {
           :placeholder="t('collectionManage.namePlaceholder')"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
+      </FormFieldCl>
+      <FormFieldCl
+        :label="t('collectionManage.faviconAllowlist')"
+        for-id="edit-collection-favicon-allowlist"
+        :error="errors.faviconAllowlist"
+      >
+        <textarea
+          id="edit-collection-favicon-allowlist"
+          v-model="faviconAllowlist"
+          v-bind="faviconAllowlistAttrs"
+          rows="4"
+          maxlength="2000"
+          data-testid="edit-collection-favicon-allowlist-input"
+          :placeholder="t('collectionManage.faviconAllowlistPlaceholder')"
+          class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
+        <p class="text-xs text-muted-foreground mt-1">{{ t('collectionManage.faviconAllowlistHelp') }}</p>
       </FormFieldCl>
       <div class="flex justify-end gap-2">
         <ButtonCl type="button" variant="outline" @click="emit('update:open', false)">

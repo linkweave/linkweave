@@ -12,6 +12,7 @@ import { useTagStore } from '@/stores/tag'
 import { useFolderStore } from '@/stores/folder'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { DRAG_TYPE_BOOKMARK, setDraggingBookmark } from '@/composables/useDragState'
+import BookmarkFavicon from '@/components/bookmark/BookmarkFavicon.vue'
 
 const tagStore = useTagStore()
 const folderStore = useFolderStore()
@@ -26,21 +27,6 @@ const emit = defineEmits<{
   delete: [bookmark: BookmarkJson]
   move: [bookmark: BookmarkJson]
 }>()
-
-function extractHostname(url: string) {
-  try {
-    return new URL(url).hostname
-  } catch {
-    return ''
-  }
-}
-
-function faviconUrl(url: string) {
-  const hostname = extractHostname(url)
-  return hostname
-    ? `https://icons.duckduckgo.com/ip3/${hostname}.ico`
-    : ''
-}
 
 function getTagById(tagId: string) {
   return tagStore.tags.find(t => t.id === tagId)
@@ -74,13 +60,11 @@ function getFolderName(): string | null {
   >
     <DropdownMenuRoot>
       <div class="flex items-start gap-3">
-        <img
-          v-if="faviconUrl(props.bookmark.data.url)"
-          :src="faviconUrl(props.bookmark.data.url)"
-          :alt="''"
-          class="w-5 h-5 mt-0.5 rounded-sm shrink-0"
-          loading="lazy"
-          @error="($event.target as HTMLImageElement).style.display = 'none'"
+        <BookmarkFavicon
+          :bookmark-id="props.bookmark.id"
+          :url="props.bookmark.data.url"
+          :size="20"
+          class="mt-0.5"
         />
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2">

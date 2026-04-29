@@ -24,6 +24,7 @@ import {
     BookmarkJsonFromJSON,
     BookmarkJsonToJSON,
     FolderJsonFromJSON,
+    FolderJsonToJSON,
     TrashbinCountJsonFromJSON,
     TrashbinCountJsonToJSON,
     TrashbinJsonFromJSON,

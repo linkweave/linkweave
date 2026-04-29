@@ -25,6 +25,12 @@ export interface CollectionUpdateJson {
      * @memberof CollectionUpdateJson
      */
     name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CollectionUpdateJson
+     */
+    faviconAllowlist?: string;
 }
 
 /**
@@ -46,6 +52,7 @@ export function CollectionUpdateJsonFromJSONTyped(json: any, ignoreDiscriminator
     return {
         
         'name': json['name'],
+        'faviconAllowlist': json['faviconAllowlist'] == null ? undefined : json['faviconAllowlist'],
     };
 }
 
@@ -61,6 +68,7 @@ export function CollectionUpdateJsonToJSONTyped(value?: CollectionUpdateJson | n
     return {
         
         'name': value['name'],
+        'faviconAllowlist': value['faviconAllowlist'],
     };
 }
 

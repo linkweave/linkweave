@@ -57,6 +57,10 @@
   border-color: var(--color-border);
 }
 
+::placeholder {
+  opacity: 0.55;
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);

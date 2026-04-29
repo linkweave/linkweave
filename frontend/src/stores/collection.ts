@@ -95,10 +95,20 @@ export const useCollectionStore = defineStore('collection', () => {
     }
   }
 
-  async function updateCollection(collectionId: string, name: string): Promise<boolean> {
+  async function updateCollection(
+    collectionId: string,
+    name: string,
+    faviconAllowlist?: string,
+  ): Promise<boolean> {
     try {
-      await collectionApi.apiCollectionsIdPut({ id: collectionId, collectionUpdateJson: { name } })
+      await collectionApi.apiCollectionsIdPut({
+        id: collectionId,
+        collectionUpdateJson: { name, faviconAllowlist },
+      })
       await fetchCollections()
+      if (currentCollectionId.value === collectionId) {
+        await fetchCollectionInfo(collectionId)
+      }
       return true
     } catch (err) {
       console.error('Failed to update collection:', err)

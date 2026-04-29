@@ -55,6 +55,12 @@ export interface CollectionInfoJson {
     name: string;
     /**
      * 
+     * @type {string}
+     * @memberof CollectionInfoJson
+     */
+    faviconAllowlist?: string;
+    /**
+     * 
      * @type {Array<BookmarkJson>}
      * @memberof CollectionInfoJson
      */
@@ -94,6 +100,7 @@ export function CollectionInfoJsonFromJSONTyped(json: any, ignoreDiscriminator: 
         
         'id': json['id'],
         'name': json['name'],
+        'faviconAllowlist': json['faviconAllowlist'] == null ? undefined : json['faviconAllowlist'],
         'bookmarks': json['bookmarks'] == null ? undefined : ((json['bookmarks'] as Array<any>).map(BookmarkJsonFromJSON)),
         'tags': json['tags'] == null ? undefined : ((json['tags'] as Array<any>).map(TagJsonFromJSON)),
         'folders': json['folders'] == null ? undefined : ((json['folders'] as Array<any>).map(FolderJsonFromJSON)),
@@ -113,6 +120,7 @@ export function CollectionInfoJsonToJSONTyped(value?: CollectionInfoJson | null,
         
         'id': value['id'],
         'name': value['name'],
+        'faviconAllowlist': value['faviconAllowlist'],
         'bookmarks': value['bookmarks'] == null ? undefined : ((value['bookmarks'] as Array<any>).map(BookmarkJsonToJSON)),
         'tags': value['tags'] == null ? undefined : ((value['tags'] as Array<any>).map(TagJsonToJSON)),
         'folders': value['folders'] == null ? undefined : ((value['folders'] as Array<any>).map(FolderJsonToJSON)),
