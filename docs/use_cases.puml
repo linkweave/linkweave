@@ -92,7 +92,7 @@ rectangle "Chainlink Bookmark Manager" {
     }
 
     rectangle "Favicons" {
-        usecase "UC-050\nFetch Bookmark\nFavicons" as UC050
+        usecase "UC-050\nFetch Bookmark\nFavicons" as UC050 <<implemented>>
         usecase "UC-051\nFavicon Cache\nCleanup Job" as UC051
     }
 

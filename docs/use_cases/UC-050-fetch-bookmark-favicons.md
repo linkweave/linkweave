@@ -7,7 +7,7 @@
 **Primary Actor:** User
 **Secondary Actor:** Collection Owner (configures internal-domain allowlist)
 **Goal:** Display recognisable favicons next to bookmarks so that the user can scan a list visually, while preventing the backend from being abused as an SSRF vector and while still working for bookmarks that point to internal hosts the backend cannot reach.
-**Status:** Draft
+**Status:** Implemented
 
 ## Traceability
 
