@@ -6,7 +6,7 @@
 **Use Case Name:** Favicon Cache Cleanup Job
 **Primary Actor:** System (Scheduler)
 **Goal:** Keep the on-disk favicon cache (UC-050) within an operator-defined size budget by periodically evicting cache entries belonging to the oldest bookmarks across all collections, so that long-running deployments do not accumulate unbounded disk usage.
-**Status:** Draft
+**Status:** Implemented
 
 ## Traceability
 

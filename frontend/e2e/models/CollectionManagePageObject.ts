@@ -7,6 +7,7 @@ export class CollectionManagePageObject {
   readonly createButton: Locator
   readonly createNameInput: Locator
   readonly editNameInput: Locator
+  readonly editFaviconAllowlistInput: Locator
   readonly deleteConfirmInput: Locator
 
   constructor(page: Page) {
@@ -15,6 +16,7 @@ export class CollectionManagePageObject {
     this.createButton = page.getByTestId('collection-manage-create-btn')
     this.createNameInput = page.getByTestId('create-collection-name-input')
     this.editNameInput = page.getByTestId('edit-collection-name-input')
+    this.editFaviconAllowlistInput = page.getByTestId('edit-collection-favicon-allowlist-input')
     this.deleteConfirmInput = page.getByTestId('delete-confirm-name-input')
   }
 
@@ -51,6 +53,43 @@ export class CollectionManagePageObject {
     await this.editNameInput.fill(newName)
     await this.page.getByTestId('collection-edit-submit-btn').click()
     await expect(this.editNameInput).not.toBeVisible()
+  }
+
+  async openEditDialog(collectionId: string) {
+    await this.page.getByTestId(`collection-edit-btn-${collectionId}`).click()
+    await expect(this.editNameInput).toBeVisible()
+  }
+
+  /**
+   * Opens the edit dialog and waits for the async collection-info fetch
+   * to complete so the favicon-allowlist textarea reflects the persisted value.
+   */
+  async openEditDialogAndWaitForAllowlist(collectionId: string, expectedValue?: string) {
+    await this.openEditDialog(collectionId)
+    await expect(this.editFaviconAllowlistInput).toBeVisible()
+    if (expectedValue !== undefined) {
+      await expect(this.editFaviconAllowlistInput).toHaveValue(expectedValue, { timeout: 10000 })
+    } else {
+      // Wait for the textarea value to stabilise (the dialog first resets to ''
+      // then populates from the API). We wait for it to become non-empty or
+      // confirm it stays empty after the API round-trip.
+      await this.page.waitForTimeout(500)
+    }
+  }
+
+  async submitEditDialog() {
+    await this.page.getByTestId('collection-edit-submit-btn').click()
+    await expect(this.editNameInput).not.toBeVisible()
+  }
+
+  async editFaviconAllowlist(collectionId: string, allowlist: string) {
+    await this.openEditDialog(collectionId)
+    await expect(this.editFaviconAllowlistInput).toBeVisible()
+    await this.editFaviconAllowlistInput.clear()
+    if (allowlist) {
+      await this.editFaviconAllowlistInput.fill(allowlist)
+    }
+    await this.submitEditDialog()
   }
 
   async deleteCollection(collectionId: string, collectionName: string) {

@@ -20,6 +20,7 @@ const editOpen = ref(false)
 const deleteOpen = ref(false)
 const editingId = ref<string | null>(null)
 const editingName = ref('')
+const editingIsOwner = ref(false)
 const deletingId = ref<string | null>(null)
 const deletingName = ref('')
 const shareOpen = ref(false)
@@ -30,9 +31,10 @@ onMounted(async () => {
   await collectionStore.fetchCollections()
 })
 
-function openEdit(id: string, currentName: string) {
+function openEdit(id: string, currentName: string, isOwner: boolean) {
   editingId.value = id
   editingName.value = currentName
+  editingIsOwner.value = isOwner
   editOpen.value = true
 }
 
@@ -136,7 +138,7 @@ function goBack() {
             size="icon"
             :data-testid="`collection-edit-btn-${col.id}`"
             :title="t('common.edit')"
-            @click="openEdit(col.id!, col.name ?? '')"
+             @click="openEdit(col.id!, col.name ?? '', true)"
            >
              <Pencil class="h-4 w-4" />
            </ButtonCl>
@@ -163,6 +165,7 @@ function goBack() {
       :open="editOpen"
       :collection-id="editingId ?? ''"
       :current-name="editingName"
+      :is-owner="editingIsOwner"
       @update:open="editOpen = $event"
     />
 
