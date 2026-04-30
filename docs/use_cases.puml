@@ -109,6 +109,10 @@ rectangle "Chainlink Bookmark Manager" {
         usecase "UC-048\nBrowse Bookmarks Offline" as UC048
         usecase "UC-049\nResume Online Session" as UC049
     }
+
+    rectangle "Distribution" {
+        usecase "UC-052\nRun as Desktop App" as UC052
+    }
 }
 
 ' Authentication
@@ -193,6 +197,14 @@ user --> UC050
 owner --> UC050
 scheduler --> UC051
 operator --> UC051
+
+' Distribution
+user --> UC052
+
+note right of UC052
+  See desktop-app.md
+  for implementation plan
+end note
 
 note right of UC037
   See browser-extension.md
