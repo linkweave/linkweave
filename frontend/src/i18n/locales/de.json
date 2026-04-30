@@ -203,6 +203,10 @@
   "search": {
     "placeholder": "Lesezeichen suchen (Leerzeichen für mehrere Begriffe, z.B. prod foobar)..."
   },
+  "collectionSearch": {
+    "placeholder": "Sammlungen durchsuchen...",
+    "noResults": "Keine Sammlungen entsprechen Ihrer Suche."
+  },
   "language": {
     "en": "English",
     "de": "Deutsch",

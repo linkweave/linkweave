@@ -1,11 +1,18 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Search, X } from 'lucide-vue-next'
-import { useI18n } from 'vue-i18n'
-import { useBookmarkStore } from '@/stores/bookmark'
 
-const { t } = useI18n()
-const bookmarkStore = useBookmarkStore()
+const props = withDefaults(defineProps<{
+  modelValue: string
+  placeholder?: string
+}>(), {
+  placeholder: 'Search...',
+})
+
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+}>()
+
 const inputRef = ref<HTMLInputElement | null>(null)
 
 const shortcutKeys = computed(() => {
@@ -27,7 +34,7 @@ function handleShortcut(e: KeyboardEvent) {
 }
 
 function clear() {
-  bookmarkStore.clearSearchQuery()
+  emit('update:modelValue', '')
   inputRef.value?.focus()
 }
 
@@ -43,13 +50,13 @@ onUnmounted(() => globalThis.removeEventListener('keydown', handleShortcut))
     <input
       ref="inputRef"
       type="text"
-      :value="bookmarkStore.searchQuery"
-      :placeholder="t('search.placeholder')"
+      :value="props.modelValue"
+      :placeholder="props.placeholder"
       class="flex h-10 w-full rounded-md border border-border bg-secondary pl-10 pr-20 py-1 text-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      @input="bookmarkStore.setSearchQuery(($event.target as HTMLInputElement).value)"
+      @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     />
     <kbd
-      v-if="!bookmarkStore.searchQuery"
+      v-if="!props.modelValue"
       class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none inline-flex items-center gap-0.5 select-none"
     >
       <template v-for="(key, i) in shortcutKeys" :key="i">
@@ -65,7 +72,7 @@ onUnmounted(() => globalThis.removeEventListener('keydown', handleShortcut))
       </template>
     </kbd>
     <button
-      v-if="bookmarkStore.searchQuery"
+      v-if="props.modelValue"
       class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
       @click="clear"
     >

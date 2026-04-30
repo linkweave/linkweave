@@ -16,11 +16,20 @@ export const useCollectionStore = defineStore('collection', () => {
   const collectionInfo = ref<CollectionInfoJson | null>(null)
   const collections = ref<CollectionSummaryJson[]>([])
   const loading = ref(false)
+  const searchQuery = ref('')
 
   const collectionName = computed(() => collectionInfo.value?.name ?? null)
   const defaultCollectionId = computed(() =>
     collections.value.find(c => c.isDefault)?.id ?? null
   )
+
+  const filteredCollections = computed(() => {
+    if (!searchQuery.value) return collections.value
+    const query = searchQuery.value.toLowerCase()
+    return collections.value.filter(c =>
+      c.name?.toLowerCase().includes(query)
+    )
+  })
 
   const collectionsFetched = ref(false)
 
@@ -195,8 +204,10 @@ export const useCollectionStore = defineStore('collection', () => {
     collectionInfo,
     collections,
     loading,
+    searchQuery,
     collectionName,
     defaultCollectionId,
+    filteredCollections,
     setCurrentCollectionId,
     fetchCollectionInfo,
     fetchCollections,

@@ -203,6 +203,10 @@
   "search": {
     "placeholder": "Search bookmarks (use spaces for multiple terms, e.g. prod foobar)..."
   },
+  "collectionSearch": {
+    "placeholder": "Search collections...",
+    "noResults": "No collections match your search."
+  },
   "language": {
     "en": "English",
     "de": "Deutsch",

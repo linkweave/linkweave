@@ -3,7 +3,9 @@ import { ref, computed } from 'vue'
 import { BookmarkPlus } from 'lucide-vue-next'
 import { MainLayout } from '@/components/layout'
 import { ButtonCl } from '@/components/ui'
-import { BookmarkList, SearchBar } from '@/components/bookmark'
+import { BookmarkList } from '@/components/bookmark'
+import { SearchBar } from '@/components/ui'
+import { useBookmarkStore } from '@/stores/bookmark'
 import { FolderBreadcrumbCl } from '@/components/folder'
 import { useI18n } from 'vue-i18n'
 import { useCollectionStore } from '@/stores/collection'
@@ -13,6 +15,7 @@ import CreateBookmarkDialog from '@/components/bookmark/CreateBookmarkDialog.vue
 
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
+const bookmarkStore = useBookmarkStore()
 const ui = useUiStore()
 const offline = useOfflineStore()
 const isAddingBookmark = ref(false)
@@ -33,7 +36,7 @@ const containerClass = computed(() =>
 
     <div :class="[containerClass, 'mx-auto space-y-6']">
       <FolderBreadcrumbCl />
-      <SearchBar />
+      <SearchBar v-model="bookmarkStore.searchQuery" :placeholder="t('search.placeholder')" />
       <BookmarkList />
     </div>
 
