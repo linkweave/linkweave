@@ -6,7 +6,7 @@
 **Use Case Name:** Multi-Term Search Bookmarks
 **Primary Actor:** User
 **Goal:** Find specific bookmarks by typing multiple search terms separated by whitespace, where each term is matched independently and results are combined with AND logic. Terms wrapped in single quotes are treated as a single literal phrase.
-**Status:** Draft
+**Status:** Implemented
 
 ## Traceability
 
