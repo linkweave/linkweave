@@ -84,7 +84,15 @@ test.describe('Favicon Allowlist', () => {
   test('should clean up: delete test collection', async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
     await manage.loginAndNavigate()
-    await manage.deleteCollection(collectionId, collectionName)
+    let lastStatus = 0
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const resp = await page.request.delete(`/api/collections/${collectionId}`)
+      lastStatus = resp.status()
+      if (resp.ok()) break
+      await page.waitForTimeout(500)
+    }
+    expect(lastStatus, `delete failed: ${lastStatus}`).toBeLessThan(400)
+    await page.reload()
     await manage.expectCollectionNotVisible(collectionName)
   })
 })

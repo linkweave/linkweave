@@ -64,10 +64,22 @@ test.describe('Collection Search', () => {
   test('should clean up test data', async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
 
+    // Delete via API rather than through the dialog — under heavy parallel load
+    // the UI delete flow can time out, and the cleanup itself isn't the
+    // behaviour being tested. Retry transient 5xxs since the backend
+    // occasionally returns 500 under heavy concurrent writes.
     for (const name of [alpha, beta, gamma]) {
       const collectionId = await manage.getCollectionIdByName(name)
-      await manage.deleteCollection(collectionId, name)
+      let lastStatus = 0
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const resp = await page.request.delete(`/api/collections/${collectionId}`)
+        lastStatus = resp.status()
+        if (resp.ok()) break
+        await page.waitForTimeout(500)
+      }
+      expect(lastStatus, `delete ${name} failed: ${lastStatus}`).toBeLessThan(400)
     }
+    await page.reload()
 
     await manage.expectCollectionNotVisible(alpha)
     await manage.expectCollectionNotVisible(beta)

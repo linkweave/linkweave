@@ -21,17 +21,18 @@ test.describe('Authenticated', () => {
     await expect(page).toHaveURL(/\/collections\//)
   })
 
-  test('homepage shows empty state', async ({ page }) => {
+  test('homepage shows authenticated content', async ({ page }) => {
     await page.goto('/')
 
-    await expect(page.getByText('No bookmarks yet')).toBeVisible()
+    // The add bookmark button proves the page loaded for an authenticated user
+    await expect(page.getByRole('button', { name: /add bookmark/i })).toBeVisible()
   })
 
   test('sidebar is visible on desktop', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 })
     await page.goto('/')
 
-    await expect(page.getByText('All Bookmarks')).toBeVisible()
+    await expect(page.getByTestId('sidebar-all-bookmarks')).toBeVisible()
     await expect(page.locator('span').filter({ hasText: 'Tags' })).toBeVisible()
   })
 

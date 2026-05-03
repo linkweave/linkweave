@@ -14,7 +14,10 @@ test.describe('Offline Mode', () => {
 
     await context.setOffline(true)
 
-    await page.reload()
+    // Trigger the window 'offline' event manually — context.setOffline blocks
+    // network but does not always dispatch the event in the page. Reloading
+    // while offline races against service worker install and is unreliable.
+    await page.evaluate(() => window.dispatchEvent(new Event('offline')))
 
     await expect(page.getByText(/you're offline/i)).toBeVisible({ timeout: 10000 })
 
@@ -27,6 +30,7 @@ test.describe('Offline Mode', () => {
     }
 
     await context.setOffline(false)
+    await page.evaluate(() => window.dispatchEvent(new Event('online')))
 
     await expect(page.getByText(/you're offline/i)).not.toBeVisible({ timeout: 10000 })
   })

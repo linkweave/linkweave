@@ -2,6 +2,10 @@
 /* eslint-disable */
 export * from './app-failure-error-json';
 export * from './app-validation-error-json';
+export * from './auto-tag-rule-json';
+export * from './auto-tag-rule-list-json';
+export * from './auto-tag-rule-order-json';
+export * from './auto-tag-rule-save-json';
 export * from './bookmark-json';
 export * from './bookmark-list-json';
 export * from './bookmark-move-json';

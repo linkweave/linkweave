@@ -10,7 +10,7 @@ export class AppPageObject {
     this.page = page
     this.userMenuButton = page.getByTestId('user-menu-trigger')
     this.signOutButton = page.getByRole('menuitem', { name: 'Sign out' })
-    this.allBookmarksLabel = page.getByText('All Bookmarks')
+    this.allBookmarksLabel = page.getByTestId('sidebar-all-bookmarks')
   }
 
   async goto() {

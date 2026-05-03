@@ -4,6 +4,8 @@ import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.chainlink.api.bookmark.AutoTagRule;
+import org.chainlink.api.bookmark.AutoTagRuleMapper;
 import org.chainlink.api.bookmark.Bookmark;
 import org.chainlink.api.bookmark.BookmarkMapper;
 import org.chainlink.api.bookmark.Tag;
@@ -21,7 +23,8 @@ public class CollectionInfoMapperService {
         Collection collection,
         List<Bookmark> bookmarks,
         List<Folder> folders,
-        List<Tag> tags
+        List<Tag> tags,
+        List<AutoTagRule> autoTagRules
     ) {
         return new CollectionInfoJson(
             collection.getId(),
@@ -29,7 +32,8 @@ public class CollectionInfoMapperService {
             collection.getFaviconAllowlist(),
             bookmarks.stream().map(BookmarkMapper::toJson).toList(),
             folders.stream().map(FolderMapper::toJson).toList(),
-            tags.stream().map(TagMapper::toJson).toList()
+            tags.stream().map(TagMapper::toJson).toList(),
+            autoTagRules.stream().map(AutoTagRuleMapper::toJson).toList()
         );
     }
 }
