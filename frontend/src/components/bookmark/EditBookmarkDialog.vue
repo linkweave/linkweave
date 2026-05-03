@@ -224,10 +224,12 @@ const onSubmit = handleSubmit(async (values) => {
       <div data-testid="suggested-tags-section" class="space-y-2 min-h-[5.5rem]">
         <div class="flex items-center justify-between">
           <label class="text-sm font-medium">{{ t('bookmark.suggestedTags') }}</label>
+<!--          prevent default to prevent validation on click-->
           <button
             type="button"
             class="text-xs text-primary hover:underline"
             data-testid="manage-auto-tag-rules"
+            @mousedown.prevent
             @click="rulesManagerOpen = true"
           >
             {{ t('bookmark.manageRules') }}
