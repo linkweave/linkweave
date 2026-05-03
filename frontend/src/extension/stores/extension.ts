@@ -2,6 +2,7 @@ import {
   AuthResourceApi,
   BookmarkResourceApi,
   CollectionResourceApi,
+  TagResourceApi,
   ResponseError,
 } from '@/api/generated'
 import type {
@@ -9,6 +10,8 @@ import type {
   BookmarkSaveJson,
   CollectionInfoJson,
   CollectionSummaryJson,
+  TagJson,
+  TagSaveJson,
   UserInfoJson,
 } from '@/api/generated'
 import { loadExtensionConfig, createApiConfig } from '../api/client'
@@ -23,6 +26,7 @@ export const useExtensionStore = defineStore('extension', () => {
   let authApi: AuthResourceApi
   let collectionApi: CollectionResourceApi
   let bookmarkApi: BookmarkResourceApi
+  let tagApi: TagResourceApi
   const webAppUrl = ref('')
 
   // --- Current browser tab ---
@@ -125,6 +129,7 @@ export const useExtensionStore = defineStore('extension', () => {
     authApi = new AuthResourceApi(apiConfig)
     collectionApi = new CollectionResourceApi(apiConfig)
     bookmarkApi = new BookmarkResourceApi(apiConfig)
+    tagApi = new TagResourceApi(apiConfig)
     webAppUrl.value = config.webAppUrl
     return config
   }
@@ -168,6 +173,14 @@ export const useExtensionStore = defineStore('extension', () => {
     } finally {
       collectionLoading.value = false
     }
+  }
+
+  async function createTag(data: TagSaveJson): Promise<TagJson> {
+    const tag = await tagApi.apiTagsPost({ tagSaveJson: data })
+    if (collectionInfo.value) {
+      collectionInfo.value.tags = [...(collectionInfo.value.tags ?? []), tag]
+    }
+    return tag
   }
 
   async function createBookmark(data: BookmarkSaveJson): Promise<BookmarkJson> {
@@ -225,6 +238,7 @@ export const useExtensionStore = defineStore('extension', () => {
     loadCollections,
     loadCollection,
     createBookmark,
+    createTag,
     trackClick,
     toggleTag,
     clearFilters,

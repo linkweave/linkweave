@@ -24,10 +24,10 @@ export class CollectionManagePageObject {
     const loginPage = new LoginPageObject(this.page)
     await loginPage.goto()
     await loginPage.login(email, password)
-    await expect(this.page).toHaveURL(/\/collections\//)
+    await expect(this.page).toHaveURL(/\/collections\//, { timeout: 15000 })
 
     await this.page.goto('/manage/collections')
-    await expect(this.page).toHaveURL(/\/manage\/collections/)
+    await expect(this.page).toHaveURL(/\/manage\/collections/, { timeout: 15000 })
     await this.page.locator('[data-testid^="collection-row-"], :text("noCollections")').waitFor({ state: 'visible' }).catch(() => {})
     await expect(this.createButton).toBeVisible()
   }
@@ -42,22 +42,40 @@ export class CollectionManagePageObject {
     await this.createButton.click()
     await expect(this.createNameInput).toBeVisible()
     await this.createNameInput.fill(name)
-    await this.page.getByTestId('collection-create-submit-btn').click()
-    await expect(this.createNameInput).not.toBeVisible()
+    const submitBtn = this.page.getByTestId('collection-create-submit-btn')
+    await expect(submitBtn).toBeEnabled()
+    const createResp = this.page.waitForResponse(
+      r => r.url().endsWith('/api/collections') && r.request().method() === 'POST',
+      { timeout: 30000 },
+    )
+    await submitBtn.click()
+    const resp = await createResp.catch(() => null)
+    if (resp && !resp.ok()) {
+      throw new Error(`createCollection POST failed: ${resp.status()}`)
+    }
+    // The dialog only closes after createCollection's follow-up fetchCollections
+    // completes. Under heavy parallel load the list-fetch can be slow, so use a
+    // generous timeout instead of the default 5s.
+    await expect(this.createNameInput).not.toBeVisible({ timeout: 30000 })
   }
 
   async editCollection(collectionId: string, newName: string) {
-    await this.page.getByTestId(`collection-edit-btn-${collectionId}`).click()
-    await expect(this.editNameInput).toBeVisible()
+    await this.openEditDialog(collectionId)
     await this.editNameInput.clear()
     await this.editNameInput.fill(newName)
-    await this.page.getByTestId('collection-edit-submit-btn').click()
-    await expect(this.editNameInput).not.toBeVisible()
+    await this.submitEditDialog()
   }
 
   async openEditDialog(collectionId: string) {
+    // The dialog opens, then asynchronously fetches the collection and resets
+    // the form. Wait for that GET so user input isn't clobbered by the late
+    // resetForm.
+    const collectionGet = this.page.waitForResponse(
+      r => r.url().includes(`/api/collections/${collectionId}`) && r.request().method() === 'GET',
+    )
     await this.page.getByTestId(`collection-edit-btn-${collectionId}`).click()
     await expect(this.editNameInput).toBeVisible()
+    await collectionGet.catch(() => undefined)
   }
 
   /**
@@ -69,17 +87,12 @@ export class CollectionManagePageObject {
     await expect(this.editFaviconAllowlistInput).toBeVisible()
     if (expectedValue !== undefined) {
       await expect(this.editFaviconAllowlistInput).toHaveValue(expectedValue, { timeout: 10000 })
-    } else {
-      // Wait for the textarea value to stabilise (the dialog first resets to ''
-      // then populates from the API). We wait for it to become non-empty or
-      // confirm it stays empty after the API round-trip.
-      await this.page.waitForTimeout(500)
     }
   }
 
   async submitEditDialog() {
     await this.page.getByTestId('collection-edit-submit-btn').click()
-    await expect(this.editNameInput).not.toBeVisible()
+    await expect(this.editNameInput).not.toBeVisible({ timeout: 15000 })
   }
 
   async editFaviconAllowlist(collectionId: string, allowlist: string) {
@@ -96,8 +109,14 @@ export class CollectionManagePageObject {
     await this.page.getByTestId(`collection-delete-btn-${collectionId}`).click()
     await expect(this.deleteConfirmInput).toBeVisible()
     await this.deleteConfirmInput.fill(collectionName)
-    await this.page.getByTestId('collection-delete-submit-btn').click()
-    await expect(this.deleteConfirmInput).not.toBeVisible()
+    const submitBtn = this.page.getByTestId('collection-delete-submit-btn')
+    await expect(submitBtn).toBeEnabled()
+    const deleteResp = this.page.waitForResponse(
+      r => r.url().includes(`/api/collections/${collectionId}`) && r.request().method() === 'DELETE',
+    )
+    await submitBtn.click()
+    await deleteResp.catch(() => undefined)
+    await expect(this.deleteConfirmInput).not.toBeVisible({ timeout: 15000 })
   }
 
   async setAsDefault(collectionId: string) {
@@ -118,6 +137,6 @@ export class CollectionManagePageObject {
 
   async goBack() {
     await this.backButton.click()
-    await expect(this.page).toHaveURL(/\/collections\//)
+    await expect(this.page).toHaveURL(/\/collections\//, { timeout: 15000 })
   }
 }

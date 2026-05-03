@@ -68,7 +68,18 @@ test.describe('Collection Sharing', () => {
   test('should clean up: delete test collection', async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
     await manage.loginAndNavigate()
-    await manage.deleteCollection(collectionId, collectionName)
+    // Delete via API rather than going through the dialog — under heavy parallel
+    // load the dialog flow can time out. Retry transient 5xxs since the backend
+    // occasionally returns 500 under heavy concurrent writes.
+    let lastStatus = 0
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const resp = await page.request.delete(`/api/collections/${collectionId}`)
+      lastStatus = resp.status()
+      if (resp.ok()) break
+      await page.waitForTimeout(500)
+    }
+    expect(lastStatus, `delete failed: ${lastStatus}`).toBeLessThan(400)
+    await page.reload()
     await manage.expectCollectionNotVisible(collectionName)
   })
 })

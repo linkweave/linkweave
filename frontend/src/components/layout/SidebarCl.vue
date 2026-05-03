@@ -119,7 +119,7 @@ async function onAllBookmarksDrop(event: DragEvent) {
           @drop="onAllBookmarksDrop"
         >
           <Folder class="h-4 w-4 text-primary" />
-          <span>{{ t('sidebar.allBookmarks', { name: collectionStore.collectionName ?? '' }) }}</span>
+          <span data-testid="sidebar-all-bookmarks">{{ t('sidebar.allBookmarks', { name: collectionStore.collectionName ?? '' }) }}</span>
         </div>
 
         <FolderTree class-name="mt-2" @create-subfolder="handleCreateSubfolder" />

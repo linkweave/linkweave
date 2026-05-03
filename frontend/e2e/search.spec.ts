@@ -1,9 +1,11 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Browser, type Page } from '@playwright/test'
 import { LoginPageObject } from './models/LoginPageObject'
 
 test.describe.configure({ mode: 'serial' })
 
+const BASE = '/api'
 const ts = Date.now()
+const collectionName = `Search Test ${ts}`
 const tagProd = `prod-${ts}`
 const tagDev = `dev-${ts}`
 
@@ -14,11 +16,26 @@ const bookmarks = [
   { title: `Standalone Page ${ts}`, url: 'https://standalone.example.com', tag: null },
 ]
 
-async function loginAndWait(page: Page) {
+let collectionId: string
+
+async function loginAndNavigateToCollection(page: Page, collectionId: string) {
   const loginPage = new LoginPageObject(page)
   await loginPage.goto()
   await loginPage.login('alice@example.com', 'alice')
   await expect(page).toHaveURL(/\/collections\//)
+  await page.goto(`/collections/${collectionId}`)
+  await expect(page).toHaveURL(new RegExp(`/collections/${collectionId}`))
+}
+
+async function createCollectionViaApi(page: Page, name: string): Promise<string> {
+  const resp = await page.request.post(`${BASE}/collections`, { data: { name } })
+  expect(resp.ok(), `createCollection failed: ${resp.status()}`).toBeTruthy()
+  const body = await resp.json()
+  return body.id
+}
+
+async function deleteCollectionViaApi(page: Page, id: string) {
+  await page.request.delete(`${BASE}/collections/${id}`).catch(() => undefined)
 }
 
 async function createTag(page: Page, name: string) {
@@ -54,7 +71,14 @@ async function expectBookmarkNotVisible(page: Page, title: string) {
 
 test.describe('Multi-Term Search', () => {
   test('should set up test data', async ({ page }) => {
-    await loginAndWait(page)
+    const loginPage = new LoginPageObject(page)
+    await loginPage.goto()
+    await loginPage.login('alice@example.com', 'alice')
+    await expect(page).toHaveURL(/\/collections\//)
+
+    collectionId = await createCollectionViaApi(page, collectionName)
+    await page.goto(`/collections/${collectionId}`)
+    await expect(page).toHaveURL(new RegExp(`/collections/${collectionId}`))
 
     await createTag(page, tagProd)
     await createTag(page, tagDev)
@@ -69,7 +93,7 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should filter by single term', async ({ page }) => {
-    await loginAndWait(page)
+    await loginAndNavigateToCollection(page, collectionId)
     await search(page, 'Production')
 
     await expectBookmarkVisible(page, bookmarks[0].title)
@@ -79,7 +103,7 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should combine multiple terms with AND logic', async ({ page }) => {
-    await loginAndWait(page)
+    await loginAndNavigateToCollection(page, collectionId)
     await search(page, `Production API`)
 
     await expectBookmarkVisible(page, bookmarks[0].title)
@@ -89,7 +113,7 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should match term against tag name', async ({ page }) => {
-    await loginAndWait(page)
+    await loginAndNavigateToCollection(page, collectionId)
     await search(page, `API ${tagDev}`)
 
     await expectBookmarkVisible(page, bookmarks[2].title)
@@ -99,7 +123,7 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should treat quoted phrase as single term', async ({ page }) => {
-    await loginAndWait(page)
+    await loginAndNavigateToCollection(page, collectionId)
     await search(page, `'Production Frontend'`)
 
     await expectBookmarkVisible(page, bookmarks[1].title)
@@ -109,7 +133,7 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should combine quoted phrase with another term', async ({ page }) => {
-    await loginAndWait(page)
+    await loginAndNavigateToCollection(page, collectionId)
     await search(page, `'Production Frontend' ${tagProd}`)
 
     await expectBookmarkVisible(page, bookmarks[1].title)
@@ -119,7 +143,7 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should show empty results when terms do not all match', async ({ page }) => {
-    await loginAndWait(page)
+    await loginAndNavigateToCollection(page, collectionId)
     await search(page, `Standalone ${tagProd}`)
 
     await expectBookmarkNotVisible(page, bookmarks[0].title)
@@ -129,7 +153,7 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should show all bookmarks when search is cleared', async ({ page }) => {
-    await loginAndWait(page)
+    await loginAndNavigateToCollection(page, collectionId)
     await search(page, 'Production')
     await expect(page.locator('h3').filter({ hasText: `Production` }).first()).toBeVisible()
 
@@ -141,12 +165,27 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should match term against URL', async ({ page }) => {
-    await loginAndWait(page)
+    await loginAndNavigateToCollection(page, collectionId)
     await search(page, `standalone.example.com`)
 
     await expectBookmarkVisible(page, bookmarks[3].title)
     await expectBookmarkNotVisible(page, bookmarks[0].title)
     await expectBookmarkNotVisible(page, bookmarks[1].title)
     await expectBookmarkNotVisible(page, bookmarks[2].title)
+  })
+
+  test.afterAll(async ({ browser }: { browser: Browser }) => {
+    if (!collectionId) return
+    const context = await browser.newContext({ ignoreHTTPSErrors: true })
+    const page = await context.newPage()
+    try {
+      const loginPage = new LoginPageObject(page)
+      await loginPage.goto()
+      await loginPage.login('alice@example.com', 'alice')
+      await expect(page).toHaveURL(/\/collections\//)
+      await deleteCollectionViaApi(page, collectionId)
+    } finally {
+      await context.close()
+    }
   })
 })

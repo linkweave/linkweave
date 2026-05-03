@@ -7,15 +7,6 @@
     "title": "Chainlink",
     "version": "version"
   },
-  "collectionSwitcher": {
-    "selectCollection": "Select Collection",
-    "collections": "Collections",
-    "default": "Default",
-    "activeCollection": "Active Collection",
-    "setAsDefault": "Set as Default",
-    "thisIsDefault": "This is your default",
-    "manageCollections": "Manage Collections"
-  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",
@@ -27,7 +18,8 @@
     "all": "All",
     "undo": "Undo",
     "reset": "Reset",
-    "back": "Back"
+    "back": "Back",
+    "close": "Close"
   },
   "dnd": {
     "bookmarkMoved": "Bookmark moved.",
@@ -171,7 +163,12 @@
     "folder": "Folder",
     "noFolder": "No folder (unfiled)",
     "tags": "Tags",
+    "suggestedTags": "Suggested tags",
+    "acceptSuggestions": "Accept suggestions",
+    "suggestionWillCreate": "(new)",
+    "manageRules": "Manage rules",
     "createError": "Failed to create bookmark.",
+    "tagSuggestionError": "Failed to apply some tag suggestions.",
     "updateError": "Failed to update bookmark.",
     "moveError": "Failed to move bookmark.",
     "moveToFolder": "Move to Folder",
@@ -251,12 +248,41 @@
     "passwordMismatch": "Passwords do not match.",
     "nameMismatch": "Name does not match",
     "colorHex": "Must be a valid hex color (e.g. #ef4444)",
-    "collectionIdRequired": "collectionId is required"
+    "collectionIdRequired": "collectionId is required",
+    "invalidRegex": "Invalid regular expression",
+    "atLeastOneTag": "At least one tag is required",
+    "maxTags": "Maximum {max} tags allowed"
   },
   "offline": {
     "banner": "You're offline. Showing cached data.",
     "bannerNoCache": "You're offline. No cached data available.",
     "lastSynced": "Last synced {time}",
     "writeDisabled": "This action is not available while offline."
+  },
+  "autoTagRule": {
+    "managerTitle": "Auto-tag rules",
+    "managerHelp": "Define URL patterns that suggest tags when creating bookmarks. Built-in rules for common environment subdomains always run first.",
+    "createTitle": "New auto-tag rule",
+    "editTitle": "Edit auto-tag rule",
+    "add": "Add rule",
+    "empty": "No custom rules yet. Built-in rules still apply.",
+    "pattern": "URL pattern (regex)",
+    "patternPlaceholder": "^https://github\\.com/.+/pull/\\d+",
+    "tagNames": "Tags",
+    "tagNamesPlaceholder": "pr, github",
+    "tagNamesHelp": "Comma-separated. Tags that don't exist will be created when this rule fires and you accept the suggestion.",
+    "description": "Description (optional)",
+    "enabled": "Enabled",
+    "testUrl": "Test URL",
+    "testMatched": "Match",
+    "testNotMatched": "No match",
+    "helpAria": "Show regex help",
+    "helpHeader": "Regex tips",
+    "helpSyntax": "JavaScript regex syntax. Anchor with ^, escape literal dots as \\., use (?:…) for non-capturing groups.",
+    "helpExamples": "Copy-paste examples",
+    "copyPattern": "Copy pattern",
+    "useExample": "Use",
+    "saveError": "Failed to save rule.",
+    "deleteError": "Failed to delete rule."
   }
 }

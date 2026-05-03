@@ -27,6 +27,13 @@ import {
     FolderJsonToJSON,
     FolderJsonToJSONTyped,
 } from './folder-json';
+import type { AutoTagRuleJson } from './auto-tag-rule-json';
+import {
+    AutoTagRuleJsonFromJSON,
+    AutoTagRuleJsonFromJSONTyped,
+    AutoTagRuleJsonToJSON,
+    AutoTagRuleJsonToJSONTyped,
+} from './auto-tag-rule-json';
 import type { BookmarkJson } from './bookmark-json';
 import {
     BookmarkJsonFromJSON,
@@ -77,6 +84,12 @@ export interface CollectionInfoJson {
      * @memberof CollectionInfoJson
      */
     folders?: Array<FolderJson>;
+    /**
+     * 
+     * @type {Array<AutoTagRuleJson>}
+     * @memberof CollectionInfoJson
+     */
+    autoTagRules?: Array<AutoTagRuleJson>;
 }
 
 /**
@@ -104,6 +117,7 @@ export function CollectionInfoJsonFromJSONTyped(json: any, ignoreDiscriminator: 
         'bookmarks': json['bookmarks'] == null ? undefined : ((json['bookmarks'] as Array<any>).map(BookmarkJsonFromJSON)),
         'tags': json['tags'] == null ? undefined : ((json['tags'] as Array<any>).map(TagJsonFromJSON)),
         'folders': json['folders'] == null ? undefined : ((json['folders'] as Array<any>).map(FolderJsonFromJSON)),
+        'autoTagRules': json['autoTagRules'] == null ? undefined : ((json['autoTagRules'] as Array<any>).map(AutoTagRuleJsonFromJSON)),
     };
 }
 
@@ -124,6 +138,7 @@ export function CollectionInfoJsonToJSONTyped(value?: CollectionInfoJson | null,
         'bookmarks': value['bookmarks'] == null ? undefined : ((value['bookmarks'] as Array<any>).map(BookmarkJsonToJSON)),
         'tags': value['tags'] == null ? undefined : ((value['tags'] as Array<any>).map(TagJsonToJSON)),
         'folders': value['folders'] == null ? undefined : ((value['folders'] as Array<any>).map(FolderJsonToJSON)),
+        'autoTagRules': value['autoTagRules'] == null ? undefined : ((value['autoTagRules'] as Array<any>).map(AutoTagRuleJsonToJSON)),
     };
 }
 

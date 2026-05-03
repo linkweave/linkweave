@@ -55,6 +55,7 @@ All access checks are performed in the **Resource layer** using `AuthorizationSe
 - Most entities extend `AbstractEntity` which auto-sets `userErstellt` and `userMutiert` via `CurrentUserService`
 - Use `@AllArgsConstructor` for entity classes to ensure all fields are initialized
 - Always check your code by running npm run type-check and by compiling using maven
+- Use zod schemas to validate form input
 
 ## Custom Types
 
