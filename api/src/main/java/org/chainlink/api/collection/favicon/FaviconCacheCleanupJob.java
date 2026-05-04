@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import ch.dvbern.dvbstarter.clock.ClockProvider;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -33,6 +34,7 @@ public class FaviconCacheCleanupJob {
 
     private final BookmarkRepo bookmarkRepo;
     private final FaviconCacheService cache;
+    private final ClockProvider clockProvider;
 
     @ConfigProperty(name = "chainlink.favicon.cache-cleanup.max-size", defaultValue = "40MB")
     String maxSizeRaw;
@@ -73,7 +75,7 @@ public class FaviconCacheCleanupJob {
             return Result.ofWithinBudget(currentSize);
         }
 
-        Instant cutoff = Instant.now().minus(minAge);
+        Instant cutoff = Instant.now(clockProvider.getClock()).minus(minAge);
         Set<String> seenOrigins = new HashSet<>();
         long evictedFiles = 0L;
         long bytesFreed = 0L;
@@ -95,7 +97,7 @@ public class FaviconCacheCleanupJob {
                 bytesFreed += freed;
                 currentSize -= freed;
                 if (created != null) {
-                    Duration age = Duration.between(created.toInstant(), Instant.now());
+                    Duration age = Duration.between(created.toInstant(), Instant.now(clockProvider.getClock()));
                     if (age.compareTo(oldestEvictedAge) > 0) {
                         oldestEvictedAge = age;
                     }

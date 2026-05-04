@@ -1,9 +1,9 @@
 package org.chainlink.api.cleanup;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
 
+import ch.dvbern.dvbstarter.clock.AppClock;
 import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.Bookmark;
@@ -22,6 +22,7 @@ public class CleanupSuggestionService {
     private final BookmarkRepo bookmarkRepo;
     private final BookmarkService bookmarkService;
     private final ConfigService configService;
+    private final AppClock appClock;
 
     @NonNull
     public List<CleanupSuggestionJson> getSuggestions(
@@ -48,7 +49,7 @@ public class CleanupSuggestionService {
 
     public void dismissSuggestion(@NonNull ID<Bookmark> bookmarkId) {
         Bookmark bookmark = bookmarkRepo.getById(bookmarkId);
-        bookmark.setSuggestionDismissedAt(OffsetDateTime.now());
+        bookmark.setSuggestionDismissedAt(appClock.offsetDateTime().now());
         bookmarkRepo.persist(bookmark);
     }
 

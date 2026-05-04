@@ -1,6 +1,7 @@
 package ch.dvbern.dvbstarter.clock;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -39,6 +40,20 @@ public class AppClock {
 
     public ZonedDateTimeProvider zonedDateTime() {
         return new ZonedDateTimeProvider(clock());
+    }
+
+    public InstantProvider instant() {
+        return new InstantProvider(clock());
+    }
+
+    public record InstantProvider(Clock clock) {
+        public InstantProvider {
+            Objects.requireNonNull(clock);
+        }
+
+        public Instant now() {
+            return Instant.now(clock);
+        }
     }
 
     //<editor-fold desc="LocalTimeProvider" defaultstate="collapsed">

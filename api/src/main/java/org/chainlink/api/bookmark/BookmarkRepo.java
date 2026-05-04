@@ -3,10 +3,12 @@ package org.chainlink.api.bookmark;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+import ch.dvbern.dvbstarter.clock.AppClock;
 import ch.dvbern.dvbstarter.types.id.ID;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.DateTimeExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.infrastructure.db.BaseRepo;
@@ -15,7 +17,10 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 @Repository
+@RequiredArgsConstructor
 public class BookmarkRepo extends BaseRepo<Bookmark> {
+
+    private final AppClock appClock;
 
     private static BooleanExpression notDeleted() {
         return QBookmark.bookmark.deletedAt.isNull();
@@ -136,7 +141,7 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
         @NonNull ID<Collection> collectionId,
         int thresholdMonths
     ) {
-        var now = OffsetDateTime.now();
+        var now = appClock.offsetDateTime().now();
         var cutoff = now.minusMonths(thresholdMonths);
         DateTimeExpression<OffsetDateTime> cutoffExpr = Expressions.dateTimeTemplate(
             OffsetDateTime.class, "({0})", cutoff

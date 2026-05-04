@@ -3,13 +3,13 @@ package org.chainlink.api.bookmark.importbookmarks;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import ch.dvbern.dvbstarter.clock.AppClock;
 import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.Bookmark;
@@ -33,6 +33,7 @@ public class BookmarkImportService {
     private final CollectionRepo collectionRepo;
     private final FolderRepo folderRepo;
     private final TagRepo tagRepo;
+    private final AppClock appClock;
 
     @NonNull
     public ImportSummaryJson importBookmarks(@NonNull ID<Collection> collectionId, @NonNull InputStream inputStream) {
@@ -61,7 +62,7 @@ public class BookmarkImportService {
     }
 
     private Tag createImportTag(@NonNull Collection collection) {
-        String datePart = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
+        String datePart = appClock.getToday().format(DateTimeFormatter.ISO_LOCAL_DATE);
         String prefix = "imported=" + datePart + "_";
 
         int existingCount = tagRepo.findByCollection(collection.getId()).size();
