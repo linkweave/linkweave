@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useExtensionStore } from '../stores/extension'
-import { FolderSelectCl } from '@/components/ui'
+import FolderSelectCl from '@/components/ui/FolderSelectCl.vue'
 import TagSelect from '../components/TagSelect.vue'
 import ButtonCl from '@/components/ui/ButtonCl.vue'
 import { useTagSuggestions } from '@/composables/useTagSuggestions'
@@ -52,12 +52,20 @@ function toggleTag(tagId: string) {
 
 const tagsRef = computed(() => store.tags)
 const collectionIdRef = computed(() => store.currentCollectionId ?? '')
+const customRulesRef = computed(() =>
+  (store.collectionInfo?.autoTagRules ?? []).map((r) => ({
+    pattern: r.data.pattern,
+    tagNames: r.data.tagNames,
+    enabled: r.data.enabled,
+  })),
+)
 const { suggestions, selectedNames, toggle: toggleSuggestion, acceptInto } =
   useTagSuggestions({
     url: effectiveUrl,
     tags: tagsRef,
     collectionId: collectionIdRef,
     createTag: store.createTag,
+    customRules: customRulesRef,
   })
 
 async function onAcceptSuggestions() {
