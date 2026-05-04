@@ -130,11 +130,15 @@ jobs:
           echo "Manifest version:"
           grep '"version"' manifest.json
 
-      - name: Build and package extension
+      - name: Build extension
         working-directory: frontend
         run: npm run build:extension
 
-      - name: Package extension ZIP
+      - name: Lint extension
+        working-directory: frontend
+        run: npx web-ext lint --source-dir dist-extension
+
+      - name: Package extension
         working-directory: frontend
         run: npx web-ext build --source-dir dist-extension --artifacts-dir . --overwrite-dest --filename chainlink-extension.zip
 
