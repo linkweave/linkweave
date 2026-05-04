@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'https://local-chainlink.localhost:5173'
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -16,7 +18,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : 3,
   reporter: 'html',
   use: {
-    baseURL: 'https://local-chainlink.localhost:5173',
+    baseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     ignoreHTTPSErrors: true,
@@ -45,7 +47,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm run dev',
-    url: 'https://local-chainlink.localhost:5173',
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     stdout: 'pipe',
     stderr: 'pipe',
