@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useExtensionStore } from '../stores/extension'
-import FolderSelectCl from '@/components/ui/FolderSelectCl.vue'
-import TagSelect from '../components/TagSelect.vue'
 import ButtonCl from '@/components/ui/ButtonCl.vue'
+import FolderSelectCl from '@/components/ui/FolderSelectCl.vue'
+import { useDuplicateCheck } from '@/composables/useDuplicateCheck'
 import { useTagSuggestions } from '@/composables/useTagSuggestions'
 import { ensureUrlProtocol } from '@/lib/url'
+import { computed, ref, watch } from 'vue'
+import TagSelect from '../components/TagSelect.vue'
+import { useExtensionStore } from '../stores/extension'
 
 const props = defineProps<{
   initialUrl: string
@@ -28,8 +29,18 @@ const saved = ref(false)
 const savedTitle = ref('')
 
 // When props change (e.g. context menu URL arrives after mount)
-watch(() => props.initialUrl, (v) => { url.value = v })
-watch(() => props.initialTitle, (v) => { title.value = v })
+watch(
+  () => props.initialUrl,
+  (v) => {
+    url.value = v
+  },
+)
+watch(
+  () => props.initialTitle,
+  (v) => {
+    title.value = v
+  },
+)
 
 const effectiveUrl = computed(() => {
   if (!domainOnly.value) return url.value
@@ -59,14 +70,22 @@ const customRulesRef = computed(() =>
     enabled: r.data.enabled,
   })),
 )
-const { suggestions, selectedNames, toggle: toggleSuggestion, acceptInto } =
-  useTagSuggestions({
-    url: effectiveUrl,
-    tags: tagsRef,
-    collectionId: collectionIdRef,
-    createTag: store.createTag,
-    customRules: customRulesRef,
-  })
+const {
+  suggestions,
+  selectedNames,
+  toggle: toggleSuggestion,
+  acceptInto,
+} = useTagSuggestions({
+  url: effectiveUrl,
+  tags: tagsRef,
+  collectionId: collectionIdRef,
+  createTag: store.createTag,
+  customRules: customRulesRef,
+})
+
+const bookmarksRef = computed(() => store.collectionInfo?.bookmarks ?? [])
+const foldersRef = computed(() => store.folders)
+const { duplicates } = useDuplicateCheck(effectiveUrl, bookmarksRef, { folders: foldersRef })
 
 async function onAcceptSuggestions() {
   try {
@@ -133,7 +152,8 @@ function saveAnother() {
   >
     <span class="text-primary shrink-0">✓</span>
     <span class="text-foreground/80 flex-1 truncate">
-      Already saved as <em class="not-italic font-medium">{{ store.alreadySavedBookmark.data.title }}</em>
+      Already saved as
+      <em class="not-italic font-medium">{{ store.alreadySavedBookmark.data.title }}</em>
     </span>
     <button
       type="button"
@@ -149,12 +169,16 @@ function saveAnother() {
     <!-- URL -->
     <div class="space-y-1.5">
       <div class="flex items-center justify-between">
-        <label class="text-xs font-medium">URL</label>
+        <label class="text-xs font-medium">URL <span class="text-destructive">*</span></label>
         <div class="flex gap-0.5">
           <button
             type="button"
             class="text-[10px] px-1.5 py-0.5 rounded transition-colors"
-            :class="!domainOnly ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'"
+            :class="
+              !domainOnly
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            "
             @click="domainOnly = false"
           >
             Full URL
@@ -162,7 +186,11 @@ function saveAnother() {
           <button
             type="button"
             class="text-[10px] px-1.5 py-0.5 rounded transition-colors"
-            :class="domainOnly ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'"
+            :class="
+              domainOnly
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            "
             @click="domainOnly = true"
           >
             Domain only
@@ -180,6 +208,20 @@ function saveAnother() {
       <p v-if="domainOnly" class="text-[10px] text-muted-foreground">
         Will save: {{ effectiveUrl }}
       </p>
+      <div
+        v-if="duplicates.length > 0"
+        class="rounded border border-yellow-300 bg-yellow-50 px-2 py-1.5 text-[10px] text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-200"
+      >
+        <p class="font-medium">Bookmark with this URL already exists:</p>
+        <ul class="mt-0.5 list-inside list-disc">
+          <li v-for="dup in duplicates" :key="dup.id" class="truncate">
+            {{ dup.title }}
+            <span v-if="dup.folderName" class="text-yellow-600 dark:text-yellow-400">
+              (in {{ dup.folderName }})
+            </span>
+          </li>
+        </ul>
+      </div>
     </div>
 
     <!-- Title -->
