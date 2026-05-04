@@ -21,7 +21,7 @@
     "test:watch": "vitest",
     "dev:extension": "vite build --watch --config vite.config.extension.ts --mode extension.development",
     "build:extension": "vite build --config vite.config.extension.ts --mode extension.production",
-    "package:extension": "npm run build:extension && cd dist-extension && zip -r ../chainlink-extension.zip . -x '.*'"
+    "package:extension": "npm run build:extension && web-ext build --source-dir dist-extension --artifacts-dir . --overwrite-dest --filename=\"chainlink-ext-$(date +%Y%m%d-%H%M%S).zip\""
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",
@@ -65,7 +65,8 @@
     "vite-plugin-pwa": "^1.2.0",
     "vite-plugin-vue-devtools": "^8.0.7",
     "vitest": "^4.1.2",
-    "vue-tsc": "^3.2.5"
+    "vue-tsc": "^3.2.5",
+    "web-ext": "^10.1.0"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
