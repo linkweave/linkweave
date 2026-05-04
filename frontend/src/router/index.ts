@@ -31,6 +31,11 @@ const router = createRouter({
       component: () => import('@/views/TrashbinView.vue')
     },
     {
+      path: '/cleanup-suggestions',
+      name: 'cleanup-suggestions',
+      component: () => import('@/views/CleanupSuggestionsView.vue')
+    },
+    {
       path: '/login',
       name: 'login',
       meta: { public: true },

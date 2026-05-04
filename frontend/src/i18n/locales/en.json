@@ -29,7 +29,8 @@
     "addBookmark": "Add Bookmark",
     "logout": "Sign out",
     "settings": "Settings",
-    "trashbin": "Trashbin"
+    "trashbin": "Trashbin",
+    "cleanupSuggestions": "Cleanup Suggestions"
   },
   "trashbin": {
     "title": "Trashbin",
@@ -287,5 +288,26 @@
     "useExample": "Use",
     "saveError": "Failed to save rule.",
     "deleteError": "Failed to delete rule."
+  },
+  "cleanupSuggestions": {
+    "title": "Cleanup Suggestions",
+    "empty": "Your collection is tidy! No stale bookmarks found.",
+    "noCollection": "No collection selected.",
+    "neverClicked": "Never clicked",
+    "lastClicked": "Last clicked: {date}",
+    "clickCount": "{count} clicks",
+    "folder": "Folder",
+    "dismiss": "Dismiss",
+    "dismissed": "Suggestion dismissed.",
+    "dismissError": "Failed to dismiss suggestion.",
+    "moveToTrash": "Move to Trash",
+    "movedToTrash": "{count} bookmark(s) moved to trash.",
+    "moveToTrashError": "Failed to move bookmarks to trash.",
+    "confirmMoveToTrash": "Move {count} selected bookmark(s) to the trashbin?",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "suggestions": "suggestions",
+    "thresholdLabel": "Inactivity period",
+    "thresholdMonths": "{months} months"
   }
 }

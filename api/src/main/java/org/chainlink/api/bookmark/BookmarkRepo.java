@@ -1,9 +1,12 @@
 package org.chainlink.api.bookmark;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.DateTimeExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.infrastructure.db.BaseRepo;
@@ -126,5 +129,38 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
         for (var bookmark : bookmarks) {
             remove(bookmark.getId());
         }
+    }
+
+    @NonNull
+    public List<Bookmark> findStaleByCollection(
+        @NonNull ID<Collection> collectionId,
+        int thresholdMonths
+    ) {
+        var now = OffsetDateTime.now();
+        var cutoff = now.minusMonths(thresholdMonths);
+        DateTimeExpression<OffsetDateTime> cutoffExpr = Expressions.dateTimeTemplate(
+            OffsetDateTime.class, "({0})", cutoff
+        );
+
+        BooleanExpression inactive = QBookmark.bookmark.lastClickedAt.lt(cutoffExpr)
+            .or(QBookmark.bookmark.lastClickedAt.isNull()
+                .and(QBookmark.bookmark.timestampErstellt.lt(cutoffExpr)));
+
+        BooleanExpression notDismissed = QBookmark.bookmark.suggestionDismissedAt.isNull()
+            .or(QBookmark.bookmark.suggestionDismissedAt.lt(cutoffExpr));
+
+        return db.selectFrom(QBookmark.bookmark)
+            .leftJoin(QBookmark.bookmark.folder).fetchJoin()
+            .where(
+                QBookmark.bookmark.collection.id.eq(collectionId.getUUID()),
+                notDeleted(),
+                inactive,
+                notDismissed
+            )
+            .orderBy(
+                QBookmark.bookmark.lastClickedAt.asc().nullsFirst(),
+                QBookmark.bookmark.timestampErstellt.asc()
+            )
+            .fetch();
     }
 }

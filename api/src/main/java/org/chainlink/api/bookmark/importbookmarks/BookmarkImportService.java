@@ -127,6 +127,7 @@ public class BookmarkImportService {
             new HashSet<>(Set.of(importTag)),
             0,
             null,
+            null,
             null
         );
         bookmarkRepo.persist(bookmark);

@@ -29,7 +29,8 @@
     "addBookmark": "Lesezeichen hinzufügen",
     "logout": "Abmelden",
     "settings": "Einstellungen",
-    "trashbin": "Papierkorb"
+    "trashbin": "Papierkorb",
+    "cleanupSuggestions": "Aufräumvorschläge"
   },
   "trashbin": {
     "title": "Papierkorb",
@@ -284,5 +285,26 @@
     "useExample": "Übernehmen",
     "saveError": "Regel konnte nicht gespeichert werden.",
     "deleteError": "Regel konnte nicht gelöscht werden."
+  },
+  "cleanupSuggestions": {
+    "title": "Aufräumvorschläge",
+    "empty": "Ihre Sammlung ist aufgeräumt! Keine veralteten Lesezeichen gefunden.",
+    "noCollection": "Keine Sammlung ausgewählt.",
+    "neverClicked": "Nie geklickt",
+    "lastClicked": "Zuletzt geklickt: {date}",
+    "clickCount": "{count} Klicks",
+    "folder": "Ordner",
+    "dismiss": "Ausblenden",
+    "dismissed": "Vorschlag ausgeblendet.",
+    "dismissError": "Vorschlag konnte nicht ausgeblendet werden.",
+    "moveToTrash": "In den Papierkorb",
+    "movedToTrash": "{count} Lesezeichen in den Papierkorb verschoben.",
+    "moveToTrashError": "Lesezeichen konnten nicht in den Papierkorb verschoben werden.",
+    "confirmMoveToTrash": "{count} ausgewählte(s) Lesezeichen in den Papierkorb verschieben?",
+    "selectAll": "Alle auswählen",
+    "deselectAll": "Auswahl aufheben",
+    "suggestions": "Vorschläge",
+    "thresholdLabel": "Inaktivitätszeitraum",
+    "thresholdMonths": "{months} Monate"
   }
 }
