@@ -130,9 +130,13 @@ jobs:
           echo "Manifest version:"
           grep '"version"' manifest.json
 
-      - name: Build extension
+      - name: Build and package extension
         working-directory: frontend
-        run: npm run package:extension
+        run: npm run build:extension
+
+      - name: Package extension ZIP
+        working-directory: frontend
+        run: npx web-ext build --source-dir dist-extension --artifacts-dir . --overwrite-dest --filename chainlink-extension.zip
 
       - name: Upload extension artifact
         uses: actions/upload-artifact@v3
