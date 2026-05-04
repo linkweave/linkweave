@@ -40,6 +40,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Disable unreachable PPAs
+        # The runner image ships with a git-core PPA that this network can't
+        # reach. Any later apt operation (notably `playwright install
+        # --with-deps`) runs `apt-get update` and emits a noisy connection
+        # error for it. Removing the source list silences the warning and
+        # avoids the hard failure if apt ever starts treating it as fatal.
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/git-core-ubuntu-ppa-*.list
+
       - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
@@ -60,17 +69,17 @@ jobs:
         run: |
           echo "127.0.0.1 ${E2E_HOST}" | sudo tee -a /etc/hosts
 
-      - name: Install mkcert
+      - name: Install mkcert binary
         # developer-local-settings/ is gitignored, so a fresh checkout has no
         # certs. The repo's own scripts/certs/generate-keypair.sh issues them
         # via mkcert + keytool — we just need mkcert on PATH first.
+        # We skip `mkcert -install` (and the libnss3-tools dependency it pulls
+        # in) because Playwright runs with ignoreHTTPSErrors: true — nothing
+        # in the run actually needs the local CA installed in a trust store.
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq libnss3-tools
           curl -sSL -o /tmp/mkcert https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64
           chmod +x /tmp/mkcert
           sudo mv /tmp/mkcert /usr/local/bin/mkcert
-          mkcert -install
 
       - name: Generate dev TLS cert
         env:
@@ -105,8 +114,22 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          # Where `playwright install` drops the browser binaries.
+          path: ~/.cache/ms-playwright
+          # Bust the cache when the @playwright/test version changes — browser
+          # binaries are tied to it.
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
       - name: Install Playwright browsers
         working-directory: frontend
+        # On cache hit this is a near-no-op for the browser download itself;
+        # --with-deps still ensures the apt packages chromium needs are
+        # present (those aren't easily cacheable, and apt is fast on hot mirrors).
         run: npx playwright install --with-deps chromium
 
       - name: Run e2e (Chromium)
