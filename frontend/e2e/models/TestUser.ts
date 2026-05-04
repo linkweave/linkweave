@@ -3,15 +3,15 @@ import {
   type Browser,
   type BrowserContext,
   expect,
-  type Page,
 } from '@playwright/test'
-import { LoginPageObject } from './LoginPageObject'
 
 export type TestUser = { email: string; password: string }
 export type StorageState = Awaited<ReturnType<BrowserContext['storageState']>>
 
 const REGISTER_URL = '/api/auth/register'
 const DELETE_ME_URL = '/api/auth/me'
+const LOGIN_URL = '/api/j_security_check'
+const ME_URL = '/api/auth/me'
 
 /**
  * Registers a fresh user via POST /api/auth/register. The email is unique per
@@ -49,76 +49,58 @@ export async function registerTestUser(
 }
 
 /**
- * Logs the user in via the UI form and returns the auto-provisioned default
- * collection id (read from the post-login redirect URL).
+ * Authenticates against Quarkus form auth (`/j_security_check`) without
+ * booting the SPA. The session cookie is stored on the request context, so
+ * any subsequent `request.*` calls — and any browser context constructed from
+ * `ctx.storageState()` — are authenticated.
+ *
+ * Retries transient 5xx responses for parity with `registerTestUser`.
  */
-export async function loginAsTestUser(page: Page, user: TestUser): Promise<string> {
-  const loginPage = new LoginPageObject(page)
-
-  // In a Playwright worker, the BrowserContext (and its cookies, IndexedDB,
-  // service-worker registration, in-memory Pinia state etc.) persists across
-  // tests in the same describe — both serial mode and even the default
-  // parallel describes inside a single worker. The previous test's session
-  // cookie + cached UserInfo + active SW make /login auto-redirect to
-  // /collections and the Email field never appears. Nuke everything.
-  await page.context().clearCookies()
-  // Land on the app origin so we can run in-page cleanup against the real
-  // SPA storage scope.
-  await loginPage.goto()
-  await page.evaluate(async () => {
-    try {
-      // Unregister any service worker so cached responses can't fool the
-      // auth store on the next navigation.
-      if ('serviceWorker' in navigator) {
-        const regs = await navigator.serviceWorker.getRegistrations()
-        await Promise.all(regs.map((r) => r.unregister()))
-      }
-      const dbs =
-        (await (
-          indexedDB as unknown as { databases?: () => Promise<{ name?: string }[]> }
-        ).databases?.()) ?? []
-      await Promise.all(
-        dbs.map((db) =>
-          db.name
-            ? new Promise<void>((resolve) => {
-                const req = indexedDB.deleteDatabase(db.name!)
-                req.onsuccess = req.onerror = req.onblocked = () => resolve()
-              })
-            : Promise.resolve(),
-        ),
-      )
-      localStorage.clear()
-      sessionStorage.clear()
-    } catch (err: unknown) {
-      console.error('loginAsTestUser: failed to clear storage', err)
-    }
-  })
-
-  // After the storage wipe, a final reload to make sure the SPA boots
-  // without any leftover Pinia/auth state. Retry the login click twice if
-  // the form bounces back to /login under transient SQLite write contention.
+export async function loginViaApi(request: APIRequestContext, user: TestUser): Promise<void> {
+  let lastStatus = 0
+  let lastBody = ''
   for (let attempt = 0; attempt < 3; attempt++) {
-    await page.goto('/login', { waitUntil: 'load' })
-    await page.getByLabel('Email').waitFor({ state: 'visible', timeout: 15000 })
-    await loginPage.login(user.email, user.password)
-    try {
-      await expect(page).toHaveURL(/\/collections\//, { timeout: 12000 })
-      const match = page.url().match(/\/collections\/([^/?#]+)/)
-      if (!match) throw new Error(`could not parse collection id from URL: ${page.url()}`)
-      return match[1]
-    } catch (err) {
-      if (attempt === 2) throw err
-      await page.waitForTimeout(750)
-    }
+    const resp = await request.post(LOGIN_URL, {
+      form: { j_username: user.email, j_password: user.password },
+      maxRedirects: 0,
+    })
+    lastStatus = resp.status()
+    // Quarkus form auth answers with a 302 to the landing page on success.
+    // 200 also counts (some configs).
+    if (lastStatus === 302 || lastStatus === 200) return
+    lastBody = await resp.text().catch(() => '')
+    if (lastStatus < 500) break
+    await new Promise((r) => setTimeout(r, 500))
   }
-  throw new Error('unreachable')
+  throw new Error(`loginViaApi failed: ${lastStatus} ${lastBody}`)
+}
+
+async function fetchDefaultCollectionId(request: APIRequestContext): Promise<string> {
+  // /api/auth/me auto-provisions the user's default collection on first access.
+  // Under heavy parallel registration, the auto-provision write contends on
+  // SQLite and can return 500 — retry transient failures.
+  let lastStatus = 0
+  let lastBody = ''
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const resp = await request.get(ME_URL)
+    lastStatus = resp.status()
+    if (resp.ok()) {
+      const body = (await resp.json()) as { defaultCollectionId: string }
+      expect(body.defaultCollectionId, '/auth/me returned no defaultCollectionId').toBeTruthy()
+      return body.defaultCollectionId
+    }
+    lastBody = await resp.text().catch(() => '')
+    if (lastStatus < 500) break
+    await new Promise((r) => setTimeout(r, 500))
+  }
+  throw new Error(`fetch /auth/me failed: ${lastStatus} ${lastBody}`)
 }
 
 /**
- * Registers a fresh user, logs them in once in a throwaway context, and
- * captures the resulting cookies + localStorage. The caller passes the result
- * into `test.use({ storageState })` so every test in the describe boots
- * already authenticated — no per-test UI login.
+ * Registers a fresh user, authenticates them via the form-auth endpoint, and
+ * captures the resulting session cookie as a Playwright storageState. The
+ * caller passes the result into `test.use({ storageState })` so every test in
+ * the describe boots already authenticated — no SPA boot, no UI form.
  */
 export async function registerAndCaptureStorageState(
   browser: Browser,
@@ -127,8 +109,8 @@ export async function registerAndCaptureStorageState(
   const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
   try {
     const user = await registerTestUser(ctx.request, specSlug)
-    const page = await ctx.newPage()
-    const collectionId = await loginAsTestUser(page, user)
+    await loginViaApi(ctx.request, user)
+    const collectionId = await fetchDefaultCollectionId(ctx.request)
     const storageState = await ctx.storageState()
     return { user, storageState, collectionId }
   } finally {
@@ -148,14 +130,11 @@ export async function deleteTestUser(request: APIRequestContext): Promise<void> 
 }
 
 /**
- * Standard `afterAll` cleanup: opens a fresh browser context, logs in as the
- * given user, and hard-deletes them via DELETE /auth/me. Use directly as the
- * `afterAll` callback to avoid copy-pasting the same boilerplate in every
- * spec:
- *
- * ```ts
- * test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => user))
- * ```
+ * Standard `afterAll` cleanup: opens a fresh API request context, authenticates
+ * via form-auth, and hard-deletes the user via DELETE /auth/me. Pure HTTP — no
+ * browser page, no SPA boot, no service-worker dance. This keeps the cleanup
+ * window to ~50ms instead of several seconds, which removes most of the
+ * SQLite-write contention that previously flaked `afterAll`.
  *
  * Takes a getter rather than the user value because module-level `let user`
  * is assigned in `beforeAll`, after the `afterAll` callback is registered.
@@ -167,10 +146,9 @@ export async function deleteTestUserCleanup(
   const user = userGetter()
   if (!user) return
   const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
-  const page = await ctx.newPage()
   try {
-    await loginAsTestUser(page, user)
-    await deleteTestUser(page.request)
+    await loginViaApi(ctx.request, user)
+    await deleteTestUser(ctx.request)
   } finally {
     await ctx.close()
   }

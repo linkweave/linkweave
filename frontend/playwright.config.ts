@@ -9,7 +9,11 @@ export default defineConfig({
   timeout: 90_000,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // Cap parallel workers locally. The dev SQLite DB serializes writes and
+  // returns 5xx/401 responses under high concurrent registration/login load.
+  // The API-only auth flow (registerAndCaptureStorageState) is fast enough
+  // that the default worker count (~CPU cores) saturates the backend.
+  workers: process.env.CI ? 1 : 3,
   reporter: 'html',
   use: {
     baseURL: 'https://local-chainlink.localhost:5173',

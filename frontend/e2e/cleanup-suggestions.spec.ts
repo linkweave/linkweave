@@ -1,5 +1,10 @@
 import { expect, type Page, test } from '@playwright/test'
 import { execSync } from 'node:child_process'
+import * as path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __filename_ = fileURLToPath(import.meta.url)
+const __dirname_ = path.dirname(__filename_)
 import {
   deleteTestUserCleanup,
   registerAndCaptureStorageState,
@@ -12,7 +17,8 @@ test.describe.configure({ mode: 'serial' })
 
 const ts = Date.now()
 const BASE = '/api'
-const DB_PATH = 'developer-local-settings/chainlink.db'
+// Resolved relative to the repo root so the test works from any cwd.
+const DB_PATH = path.resolve(__dirname_, '../../developer-local-settings/chainlink.db')
 
 let user: TestUser
 let collectionId: string
