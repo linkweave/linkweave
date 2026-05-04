@@ -106,4 +106,4 @@ The URL must be a valid HTTP or HTTPS URL.
 
 ### BR-026: Duplicate URLs
 
-Duplicate URLs are allowed within the same collection.
+Duplicate URLs are allowed within the same collection. The system displays a non-blocking warning when a duplicate URL is detected (see UC-053).
