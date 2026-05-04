@@ -174,7 +174,10 @@
     "moveToFolder": "Move to Folder",
     "deleteTitle": "Delete Bookmark",
     "deleteConfirm": "Are you sure you want to delete this bookmark? This action cannot be undone.",
-    "deleteError": "Failed to delete bookmark."
+    "deleteError": "Failed to delete bookmark.",
+    "duplicateWarning": "A bookmark with this URL already exists:",
+    "duplicateWarningPlural": "{count} bookmarks with this URL already exist:",
+    "duplicateInFolder": "in {folder}"
   },
   "tag": {
     "none": "No tags yet",

@@ -2,6 +2,7 @@
 import type { BookmarkJson } from '@/api/generated'
 import AutoTagRulesDialog from '@/components/autotagrule/AutoTagRulesDialog.vue'
 import { ButtonCl, DialogCl, FolderSelectCl, FormFieldCl } from '@/components/ui'
+import { useDuplicateCheck } from '@/composables/useDuplicateCheck'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { useTagSuggestions } from '@/composables/useTagSuggestions'
 import { ensureUrlProtocol } from '@/lib/url'
@@ -94,6 +95,14 @@ const {
   customRules: customRulesRef,
 })
 
+const bookmarkIdRef = computed(() => props.bookmark?.id)
+const bookmarksRef = computed(() => bookmarkStore.bookmarks)
+const foldersRef = computed(() => folderStore.folders)
+const { duplicates } = useDuplicateCheck(url, bookmarksRef, {
+  excludeBookmarkId: bookmarkIdRef,
+  folders: foldersRef,
+})
+
 async function onAcceptSuggestions() {
   try {
     await acceptInto(tagIds)
@@ -155,6 +164,28 @@ const onSubmit = handleSubmit(async (values) => {
           @blur="onUrlBlur"
         />
       </FormFieldCl>
+
+      <div
+        v-if="duplicates.length > 0"
+        data-testid="duplicate-warning"
+        class="rounded-md border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-200"
+      >
+        <p class="font-medium">
+          {{
+            duplicates.length === 1
+              ? t('bookmark.duplicateWarning')
+              : t('bookmark.duplicateWarningPlural', { count: duplicates.length })
+          }}
+        </p>
+        <ul class="mt-1 list-inside list-disc">
+          <li v-for="dup in duplicates" :key="dup.id">
+            {{ dup.title }}
+            <span v-if="dup.folderName" class="text-muted-foreground">
+              ({{ t('bookmark.duplicateInFolder', { folder: dup.folderName }) }})
+            </span>
+          </li>
+        </ul>
+      </div>
 
       <FormFieldCl
         :label="t('bookmark.title')"
@@ -224,7 +255,7 @@ const onSubmit = handleSubmit(async (values) => {
       <div data-testid="suggested-tags-section" class="space-y-2 min-h-[5.5rem]">
         <div class="flex items-center justify-between">
           <label class="text-sm font-medium">{{ t('bookmark.suggestedTags') }}</label>
-<!--          prevent default to prevent validation on click-->
+          <!--          prevent default to prevent validation on click-->
           <button
             type="button"
             class="text-xs text-primary hover:underline"
