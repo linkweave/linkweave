@@ -31,6 +31,8 @@ export * from './registration-request-json';
 export * from './tag-json';
 export * from './tag-list-json';
 export * from './tag-save-json';
+export * from './time-travel-request';
+export * from './time-travel-status';
 export * from './trashbin-count-json';
 export * from './trashbin-json';
 export * from './user-info-json';

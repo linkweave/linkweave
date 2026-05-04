@@ -1,10 +1,4 @@
 import { expect, type Page, test } from '@playwright/test'
-import { execSync } from 'node:child_process'
-import * as path from 'node:path'
-import { fileURLToPath } from 'node:url'
-
-const __filename_ = fileURLToPath(import.meta.url)
-const __dirname_ = path.dirname(__filename_)
 import {
   deleteTestUserCleanup,
   registerAndCaptureStorageState,
@@ -17,8 +11,6 @@ test.describe.configure({ mode: 'serial' })
 
 const ts = Date.now()
 const BASE = '/api'
-// Resolved relative to the repo root so the test works from any cwd.
-const DB_PATH = path.resolve(__dirname_, '../../developer-local-settings/chainlink.db')
 
 let user: TestUser
 let collectionId: string
@@ -49,24 +41,27 @@ async function createBookmarkViaApi(
   return body.id
 }
 
-function backdateBookmark(bookmarkId: string, monthsAgo: number) {
-  const pastDate = new Date()
-  pastDate.setMonth(pastDate.getMonth() - monthsAgo)
-  const timestamp = pastDate.getTime()
-  execSync(
-    `sqlite3 "${DB_PATH}" "UPDATE Bookmark SET timestampErstellt = ${timestamp}, last_clicked_at = ${timestamp} WHERE id = '${bookmarkId}'"`,
-    { stdio: 'pipe' },
-  )
+async function trackClickViaApi(page: Page, bookmarkId: string) {
+  const resp = await page.request.post(`${BASE}/bookmarks/${bookmarkId}/track-click`)
+  expect(resp.ok(), `trackClick failed: ${resp.status()}`).toBeTruthy()
 }
 
-function makeNeverClicked(bookmarkId: string, monthsAgo: number) {
-  const pastDate = new Date()
-  pastDate.setMonth(pastDate.getMonth() - monthsAgo)
-  const timestamp = pastDate.getTime()
-  execSync(
-    `sqlite3 "${DB_PATH}" "UPDATE Bookmark SET timestampErstellt = ${timestamp}, click_count = 0, last_clicked_at = NULL WHERE id = '${bookmarkId}'"`,
-    { stdio: 'pipe' },
-  )
+async function travelTo(page: Page, isoInstant: string) {
+  const resp = await page.request.post(`${BASE}/dev/time-travel`, {
+    data: { instant: isoInstant },
+  })
+  expect(resp.ok(), `time-travel failed: ${resp.status()}`).toBeTruthy()
+}
+
+async function resetClock(page: Page) {
+  const resp = await page.request.delete(`${BASE}/dev/time-travel`)
+  expect(resp.ok(), `reset clock failed: ${resp.status()}`).toBeTruthy()
+}
+
+function isoMonthsAgo(months: number): string {
+  const d = new Date()
+  d.setMonth(d.getMonth() - months)
+  return d.toISOString()
 }
 
 test.describe('Cleanup Suggestions', () => {
@@ -95,28 +90,37 @@ test.describe('Cleanup Suggestions', () => {
   test('should set up stale bookmarks and show them as suggestions', async ({ page }) => {
     await gotoCollection(page)
 
-    staleAId = await createBookmarkViaApi(
-      page,
-      collectionId,
-      `Stale-A-${ts}`,
-      'https://stale-a.example.com',
-    )
-    staleBId = await createBookmarkViaApi(
-      page,
-      collectionId,
-      `Stale-B-${ts}`,
-      'https://stale-b.example.com',
-    )
-    neverClickedId = await createBookmarkViaApi(
-      page,
-      collectionId,
-      `Never-Clicked-${ts}`,
-      'https://never-clicked.example.com',
-    )
+    // Time-travel the backend so newly created bookmarks land in the past.
+    // staleA/B are created and clicked 7-8 months ago (clicked-but-stale).
+    // neverClickedId is created 7 months ago and never clicked.
+    try {
+      await travelTo(page, isoMonthsAgo(8))
+      staleBId = await createBookmarkViaApi(
+        page,
+        collectionId,
+        `Stale-B-${ts}`,
+        'https://stale-b.example.com',
+      )
+      await trackClickViaApi(page, staleBId)
 
-    backdateBookmark(staleAId, 7)
-    backdateBookmark(staleBId, 8)
-    makeNeverClicked(neverClickedId, 7)
+      await travelTo(page, isoMonthsAgo(7))
+      staleAId = await createBookmarkViaApi(
+        page,
+        collectionId,
+        `Stale-A-${ts}`,
+        'https://stale-a.example.com',
+      )
+      await trackClickViaApi(page, staleAId)
+
+      neverClickedId = await createBookmarkViaApi(
+        page,
+        collectionId,
+        `Never-Clicked-${ts}`,
+        'https://never-clicked.example.com',
+      )
+    } finally {
+      await resetClock(page)
+    }
 
     await navigateToCleanupSuggestions(page)
 
