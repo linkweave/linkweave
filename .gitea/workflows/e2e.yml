@@ -96,10 +96,11 @@ jobs:
         # the SQLite DB. quarkus:dev is overkill (hot reload, dev-ui); the
         # built fast-jar is faster to launch.
         run: |
-          java -jar target/quarkus-app/quarkus-run.jar \
+          java \
             -Dquarkus.profile=dev \
             -Dquarkus.http.host=0.0.0.0 \
             -Dquarkus.oidc.enabled=false \
+            -jar target/quarkus-app/quarkus-run.jar \
             > ../api-stdout.log 2>&1 &
           echo $! > ../api.pid
           # Wait for any HTTP response from the API (no smallrye-health
