@@ -99,16 +99,25 @@ jobs:
           java -jar target/quarkus-app/quarkus-run.jar \
             -Dquarkus.profile=dev \
             -Dquarkus.http.host=0.0.0.0 \
+            -Dquarkus.oidc.enabled=false \
             > ../api-stdout.log 2>&1 &
           echo $! > ../api.pid
-          # Wait for /q/health (Quarkus's smallrye-health endpoint)
+          # Wait for any HTTP response from the API (no smallrye-health
+          # dependency, so we just hit the root and accept any status).
+          api_up=false
           for i in $(seq 1 60); do
-            if curl -sk https://localhost:8443/q/health/ready >/dev/null 2>&1; then
+            if curl -sk -o /dev/null https://localhost:8443/ 2>/dev/null; then
               echo "API ready after ${i}s"
+              api_up=true
               break
             fi
             sleep 1
           done
+          if [ "$api_up" = false ]; then
+            echo "::error::API failed to start within 60s"
+            cat ../api-stdout.log
+            exit 1
+          fi
 
       - name: Install frontend deps
         working-directory: frontend
