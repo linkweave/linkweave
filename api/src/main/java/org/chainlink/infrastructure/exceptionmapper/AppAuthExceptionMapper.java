@@ -19,7 +19,7 @@ class AppAuthExceptionMapper implements ExceptionMapper<AppAuthException> {
 
     @Override
     public Response toResponse(AppAuthException exception) {
-        LOG.error("AppAuthException: {}", exception.getId(), exception);
+        LOG.debug("AppAuthException: {}", exception.getId(), exception);
         var msg = tl.translate(exception.getI18nMessage());
 
         return Response.status(Response.Status.UNAUTHORIZED)
