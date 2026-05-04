@@ -7,15 +7,6 @@
     "title": "Chainlink",
     "version": "Version"
   },
-  "collectionSwitcher": {
-    "selectCollection": "Sammlung auswählen",
-    "collections": "Sammlungen",
-    "default": "Standard",
-    "activeCollection": "Aktive Sammlung",
-    "setAsDefault": "Als Standard festlegen",
-    "thisIsDefault": "Ihre Standardsammlung",
-    "manageCollections": "Sammlungen verwalten"
-  },
   "common": {
     "save": "Speichern",
     "cancel": "Abbrechen",
@@ -27,7 +18,8 @@
     "all": "Alle",
     "undo": "Rückgängig",
     "reset": "Zurücksetzen",
-    "back": "Zurück"
+    "back": "Zurück",
+    "close": "Schließen"
   },
   "dnd": {
     "bookmarkMoved": "Lesezeichen verschoben.",
@@ -171,7 +163,12 @@
     "folder": "Ordner",
     "noFolder": "Kein Ordner (nicht zugeordnet)",
     "tags": "Tags",
+    "suggestedTags": "Vorgeschlagene Tags",
+    "acceptSuggestions": "Vorschläge übernehmen",
+    "suggestionWillCreate": "(neu)",
+    "manageRules": "Regeln verwalten",
     "createError": "Lesezeichen konnte nicht erstellt werden.",
+    "tagSuggestionError": "Einige Tag-Vorschläge konnten nicht übernommen werden.",
     "updateError": "Lesezeichen konnte nicht aktualisiert werden.",
     "moveError": "Lesezeichen konnte nicht verschoben werden.",
     "moveToFolder": "In Ordner verschieben",
@@ -251,12 +248,41 @@
     "passwordMismatch": "Passwörter stimmen nicht überein.",
     "nameMismatch": "Name stimmt nicht überein",
     "colorHex": "Muss ein gültiger Hex-Farbwert sein (z.B. #ef4444)",
-    "collectionIdRequired": "collectionId ist erforderlich"
+    "collectionIdRequired": "collectionId ist erforderlich",
+    "invalidRegex": "Ungültiger regulärer Ausdruck",
+    "atLeastOneTag": "Mindestens ein Tag ist erforderlich",
+    "maxTags": "Maximal {max} Tags erlaubt"
   },
   "offline": {
     "banner": "Sie sind offline. Cachedaten werden angezeigt.",
     "bannerNoCache": "Sie sind offline. Keine Cachedaten verfügbar.",
     "lastSynced": "Zuletzt synchronisiert {time}",
     "writeDisabled": "Diese Aktion ist offline nicht verfügbar."
+  },
+  "autoTagRule": {
+    "managerTitle": "Auto-Tag Regeln",
+    "managerHelp": "Definieren Sie URL-Muster, die beim Erstellen von Lesezeichen Tags vorschlagen. Eingebaute Regeln für gängige Umgebungs-Subdomains werden immer zuerst ausgeführt.",
+    "createTitle": "Neue Auto-Tag Regel",
+    "editTitle": "Auto-Tag Regel bearbeiten",
+    "add": "Regel hinzufügen",
+    "empty": "Noch keine eigenen Regeln. Eingebaute Regeln gelten weiterhin.",
+    "pattern": "URL-Muster (Regex)",
+    "patternPlaceholder": "^https://github\\.com/.+/pull/\\d+",
+    "tagNames": "Tags",
+    "tagNamesPlaceholder": "pr, github",
+    "tagNamesHelp": "Kommagetrennt. Tags, die nicht existieren, werden beim Akzeptieren des Vorschlags angelegt.",
+    "description": "Beschreibung (optional)",
+    "enabled": "Aktiviert",
+    "testUrl": "Test-URL",
+    "testMatched": "Treffer",
+    "testNotMatched": "Kein Treffer",
+    "helpAria": "Regex-Hilfe anzeigen",
+    "helpHeader": "Regex-Tipps",
+    "helpSyntax": "JavaScript-Regex-Syntax. Mit ^ verankern, Punkte als \\. escapen, (?:…) für nicht-erfassende Gruppen.",
+    "helpExamples": "Kopierbare Beispiele",
+    "copyPattern": "Muster kopieren",
+    "useExample": "Übernehmen",
+    "saveError": "Regel konnte nicht gespeichert werden.",
+    "deleteError": "Regel konnte nicht gelöscht werden."
   }
 }

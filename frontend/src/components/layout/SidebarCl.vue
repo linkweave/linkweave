@@ -122,7 +122,7 @@ async function onAllBookmarksDrop(event: DragEvent) {
           @drop="onAllBookmarksDrop"
         >
           <Folder class="h-4 w-4 text-primary" />
-          <span>{{
+          <span data-testid="sidebar-all-bookmarks">{{
             t('sidebar.allBookmarks', { name: collectionStore.collectionName ?? '' })
           }}</span>
         </div>

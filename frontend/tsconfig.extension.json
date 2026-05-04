@@ -5,6 +5,8 @@
     "src/extension/**/*.vue",
     "src/api/**/*",
     "src/lib/**/*",
+    "src/composables/**/*",
+    "src/utils/**/*",
     "src/assets/**/*",
     "src/components/ui/**/*.vue"
   ],

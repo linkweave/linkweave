@@ -2,7 +2,7 @@
 import { useExtensionStore } from '../stores/extension'
 import BookmarkItem from '../components/BookmarkItem.vue'
 import TagSelect from '../components/TagSelect.vue'
-import { FolderSelectCl } from '@/components/ui'
+import FolderSelectCl from '@/components/ui/FolderSelectCl.vue'
 import { Search, X } from 'lucide-vue-next'
 
 const store = useExtensionStore()

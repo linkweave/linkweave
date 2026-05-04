@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useExtensionStore } from '../stores/extension'
-import { FolderSelectCl } from '@/components/ui'
+import FolderSelectCl from '@/components/ui/FolderSelectCl.vue'
 import TagSelect from '../components/TagSelect.vue'
 import ButtonCl from '@/components/ui/ButtonCl.vue'
+import { useTagSuggestions } from '@/composables/useTagSuggestions'
+import { ensureUrlProtocol } from '@/lib/url'
 
 const props = defineProps<{
   initialUrl: string
@@ -46,6 +48,36 @@ function toggleTag(tagId: string) {
   if (next.has(tagId)) next.delete(tagId)
   else next.add(tagId)
   selectedTagIds.value = next
+}
+
+const tagsRef = computed(() => store.tags)
+const collectionIdRef = computed(() => store.currentCollectionId ?? '')
+const customRulesRef = computed(() =>
+  (store.collectionInfo?.autoTagRules ?? []).map((r) => ({
+    pattern: r.data.pattern,
+    tagNames: r.data.tagNames,
+    enabled: r.data.enabled,
+  })),
+)
+const { suggestions, selectedNames, toggle: toggleSuggestion, acceptInto } =
+  useTagSuggestions({
+    url: effectiveUrl,
+    tags: tagsRef,
+    collectionId: collectionIdRef,
+    createTag: store.createTag,
+    customRules: customRulesRef,
+  })
+
+async function onAcceptSuggestions() {
+  try {
+    await acceptInto(selectedTagIds)
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to apply some tag suggestions'
+  }
+}
+
+function onUrlBlur() {
+  url.value = ensureUrlProtocol(url.value)
 }
 
 async function save() {
@@ -143,6 +175,7 @@ function saveAnother() {
         required
         placeholder="https://..."
         class="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        @blur="onUrlBlur"
       />
       <p v-if="domainOnly" class="text-[10px] text-muted-foreground">
         Will save: {{ effectiveUrl }}
@@ -188,6 +221,36 @@ function saveAnother() {
         @toggle="toggleTag"
         @clear="selectedTagIds = new Set()"
       />
+    </div>
+
+    <!-- Suggested tags (reserved space to avoid layout shift) -->
+    <div data-testid="suggested-tags-section" class="space-y-1.5 min-h-[4rem]">
+      <template v-if="suggestions.length > 0">
+        <label class="text-xs font-medium">Suggested tags</label>
+        <div class="flex flex-wrap gap-1">
+          <button
+            v-for="suggestion in suggestions"
+            :key="suggestion.name"
+            type="button"
+            :data-testid="`suggested-tag-${suggestion.name}`"
+            class="inline-flex items-center gap-1 rounded-full border border-dashed border-input px-2 py-0.5 text-[10px] transition-opacity"
+            :class="selectedNames.has(suggestion.name) ? 'opacity-100' : 'opacity-40'"
+            @click="toggleSuggestion(suggestion.name)"
+          >
+            <span>{{ suggestion.name }}</span>
+            <span v-if="!suggestion.existingTagId" class="text-muted-foreground">(new)</span>
+          </button>
+          <button
+            type="button"
+            data-testid="accept-suggestions-btn"
+            class="ml-auto text-[10px] text-primary disabled:text-muted-foreground"
+            :disabled="selectedNames.size === 0"
+            @click="onAcceptSuggestions"
+          >
+            Accept
+          </button>
+        </div>
+      </template>
     </div>
 
     <!-- Error -->

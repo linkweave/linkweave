@@ -1,21 +1,26 @@
 <script setup lang="ts">
-import { computed, toRef } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { toTypedSchema } from '@vee-validate/zod'
-import { useForm } from 'vee-validate'
-import { DialogCl, ButtonCl, FormFieldCl, FolderSelectCl } from '@/components/ui'
+import type { BookmarkJson } from '@/api/generated'
+import AutoTagRulesDialog from '@/components/autotagrule/AutoTagRulesDialog.vue'
+import { ButtonCl, DialogCl, FolderSelectCl, FormFieldCl } from '@/components/ui'
+import { useFormDialog } from '@/composables/useFormDialog'
+import { useTagSuggestions } from '@/composables/useTagSuggestions'
+import { ensureUrlProtocol } from '@/lib/url'
+import { bookmarkSaveSchema } from '@/schemas/bookmark'
+import { useAutoTagRuleStore } from '@/stores/autoTagRule'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useFolderStore } from '@/stores/folder'
-import { useTagStore } from '@/stores/tag'
 import { useNotificationStore } from '@/stores/notification'
-import { bookmarkSaveSchema } from '@/schemas/bookmark'
-import { useFormDialog } from '@/composables/useFormDialog'
-import type { BookmarkJson } from '@/api/generated'
+import { useTagStore } from '@/stores/tag'
+import { toTypedSchema } from '@vee-validate/zod'
+import { useForm } from 'vee-validate'
+import { computed, ref, toRef } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const bookmarkStore = useBookmarkStore()
 const folderStore = useFolderStore()
 const tagStore = useTagStore()
+const autoTagRuleStore = useAutoTagRuleStore()
 const notification = useNotificationStore()
 
 interface Props {
@@ -59,11 +64,51 @@ useFormDialog(toRef(props, 'open'), () => {
         url: props.bookmark.data.url,
         description: props.bookmark.data.description ?? '',
         folderId: props.bookmark.data.folderId ?? undefined,
-        tagIds: props.bookmark.data.tagIds ? new Set(props.bookmark.data.tagIds) : new Set<string>(),
+        tagIds: props.bookmark.data.tagIds
+          ? new Set(props.bookmark.data.tagIds)
+          : new Set<string>(),
       },
     })
   }
 })
+
+const tagsRef = computed(() => tagStore.tags)
+const collectionIdRef = computed(() => props.bookmark?.data.collectionId ?? '')
+const customRulesRef = computed(() =>
+  autoTagRuleStore.rules.map((r) => ({
+    pattern: r.data.pattern,
+    tagNames: r.data.tagNames,
+    enabled: r.data.enabled,
+  })),
+)
+const {
+  suggestions,
+  selectedNames,
+  toggle: toggleSuggestion,
+  acceptInto,
+} = useTagSuggestions({
+  url,
+  tags: tagsRef,
+  collectionId: collectionIdRef,
+  createTag: tagStore.createTag,
+  customRules: customRulesRef,
+})
+
+async function onAcceptSuggestions() {
+  try {
+    await acceptInto(tagIds)
+  } catch (err) {
+    notification.handleApiError(err, t('bookmark.tagSuggestionError'))
+  }
+}
+
+function onUrlBlur() {
+  if (typeof url.value === 'string') {
+    url.value = ensureUrlProtocol(url.value)
+  }
+}
+
+const rulesManagerOpen = ref(false)
 
 function toggleTagId(tagId: string) {
   const current = tagIds.value ?? new Set<string>()
@@ -94,7 +139,12 @@ const onSubmit = handleSubmit(async (values) => {
     <template #title>{{ t('bookmark.editTitle') }}</template>
 
     <form @submit.prevent="onSubmit" class="space-y-4">
-      <FormFieldCl :label="t('bookmark.url')" for-id="edit-bookmark-url" :error="errors.url" required>
+      <FormFieldCl
+        :label="t('bookmark.url')"
+        for-id="edit-bookmark-url"
+        :error="errors.url"
+        required
+      >
         <input
           id="edit-bookmark-url"
           v-model="url"
@@ -102,10 +152,16 @@ const onSubmit = handleSubmit(async (values) => {
           type="url"
           :placeholder="t('bookmark.urlPlaceholder')"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          @blur="onUrlBlur"
         />
       </FormFieldCl>
 
-      <FormFieldCl :label="t('bookmark.title')" for-id="edit-bookmark-title" :error="errors.title" required>
+      <FormFieldCl
+        :label="t('bookmark.title')"
+        for-id="edit-bookmark-title"
+        :error="errors.title"
+        required
+      >
         <input
           id="edit-bookmark-title"
           v-model="title"
@@ -116,7 +172,11 @@ const onSubmit = handleSubmit(async (values) => {
         />
       </FormFieldCl>
 
-      <FormFieldCl :label="t('bookmark.description')" for-id="edit-bookmark-description" :error="errors.description">
+      <FormFieldCl
+        :label="t('bookmark.description')"
+        for-id="edit-bookmark-description"
+        :error="errors.description"
+      >
         <textarea
           id="edit-bookmark-description"
           v-model="description"
@@ -127,7 +187,11 @@ const onSubmit = handleSubmit(async (values) => {
         />
       </FormFieldCl>
 
-      <FormFieldCl :label="t('bookmark.folder')" for-id="edit-bookmark-folder" :error="errors.folderId">
+      <FormFieldCl
+        :label="t('bookmark.folder')"
+        for-id="edit-bookmark-folder"
+        :error="errors.folderId"
+      >
         <FolderSelectCl
           id="edit-bookmark-folder"
           v-model="folderId"
@@ -152,7 +216,55 @@ const onSubmit = handleSubmit(async (values) => {
             {{ tag.data.name }}
           </button>
         </div>
-        <p v-if="tagStore.tags.length === 0" class="text-xs text-muted-foreground">{{ t('tag.none') }}</p>
+        <p v-if="tagStore.tags.length === 0" class="text-xs text-muted-foreground">
+          {{ t('tag.none') }}
+        </p>
+      </div>
+      <!-- suggested tags-->
+      <div data-testid="suggested-tags-section" class="space-y-2 min-h-[5.5rem]">
+        <div class="flex items-center justify-between">
+          <label class="text-sm font-medium">{{ t('bookmark.suggestedTags') }}</label>
+<!--          prevent default to prevent validation on click-->
+          <button
+            type="button"
+            class="text-xs text-primary hover:underline"
+            data-testid="manage-auto-tag-rules"
+            @mousedown.prevent
+            @click="rulesManagerOpen = true"
+          >
+            {{ t('bookmark.manageRules') }}
+          </button>
+        </div>
+        <template v-if="suggestions.length > 0">
+          <div class="flex flex-wrap gap-1.5">
+            <button
+              v-for="suggestion in suggestions"
+              :key="suggestion.name"
+              type="button"
+              :data-testid="`suggested-tag-${suggestion.name}`"
+              class="inline-flex items-center gap-1 rounded-full border border-dashed border-input px-2.5 py-0.5 text-xs transition-opacity"
+              :class="selectedNames.has(suggestion.name) ? 'opacity-100' : 'opacity-40'"
+              @click="toggleSuggestion(suggestion.name)"
+            >
+              <span>{{ suggestion.name }}</span>
+              <span v-if="!suggestion.existingTagId" class="text-muted-foreground">
+                {{ t('bookmark.suggestionWillCreate') }}
+              </span>
+            </button>
+          </div>
+          <div class="flex justify-end">
+            <ButtonCl
+              type="button"
+              variant="outline"
+              size="sm"
+              data-testid="accept-suggestions-btn"
+              :disabled="selectedNames.size === 0"
+              @click="onAcceptSuggestions"
+            >
+              {{ t('bookmark.acceptSuggestions') }}
+            </ButtonCl>
+          </div>
+        </template>
       </div>
 
       <div class="flex justify-end gap-2">
@@ -165,4 +277,10 @@ const onSubmit = handleSubmit(async (values) => {
       </div>
     </form>
   </DialogCl>
+
+  <AutoTagRulesDialog
+    v-if="bookmark"
+    v-model:open="rulesManagerOpen"
+    :collection-id="bookmark.data.collectionId"
+  />
 </template>

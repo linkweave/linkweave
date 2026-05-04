@@ -6,7 +6,7 @@
 **Use Case Name:** Auto-Tag Bookmark by URL Pattern
 **Primary Actor:** User
 **Goal:** Present tag suggestions in a dedicated UI area based on the entered URL, so that the user can review, select/deselect individual suggestions, and accept them into the bookmark's tag selection with a single action.
-**Status:** Draft
+**Status:** Implemented (with custom user-defined rules)
 
 ## Traceability
 
