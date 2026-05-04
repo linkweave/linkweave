@@ -1,10 +1,22 @@
 import { expect, test } from '@playwright/test'
 import { CollectionSwitcherPageObject } from './models/CollectionSwitcherPageObject'
+import { deleteTestUserCleanup, registerTestUser, type TestUser } from './models/TestUser'
+
+let user: TestUser
 
 test.describe('Collection Switcher', () => {
+  test.beforeAll(async ({ browser }) => {
+    const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
+    try {
+      user = await registerTestUser(ctx.request, 'colswitcher')
+    } finally {
+      await ctx.close()
+    }
+  })
+
   test.beforeEach(async ({ page }) => {
     const switcher = new CollectionSwitcherPageObject(page)
-    await switcher.loginAndWaitForPage()
+    await switcher.loginAndWaitForPage(user.email, user.password)
   })
 
   test('should show switcher button in sidebar', async ({ page }) => {
@@ -47,4 +59,6 @@ test.describe('Collection Switcher', () => {
     await page.keyboard.press('Escape')
     await switcher.expectDropdownHidden()
   })
+
+  test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => user))
 })

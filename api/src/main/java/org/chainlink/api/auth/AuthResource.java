@@ -14,6 +14,7 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
 import jakarta.validation.Valid;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -43,6 +44,7 @@ public class AuthResource {
     private final Instance<OidcSession> oidcSessionInstance;
     private final EnsureUserService ensureUserService;
     private final RegistrationService registrationService;
+    private final UserService userService;
 
     private final  UriInfo uriInfo;
 
@@ -106,6 +108,24 @@ public class AuthResource {
         }
     }
 
+
+    @DELETE
+    @Path("/me")
+    @Authenticated
+    public Response deleteCurrentUser() {
+        ID<User> userId = currentUserService.currentUserID();
+        userService.hardDeleteUser(userId);
+
+        // Drop the session cookie so the now-orphaned credential isn't reused.
+        if (oidcSessionInstance.isResolvable()
+                && identity.getPrincipal() instanceof JsonWebToken) {
+            oidcSessionInstance.get().logout().await().indefinitely();
+        } else {
+            FormAuthenticationMechanism.logout(identity);
+        }
+
+        return Response.noContent().build();
+    }
 
     @POST
     @Path("/logout")

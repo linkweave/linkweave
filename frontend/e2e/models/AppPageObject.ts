@@ -1,4 +1,4 @@
-import { type Locator, type Page, expect } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 
 export class AppPageObject {
   readonly page: Page
@@ -10,7 +10,7 @@ export class AppPageObject {
     this.page = page
     this.userMenuButton = page.getByTestId('user-menu-trigger')
     this.signOutButton = page.getByRole('menuitem', { name: 'Sign out' })
-    this.allBookmarksLabel = page.getByText('All Bookmarks')
+    this.allBookmarksLabel = page.getByTestId('sidebar-all-bookmarks')
   }
 
   async goto() {

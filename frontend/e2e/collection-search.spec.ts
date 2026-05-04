@@ -1,7 +1,10 @@
 import { expect, test } from '@playwright/test'
 import { CollectionManagePageObject } from './models/CollectionManagePageObject'
+import { deleteTestUserCleanup, registerTestUser, type TestUser } from './models/TestUser'
 
 test.describe.configure({ mode: 'serial' })
+
+let user: TestUser
 
 test.describe('Collection Search', () => {
   const ts = Date.now()
@@ -9,9 +12,18 @@ test.describe('Collection Search', () => {
   const beta = `Beta Project ${ts}`
   const gamma = `Gamma Archive ${ts}`
 
+  test.beforeAll(async ({ browser }) => {
+    const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
+    try {
+      user = await registerTestUser(ctx.request, 'colsearch')
+    } finally {
+      await ctx.close()
+    }
+  })
+
   test.beforeEach(async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
-    await manage.loginAndNavigate()
+    await manage.loginAndNavigate(user.email, user.password)
   })
 
   test('should set up test data', async ({ page }) => {
@@ -30,8 +42,12 @@ test.describe('Collection Search', () => {
     await searchInput.fill('Alpha')
 
     await expect(page.locator('[data-testid^="collection-row-"]', { hasText: alpha })).toBeVisible()
-    await expect(page.locator('[data-testid^="collection-row-"]', { hasText: beta })).not.toBeVisible()
-    await expect(page.locator('[data-testid^="collection-row-"]', { hasText: gamma })).not.toBeVisible()
+    await expect(
+      page.locator('[data-testid^="collection-row-"]', { hasText: beta }),
+    ).not.toBeVisible()
+    await expect(
+      page.locator('[data-testid^="collection-row-"]', { hasText: gamma }),
+    ).not.toBeVisible()
   })
 
   test('should show no results message when nothing matches', async ({ page }) => {
@@ -46,7 +62,9 @@ test.describe('Collection Search', () => {
     await searchInput.fill('gamma archive')
 
     await expect(page.locator('[data-testid^="collection-row-"]', { hasText: gamma })).toBeVisible()
-    await expect(page.locator('[data-testid^="collection-row-"]', { hasText: alpha })).not.toBeVisible()
+    await expect(
+      page.locator('[data-testid^="collection-row-"]', { hasText: alpha }),
+    ).not.toBeVisible()
   })
 
   test('should show all collections when search is cleared', async ({ page }) => {
@@ -61,16 +79,7 @@ test.describe('Collection Search', () => {
     await expect(page.locator('[data-testid^="collection-row-"]', { hasText: gamma })).toBeVisible()
   })
 
-  test('should clean up test data', async ({ page }) => {
-    const manage = new CollectionManagePageObject(page)
-
-    for (const name of [alpha, beta, gamma]) {
-      const collectionId = await manage.getCollectionIdByName(name)
-      await manage.deleteCollection(collectionId, name)
-    }
-
-    await manage.expectCollectionNotVisible(alpha)
-    await manage.expectCollectionNotVisible(beta)
-    await manage.expectCollectionNotVisible(gamma)
-  })
+  // Cleanup is handled by deleting the test user — no explicit per-collection
+  // delete test needed.
+  test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => user))
 })

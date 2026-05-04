@@ -1,15 +1,27 @@
 import { expect, test } from '@playwright/test'
 import { CollectionManagePageObject } from './models/CollectionManagePageObject'
+import { deleteTestUserCleanup, registerTestUser, type TestUser } from './models/TestUser'
 
 test.describe.configure({ mode: 'serial' })
+
+let user: TestUser
 
 test.describe('Favicon Allowlist', () => {
   let collectionId: string
   const collectionName = `Allowlist Test ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
 
+  test.beforeAll(async ({ browser }) => {
+    const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
+    try {
+      user = await registerTestUser(ctx.request, 'favicon')
+    } finally {
+      await ctx.close()
+    }
+  })
+
   test('should create a test collection', async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
-    await manage.loginAndNavigate()
+    await manage.loginAndNavigate(user.email, user.password)
     await manage.createCollection(collectionName)
     await manage.expectCollectionVisible(collectionName)
 
@@ -18,7 +30,7 @@ test.describe('Favicon Allowlist', () => {
 
   test('should add favicon allowlist patterns', async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
-    await manage.loginAndNavigate()
+    await manage.loginAndNavigate(user.email, user.password)
 
     // Open edit dialog — allowlist starts empty
     await manage.openEditDialogAndWaitForAllowlist(collectionId, '')
@@ -26,15 +38,21 @@ test.describe('Favicon Allowlist', () => {
     await manage.submitEditDialog()
 
     // Reopen the dialog and verify the patterns persisted
-    await manage.openEditDialogAndWaitForAllowlist(collectionId, '*.mycompany.domain\nintranet.local')
+    await manage.openEditDialogAndWaitForAllowlist(
+      collectionId,
+      '*.mycompany.domain\nintranet.local',
+    )
   })
 
   test('should edit existing favicon allowlist patterns', async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
-    await manage.loginAndNavigate()
+    await manage.loginAndNavigate(user.email, user.password)
 
     // Open dialog — should show previously saved patterns
-    await manage.openEditDialogAndWaitForAllowlist(collectionId, '*.mycompany.domain\nintranet.local')
+    await manage.openEditDialogAndWaitForAllowlist(
+      collectionId,
+      '*.mycompany.domain\nintranet.local',
+    )
 
     // Replace with new patterns
     await manage.editFaviconAllowlistInput.clear()
@@ -47,7 +65,7 @@ test.describe('Favicon Allowlist', () => {
 
   test('should clear the favicon allowlist', async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
-    await manage.loginAndNavigate()
+    await manage.loginAndNavigate(user.email, user.password)
 
     // Open dialog — should show previously saved patterns
     await manage.openEditDialogAndWaitForAllowlist(collectionId, 'staging.internal\n*.other.domain')
@@ -62,7 +80,7 @@ test.describe('Favicon Allowlist', () => {
 
   test('should reject invalid favicon allowlist patterns', async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
-    await manage.loginAndNavigate()
+    await manage.loginAndNavigate(user.email, user.password)
 
     // Use openEditDialogAndWaitForAllowlist to ensure the async API fetch completes
     // before we fill — otherwise the async resetForm overwrites our fill.
@@ -81,10 +99,6 @@ test.describe('Favicon Allowlist', () => {
     await expect(manage.editFaviconAllowlistInput).toBeVisible()
   })
 
-  test('should clean up: delete test collection', async ({ page }) => {
-    const manage = new CollectionManagePageObject(page)
-    await manage.loginAndNavigate()
-    await manage.deleteCollection(collectionId, collectionName)
-    await manage.expectCollectionNotVisible(collectionName)
-  })
+  // Cleanup handled by user-delete in afterAll.
+  test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => user))
 })

@@ -1,5 +1,10 @@
-import { expect, test, type Page } from '@playwright/test'
-import { LoginPageObject } from './models/LoginPageObject'
+import { expect, type Page, test } from '@playwright/test'
+import {
+  deleteTestUserCleanup,
+  loginAsTestUser,
+  registerTestUser,
+  type TestUser,
+} from './models/TestUser'
 import { TrashbinPageObject } from './models/TrashbinPageObject'
 
 test.describe.configure({ mode: 'serial' })
@@ -7,17 +12,21 @@ test.describe.configure({ mode: 'serial' })
 const ts = Date.now()
 const BASE = '/api'
 
-async function loginAndGetCollectionId(page: Page): Promise<string> {
-  const loginPage = new LoginPageObject(page)
-  await loginPage.goto()
-  await loginPage.login('alice@example.com', 'alice')
-  await expect(page).toHaveURL(/\/collections\//, { timeout: 10000 })
-  const url = page.url()
-  const match = url.match(/\/collections\/([^/?#]+)/)
-  return match![1]
+let user: TestUser
+let collectionId: string
+
+async function navigateToTrashbin(page: Page) {
+  await page.getByTestId('user-menu-trigger').click()
+  await page.getByTestId('user-menu-trashbin').click()
+  await expect(page).toHaveURL(/\/trashbin/)
 }
 
-async function createBookmarkViaApi(page: Page, collectionId: string, title: string, url: string): Promise<string> {
+async function createBookmarkViaApi(
+  page: Page,
+  collectionId: string,
+  title: string,
+  url: string,
+): Promise<string> {
   const resp = await page.request.post(`${BASE}/bookmarks`, {
     data: { collectionId, title, url },
   })
@@ -32,15 +41,33 @@ async function deleteBookmarkViaApi(page: Page, bookmarkId: string) {
 }
 
 test.describe('Trashbin', () => {
-  let collectionId: string
   let bookmarkAId: string
   let bookmarkBId: string
 
-  test('should set up bookmarks and soft-delete them', async ({ page }) => {
-    collectionId = await loginAndGetCollectionId(page)
+  test.beforeAll(async ({ browser }) => {
+    const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
+    try {
+      user = await registerTestUser(ctx.request, 'trashbin')
+    } finally {
+      await ctx.close()
+    }
+  })
 
-    bookmarkAId = await createBookmarkViaApi(page, collectionId, `Trash-A-${ts}`, 'https://trash-a.example.com')
-    bookmarkBId = await createBookmarkViaApi(page, collectionId, `Trash-B-${ts}`, 'https://trash-b.example.com')
+  test('should set up bookmarks and soft-delete them', async ({ page }) => {
+    collectionId = await loginAsTestUser(page, user)
+
+    bookmarkAId = await createBookmarkViaApi(
+      page,
+      collectionId,
+      `Trash-A-${ts}`,
+      'https://trash-a.example.com',
+    )
+    bookmarkBId = await createBookmarkViaApi(
+      page,
+      collectionId,
+      `Trash-B-${ts}`,
+      'https://trash-b.example.com',
+    )
 
     await page.reload()
     await expect(page.locator('h3').filter({ hasText: `Trash-A-${ts}` })).toBeVisible()
@@ -55,60 +82,55 @@ test.describe('Trashbin', () => {
   })
 
   test('should show deleted items in trashbin', async ({ page }) => {
-    await loginAndGetCollectionId(page)
+    await loginAsTestUser(page, user)
+    await navigateToTrashbin(page)
 
     const trashbin = new TrashbinPageObject(page)
-    await trashbin.loginAndNavigate()
-
     await expect(trashbin.heading).toBeVisible()
-    const items = page.locator('[data-testid^="trashbin-item-"]')
-    await expect(items).toHaveCount(2)
+    await expect(trashbin.bookmarkRow(bookmarkAId)).toBeVisible()
+    await expect(trashbin.bookmarkRow(bookmarkBId)).toBeVisible()
   })
 
   test('should restore a bookmark from trashbin', async ({ page }) => {
-    await loginAndGetCollectionId(page)
+    await loginAsTestUser(page, user)
+    await navigateToTrashbin(page)
 
     const trashbin = new TrashbinPageObject(page)
-    await trashbin.loginAndNavigate()
+    await trashbin.restoreBookmark(bookmarkAId)
+    await trashbin.expectBookmarkNotVisible(bookmarkAId)
 
-    const bookmarkItem = page.locator('[data-testid^="trashbin-item-"]').first()
-    const titleEl = bookmarkItem.locator('.font-medium')
-    const restoredTitle = await titleEl.textContent()
-    const testId = await bookmarkItem.getAttribute('data-testid')
-    const bookmarkId = testId!.replace('trashbin-item-', '')
-
-    await trashbin.restoreBookmark(bookmarkId)
-    await trashbin.expectBookmarkNotVisible(bookmarkId)
-
-    await page.goto('/')
-    await expect(page).toHaveURL(/\/collections\//, { timeout: 10000 })
-    await expect(page.locator('h3').filter({ hasText: restoredTitle! })).toBeVisible()
+    await page.goto(`/collections/${collectionId}`)
+    await expect(page).toHaveURL(new RegExp(`/collections/${collectionId}`))
+    await expect(page.locator('h3').filter({ hasText: `Trash-A-${ts}` })).toBeVisible()
   })
 
   test('should purge a bookmark permanently', async ({ page }) => {
-    await loginAndGetCollectionId(page)
+    await loginAsTestUser(page, user)
+    await navigateToTrashbin(page)
 
     const trashbin = new TrashbinPageObject(page)
-    await trashbin.loginAndNavigate()
-
-    const bookmarkItem = page.locator('[data-testid^="trashbin-item-"]').first()
-    const testId = await bookmarkItem.getAttribute('data-testid')
-    const bookmarkId = testId!.replace('trashbin-item-', '')
-
-    await trashbin.purgeBookmark(bookmarkId)
-    await trashbin.expectBookmarkNotVisible(bookmarkId)
+    await trashbin.purgeBookmark(bookmarkBId)
+    await trashbin.expectBookmarkNotVisible(bookmarkBId)
   })
 
-  test('should show empty state when trashbin is cleared', async ({ page }) => {
-    collectionId = await loginAndGetCollectionId(page)
+  test("should show empty state after purging this spec's bookmark", async ({ page }) => {
+    await loginAsTestUser(page, user)
 
-    const bookmarkCId = await createBookmarkViaApi(page, collectionId, `Trash-C-${ts}`, 'https://trash-c.example.com')
+    const bookmarkCId = await createBookmarkViaApi(
+      page,
+      collectionId,
+      `Trash-C-${ts}`,
+      'https://trash-c.example.com',
+    )
     await deleteBookmarkViaApi(page, bookmarkCId)
 
+    await navigateToTrashbin(page)
     const trashbin = new TrashbinPageObject(page)
-    await trashbin.loginAndNavigate()
+    await expect(trashbin.bookmarkRow(bookmarkCId)).toBeVisible()
 
-    await trashbin.emptyTrashbin()
-    await trashbin.expectEmpty()
+    await trashbin.purgeBookmark(bookmarkCId)
+    await trashbin.expectBookmarkNotVisible(bookmarkCId)
   })
+
+  test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => user))
 })

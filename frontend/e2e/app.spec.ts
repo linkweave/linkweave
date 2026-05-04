@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test'
-import { LoginPageObject } from './models/LoginPageObject'
+import {
+  deleteTestUserCleanup,
+  loginAsTestUser,
+  registerTestUser,
+  type TestUser,
+} from './models/TestUser'
 
 test('homepage has title', async ({ page }) => {
   await page.goto('/')
@@ -13,12 +18,20 @@ test('redirects to login when unauthenticated', async ({ page }) => {
   await expect(page).toHaveURL(/\/login/)
 })
 
+let authedUser: TestUser
+
 test.describe('Authenticated', () => {
+  test.beforeAll(async ({ browser }) => {
+    const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
+    try {
+      authedUser = await registerTestUser(ctx.request, 'app')
+    } finally {
+      await ctx.close()
+    }
+  })
+
   test.beforeEach(async ({ page }) => {
-    const loginPage = new LoginPageObject(page)
-    await loginPage.goto()
-    await loginPage.login('alice@example.com', 'alice')
-    await expect(page).toHaveURL(/\/collections\//)
+    await loginAsTestUser(page, authedUser)
   })
 
   test('homepage shows empty state', async ({ page }) => {
@@ -31,7 +44,7 @@ test.describe('Authenticated', () => {
     await page.setViewportSize({ width: 1280, height: 720 })
     await page.goto('/')
 
-    await expect(page.getByText('All Bookmarks')).toBeVisible()
+    await expect(page.getByTestId('sidebar-all-bookmarks')).toBeVisible()
     await expect(page.locator('span').filter({ hasText: 'Tags' })).toBeVisible()
   })
 
@@ -39,7 +52,7 @@ test.describe('Authenticated', () => {
     await page.setViewportSize({ width: 375, height: 667 })
     await page.goto('/')
 
-    const sidebar = page.locator('aside')
+    const sidebar = page.getByRole('complementary')
     await expect(sidebar).toBeVisible()
   })
 
@@ -49,4 +62,6 @@ test.describe('Authenticated', () => {
     const button = page.getByRole('button', { name: /add bookmark/i })
     await expect(button).toBeVisible()
   })
+
+  test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => authedUser))
 })
