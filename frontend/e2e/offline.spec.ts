@@ -1,22 +1,35 @@
 import { expect, test } from '@playwright/test'
 import { AppPageObject } from './models/AppPageObject'
-import { LoginPageObject } from './models/LoginPageObject'
+import {
+  deleteTestUserCleanup,
+  registerAndCaptureStorageState,
+  type StorageState,
+  type TestUser,
+} from './models/TestUser'
+
+let user: TestUser
+let storageState: StorageState
 
 test.describe('Offline Mode', () => {
-  test('should show offline banner and disable write actions when offline', async ({ page, context }) => {
-    const loginPage = new LoginPageObject(page)
+  test.beforeAll(async ({ browser }) => {
+    ;({ user, storageState } = await registerAndCaptureStorageState(browser, 'offline'))
+  })
+
+  test.use({ storageState: async ({}, use) => { await use(storageState) } })
+
+  test('should show offline banner and disable write actions when offline', async ({
+    page,
+    context,
+  }) => {
     const appPage = new AppPageObject(page)
 
-    await loginPage.goto()
-    await loginPage.login('alice@example.com', 'alice')
-    await expect(page).toHaveURL(/\/collections\//)
+    await page.goto('/')
     await appPage.expectAuthenticated()
 
     await context.setOffline(true)
-
     // Trigger the window 'offline' event manually — context.setOffline blocks
-    // network but does not always dispatch the event in the page. Reloading
-    // while offline races against service worker install and is unreliable.
+    // network but doesn't always dispatch the event. Reloading while offline
+    // races against service-worker install and is unreliable.
     await page.evaluate(() => window.dispatchEvent(new Event('offline')))
 
     await expect(page.getByText(/you're offline/i)).toBeVisible({ timeout: 10000 })
@@ -34,4 +47,6 @@ test.describe('Offline Mode', () => {
 
     await expect(page.getByText(/you're offline/i)).not.toBeVisible({ timeout: 10000 })
   })
+
+  test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => user))
 })

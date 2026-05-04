@@ -1,7 +1,16 @@
 import { expect, test } from '@playwright/test'
 import { CollectionManagePageObject } from './models/CollectionManagePageObject'
+import {
+  deleteTestUserCleanup,
+  registerAndCaptureStorageState,
+  type StorageState,
+  type TestUser,
+} from './models/TestUser'
 
 test.describe.configure({ mode: 'serial' })
+
+let user: TestUser
+let storageState: StorageState
 
 test.describe('Collection Search', () => {
   const ts = Date.now()
@@ -9,9 +18,15 @@ test.describe('Collection Search', () => {
   const beta = `Beta Project ${ts}`
   const gamma = `Gamma Archive ${ts}`
 
+  test.beforeAll(async ({ browser }) => {
+    ;({ user, storageState } = await registerAndCaptureStorageState(browser, 'colsearch'))
+  })
+
+  test.use({ storageState: async ({}, use) => { await use(storageState) } })
+
   test.beforeEach(async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
-    await manage.loginAndNavigate()
+    await manage.navigate()
   })
 
   test('should set up test data', async ({ page }) => {
@@ -30,8 +45,12 @@ test.describe('Collection Search', () => {
     await searchInput.fill('Alpha')
 
     await expect(page.locator('[data-testid^="collection-row-"]', { hasText: alpha })).toBeVisible()
-    await expect(page.locator('[data-testid^="collection-row-"]', { hasText: beta })).not.toBeVisible()
-    await expect(page.locator('[data-testid^="collection-row-"]', { hasText: gamma })).not.toBeVisible()
+    await expect(
+      page.locator('[data-testid^="collection-row-"]', { hasText: beta }),
+    ).not.toBeVisible()
+    await expect(
+      page.locator('[data-testid^="collection-row-"]', { hasText: gamma }),
+    ).not.toBeVisible()
   })
 
   test('should show no results message when nothing matches', async ({ page }) => {
@@ -46,7 +65,9 @@ test.describe('Collection Search', () => {
     await searchInput.fill('gamma archive')
 
     await expect(page.locator('[data-testid^="collection-row-"]', { hasText: gamma })).toBeVisible()
-    await expect(page.locator('[data-testid^="collection-row-"]', { hasText: alpha })).not.toBeVisible()
+    await expect(
+      page.locator('[data-testid^="collection-row-"]', { hasText: alpha }),
+    ).not.toBeVisible()
   })
 
   test('should show all collections when search is cleared', async ({ page }) => {
@@ -61,28 +82,7 @@ test.describe('Collection Search', () => {
     await expect(page.locator('[data-testid^="collection-row-"]', { hasText: gamma })).toBeVisible()
   })
 
-  test('should clean up test data', async ({ page }) => {
-    const manage = new CollectionManagePageObject(page)
-
-    // Delete via API rather than through the dialog — under heavy parallel load
-    // the UI delete flow can time out, and the cleanup itself isn't the
-    // behaviour being tested. Retry transient 5xxs since the backend
-    // occasionally returns 500 under heavy concurrent writes.
-    for (const name of [alpha, beta, gamma]) {
-      const collectionId = await manage.getCollectionIdByName(name)
-      let lastStatus = 0
-      for (let attempt = 0; attempt < 3; attempt++) {
-        const resp = await page.request.delete(`/api/collections/${collectionId}`)
-        lastStatus = resp.status()
-        if (resp.ok()) break
-        await page.waitForTimeout(500)
-      }
-      expect(lastStatus, `delete ${name} failed: ${lastStatus}`).toBeLessThan(400)
-    }
-    await page.reload()
-
-    await manage.expectCollectionNotVisible(alpha)
-    await manage.expectCollectionNotVisible(beta)
-    await manage.expectCollectionNotVisible(gamma)
-  })
+  // Cleanup is handled by deleting the test user — no explicit per-collection
+  // delete test needed.
+  test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => user))
 })

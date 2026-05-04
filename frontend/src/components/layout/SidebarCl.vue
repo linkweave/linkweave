@@ -3,12 +3,7 @@ import { CreateFolderDialog, FolderTree } from '@/components/folder'
 import TagList from '@/components/tag/TagList.vue'
 import { ButtonCl } from '@/components/ui'
 import BuildversionCl from '@/components/ui/BuildversionCl.vue'
-import { useCollectionStore } from '@/stores/collection'
-import { useFolderStore } from '@/stores/folder'
-import { useOfflineStore } from '@/stores/offline'
-import { Folder, Plus, Tag } from 'lucide-vue-next'
-import { computed, ref, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { useDndMove } from '@/composables/useDndMove'
 import {
   DRAG_TYPE_BOOKMARK,
   DRAG_TYPE_FOLDER,
@@ -16,7 +11,12 @@ import {
   isDraggingBookmark,
   isDraggingFolder,
 } from '@/composables/useDragState'
-import { useDndMove } from '@/composables/useDndMove'
+import { useCollectionStore } from '@/stores/collection'
+import { useFolderStore } from '@/stores/folder'
+import { useOfflineStore } from '@/stores/offline'
+import { Folder, Plus, Tag } from 'lucide-vue-next'
+import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
@@ -61,7 +61,7 @@ function onAllBookmarksDragOver(event: DragEvent) {
   if (types.includes(DRAG_TYPE_FOLDER)) {
     const draggingId = getDraggingFolderId()
     if (!draggingId) return
-    const dragging = folderStore.folders.find(f => f.id === draggingId)
+    const dragging = folderStore.folders.find((f) => f.id === draggingId)
     if (!dragging?.data.parentId) return // already at root, no-op
     event.preventDefault()
     event.stopPropagation()
@@ -92,7 +92,7 @@ async function onAllBookmarksDrop(event: DragEvent) {
   if (types.includes(DRAG_TYPE_FOLDER)) {
     const fid = event.dataTransfer!.getData(DRAG_TYPE_FOLDER)
     if (!fid) return
-    if (!folderStore.folders.find(f => f.id === fid)?.data.parentId) return // already root
+    if (!folderStore.folders.find((f) => f.id === fid)?.data.parentId) return // already root
     await moveFolderWithUndo(fid, undefined)
   }
 }
@@ -111,7 +111,9 @@ async function onAllBookmarksDrop(event: DragEvent) {
               : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground',
             allBookmarksDragOver
               ? 'ring-2 ring-primary ring-inset'
-              : (isDraggingBookmark || isDraggingFolder) ? 'ring-1 ring-primary/30' : '',
+              : isDraggingBookmark || isDraggingFolder
+                ? 'ring-1 ring-primary/30'
+                : '',
           ]"
           @click="folderStore.selectFolder(null)"
           @dragover="onAllBookmarksDragOver"
@@ -119,7 +121,9 @@ async function onAllBookmarksDrop(event: DragEvent) {
           @drop="onAllBookmarksDrop"
         >
           <Folder class="h-4 w-4 text-primary" />
-          <span data-testid="sidebar-all-bookmarks">{{ t('sidebar.allBookmarks', { name: collectionStore.collectionName ?? '' }) }}</span>
+          <span data-testid="sidebar-all-bookmarks">{{
+            t('sidebar.allBookmarks', { name: collectionStore.collectionName ?? '' })
+          }}</span>
         </div>
 
         <FolderTree class-name="mt-2" @create-subfolder="handleCreateSubfolder" />
@@ -130,7 +134,10 @@ async function onAllBookmarksDrop(event: DragEvent) {
           size="sm"
           :disabled="offline.isOffline"
           class="w-full justify-start text-muted-foreground hover:text-foreground mt-2"
-          @click="subfolderParentId = undefined; showCreateFolder = true"
+          @click="
+            subfolderParentId = undefined;
+            showCreateFolder = true;
+          "
         >
           <Plus class="h-4 w-4 mr-2" />
           {{ t('sidebar.newFolder') }}
@@ -153,7 +160,10 @@ async function onAllBookmarksDrop(event: DragEvent) {
           {{ t('sidebar.tags') }}
         </span>
       </div>
-      <TagList class-name="px-2 pb-2 overflow-y-auto flex-1 min-h-0" :collection-id="collectionId" />
+      <TagList
+        class-name="px-2 pb-2 overflow-y-auto flex-1 min-h-0"
+        :collection-id="collectionId"
+      />
     </div>
     <div class="border-t border-border shrink-0">
       <div class="p-3 flex items-center justify-between">

@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test'
-import { LoginPageObject } from './models/LoginPageObject'
+import {
+  deleteTestUserCleanup,
+  registerAndCaptureStorageState,
+  type StorageState,
+  type TestUser,
+} from './models/TestUser'
 
 test('homepage has title', async ({ page }) => {
   await page.goto('/')
@@ -13,13 +18,15 @@ test('redirects to login when unauthenticated', async ({ page }) => {
   await expect(page).toHaveURL(/\/login/)
 })
 
+let authedUser: TestUser
+let storageState: StorageState
+
 test.describe('Authenticated', () => {
-  test.beforeEach(async ({ page }) => {
-    const loginPage = new LoginPageObject(page)
-    await loginPage.goto()
-    await loginPage.login('alice@example.com', 'alice')
-    await expect(page).toHaveURL(/\/collections\//)
+  test.beforeAll(async ({ browser }) => {
+    ;({ user: authedUser, storageState } = await registerAndCaptureStorageState(browser, 'app'))
   })
+
+  test.use({ storageState: async ({}, use) => { await use(storageState) } })
 
   test('homepage shows authenticated content', async ({ page }) => {
     await page.goto('/')
@@ -40,7 +47,7 @@ test.describe('Authenticated', () => {
     await page.setViewportSize({ width: 375, height: 667 })
     await page.goto('/')
 
-    const sidebar = page.locator('aside')
+    const sidebar = page.getByRole('complementary')
     await expect(sidebar).toBeVisible()
   })
 
@@ -50,4 +57,6 @@ test.describe('Authenticated', () => {
     const button = page.getByRole('button', { name: /add bookmark/i })
     await expect(button).toBeVisible()
   })
+
+  test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => authedUser))
 })

@@ -1,15 +1,30 @@
 import { expect, test } from '@playwright/test'
 import { CollectionManagePageObject } from './models/CollectionManagePageObject'
+import {
+  deleteTestUserCleanup,
+  registerAndCaptureStorageState,
+  type StorageState,
+  type TestUser,
+} from './models/TestUser'
 
 test.describe.configure({ mode: 'serial' })
+
+let user: TestUser
+let storageState: StorageState
 
 test.describe('Favicon Allowlist', () => {
   let collectionId: string
   const collectionName = `Allowlist Test ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
 
+  test.beforeAll(async ({ browser }) => {
+    ;({ user, storageState } = await registerAndCaptureStorageState(browser, 'favicon'))
+  })
+
+  test.use({ storageState: async ({}, use) => { await use(storageState) } })
+
   test('should create a test collection', async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
-    await manage.loginAndNavigate()
+    await manage.navigate()
     await manage.createCollection(collectionName)
     await manage.expectCollectionVisible(collectionName)
 
@@ -18,7 +33,7 @@ test.describe('Favicon Allowlist', () => {
 
   test('should add favicon allowlist patterns', async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
-    await manage.loginAndNavigate()
+    await manage.navigate()
 
     // Open edit dialog — allowlist starts empty
     await manage.openEditDialogAndWaitForAllowlist(collectionId, '')
@@ -26,15 +41,21 @@ test.describe('Favicon Allowlist', () => {
     await manage.submitEditDialog()
 
     // Reopen the dialog and verify the patterns persisted
-    await manage.openEditDialogAndWaitForAllowlist(collectionId, '*.mycompany.domain\nintranet.local')
+    await manage.openEditDialogAndWaitForAllowlist(
+      collectionId,
+      '*.mycompany.domain\nintranet.local',
+    )
   })
 
   test('should edit existing favicon allowlist patterns', async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
-    await manage.loginAndNavigate()
+    await manage.navigate()
 
     // Open dialog — should show previously saved patterns
-    await manage.openEditDialogAndWaitForAllowlist(collectionId, '*.mycompany.domain\nintranet.local')
+    await manage.openEditDialogAndWaitForAllowlist(
+      collectionId,
+      '*.mycompany.domain\nintranet.local',
+    )
 
     // Replace with new patterns
     await manage.editFaviconAllowlistInput.clear()
@@ -47,7 +68,7 @@ test.describe('Favicon Allowlist', () => {
 
   test('should clear the favicon allowlist', async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
-    await manage.loginAndNavigate()
+    await manage.navigate()
 
     // Open dialog — should show previously saved patterns
     await manage.openEditDialogAndWaitForAllowlist(collectionId, 'staging.internal\n*.other.domain')
@@ -62,7 +83,7 @@ test.describe('Favicon Allowlist', () => {
 
   test('should reject invalid favicon allowlist patterns', async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
-    await manage.loginAndNavigate()
+    await manage.navigate()
 
     // Use openEditDialogAndWaitForAllowlist to ensure the async API fetch completes
     // before we fill — otherwise the async resetForm overwrites our fill.
@@ -81,18 +102,6 @@ test.describe('Favicon Allowlist', () => {
     await expect(manage.editFaviconAllowlistInput).toBeVisible()
   })
 
-  test('should clean up: delete test collection', async ({ page }) => {
-    const manage = new CollectionManagePageObject(page)
-    await manage.loginAndNavigate()
-    let lastStatus = 0
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const resp = await page.request.delete(`/api/collections/${collectionId}`)
-      lastStatus = resp.status()
-      if (resp.ok()) break
-      await page.waitForTimeout(500)
-    }
-    expect(lastStatus, `delete failed: ${lastStatus}`).toBeLessThan(400)
-    await page.reload()
-    await manage.expectCollectionNotVisible(collectionName)
-  })
+  // Cleanup handled by user-delete in afterAll.
+  test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => user))
 })

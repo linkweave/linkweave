@@ -1,12 +1,27 @@
 import { expect, test } from '@playwright/test'
 import { CollectionManagePageObject } from './models/CollectionManagePageObject'
+import {
+  deleteTestUserCleanup,
+  registerAndCaptureStorageState,
+  type StorageState,
+  type TestUser,
+} from './models/TestUser'
 
 test.describe.configure({ mode: 'serial' })
 
+let user: TestUser
+let storageState: StorageState
+
 test.describe('Collection Management', () => {
+  test.beforeAll(async ({ browser }) => {
+    ;({ user, storageState } = await registerAndCaptureStorageState(browser, 'colmanage'))
+  })
+
+  test.use({ storageState: async ({}, use) => { await use(storageState) } })
+
   test.beforeEach(async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
-    await manage.loginAndNavigate()
+    await manage.navigate()
   })
 
   test('should navigate to manage collections page', async ({ page }) => {
@@ -76,4 +91,6 @@ test.describe('Collection Management', () => {
     await manage.setAsDefault(collectionId)
     await expect(manage.collectionSetDefaultBtn(collectionId)).not.toBeVisible()
   })
+
+  test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => user))
 })

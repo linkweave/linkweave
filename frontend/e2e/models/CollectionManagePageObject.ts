@@ -1,4 +1,4 @@
-import { type Locator, type Page, expect } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 import { LoginPageObject } from './LoginPageObject'
 
 export class CollectionManagePageObject {
@@ -25,10 +25,16 @@ export class CollectionManagePageObject {
     await loginPage.goto()
     await loginPage.login(email, password)
     await expect(this.page).toHaveURL(/\/collections\//, { timeout: 15000 })
+    await this.navigate()
+  }
 
+  async navigate() {
     await this.page.goto('/manage/collections')
     await expect(this.page).toHaveURL(/\/manage\/collections/, { timeout: 15000 })
-    await this.page.locator('[data-testid^="collection-row-"], :text("noCollections")').waitFor({ state: 'visible' }).catch(() => {})
+    await this.page
+      .locator('[data-testid^="collection-row-"], :text("noCollections")')
+      .waitFor({ state: 'visible' })
+      .catch(() => {})
     await expect(this.createButton).toBeVisible()
   }
 
@@ -45,7 +51,7 @@ export class CollectionManagePageObject {
     const submitBtn = this.page.getByTestId('collection-create-submit-btn')
     await expect(submitBtn).toBeEnabled()
     const createResp = this.page.waitForResponse(
-      r => r.url().endsWith('/api/collections') && r.request().method() === 'POST',
+      (r) => r.url().endsWith('/api/collections') && r.request().method() === 'POST',
       { timeout: 30000 },
     )
     await submitBtn.click()
@@ -71,7 +77,7 @@ export class CollectionManagePageObject {
     // the form. Wait for that GET so user input isn't clobbered by the late
     // resetForm.
     const collectionGet = this.page.waitForResponse(
-      r => r.url().includes(`/api/collections/${collectionId}`) && r.request().method() === 'GET',
+      (r) => r.url().includes(`/api/collections/${collectionId}`) && r.request().method() === 'GET',
     )
     await this.page.getByTestId(`collection-edit-btn-${collectionId}`).click()
     await expect(this.editNameInput).toBeVisible()
@@ -112,7 +118,8 @@ export class CollectionManagePageObject {
     const submitBtn = this.page.getByTestId('collection-delete-submit-btn')
     await expect(submitBtn).toBeEnabled()
     const deleteResp = this.page.waitForResponse(
-      r => r.url().includes(`/api/collections/${collectionId}`) && r.request().method() === 'DELETE',
+      (r) =>
+        r.url().includes(`/api/collections/${collectionId}`) && r.request().method() === 'DELETE',
     )
     await submitBtn.click()
     await deleteResp.catch(() => undefined)
@@ -128,11 +135,15 @@ export class CollectionManagePageObject {
   }
 
   async expectCollectionVisible(name: string) {
-    await expect(this.page.locator('[data-testid^="collection-row-"]', { hasText: name })).toBeVisible()
+    await expect(
+      this.page.locator('[data-testid^="collection-row-"]', { hasText: name }),
+    ).toBeVisible()
   }
 
   async expectCollectionNotVisible(name: string) {
-    await expect(this.page.locator('[data-testid^="collection-row-"]', { hasText: name })).not.toBeVisible()
+    await expect(
+      this.page.locator('[data-testid^="collection-row-"]', { hasText: name }),
+    ).not.toBeVisible()
   }
 
   async goBack() {

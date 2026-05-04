@@ -1,4 +1,4 @@
-import { type Locator, type Page, expect } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 import { LoginPageObject } from './LoginPageObject'
 
 export class TagsPageObject {
@@ -24,7 +24,7 @@ export class TagsPageObject {
     const loginPage = new LoginPageObject(this.page)
     await loginPage.goto()
     await loginPage.login(email, password)
-    await expect(this.page).toHaveURL(/\/collections\//)
+    await expect(this.page).toHaveURL(/\/collections\//, { timeout: 15000 })
     await expect(this.createTagButton).toBeVisible()
   }
 

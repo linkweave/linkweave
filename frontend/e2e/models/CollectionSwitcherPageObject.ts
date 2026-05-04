@@ -1,4 +1,4 @@
-import { type Locator, type Page, expect } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 import { LoginPageObject } from './LoginPageObject'
 
 export class CollectionSwitcherPageObject {
@@ -52,7 +52,9 @@ export class CollectionSwitcherPageObject {
   }
 
   async expectDefaultBadgeNotVisible(collectionId: string) {
-    await expect(this.page.getByTestId(`collection-default-badge-${collectionId}`)).not.toBeVisible()
+    await expect(
+      this.page.getByTestId(`collection-default-badge-${collectionId}`),
+    ).not.toBeVisible()
   }
 
   async setAsDefault() {
