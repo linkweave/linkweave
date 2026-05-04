@@ -6,7 +6,7 @@
 **Use Case Name:** Revoke Collection Access   
 **Primary Actor:** Collection Owner   
 **Goal:** Remove another user's access to a shared collection so they can no longer view or modify its contents.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

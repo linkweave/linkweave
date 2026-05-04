@@ -6,7 +6,7 @@
 **Use Case Name:** Delete Collection   
 **Primary Actor:** User   
 **Goal:** Delete a collection and all its contents so that resources no longer needed are removed from the system.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

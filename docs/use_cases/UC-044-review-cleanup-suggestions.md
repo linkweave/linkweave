@@ -6,7 +6,7 @@
 **Use Case Name:** Review Cleanup Suggestions
 **Primary Actor:** User
 **Goal:** View bookmarks that have not been used for a configurable period and move selected ones to the trashbin to declutter the collection.
-**Status:** Draft
+**Status:** Implemented
 
 ## Traceability
 

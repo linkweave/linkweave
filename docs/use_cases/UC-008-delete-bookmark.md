@@ -6,7 +6,7 @@
 **Use Case Name:** Delete Bookmark   
 **Primary Actor:** User   
 **Goal:** Move a bookmark that is no longer needed to the trashbin so it can be restored later or permanently deleted.
-**Status:** Draft
+**Status:** Implemented
 
 ## Traceability
 

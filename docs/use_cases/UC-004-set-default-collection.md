@@ -6,7 +6,7 @@
 **Use Case Name:** Set Default Collection   
 **Primary Actor:** User   
 **Goal:** Change which collection is the default so that login navigates directly to it.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

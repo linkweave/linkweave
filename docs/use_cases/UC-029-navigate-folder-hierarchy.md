@@ -6,7 +6,7 @@
 **Use Case Name:** Navigate Folder Hierarchy via Breadcrumb   
 **Primary Actor:** User   
 **Goal:** See the current position in the folder tree and quickly navigate to ancestor folders.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

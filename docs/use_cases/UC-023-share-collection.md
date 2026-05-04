@@ -6,7 +6,7 @@
 **Use Case Name:** Share Collection   
 **Primary Actor:** Collection Owner   
 **Goal:** Grant another user access to a collection so they can collaborate on the shared bookmark collection.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

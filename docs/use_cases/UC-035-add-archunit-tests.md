@@ -6,7 +6,7 @@
 **Use Case Name:** Add ArchUnit Tests   
 **Primary Actor:** Developer   
 **Goal:** Ensure the project's architecture and coding standards are automatically enforced through ArchUnit tests, using the `esc` project as a reference.   
-**Status:** In Progress   
+**Status:** Open   
 
 ## Traceability
 

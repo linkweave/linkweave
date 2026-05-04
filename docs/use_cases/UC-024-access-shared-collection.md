@@ -6,7 +6,7 @@
 **Use Case Name:** Access Shared Collection   
 **Primary Actor:** User   
 **Goal:** Open and work with a collection that another user has shared with them.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

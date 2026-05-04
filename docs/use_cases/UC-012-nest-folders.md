@@ -6,7 +6,7 @@
 **Use Case Name:** Nest Folders   
 **Primary Actor:** User   
 **Goal:** Move a folder inside another folder to create a hierarchical structure.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 

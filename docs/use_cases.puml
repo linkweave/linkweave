@@ -65,7 +65,7 @@ rectangle "Chainlink Bookmark Manager" {
 
     rectangle "Navigation" {
         usecase "UC-029\nNavigate Folder\nHierarchy" as UC029 <<implemented>>
-        usecase "UC-039\nReorganize Items\nvia Drag and Drop" as UC039
+        usecase "UC-039\nReorganize Items\nvia Drag and Drop" as UC039 <<implemented>>
     }
 
     rectangle "Import" {
@@ -84,8 +84,8 @@ rectangle "Chainlink Bookmark Manager" {
     }
 
     rectangle "Cleanup" {
-        usecase "UC-044\nReview Cleanup\nSuggestions" as UC044
-        usecase "UC-053\nWarn on Duplicate\nBookmark" as UC053
+        usecase "UC-044\nReview Cleanup\nSuggestions" as UC044 <<implemented>>
+        usecase "UC-053\nWarn on Duplicate\nBookmark" as UC053 <<implemented>>
     }
 
     rectangle "Auto-Tagging" {
@@ -94,7 +94,7 @@ rectangle "Chainlink Bookmark Manager" {
 
     rectangle "Favicons" {
         usecase "UC-050\nFetch Bookmark\nFavicons" as UC050 <<implemented>>
-        usecase "UC-051\nFavicon Cache\nCleanup Job" as UC051
+        usecase "UC-051\nFavicon Cache\nCleanup Job" as UC051 <<implemented>>
     }
 
     rectangle "Screenshot Previews" {
@@ -103,17 +103,17 @@ rectangle "Chainlink Bookmark Manager" {
     }
 
     rectangle "Architecture & Quality Control" {
-        usecase "UC-030\nRobust Error Handling" as UC030
+        usecase "UC-030\nRobust Error Handling" as UC030 <<implemented>>
         usecase "UC-035\nAdd ArchUnit Tests" as UC035
         usecase "UC-036\nAdopt Form Library\nwith Zod Schemas" as UC036 <<implemented>>
-        usecase "UC-039\nSession Data Cleanup" as UC039 <<implemented>>
+        usecase "UC-056\nSession Data Cleanup" as UC056 <<implemented>>
         usecase "UC-037\nProvide Browser\nExtension" as UC037 <<implemented>>
     }
 
     rectangle "Offline Mode" {
-        usecase "UC-047\nManage Offline Cache\n(always-on, opt-out)" as UC047
-        usecase "UC-048\nBrowse Bookmarks Offline" as UC048
-        usecase "UC-049\nResume Online Session" as UC049
+        usecase "UC-047\nManage Offline Cache\n(always-on, opt-out)" as UC047 <<implemented>>
+        usecase "UC-048\nBrowse Bookmarks Offline" as UC048 <<implemented>>
+        usecase "UC-049\nResume Online Session" as UC049 <<implemented>>
     }
 
     rectangle "Distribution" {
@@ -175,7 +175,7 @@ user --> UC031
 ' Architecture & Quality
 developer --> UC035
 developer --> UC036
-developer --> UC039
+developer --> UC056
 user --> UC037
 
 ' Offline Mode

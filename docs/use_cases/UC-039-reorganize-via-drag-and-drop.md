@@ -6,7 +6,7 @@
 **Use Case Name:** Reorganize Items via Drag and Drop
 **Primary Actor:** User
 **Goal:** Reorganize folders and bookmarks within a collection by dragging and dropping them to new positions or parents.
-**Status:** Draft
+**Status:** Implemented
 
 ## Traceability
 
