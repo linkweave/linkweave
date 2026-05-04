@@ -5,12 +5,14 @@ import { Trash2, Undo2, ArrowLeft, Folder as FolderIcon, Bookmark as BookmarkIco
 import { MainLayout } from '@/components/layout'
 import { ButtonCl, ConfirmDialog } from '@/components/ui'
 import { useTrashbinStore } from '@/stores/trashbin'
+import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
 import router from '@/router'
 import { isNullish } from '@/lib/nullish'
 
 const { t, locale } = useI18n()
 const trashbin = useTrashbinStore()
+const collectionStore = useCollectionStore()
 const notify = useNotificationStore()
 
 type PurgeKind = 'bookmark' | 'folder'
@@ -27,6 +29,11 @@ function formatDate(value: Date | string | null | undefined): string {
   if (!value) return ''
   const date = typeof value === 'string' ? new Date(value) : value
   return date.toLocaleString(locale.value)
+}
+
+function collectionName(collectionId: string | undefined): string | undefined {
+  if (!collectionId) return undefined
+  return collectionStore.collections.find(c => c.id === collectionId)?.name
 }
 
 async function handleRestoreBookmark(id: string) {
@@ -108,7 +115,7 @@ function goBack() {
           <div class="min-w-0 flex-1">
             <div class="truncate font-medium">{{ folder.data.name }}</div>
             <div class="text-xs text-muted-foreground">
-              {{ $t('trashbin.folderItem') }} · {{ $t('trashbin.deletedAt') }}: {{ formatDate(folder.deletedAt) }}
+              {{ $t('trashbin.folderItem') }} · {{ $t('trashbin.deletedAt') }}: {{ formatDate(folder.deletedAt) }}<template v-if="collectionName(folder.data.collectionId)"> · {{ collectionName(folder.data.collectionId) }}</template>
             </div>
           </div>
           <ButtonCl
@@ -141,7 +148,7 @@ function goBack() {
             <div class="truncate font-medium">{{ item.data.title }}</div>
             <div class="truncate text-sm text-muted-foreground">{{ item.data.url }}</div>
             <div class="text-xs text-muted-foreground">
-              {{ $t('trashbin.deletedAt') }}: {{ formatDate(item.deletedAt) }}
+              {{ $t('trashbin.deletedAt') }}: {{ formatDate(item.deletedAt) }}<template v-if="collectionName(item.data.collectionId)"> · {{ collectionName(item.data.collectionId) }}</template>
             </div>
           </div>
           <ButtonCl

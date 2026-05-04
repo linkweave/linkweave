@@ -1,0 +1,172 @@
+# Playwright e2e suite. Boots the API on :8443 and the Vite dev server on
+# :5173, then runs Chromium against the pair. Kept separate from build.yml so
+# a flaky e2e doesn't block image publishing.
+#
+# Assumptions:
+#   - Vite proxies /api to $VITE_API_TARGET (defaults to the prod-like dev
+#     hostname when unset — see vite.config.ts). Workflow points it at the
+#     local Quarkus instance below.
+#   - The dev TLS cert lives under developer-local-settings/, which is
+#     gitignored. CI generates a fresh self-signed cert via mkcert before
+#     starting the API.
+#   - CL_FORM_LOGIN_COOKIE_SECRET only needs a value, anything works for tests.
+name: e2e
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Form-login cookie encryption key. Tests don't care about the value, but
+      # Quarkus refuses to boot without one.
+      CL_FORM_LOGIN_COOKIE_SECRET: ci-e2e-cookie-secret-placeholder
+      # Dedicated CI hostname keeps any future concurrent dev/CI usage from
+      # colliding on cookies/storage and makes it obvious in test reports
+      # that the run was an e2e run rather than dev.
+      E2E_HOST: e2e-chainlink.localhost
+      VITE_DEV_HOST: e2e-chainlink.localhost
+      PLAYWRIGHT_BASE_URL: https://e2e-chainlink.localhost:5173
+      # Vite proxies /api straight at the local Quarkus instance. The cert's
+      # SAN list includes 'localhost', so TLS verification works even though
+      # the browser-facing hostname is e2e-chainlink.localhost.
+      VITE_API_TARGET: https://localhost:8443
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Disable unreachable PPAs
+        # The runner image ships with a git-core PPA that this network can't
+        # reach. Any later apt operation (notably `playwright install
+        # --with-deps`) runs `apt-get update` and emits a noisy connection
+        # error for it. Removing the source list silences the warning and
+        # avoids the hard failure if apt ever starts treating it as fatal.
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/git-core-ubuntu-ppa-*.list
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: 25
+          distribution: temurin
+          cache: maven
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Hostname alias for the e2e domain
+        # *.localhost normally resolves to 127.0.0.1 via systemd-resolved on
+        # ubuntu-latest, but explicit /etc/hosts is bullet-proof.
+        run: |
+          echo "127.0.0.1 ${E2E_HOST}" | sudo tee -a /etc/hosts
+
+      - name: Install mkcert binary
+        # developer-local-settings/ is gitignored, so a fresh checkout has no
+        # certs. The repo's own scripts/certs/generate-keypair.sh issues them
+        # via mkcert + keytool — we just need mkcert on PATH first.
+        # We skip `mkcert -install` (and the libnss3-tools dependency it pulls
+        # in) because Playwright runs with ignoreHTTPSErrors: true — nothing
+        # in the run actually needs the local CA installed in a trust store.
+        run: |
+          curl -sSL -o /tmp/mkcert https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64
+          chmod +x /tmp/mkcert
+          sudo mv /tmp/mkcert /usr/local/bin/mkcert
+
+      - name: Generate dev TLS cert
+        env:
+          CERT_DOMAINS: ${{ env.E2E_HOST }}
+        run: bash scripts/certs/generate-keypair.sh
+
+      - name: Build API
+        working-directory: api
+        run: ./mvnw -B -DskipTests package -Dquarkus.package.jar.type=fast-jar -Dquarkus.profile=dev
+
+      - name: Start API (dev profile, background)
+        working-directory: api
+        # Dev profile keeps the relaxed register rate-limit and auto-creates
+        # the SQLite DB. quarkus:dev is overkill (hot reload, dev-ui); the
+        # built fast-jar is faster to launch.
+        run: |
+          java \
+            -Dquarkus.profile=dev \
+            -Dquarkus.http.host=0.0.0.0 \
+            -Dquarkus.oidc.enabled=false \
+            -jar target/quarkus-app/quarkus-run.jar \
+            > ../api-stdout.log 2>&1 &
+          echo $! > ../api.pid
+          # Wait for any HTTP response from the API (no smallrye-health
+          # dependency, so we just hit the root and accept any status).
+          api_up=false
+          for i in $(seq 1 60); do
+            if curl -sk -o /dev/null https://localhost:8443/ 2>/dev/null; then
+              echo "API ready after ${i}s"
+              api_up=true
+              break
+            fi
+            sleep 1
+          done
+          if [ "$api_up" = false ]; then
+            echo "::error::API failed to start within 60s"
+            cat ../api-stdout.log
+            exit 1
+          fi
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          # Where `playwright install` drops the browser binaries.
+          path: ~/.cache/ms-playwright
+          # Bust the cache when the @playwright/test version changes — browser
+          # binaries are tied to it.
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        # On cache hit this is a near-no-op for the browser download itself;
+        # --with-deps still ensures the apt packages chromium needs are
+        # present (those aren't easily cacheable, and apt is fast on hot mirrors).
+        run: npx playwright install --with-deps chromium
+
+      - name: Run e2e (Chromium)
+        working-directory: frontend
+        # playwright.config.ts already auto-starts `npm run dev` via webServer
+        # and waits for it on :5173.
+        run: npx playwright test --project=chromium
+
+      - name: Stop API
+        if: always()
+        run: |
+          if [ -f api.pid ]; then
+            kill "$(cat api.pid)" 2>/dev/null || true
+          fi
+
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 14
+
+      - name: Upload API log on failure
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: api-stdout
+          path: api-stdout.log
+          retention-days: 14

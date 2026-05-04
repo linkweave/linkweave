@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from 'radix-vue'
-import { ChevronDown, LogOut, Settings, Trash2 } from 'lucide-vue-next'
+import { ChevronDown, LogOut, Settings, Trash2, Sparkles } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
 import { useCollectionStore } from '@/stores/collection'
@@ -31,6 +31,14 @@ onMounted(() => {
 
 function openTrashbin() {
   routerInstance.push({ name: 'trashbin' })
+}
+
+function openCleanupSuggestions() {
+  const currentRoute = routerInstance.currentRoute.value
+  const collectionId = (currentRoute.params.id as string) || collectionStore.currentCollectionId
+  if (collectionId) {
+    routerInstance.push({ name: 'cleanup-suggestions', query: { collectionId } })
+  }
 }
 
 function switchLocale(locale: SupportedLocale) {
@@ -73,6 +81,14 @@ function switchLocale(locale: SupportedLocale) {
           </button>
         </div>
         <DropdownMenuSeparator class="-mx-1 my-1 h-px bg-border" />
+        <DropdownMenuItem
+          class="relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+          data-testid="user-menu-cleanup-suggestions"
+          @select="openCleanupSuggestions"
+        >
+          <Sparkles class="h-4 w-4" />
+          <span class="flex-1">{{ $t('header.cleanupSuggestions') }}</span>
+        </DropdownMenuItem>
         <DropdownMenuItem
           class="relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
           data-testid="user-menu-trashbin"

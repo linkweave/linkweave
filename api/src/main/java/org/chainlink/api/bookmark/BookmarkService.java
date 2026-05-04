@@ -3,11 +3,11 @@ package org.chainlink.api.bookmark;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import ch.dvbern.dvbstarter.clock.AppClock;
 import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.folder.Folder;
@@ -29,6 +29,7 @@ public class BookmarkService {
     private final CollectionRepo collectionRepo;
     private final FolderRepo folderRepo;
     private final TagRepo tagRepo;
+    private final AppClock appClock;
 
     @NonNull
     public List<Bookmark> getBookmarksByCollection(@NonNull ID<Collection> collectionId) {
@@ -89,7 +90,7 @@ public class BookmarkService {
 
     public void removeBookmark(@NonNull ID<Bookmark> id) {
         Bookmark bookmark = bookmarkRepo.getById(id);
-        bookmark.setDeletedAt(OffsetDateTime.now());
+        bookmark.setDeletedAt(appClock.offsetDateTime().now());
         bookmarkRepo.persist(bookmark);
     }
 
@@ -179,7 +180,7 @@ public class BookmarkService {
     public void trackClick(@NonNull ID<Bookmark> bookmarkId) {
         Bookmark bookmark = bookmarkRepo.getById(bookmarkId);
         bookmark.setClickCount(bookmark.getClickCount() + 1);
-        bookmark.setLastClickedAt(OffsetDateTime.now());
+        bookmark.setLastClickedAt(appClock.offsetDateTime().now());
         bookmarkRepo.persist(bookmark);
     }
 }

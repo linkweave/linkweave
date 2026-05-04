@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'https://local-chainlink.localhost:5173'
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -9,10 +11,14 @@ export default defineConfig({
   timeout: 90_000,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // Cap parallel workers locally. The dev SQLite DB serializes writes and
+  // returns 5xx/401 responses under high concurrent registration/login load.
+  // The API-only auth flow (registerAndCaptureStorageState) is fast enough
+  // that the default worker count (~CPU cores) saturates the backend.
+  workers: process.env.CI ? 1 : 3,
   reporter: 'html',
   use: {
-    baseURL: 'https://local-chainlink.localhost:5173',
+    baseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     ignoreHTTPSErrors: true,
@@ -41,7 +47,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm run dev',
-    url: 'https://local-chainlink.localhost:5173',
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     stdout: 'pipe',
     stderr: 'pipe',

@@ -12,7 +12,9 @@ import java.time.Instant;
 import java.util.HexFormat;
 import java.util.Optional;
 
+import ch.dvbern.dvbstarter.clock.AppClock;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -20,7 +22,10 @@ import org.jspecify.annotations.NonNull;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class FaviconCacheService {
+
+    private final AppClock appClock;
 
     /**
      * The file extension for the raw favicon bytes on disk. Each cached origin
@@ -89,7 +94,7 @@ public class FaviconCacheService {
             long fetchedAt = lines.length > 1 ? Long.parseLong(lines[1]) : 0L;
             boolean negative = lines.length > 2 && "negative".equals(lines[2]);
 
-            Duration age = Duration.between(Instant.ofEpochSecond(fetchedAt), Instant.now());
+            Duration age = Duration.between(Instant.ofEpochSecond(fetchedAt), appClock.instant().now());
             Duration ttl = negative ? negativeTtl : successTtl;
             if (age.compareTo(ttl) > 0) {
                 return Optional.empty();
@@ -121,7 +126,7 @@ public class FaviconCacheService {
             } else {
                 Files.deleteIfExists(bin);
             }
-            String metaText = contentType + "\n" + Instant.now().getEpochSecond() + (negative ? "\nnegative" : "");
+            String metaText = contentType + "\n" + appClock.instant().now().getEpochSecond() + (negative ? "\nnegative" : "");
             Files.writeString(meta, metaText, StandardCharsets.UTF_8);
         } catch (IOException e) {
             LOG.warn("Failed to write favicon cache for origin {}: {}", origin, e.getMessage());

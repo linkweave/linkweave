@@ -12,8 +12,12 @@ export default defineConfig(({ command }) => {
   const isDev = command === 'serve'
 
   const certsDir = path.resolve(__dirname, '../developer-local-settings/config/certs')
-  const certFile = path.join(certsDir, 'local-chainlink.localhost.pem')
-  const keyFile = path.join(certsDir, 'local-chainlink.localhost.key')
+  // Hostname Vite serves under. Override via VITE_DEV_HOST (e.g. CI uses
+  // 'e2e-chainlink.localhost' to keep e2e cookies/storage isolated). The
+  // matching cert files are written by scripts/certs/generate-keypair.sh.
+  const devHost = process.env.VITE_DEV_HOST ?? 'local-chainlink.localhost'
+  const certFile = path.join(certsDir, `${devHost}.pem`)
+  const keyFile = path.join(certsDir, `${devHost}.key`)
 
   return {
     plugins: [
@@ -55,7 +59,7 @@ export default defineConfig(({ command }) => {
     server: {
       port: 5173,
       host: true,
-      allowedHosts: ['dev-chainlink.markushofstetter.com', 'local-chainlink.localhost'],
+      allowedHosts: ['dev-chainlink.markushofstetter.com', 'local-chainlink.localhost', devHost],
       ...(isDev
         ? {
             https: {
@@ -66,7 +70,7 @@ export default defineConfig(({ command }) => {
         : {}),
       proxy: {
         '/api': {
-          target: 'https://dev-chainlink.markushofstetter.com:8443',
+          target: process.env.VITE_API_TARGET ?? 'https://dev-chainlink.markushofstetter.com:8443',
           changeOrigin: true,
           secure: false,
           configure: (proxy, _options) => {

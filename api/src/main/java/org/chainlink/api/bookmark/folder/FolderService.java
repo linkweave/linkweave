@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import ch.dvbern.dvbstarter.clock.AppClock;
 import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.Bookmark;
@@ -25,6 +26,7 @@ public class FolderService {
     private final FolderRepo folderRepo;
     private final CollectionRepo collectionRepo;
     private final BookmarkRepo bookmarkRepo;
+    private final AppClock appClock;
 
 
 
@@ -122,7 +124,7 @@ public class FolderService {
         if (folder.getDeletedAt() != null) {
             return;
         }
-        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime now = appClock.offsetDateTime().now();
         cascadeSoftDelete(folder, now);
     }
 

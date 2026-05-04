@@ -18,6 +18,7 @@
 
 package org.chainlink.api.shared.config;
 
+import java.util.List;
 import java.util.Set;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -96,6 +97,12 @@ public class ConfigService {
 
     @ConfigProperty(name = "esc.feature.optimistic.locking.disabled", defaultValue = "false")
     boolean featureOptimisticLockingDisabled;
+
+    @ConfigProperty(name = "chainlink.cleanup.default-threshold-months", defaultValue = "6")
+    int cleanupDefaultThresholdMonths;
+
+    @ConfigProperty(name = "chainlink.cleanup.available-thresholds", defaultValue = "3,6,12")
+    List<Integer> cleanupAvailableThresholds;
 
 
 

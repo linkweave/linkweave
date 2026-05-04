@@ -89,4 +89,8 @@ public class Bookmark extends AbstractEntity<Bookmark> {
     @Column(name = "deleted_at", nullable = true)
     private OffsetDateTime deletedAt;
 
+    @Nullable
+    @Column(name = "suggestion_dismissed_at", nullable = true)
+    private OffsetDateTime suggestionDismissedAt;
+
 }

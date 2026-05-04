@@ -11,10 +11,14 @@ test.describe.configure({ mode: 'serial' })
 
 let user: TestUser
 let storageState: StorageState
+let collectionId: string
 
 test.describe('Collection Management', () => {
   test.beforeAll(async ({ browser }) => {
-    ;({ user, storageState } = await registerAndCaptureStorageState(browser, 'colmanage'))
+    ;({ user, storageState, collectionId } = await registerAndCaptureStorageState(
+      browser,
+      'colmanage',
+    ))
   })
 
   test.use({ storageState: async ({}, use) => { await use(storageState) } })
@@ -29,7 +33,11 @@ test.describe('Collection Management', () => {
   })
 
   test('should go back to collection view when pressing back button', async ({ page }) => {
+    // The back button uses router.go(-1); seed history with a collection
+    // visit so back navigates somewhere meaningful (not about:blank).
+    await page.goto(`/collections/${collectionId}`)
     const manage = new CollectionManagePageObject(page)
+    await manage.navigate()
     await manage.goBack()
   })
 
