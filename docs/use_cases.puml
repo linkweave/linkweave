@@ -97,6 +97,11 @@ rectangle "Chainlink Bookmark Manager" {
         usecase "UC-051\nFavicon Cache\nCleanup Job" as UC051
     }
 
+    rectangle "Screenshot Previews" {
+        usecase "UC-054\nView Bookmark\nScreenshot Previews" as UC054
+        usecase "UC-055\nScreenshot Cache\nCleanup Job" as UC055
+    }
+
     rectangle "Architecture & Quality Control" {
         usecase "UC-030\nRobust Error Handling" as UC030
         usecase "UC-035\nAdd ArchUnit Tests" as UC035
@@ -200,6 +205,12 @@ owner --> UC050
 scheduler --> UC051
 operator --> UC051
 
+' Screenshot Previews
+user --> UC054
+owner --> UC054
+scheduler --> UC055
+operator --> UC055
+
 ' Distribution
 user --> UC052
 
@@ -211,6 +222,11 @@ end note
 note right of UC037
   See browser-extension.md
   for architecture plan
+end note
+
+note right of UC054
+  See plans/screenshot-previews.md
+  for architecture & design
 end note
 
 note right of UC048
