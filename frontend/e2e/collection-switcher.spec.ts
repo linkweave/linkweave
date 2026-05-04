@@ -1,22 +1,25 @@
 import { expect, test } from '@playwright/test'
 import { CollectionSwitcherPageObject } from './models/CollectionSwitcherPageObject'
-import { deleteTestUserCleanup, registerTestUser, type TestUser } from './models/TestUser'
+import {
+  deleteTestUserCleanup,
+  registerAndCaptureStorageState,
+  type StorageState,
+  type TestUser,
+} from './models/TestUser'
 
 let user: TestUser
+let storageState: StorageState
 
 test.describe('Collection Switcher', () => {
   test.beforeAll(async ({ browser }) => {
-    const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
-    try {
-      user = await registerTestUser(ctx.request, 'colswitcher')
-    } finally {
-      await ctx.close()
-    }
+    ;({ user, storageState } = await registerAndCaptureStorageState(browser, 'colswitcher'))
   })
 
+  test.use({ storageState: async ({}, use) => { await use(storageState) } })
+
   test.beforeEach(async ({ page }) => {
-    const switcher = new CollectionSwitcherPageObject(page)
-    await switcher.loginAndWaitForPage(user.email, user.password)
+    await page.goto('/')
+    await expect(page).toHaveURL(/\/collections\//, { timeout: 15000 })
   })
 
   test('should show switcher button in sidebar', async ({ page }) => {

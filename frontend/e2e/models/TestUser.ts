@@ -1,7 +1,14 @@
-import { type APIRequestContext, type Browser, expect, type Page } from '@playwright/test'
+import {
+  type APIRequestContext,
+  type Browser,
+  type BrowserContext,
+  expect,
+  type Page,
+} from '@playwright/test'
 import { LoginPageObject } from './LoginPageObject'
 
 export type TestUser = { email: string; password: string }
+export type StorageState = Awaited<ReturnType<BrowserContext['storageState']>>
 
 const REGISTER_URL = '/api/auth/register'
 const DELETE_ME_URL = '/api/auth/me'
@@ -105,6 +112,28 @@ export async function loginAsTestUser(page: Page, user: TestUser): Promise<strin
     }
   }
   throw new Error('unreachable')
+}
+
+/**
+ * Registers a fresh user, logs them in once in a throwaway context, and
+ * captures the resulting cookies + localStorage. The caller passes the result
+ * into `test.use({ storageState })` so every test in the describe boots
+ * already authenticated — no per-test UI login.
+ */
+export async function registerAndCaptureStorageState(
+  browser: Browser,
+  specSlug: string,
+): Promise<{ user: TestUser; storageState: StorageState; collectionId: string }> {
+  const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
+  try {
+    const user = await registerTestUser(ctx.request, specSlug)
+    const page = await ctx.newPage()
+    const collectionId = await loginAsTestUser(page, user)
+    const storageState = await ctx.storageState()
+    return { user, storageState, collectionId }
+  } finally {
+    await ctx.close()
+  }
 }
 
 /**

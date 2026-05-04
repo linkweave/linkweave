@@ -104,7 +104,6 @@ async function onAllBookmarksDrop(event: DragEvent) {
     <div class="flex-1 min-h-0 flex flex-col">
       <div class="overflow-y-auto p-2">
         <div
-          data-testid="sidebar-all-bookmarks"
           class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors mb-1"
           :class="[
             folderStore.selectedFolderId === null
@@ -136,8 +135,8 @@ async function onAllBookmarksDrop(event: DragEvent) {
           :disabled="offline.isOffline"
           class="w-full justify-start text-muted-foreground hover:text-foreground mt-2"
           @click="
-            subfolderParentId = undefined
-            showCreateFolder = true
+            subfolderParentId = undefined;
+            showCreateFolder = true;
           "
         >
           <Plus class="h-4 w-4 mr-2" />

@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test'
 import {
   deleteTestUserCleanup,
-  loginAsTestUser,
-  registerTestUser,
+  registerAndCaptureStorageState,
+  type StorageState,
   type TestUser,
 } from './models/TestUser'
 
@@ -19,20 +19,14 @@ test('redirects to login when unauthenticated', async ({ page }) => {
 })
 
 let authedUser: TestUser
+let storageState: StorageState
 
 test.describe('Authenticated', () => {
   test.beforeAll(async ({ browser }) => {
-    const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
-    try {
-      authedUser = await registerTestUser(ctx.request, 'app')
-    } finally {
-      await ctx.close()
-    }
+    ;({ user: authedUser, storageState } = await registerAndCaptureStorageState(browser, 'app'))
   })
 
-  test.beforeEach(async ({ page }) => {
-    await loginAsTestUser(page, authedUser)
-  })
+  test.use({ storageState: async ({}, use) => { await use(storageState) } })
 
   test('homepage shows authenticated content', async ({ page }) => {
     await page.goto('/')

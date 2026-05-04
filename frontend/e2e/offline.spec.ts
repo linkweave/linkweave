@@ -2,22 +2,20 @@ import { expect, test } from '@playwright/test'
 import { AppPageObject } from './models/AppPageObject'
 import {
   deleteTestUserCleanup,
-  loginAsTestUser,
-  registerTestUser,
+  registerAndCaptureStorageState,
+  type StorageState,
   type TestUser,
 } from './models/TestUser'
 
 let user: TestUser
+let storageState: StorageState
 
 test.describe('Offline Mode', () => {
   test.beforeAll(async ({ browser }) => {
-    const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
-    try {
-      user = await registerTestUser(ctx.request, 'offline')
-    } finally {
-      await ctx.close()
-    }
+    ;({ user, storageState } = await registerAndCaptureStorageState(browser, 'offline'))
   })
+
+  test.use({ storageState: async ({}, use) => { await use(storageState) } })
 
   test('should show offline banner and disable write actions when offline', async ({
     page,
@@ -25,7 +23,7 @@ test.describe('Offline Mode', () => {
   }) => {
     const appPage = new AppPageObject(page)
 
-    await loginAsTestUser(page, user)
+    await page.goto('/')
     await appPage.expectAuthenticated()
 
     await context.setOffline(true)

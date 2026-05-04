@@ -1,30 +1,33 @@
 import { expect, test } from '@playwright/test'
 import { CollectionManagePageObject } from './models/CollectionManagePageObject'
 import { ShareCollectionPageObject } from './models/ShareCollectionPageObject'
-import { deleteTestUserCleanup, registerTestUser, type TestUser } from './models/TestUser'
+import {
+  deleteTestUserCleanup,
+  registerAndCaptureStorageState,
+  type StorageState,
+  type TestUser,
+} from './models/TestUser'
 
 test.describe.configure({ mode: 'serial' })
 
 let user: TestUser
+let storageState: StorageState
 
 test.describe('Collection Sharing', () => {
   let collectionId: string
   const collectionName = `Share Test ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
 
   test.beforeAll(async ({ browser }) => {
-    const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
-    try {
-      user = await registerTestUser(ctx.request, 'colsharing')
-    } finally {
-      await ctx.close()
-    }
+    ;({ user, storageState } = await registerAndCaptureStorageState(browser, 'colsharing'))
   })
+
+  test.use({ storageState: async ({}, use) => { await use(storageState) } })
 
   test('should create a collection and open share dialog', async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
     const share = new ShareCollectionPageObject(page)
 
-    await manage.loginAndNavigate(user.email, user.password)
+    await manage.navigate()
     await manage.createCollection(collectionName)
     await manage.expectCollectionVisible(collectionName)
 
@@ -38,7 +41,7 @@ test.describe('Collection Sharing', () => {
 
   test('should show share button only for owned collections', async ({ page }) => {
     const manage = new CollectionManagePageObject(page)
-    await manage.loginAndNavigate(user.email, user.password)
+    await manage.navigate()
     await expect(page.getByTestId(`collection-share-btn-${collectionId}`)).toBeVisible()
   })
 
@@ -46,7 +49,7 @@ test.describe('Collection Sharing', () => {
     const manage = new CollectionManagePageObject(page)
     const share = new ShareCollectionPageObject(page)
 
-    await manage.loginAndNavigate(user.email, user.password)
+    await manage.navigate()
     await share.openShareDialog(collectionId)
 
     await expect(share.emailInput).toBeVisible()
@@ -58,7 +61,7 @@ test.describe('Collection Sharing', () => {
     const manage = new CollectionManagePageObject(page)
     const share = new ShareCollectionPageObject(page)
 
-    await manage.loginAndNavigate(user.email, user.password)
+    await manage.navigate()
     await share.openShareDialog(collectionId)
 
     // alice@example.com is a stable seeded invitee.
@@ -70,7 +73,7 @@ test.describe('Collection Sharing', () => {
     const manage = new CollectionManagePageObject(page)
     const share = new ShareCollectionPageObject(page)
 
-    await manage.loginAndNavigate(user.email, user.password)
+    await manage.navigate()
     await share.openShareDialog(collectionId)
 
     await share.emailInput.fill('not-an-email')

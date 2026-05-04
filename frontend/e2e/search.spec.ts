@@ -1,8 +1,8 @@
 import { expect, type Page, test } from '@playwright/test'
 import {
   deleteTestUserCleanup,
-  loginAsTestUser,
-  registerTestUser,
+  registerAndCaptureStorageState,
+  type StorageState,
   type TestUser,
 } from './models/TestUser'
 
@@ -21,6 +21,12 @@ const bookmarks = [
 
 let user: TestUser
 let collectionId: string
+let storageState: StorageState
+
+async function gotoCollection(page: Page) {
+  await page.goto(`/collections/${collectionId}`)
+  await expect(page).toHaveURL(new RegExp(`/collections/${collectionId}`))
+}
 
 async function createTag(page: Page, name: string) {
   await page.getByTestId('new-tag-btn').click()
@@ -55,16 +61,16 @@ async function expectBookmarkNotVisible(page: Page, title: string) {
 
 test.describe('Multi-Term Search', () => {
   test.beforeAll(async ({ browser }) => {
-    const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
-    try {
-      user = await registerTestUser(ctx.request, 'search')
-    } finally {
-      await ctx.close()
-    }
+    ;({ user, storageState, collectionId } = await registerAndCaptureStorageState(
+      browser,
+      'search',
+    ))
   })
 
+  test.use({ storageState: async ({}, use) => { await use(storageState) } })
+
   test('should set up test data', async ({ page }) => {
-    collectionId = await loginAsTestUser(page, user)
+    await gotoCollection(page)
 
     await createTag(page, tagProd)
     await createTag(page, tagDev)
@@ -79,7 +85,7 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should filter by single term', async ({ page }) => {
-    await loginAsTestUser(page, user)
+    await gotoCollection(page)
     await search(page, 'Production')
 
     await expectBookmarkVisible(page, bookmarks[0].title)
@@ -89,7 +95,7 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should combine multiple terms with AND logic', async ({ page }) => {
-    await loginAsTestUser(page, user)
+    await gotoCollection(page)
     await search(page, `Production API`)
 
     await expectBookmarkVisible(page, bookmarks[0].title)
@@ -99,7 +105,7 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should match term against tag name', async ({ page }) => {
-    await loginAsTestUser(page, user)
+    await gotoCollection(page)
     await search(page, `API ${tagDev}`)
 
     await expectBookmarkVisible(page, bookmarks[2].title)
@@ -109,7 +115,7 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should treat quoted phrase as single term', async ({ page }) => {
-    await loginAsTestUser(page, user)
+    await gotoCollection(page)
     await search(page, `'Production Frontend'`)
 
     await expectBookmarkVisible(page, bookmarks[1].title)
@@ -119,7 +125,7 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should combine quoted phrase with another term', async ({ page }) => {
-    await loginAsTestUser(page, user)
+    await gotoCollection(page)
     await search(page, `'Production Frontend' ${tagProd}`)
 
     await expectBookmarkVisible(page, bookmarks[1].title)
@@ -129,7 +135,7 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should show empty results when terms do not all match', async ({ page }) => {
-    await loginAsTestUser(page, user)
+    await gotoCollection(page)
     await search(page, `Standalone ${tagProd}`)
 
     await expectBookmarkNotVisible(page, bookmarks[0].title)
@@ -139,7 +145,7 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should show all bookmarks when search is cleared', async ({ page }) => {
-    await loginAsTestUser(page, user)
+    await gotoCollection(page)
     await search(page, 'Production')
     await expect(page.locator('h3').filter({ hasText: `Production` }).first()).toBeVisible()
 
@@ -151,7 +157,7 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should match term against URL', async ({ page }) => {
-    await loginAsTestUser(page, user)
+    await gotoCollection(page)
     await search(page, `standalone.example.com`)
 
     await expectBookmarkVisible(page, bookmarks[3].title)

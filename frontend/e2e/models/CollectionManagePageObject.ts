@@ -25,7 +25,10 @@ export class CollectionManagePageObject {
     await loginPage.goto()
     await loginPage.login(email, password)
     await expect(this.page).toHaveURL(/\/collections\//, { timeout: 15000 })
+    await this.navigate()
+  }
 
+  async navigate() {
     await this.page.goto('/manage/collections')
     await expect(this.page).toHaveURL(/\/manage\/collections/, { timeout: 15000 })
     await this.page

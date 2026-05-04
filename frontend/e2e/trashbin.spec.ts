@@ -1,8 +1,8 @@
 import { expect, type Page, test } from '@playwright/test'
 import {
   deleteTestUserCleanup,
-  loginAsTestUser,
-  registerTestUser,
+  registerAndCaptureStorageState,
+  type StorageState,
   type TestUser,
 } from './models/TestUser'
 import { TrashbinPageObject } from './models/TrashbinPageObject'
@@ -14,6 +14,12 @@ const BASE = '/api'
 
 let user: TestUser
 let collectionId: string
+let storageState: StorageState
+
+async function gotoCollection(page: Page) {
+  await page.goto(`/collections/${collectionId}`)
+  await expect(page).toHaveURL(new RegExp(`/collections/${collectionId}`))
+}
 
 async function navigateToTrashbin(page: Page) {
   await page.getByTestId('user-menu-trigger').click()
@@ -45,16 +51,16 @@ test.describe('Trashbin', () => {
   let bookmarkBId: string
 
   test.beforeAll(async ({ browser }) => {
-    const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
-    try {
-      user = await registerTestUser(ctx.request, 'trashbin')
-    } finally {
-      await ctx.close()
-    }
+    ;({ user, storageState, collectionId } = await registerAndCaptureStorageState(
+      browser,
+      'trashbin',
+    ))
   })
 
+  test.use({ storageState: async ({}, use) => { await use(storageState) } })
+
   test('should set up bookmarks and soft-delete them', async ({ page }) => {
-    collectionId = await loginAsTestUser(page, user)
+    await gotoCollection(page)
 
     bookmarkAId = await createBookmarkViaApi(
       page,
@@ -82,7 +88,7 @@ test.describe('Trashbin', () => {
   })
 
   test('should show deleted items in trashbin', async ({ page }) => {
-    await loginAsTestUser(page, user)
+    await gotoCollection(page)
     await navigateToTrashbin(page)
 
     const trashbin = new TrashbinPageObject(page)
@@ -92,7 +98,7 @@ test.describe('Trashbin', () => {
   })
 
   test('should restore a bookmark from trashbin', async ({ page }) => {
-    await loginAsTestUser(page, user)
+    await gotoCollection(page)
     await navigateToTrashbin(page)
 
     const trashbin = new TrashbinPageObject(page)
@@ -105,7 +111,7 @@ test.describe('Trashbin', () => {
   })
 
   test('should purge a bookmark permanently', async ({ page }) => {
-    await loginAsTestUser(page, user)
+    await gotoCollection(page)
     await navigateToTrashbin(page)
 
     const trashbin = new TrashbinPageObject(page)
@@ -114,7 +120,7 @@ test.describe('Trashbin', () => {
   })
 
   test("should show empty state after purging this spec's bookmark", async ({ page }) => {
-    await loginAsTestUser(page, user)
+    await gotoCollection(page)
 
     const bookmarkCId = await createBookmarkViaApi(
       page,
