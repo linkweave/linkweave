@@ -119,6 +119,15 @@ rectangle "Chainlink Bookmark Manager" {
     rectangle "Distribution" {
         usecase "UC-052\nRun as Desktop App" as UC052
     }
+
+    rectangle "Mobile & UI Polish" {
+        usecase "UC-057\nImprove Mobile\nResponsiveness" as UC057
+        usecase "UC-058\nInvestigate Form\nLabel-Input Spacing" as UC058
+    }
+
+    rectangle "Backup" {
+        usecase "UC-061\nAutomated Backup\nCreation" as UC061
+    }
 }
 
 ' Authentication
@@ -211,13 +220,26 @@ owner --> UC054
 scheduler --> UC055
 operator --> UC055
 
-' Distribution
+'Distribution
 user --> UC052
 
 note right of UC052
   See desktop-app.md
   for implementation plan
 end note
+
+' Mobile & UI Polish
+developer --> UC057
+developer --> UC058
+
+note right of UC057
+  See mobile-viability/MOBILE-VIABILITY-REPORT.md
+  for audit & implementation plan
+end note
+
+' Backup
+user --> UC061
+scheduler --> UC061
 
 note right of UC037
   See browser-extension.md

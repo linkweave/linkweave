@@ -6,6 +6,9 @@
 .claude/
 .junie/
 
+# Marketing (private strategy docs)
+docs/marketing/
+
 # Temporary output files
 token-usage-output.txt
 
