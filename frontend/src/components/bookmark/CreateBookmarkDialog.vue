@@ -225,7 +225,7 @@ const onSubmit = handleSubmit(async (values) => {
       </FormFieldCl>
       <!--save -->
       <div class="space-y-2">
-        <label class="text-sm font-medium">{{ t('bookmark.tags') }}</label>
+        <label class="block text-sm font-medium leading-none">{{ t('bookmark.tags') }}</label>
         <div class="flex flex-wrap gap-1.5">
           <button
             v-for="tag in tagStore.tags"
@@ -246,7 +246,7 @@ const onSubmit = handleSubmit(async (values) => {
       <!--Tag autosuggestions -->
       <div data-testid="suggested-tags-section" class="space-y-2 min-h-[5.5rem]">
         <div class="flex items-center justify-between">
-          <label class="text-sm font-medium">{{ t('bookmark.suggestedTags') }}</label>
+          <label class="block text-sm font-medium leading-none">{{ t('bookmark.suggestedTags') }}</label>
           <!--          manage rules, prevent default to prevent validation -->
           <button
             type="button"

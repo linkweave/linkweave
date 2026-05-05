@@ -58,7 +58,7 @@ function resetDefaults() {
     <form class="space-y-5" @submit.prevent="save">
       <!-- API URL -->
       <div class="space-y-1.5">
-        <label class="text-sm font-medium">API URL</label>
+        <label class="block text-sm font-medium leading-none">API URL</label>
         <input
           v-model="apiUrl"
           type="url"
@@ -73,7 +73,7 @@ function resetDefaults() {
 
       <!-- Web App URL -->
       <div class="space-y-1.5">
-        <label class="text-sm font-medium">Web App URL</label>
+        <label class="block text-sm font-medium leading-none">Web App URL</label>
         <input
           v-model="webAppUrl"
           type="url"

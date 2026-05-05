@@ -169,7 +169,7 @@ function saveAnother() {
     <!-- URL -->
     <div class="space-y-1.5">
       <div class="flex items-center justify-between">
-        <label class="text-xs font-medium">URL <span class="text-destructive">*</span></label>
+        <label class="block text-xs font-medium leading-none">URL <span class="text-destructive">*</span></label>
         <div class="flex gap-0.5">
           <button
             type="button"
@@ -226,7 +226,7 @@ function saveAnother() {
 
     <!-- Title -->
     <div class="space-y-1.5">
-      <label class="text-xs font-medium">Title <span class="text-destructive">*</span></label>
+      <label class="block text-xs font-medium leading-none">Title <span class="text-destructive">*</span></label>
       <input
         v-model="title"
         type="text"
@@ -238,7 +238,7 @@ function saveAnother() {
 
     <!-- Description -->
     <div class="space-y-1.5">
-      <label class="text-xs font-medium">Description</label>
+      <label class="block text-xs font-medium leading-none">Description</label>
       <textarea
         v-model="description"
         rows="2"
@@ -249,13 +249,13 @@ function saveAnother() {
 
     <!-- Folder -->
     <div class="space-y-1.5">
-      <label class="text-xs font-medium">Folder</label>
+      <label class="block text-xs font-medium leading-none">Folder</label>
       <FolderSelectCl v-model="folderId" :folders="store.folders" />
     </div>
 
     <!-- Tags -->
     <div v-if="store.tags.length > 0" class="space-y-1.5">
-      <label class="text-xs font-medium">Tags</label>
+      <label class="block text-xs font-medium leading-none">Tags</label>
       <TagSelect
         :tags="store.tags"
         :selected="selectedTagIds"
@@ -268,7 +268,7 @@ function saveAnother() {
     <!-- Suggested tags (reserved space to avoid layout shift) -->
     <div data-testid="suggested-tags-section" class="space-y-1.5 min-h-[4rem]">
       <template v-if="suggestions.length > 0">
-        <label class="text-xs font-medium">Suggested tags</label>
+        <label class="block text-xs font-medium leading-none">Suggested tags</label>
         <div class="flex flex-wrap gap-1">
           <button
             v-for="suggestion in suggestions"

@@ -9,7 +9,7 @@ defineProps<{
 
 <template>
   <div class="space-y-2" :class="{ 'form-field-error': error }">
-    <label :for="forId" class="text-sm font-medium">
+    <label :for="forId" class="block text-sm font-medium leading-none">
       {{ label }}
       <span v-if="required" class="text-destructive"> *</span>
     </label>

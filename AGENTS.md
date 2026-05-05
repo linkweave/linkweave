@@ -13,6 +13,7 @@
 
 Always make sure that at the end of your task you run a build for the relevant module (api or frontend)
 Verify that your changes don't break any existing tests.
+The web app is running at https://local-chainlink.localhost:5173 the quarkus is at 8443
 
 
 ```bash
