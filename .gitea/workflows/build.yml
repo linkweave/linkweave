@@ -70,6 +70,18 @@ jobs:
           echo "Hash sliced (first 7 chars): ${hash::7}"
           echo "COMMIT_HASH=${hash::7}" >> $GITEA_OUTPUT
 
+      - name: Get version
+        id: version
+        run: |
+          if [[ "${{ gitea.ref }}" == refs/tags/v* ]]; then
+            VERSION="${{ gitea.ref_name }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="${{ steps.commit-hash.outputs.COMMIT_HASH }}"
+          fi
+          echo "VERSION=$VERSION" >> $GITEA_OUTPUT
+          echo "Version: $VERSION"
+
       - name: Print commit hash
         run: |
           echo "Commit hash output: ${{ steps.commit-hash.outputs.COMMIT_HASH }}"
@@ -95,6 +107,7 @@ jobs:
           file: frontend/Dockerfile
           build-args: |
             COMMIT_HASH=${{ steps.commit-hash.outputs.COMMIT_HASH }}
+            VERSION=${{ steps.version.outputs.VERSION }}
           labels: |
             org.opencontainers.image.commit=${{ steps.commit-hash.outputs.COMMIT_HASH }}
             org.opencontainers.image.title=Chainlink Frontend

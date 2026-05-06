@@ -7,7 +7,10 @@ const version = ref('unknown')
 const { t } = useI18n()
 
 onMounted(async () => {
-  version.value = await useCommitInfo()
+  const info = await useCommitInfo()
+  version.value = info.version !== 'unknown' && info.version !== ''
+    ? info.version
+    : info.commit
 })
 </script>
 
