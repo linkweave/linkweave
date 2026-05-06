@@ -57,10 +57,29 @@ rectangle "Chainlink Bookmark Manager" {
         usecase "UC-020\nRemove Tag\nfrom Bookmark" as UC020 <<implemented>>
     }
 
+    rectangle "Properties" {
+        usecase "UC-067\nDefine Bookmark\nProperty" as UC067
+        usecase "UC-068\nSet Bookmark\nProperty Value" as UC068
+        usecase "UC-069\nFilter Bookmarks\nby Property" as UC069
+    }
+
     rectangle "Search & Filtering" {
         usecase "UC-021\nFilter Bookmarks\nby Tag" as UC021 <<implemented>>
         usecase "UC-022\nFilter Bookmarks\nby Folder" as UC022 <<implemented>>
         usecase "UC-032\nSearch Bookmarks" as UC032 <<implemented>>
+        usecase "UC-070\nSearch with Operators" as UC070
+        usecase "UC-071\nSave Search Query" as UC071
+        usecase "UC-072\nUse Smart Collection" as UC072
+    }
+
+    rectangle "Batch Operations" {
+        usecase "UC-073\nBatch Tag Bookmarks" as UC073
+        usecase "UC-074\nBatch Move/Delete\nBookmarks" as UC074
+    }
+
+    rectangle "Bookmark Enrichment" {
+        usecase "UC-075\nAdd Bookmark Note" as UC075
+        usecase "UC-076\nSort Bookmarks" as UC076
     }
 
     rectangle "Navigation" {
@@ -173,6 +192,27 @@ user --> UC020
 user --> UC021
 user --> UC022
 user --> UC032
+
+' Properties
+owner --> UC067
+user --> UC068
+user --> UC069
+
+' Search Operators & Saved Searches
+user --> UC070
+user --> UC071
+user --> UC072
+
+UC070 ..> UC071 : <<extend>>
+UC071 ..> UC072 : <<extend>>
+
+' Batch Operations
+user --> UC073
+user --> UC074
+
+' Bookmark Enrichment
+user --> UC075
+user --> UC076
 
 ' Navigation
 user --> UC029

@@ -31,9 +31,9 @@
 6. System parses the HTML using the Netscape Bookmark File Format parser.
 7. System recursively creates `Folder` entities at the collection root, preserving the folder hierarchy from the import file.
 8. System creates `Bookmark` entities, each linked to the appropriate folder (or collection root if no folder).
-9. System generates a unique import tag name: `imported=YYYY-MM-DD_N` (where N increments per import on that date).
-10. System creates the import `Tag` entity in the target collection.
-11. System applies the import tag to all imported bookmarks (across all folders).
+9. System generates a unique import batch identifier: `YYYY-MM-DD_N` (where N increments per import on that date).
+10. System creates a system-managed `imported` property (type: text) with the batch identifier value on each imported bookmark (per C-016).
+11. System applies the imported property to all imported bookmarks (across all folders).
 12. System returns a success response with import summary: folders created, bookmarks created, import tag name.
 
 ## Alternative Flows
@@ -79,8 +79,8 @@
 **Trigger:** The imported HTML file contains no bookmarks or folders (step 6).
 **Flow:**
 
-1. System creates the import tag (with no bookmarks attached).
-2. System returns success response with foldersCreated=0, bookmarksCreated=0, importTag="imported=YYYY-MM-DD_N".
+1. System sets the `imported` property on zero bookmarks.
+2. System returns success response with foldersCreated=0, bookmarksCreated=0, importBatch="YYYY-MM-DD_N".
 3. Use case ends.
 
 ### A6: Transaction Rollback
@@ -88,7 +88,7 @@
 **Trigger:** An error occurs during entity creation (e.g., database constraint violation) (steps 7-11).
 **Flow:**
 
-1. System rolls back the entire transaction (no folders, bookmarks, or tags are persisted).
+1. System rolls back the entire transaction (no folders, bookmarks, or properties are persisted).
 2. System returns HTTP 500 Internal Server Error.
 3. System displays an error message: "An error occurred while importing bookmarks. Please try again."
 4. Use case ends with no changes.
@@ -99,8 +99,8 @@
 
 - All folders from the import file exist in the collection root, preserving hierarchy.
 - All bookmarks from the import file exist in the collection, linked to their respective folders.
-- An import tag exists in the collection with name `imported=YYYY-MM-DD_N`.
-- Every imported bookmark has the import tag applied.
+- An `imported` property exists on each imported bookmark with value `YYYY-MM-DD_N` (per C-016).
+- No import tag is created. Import metadata is tracked via the bookmark property system (FR-069).
 - The import summary is displayed to the user.
 
 ### Failure Postconditions
@@ -123,13 +123,13 @@ Duplicate URLs within the same collection are allowed. The import process does n
 
 Import is performed as a single database transaction. All entities (folders, bookmarks, tags) are created atomically. If any part fails, the entire import is rolled back.
 
-### BR-063: Import Tag Naming
+### BR-063: Import Batch Identifier
 
-Import tags follow the naming convention `imported=YYYY-MM-DD_N` where:
+Import batches are identified by the convention `YYYY-MM-DD_N` where:
 - `YYYY-MM-DD` is the current date
 - `N` is an incrementing counter starting at 1, incremented per import run on that date
 
-This allows users to distinguish between multiple import batches on the same day.
+This identifier is stored as a system-managed `imported` property on each imported bookmark (not as a tag). Users can filter by this property using the search operator `imported:2026-04` (UC-070).
 
 ### BR-064: Import to Collection Root
 
@@ -138,7 +138,3 @@ Imported folder hierarchy is placed at the collection root level. Folders from t
 ### BR-065: Maximum File Size
 
 The maximum allowed upload size for bookmark import is 5 MB. This limit covers bookmark collections with thousands of entries while preventing excessive server load.
-
-### BR-066: Tag Color Assignment
-
-The auto-generated import tag is assigned a default color from the application's color palette.
