@@ -126,10 +126,15 @@ const onSubmit = handleSubmit(async (values) => {
     </form>
 
     <template #footer>
-      <p class="text-center text-sm">
-        {{ t('register.hasAccount') }}
-        <router-link :to="{ name: 'login' }" class="underline hover:text-white/80">{{ t('register.signIn') }}</router-link>
-      </p>
+      <div class="space-y-2">
+        <p class="text-center text-sm">
+          {{ t('register.hasAccount') }}
+          <router-link :to="{ name: 'login' }" class="underline hover:text-white/80">{{ t('register.signIn') }}</router-link>
+        </p>
+        <p class="text-center text-xs text-white/50">
+          <router-link :to="{ name: 'privacy' }" class="hover:text-white/80">Privacy Policy</router-link>
+        </p>
+      </div>
     </template>
   </AuthLayout>
 </template>

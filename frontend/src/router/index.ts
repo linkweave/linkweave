@@ -46,6 +46,12 @@ const router = createRouter({
       name: 'register',
       meta: { public: true },
       component: () => import('@/views/RegisterView.vue')
+    },
+    {
+      path: '/privacy',
+      name: 'privacy',
+      meta: { public: true },
+      component: () => import('@/views/PrivacyPolicyView.vue')
     }
   ]
 })
