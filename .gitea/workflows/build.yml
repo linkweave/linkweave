@@ -245,5 +245,5 @@ jobs:
           curl -sf -w "\nHTTP_CODE:%{http_code}" -X POST \
             "${GITEA_API}/releases/${RELEASE_ID}/assets" \
             -H "Authorization: token ${GITEA_TOKEN}" \
-            -F "name=chainlink-extension.zip" \
+            -F "name=chainlink-extension-${TAG}.zip" \
             -F "attachment=@chainlink-extension.zip"
