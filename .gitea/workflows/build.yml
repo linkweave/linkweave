@@ -221,20 +221,23 @@ jobs:
         env:
           GITEA_TOKEN: ${{ secrets.ESC_REPO_TOKEN }}
         run: |
+          set -x
+          echo "GITEA_API=${GITEA_API}"
+          ls -la *.zip 2>/dev/null || echo "No zip files in workspace root"
           TAG="${{ gitea.ref_name }}"
-          RESPONSE=$(curl -s -X POST \
+          RESPONSE=$(curl -sf -w "\nHTTP_CODE:%{http_code}" -X POST \
             "${GITEA_API}/releases" \
             -H "Authorization: token ${GITEA_TOKEN}" \
             -H "Content-Type: application/json" \
             -d "{\"tag_name\":\"${TAG}\",\"name\":\"${TAG}\",\"body\":\"Release ${TAG}\"}")
+          echo "Release response: ${RESPONSE}"
           RELEASE_ID=$(echo "$RESPONSE" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
           if [ -z "$RELEASE_ID" ]; then
-            echo "Failed to create release. Response:"
-            echo "$RESPONSE"
+            echo "Failed to create release."
             exit 1
           fi
           echo "Created release #$RELEASE_ID"
-          curl -s -X POST \
+          curl -sf -w "\nHTTP_CODE:%{http_code}" -X POST \
             "${GITEA_API}/releases/${RELEASE_ID}/assets" \
             -H "Authorization: token ${GITEA_TOKEN}" \
             -F "name=chainlink-extension.zip" \
