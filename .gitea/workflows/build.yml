@@ -222,21 +222,26 @@ jobs:
           GITEA_TOKEN: ${{ secrets.ESC_REPO_TOKEN }}
         run: |
           set -x
-          echo "GITEA_API=${GITEA_API}"
-          ls -la *.zip 2>/dev/null || echo "No zip files in workspace root"
           TAG="${{ gitea.ref_name }}"
           RESPONSE=$(curl -sf -w "\nHTTP_CODE:%{http_code}" -X POST \
             "${GITEA_API}/releases" \
             -H "Authorization: token ${GITEA_TOKEN}" \
             -H "Content-Type: application/json" \
-            -d "{\"tag_name\":\"${TAG}\",\"name\":\"${TAG}\",\"body\":\"Release ${TAG}\"}")
-          echo "Release response: ${RESPONSE}"
-          RELEASE_ID=$(echo "$RESPONSE" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+            -d "{\"tag_name\":\"${TAG}\",\"name\":\"${TAG}\",\"body\":\"Release ${TAG}\"}" 2>/dev/null) || true
+          HTTP_CODE=$(echo "$RESPONSE" | grep 'HTTP_CODE:' | cut -d: -f2)
+          if [ "$HTTP_CODE" = "409" ] || [ "$HTTP_CODE" = "422" ]; then
+            echo "Release already exists, fetching ID..."
+            RELEASE_ID=$(curl -sf "${GITEA_API}/releases/tags/${TAG}" \
+              -H "Authorization: token ${GITEA_TOKEN}" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+          else
+            RELEASE_ID=$(echo "$RESPONSE" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+          fi
           if [ -z "$RELEASE_ID" ]; then
-            echo "Failed to create release."
+            echo "Failed to get/create release. Last response:"
+            echo "$RESPONSE"
             exit 1
           fi
-          echo "Created release #$RELEASE_ID"
+          echo "Release ID: $RELEASE_ID"
           curl -sf -w "\nHTTP_CODE:%{http_code}" -X POST \
             "${GITEA_API}/releases/${RELEASE_ID}/assets" \
             -H "Authorization: token ${GITEA_TOKEN}" \
