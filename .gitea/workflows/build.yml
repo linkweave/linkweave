@@ -3,6 +3,7 @@ name: Build
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
     branches: [main]
 
@@ -101,15 +102,25 @@ jobs:
 
   build-extension:
     runs-on: ubuntu-latest
+    outputs:
+      artifact-name: ${{ steps.version.outputs.ARTIFACT_NAME }}
     steps:
       - uses: actions/checkout@v5
 
-      - name: Generate version from timestamp
+      - name: Generate version
         id: version
         run: |
-          # Format: YYYY.MMDD.HHMM — always increasing, fits Chrome Web Store constraints
-          VERSION="$(date -u +'%Y.%-m%d.%-H%M')"
+          if [[ "${{ gitea.ref }}" == refs/tags/v* ]]; then
+            # Strip leading 'v' from tag → e.g. v1.2.3 → 1.2.3
+            VERSION="${{ gitea.ref_name }}"
+            VERSION="${VERSION#v}"
+          else
+            # Format: YYYY.MMDD.HHMM — always increasing, fits Chrome Web Store constraints
+            VERSION="$(date -u +'%Y.%-m%d.%-H%M')"
+          fi
+          ARTIFACT_NAME="chainlink-extension-${VERSION}"
           echo "VERSION=$VERSION" >> $GITEA_OUTPUT
+          echo "ARTIFACT_NAME=$ARTIFACT_NAME" >> $GITEA_OUTPUT
           echo "Extension version: $VERSION"
 
       - name: Set up Node.js
@@ -193,3 +204,24 @@ jobs:
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore(chainlink): update image tags to ${{ steps.commit-hash.outputs.COMMIT_HASH }}"
           git push
+
+  release:
+    needs: [build-extension]
+    if: startsWith(gitea.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download extension artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ needs.build-extension.outputs.artifact-name }}
+
+      - name: Create Gitea release
+        uses: actions/forgejo-release@v2
+        with:
+          token: ${{ secrets.ESC_REPO_TOKEN }}
+          direction: upload
+          tag: ${{ gitea.ref_name }}
+          title: ${{ gitea.ref_name }}
+          release-dir: .
+          override: false
+          verbose: true
