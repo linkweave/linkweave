@@ -2,7 +2,7 @@
 
 **Project:** Chainlink Browser Extension  
 **Date:** 2026-04-04  
-**Status:** Draft
+**Status:** Implemented
 
 ---
 

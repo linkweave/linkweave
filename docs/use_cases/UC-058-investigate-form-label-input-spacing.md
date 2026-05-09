@@ -6,7 +6,7 @@
 **Use Case Name:** Investigate Form Label-Input Spacing
 **Primary Actor:** Developer
 **Goal:** Investigate and adjust the vertical spacing between form field labels and their associated inputs across the application, as the current gap appears too tight.
-**Status:** Open
+**Status:** Done
 
 ---
 
