@@ -1,5 +1,7 @@
 package org.chainlink.api.bookmark;
 
+import java.time.temporal.ChronoUnit;
+
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.Authenticated;
 import jakarta.validation.Valid;
@@ -22,9 +24,11 @@ import org.chainlink.api.bookmark.json.BookmarkMoveJson;
 import org.chainlink.api.bookmark.json.BookmarkSaveJson;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.auth.AuthorizationService;
+import io.smallrye.faulttolerance.api.RateLimit;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
+@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated
@@ -37,6 +41,7 @@ public class BookmarkResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public BookmarkListJson list(@QueryParam("collectionId") @NotNull @NonNull ID<Collection> collectionId) {
         authorizationService.requireCollectionAccess(collectionId);
         return new BookmarkListJson(
@@ -50,6 +55,7 @@ public class BookmarkResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public BookmarkJson create(@NotNull @Valid @NonNull BookmarkSaveJson json) {
         authorizationService.requireCollectionAccess(json.getCollectionId());
         Bookmark bookmark = bookmarkService.createBookmark(json);
@@ -61,6 +67,7 @@ public class BookmarkResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public BookmarkJson update(
         @PathParam("bookmarkId") @NotNull @NonNull ID<Bookmark> bookmarkId,
         @NotNull @Valid @NonNull BookmarkSaveJson json
@@ -75,6 +82,7 @@ public class BookmarkResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public BookmarkJson move(
         @PathParam("bookmarkId") @NotNull @NonNull ID<Bookmark> bookmarkId,
         @NotNull @Valid @NonNull BookmarkMoveJson json
@@ -86,6 +94,7 @@ public class BookmarkResource {
 
     @DELETE
     @Path("/{bookmarkId}")
+    @Authenticated
     public void delete(
         @PathParam("bookmarkId") @NotNull @NonNull ID<Bookmark> bookmarkId
     ) {
@@ -96,6 +105,7 @@ public class BookmarkResource {
 
     @POST
     @Path("/{bookmarkId}/track-click")
+    @Authenticated
     public void trackClick(
         @PathParam("bookmarkId") @NotNull @NonNull ID<Bookmark> bookmarkId
     ) {

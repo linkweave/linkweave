@@ -1,5 +1,7 @@
 package org.chainlink.api.bookmark;
 
+import java.time.temporal.ChronoUnit;
+
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.Authenticated;
 import jakarta.validation.Valid;
@@ -21,9 +23,11 @@ import org.chainlink.api.bookmark.json.AutoTagRuleOrderJson;
 import org.chainlink.api.bookmark.json.AutoTagRuleSaveJson;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.auth.AuthorizationService;
+import io.smallrye.faulttolerance.api.RateLimit;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
+@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated
@@ -35,6 +39,7 @@ public class AutoTagRuleResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Authenticated
     @NonNull
     public AutoTagRuleListJson list(@QueryParam("collectionId") @NotNull @NonNull ID<Collection> collectionId) {
         authorizationService.requireCollectionAccess(collectionId);
@@ -48,6 +53,7 @@ public class AutoTagRuleResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Authenticated
     @NonNull
     public AutoTagRuleJson create(@NotNull @Valid @NonNull AutoTagRuleSaveJson json) {
         authorizationService.requireCollectionAccess(json.getCollectionId());
@@ -59,6 +65,7 @@ public class AutoTagRuleResource {
     @Path("/{ruleId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Authenticated
     @NonNull
     public AutoTagRuleJson update(
         @PathParam("ruleId") @NotNull @NonNull ID<AutoTagRule> ruleId,
@@ -73,6 +80,7 @@ public class AutoTagRuleResource {
 
     @DELETE
     @Path("/{ruleId}")
+    @Authenticated
     public void delete(@PathParam("ruleId") @NotNull @NonNull ID<AutoTagRule> ruleId) {
         AutoTagRule rule = autoTagRuleService.getRule(ruleId);
         authorizationService.requireCollectionAccess(rule.getCollection().getId());
@@ -82,6 +90,7 @@ public class AutoTagRuleResource {
     @PUT
     @Path("/reorder")
     @Consumes(MediaType.APPLICATION_JSON)
+    @Authenticated
     public void reorder(@NotNull @Valid @NonNull AutoTagRuleOrderJson json) {
         authorizationService.requireCollectionAccess(json.getCollectionId());
         autoTagRuleService.reorder(json.getCollectionId(), json.getOrderedIds());

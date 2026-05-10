@@ -32,9 +32,11 @@ import org.chainlink.infrastructure.errorhandling.AppAuthException;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
+@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @RequiredArgsConstructor
 @Path("/auth")
+@Authenticated
 @Slf4j
 public class AuthResource {
 
@@ -51,6 +53,7 @@ public class AuthResource {
     @GET
     @Path("/me")
     @Produces(MediaType.APPLICATION_JSON)
+    @Authenticated
     public UserInfoJson me() {
         if (identity.isAnonymous()) {
             throw new AppAuthException();

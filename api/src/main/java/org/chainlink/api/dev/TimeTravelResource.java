@@ -1,7 +1,9 @@
 package org.chainlink.api.dev;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 
 import ch.dvbern.dvbstarter.clock.ClockProvider;
 import io.quarkus.arc.profile.UnlessBuildProfile;
@@ -16,6 +18,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
+import io.smallrye.faulttolerance.api.RateLimit;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.Nullable;
 
@@ -24,6 +27,7 @@ import org.jspecify.annotations.Nullable;
  * exercise time-sensitive features (cleanup suggestions, favicon TTLs, etc.)
  * without poking the database directly. Disabled in the prod profile.
  */
+@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @UnlessBuildProfile("prod")
 @RequiredArgsConstructor
@@ -33,13 +37,16 @@ public class TimeTravelResource {
 
     private final ClockProvider clockProvider;
 
+    @PermitAll
     public record TimeTravelRequest(@Nullable String instant) {}
 
+    @PermitAll
     public record TimeTravelStatus(boolean timeTravelling, String now) {}
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Transactional(TxType.NOT_SUPPORTED)
+    @PermitAll
     public Response travelTo(TimeTravelRequest request) {
         if (request == null || request.instant() == null || request.instant().isBlank()) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -59,6 +66,7 @@ public class TimeTravelResource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Transactional(TxType.NOT_SUPPORTED)
+    @PermitAll
     public TimeTravelStatus reset() {
         clockProvider.reset();
         return currentStatus();
@@ -67,6 +75,7 @@ public class TimeTravelResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Transactional(TxType.NOT_SUPPORTED)
+    @PermitAll
     public TimeTravelStatus status() {
         return currentStatus();
     }

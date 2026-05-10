@@ -47,8 +47,8 @@ public class FaviconCacheCleanupJob {
         skipExecutionIf = DisabledPredicate.class,
         identity = "favicon-cache-cleanup"
     )
-    @Transactional
-    void scheduledRun() {
+    @Transactional(Transactional.TxType.NOT_SUPPORTED)
+    public void scheduledRun() {
         run();
     }
 

@@ -1,8 +1,11 @@
 package org.chainlink.api.bookmark.importbookmarks;
 
 import java.io.IOException;
+import java.time.temporal.ChronoUnit;
 import java.io.InputStream;
+import java.time.temporal.ChronoUnit;
 import java.nio.file.Files;
+import java.time.temporal.ChronoUnit;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.Authenticated;
@@ -20,11 +23,13 @@ import org.chainlink.infrastructure.errorhandling.AppFailureException;
 import org.chainlink.infrastructure.errorhandling.AppFailureMessage;
 import org.chainlink.infrastructure.errorhandling.AppValidationException;
 import org.chainlink.infrastructure.errorhandling.AppValidationMessage;
+import io.smallrye.faulttolerance.api.RateLimit;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 import org.jspecify.annotations.NonNull;
 
+@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated
@@ -40,6 +45,7 @@ public class ImportResource {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public ImportSummaryJson importBookmarks(
         @PathParam("collectionId") @NotNull @NonNull ID<Collection> collectionId,
         @NotNull @NonNull @RestForm("file") FileUpload file

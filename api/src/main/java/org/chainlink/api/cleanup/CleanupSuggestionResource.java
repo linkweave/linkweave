@@ -1,6 +1,7 @@
 package org.chainlink.api.cleanup;
 
 import java.util.List;
+import java.time.temporal.ChronoUnit;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.Authenticated;
@@ -21,9 +22,11 @@ import org.chainlink.api.cleanup.json.CleanupSuggestionListJson;
 import org.chainlink.api.cleanup.json.MoveToTrashJson;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.auth.AuthorizationService;
+import io.smallrye.faulttolerance.api.RateLimit;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
+@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated
@@ -46,6 +49,7 @@ public class CleanupSuggestionResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public CleanupSuggestionListJson list(
         @QueryParam("collectionId") @NotNull @NonNull ID<Collection> collectionId,
         @QueryParam("thresholdMonths") Integer thresholdMonths
@@ -60,12 +64,14 @@ public class CleanupSuggestionResource {
     @Path("/thresholds")
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public List<Integer> thresholds() {
         return cleanupSuggestionService.getAvailableThresholds();
     }
 
     @POST
     @Path("/{bookmarkId}/dismiss")
+    @Authenticated
     public void dismiss(@PathParam("bookmarkId") @NotNull @NonNull ID<Bookmark> bookmarkId) {
         Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
         authorizationService.requireCollectionAccess(bookmark.getCollection().getId());
@@ -75,6 +81,7 @@ public class CleanupSuggestionResource {
     @POST
     @Path("/move-to-trash")
     @Consumes(MediaType.APPLICATION_JSON)
+    @Authenticated
     public void moveToTrash(@NotNull @Valid @NonNull MoveToTrashJson json) {
         ID<Collection> collectionId = ID.parse(json.getCollectionId(), Collection.class);
         authorizationService.requireCollectionAccess(collectionId);

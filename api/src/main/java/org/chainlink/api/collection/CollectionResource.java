@@ -1,6 +1,7 @@
 package org.chainlink.api.collection;
 
 import java.util.List;
+import java.time.temporal.ChronoUnit;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.Authenticated;
@@ -16,9 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.chainlink.api.shared.auth.AuthorizationService;
 import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.api.shared.user.User;
+import io.smallrye.faulttolerance.api.RateLimit;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
+@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated
@@ -33,6 +36,7 @@ public class CollectionResource {
 
     @GET
     @NonNull
+    @Authenticated
     public List<CollectionSummaryJson> listCollections() {
         var currentUser = currentUserService.currentUser();
         return collectionService.findCollectionsForUser(currentUser);
@@ -41,6 +45,7 @@ public class CollectionResource {
     @GET
     @Path("{id}")
     @NonNull
+    @Authenticated
     public CollectionInfoJson getCollectionInfoById(@PathParam("id") ID<Collection> id) {
         authorizationService.requireCollectionAccess(id);
         return collectionService.getCollectionInfoById(id);
@@ -48,6 +53,7 @@ public class CollectionResource {
 
     @POST
     @NonNull
+    @Authenticated
     public CollectionSummaryJson createCollection(@Valid CollectionCreateJson json) {
         var currentUser = currentUserService.currentUser();
         return collectionService.createCollection(json.getName(), currentUser);
@@ -55,6 +61,7 @@ public class CollectionResource {
 
     @PUT
     @Path("{id}/default")
+    @Authenticated
     public void setDefaultCollection(
         @PathParam("id") ID<Collection> id
     ) {
@@ -67,6 +74,7 @@ public class CollectionResource {
     @PUT
     @Path("{id}")
     @NonNull
+    @Authenticated
     public CollectionSummaryJson updateCollection(
         @PathParam("id") ID<Collection> id,
         @Valid CollectionUpdateJson json
@@ -78,6 +86,7 @@ public class CollectionResource {
 
     @DELETE
     @Path("{id}")
+    @Authenticated
     public void deleteCollection(@PathParam("id") ID<Collection> id) {
         authorizationService.requireOwnerAccess(id);
         var currentUser = currentUserService.currentUser();
@@ -87,6 +96,7 @@ public class CollectionResource {
     @GET
     @Path("{id}/members")
     @NonNull
+    @Authenticated
     public List<CollectionMemberJson> listMembers(@PathParam("id") ID<Collection> id) {
         authorizationService.requireOwnerAccess(id);
         return collectionService.listMembers(id);
@@ -95,6 +105,7 @@ public class CollectionResource {
     @POST
     @Path("{id}/members")
     @NonNull
+    @Authenticated
     public CollectionMemberJson shareWithUser(
         @PathParam("id") ID<Collection> id,
         @Valid CollectionShareJson collectionShareJson
@@ -107,6 +118,7 @@ public class CollectionResource {
     @GET
     @Path("{id}/settings")
     @NonNull
+    @Authenticated
     public CollectionSettingsJson getSettings(@PathParam("id") ID<Collection> id) {
         authorizationService.requireCollectionAccess(id);
         return collectionSettingsService.getSettings(id);
@@ -115,6 +127,7 @@ public class CollectionResource {
     @PUT
     @Path("{id}/settings")
     @NonNull
+    @Authenticated
     public CollectionSettingsJson updateSettings(
         @PathParam("id") ID<Collection> id,
         @Valid CollectionSettingsJson json
@@ -125,6 +138,7 @@ public class CollectionResource {
 
     @DELETE
     @Path("{id}/members/{userId}")
+    @Authenticated
     public void revokeAccess(
         @PathParam("id") ID<Collection> id,
         @PathParam("userId") ID<User> userId

@@ -1,6 +1,7 @@
 package org.chainlink.api.trashbin;
 
 import java.util.List;
+import java.time.temporal.ChronoUnit;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.Authenticated;
@@ -26,9 +27,11 @@ import org.chainlink.api.collection.CollectionAccess;
 import org.chainlink.api.collection.CollectionAccessRepo;
 import org.chainlink.api.shared.auth.AuthorizationService;
 import org.chainlink.api.shared.user.CurrentUserService;
+import io.smallrye.faulttolerance.api.RateLimit;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
+@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated
@@ -44,6 +47,7 @@ public class TrashbinResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public TrashbinJson list() {
         List<ID<Collection>> collectionIds = userCollectionIds();
         return new TrashbinJson(
@@ -60,6 +64,7 @@ public class TrashbinResource {
     @Path("/count")
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public TrashbinCountJson count() {
         List<ID<Collection>> collectionIds = userCollectionIds();
         long total = bookmarkService.countDeletedByCollections(collectionIds)
@@ -71,6 +76,7 @@ public class TrashbinResource {
     @Path("/bookmarks/{bookmarkId}/restore")
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public BookmarkJson restoreBookmark(
         @PathParam("bookmarkId") @NotNull @NonNull ID<Bookmark> bookmarkId
     ) {
@@ -81,6 +87,7 @@ public class TrashbinResource {
 
     @DELETE
     @Path("/bookmarks/{bookmarkId}")
+    @Authenticated
     public void purgeBookmark(
         @PathParam("bookmarkId") @NotNull @NonNull ID<Bookmark> bookmarkId
     ) {
@@ -93,6 +100,7 @@ public class TrashbinResource {
     @Path("/folders/{folderId}/restore")
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public FolderJson restoreFolder(
         @PathParam("folderId") @NotNull @NonNull ID<Folder> folderId
     ) {
@@ -103,6 +111,7 @@ public class TrashbinResource {
 
     @DELETE
     @Path("/folders/{folderId}")
+    @Authenticated
     public void purgeFolder(
         @PathParam("folderId") @NotNull @NonNull ID<Folder> folderId
     ) {
@@ -112,6 +121,7 @@ public class TrashbinResource {
     }
 
     @DELETE
+    @Authenticated
     public void empty() {
         List<ID<Collection>> collectionIds = userCollectionIds();
         folderService.emptyTrashbin(collectionIds);
