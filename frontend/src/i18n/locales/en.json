@@ -202,7 +202,10 @@
     "unfiled": "Unfiled"
   },
   "search": {
-    "placeholder": "Search bookmarks (use spaces for multiple terms, e.g. prod foobar)..."
+    "placeholder": "Search bookmarks (use spaces for multiple terms, e.g. prod foobar)...",
+    "placeholderShort": "Search…",
+    "resultCount": "{n} result | {n} results",
+    "clear": "Clear search"
   },
   "collectionSearch": {
     "placeholder": "Search collections...",

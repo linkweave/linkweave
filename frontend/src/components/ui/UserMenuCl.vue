@@ -13,9 +13,10 @@ import { useLocaleStore } from '@/stores/locale'
 import { useCollectionStore } from '@/stores/collection'
 import { useTrashbinStore } from '@/stores/trashbin'
 import type { SupportedLocale } from '@/i18n'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import SettingsDialog from '@/components/ui/SettingsDialog.vue'
+import { avatarColor } from '@/composables/useAvatarColor'
 
 const auth = useAuthStore()
 const localeStore = useLocaleStore()
@@ -24,6 +25,7 @@ const trashbinStore = useTrashbinStore()
 const routerInstance = useRouter()
 
 const isSettingsOpen = ref(false)
+const avatarBg = computed(() => avatarColor(auth.displayName))
 
 onMounted(() => {
   trashbinStore.refreshCount().catch(() => {})
@@ -51,10 +53,17 @@ function switchLocale(locale: SupportedLocale) {
     <DropdownMenuTrigger as-child>
       <button
         data-testid="user-menu-trigger"
-        class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        class="inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       >
-        {{ auth.displayName }}
-        <ChevronDown class="h-4 w-4" />
+        <!-- Mobile: round avatar with first initial -->
+        <span class="sm:hidden h-9 w-9 rounded-full text-white flex items-center justify-center text-sm font-semibold select-none" :style="{ backgroundColor: avatarBg }">
+          {{ auth.displayName.charAt(0).toUpperCase() }}
+        </span>
+        <!-- sm+: full name with chevron -->
+        <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5">
+          {{ auth.displayName }}
+          <ChevronDown class="h-4 w-4" />
+        </span>
       </button>
     </DropdownMenuTrigger>
     <DropdownMenuPortal>
@@ -63,6 +72,10 @@ function switchLocale(locale: SupportedLocale) {
         align="end"
         :side-offset="4"
       >
+        <div class="sm:hidden px-2 py-1.5 text-sm font-medium text-foreground truncate">
+          {{ auth.displayName }}
+        </div>
+        <DropdownMenuSeparator class="sm:hidden -mx-1 my-1 h-px bg-border" />
         <div class="flex items-center justify-center gap-1 rounded-sm px-2 py-1.5 text-sm">
           <button
             class="px-1 transition-colors hover:text-accent-foreground"
