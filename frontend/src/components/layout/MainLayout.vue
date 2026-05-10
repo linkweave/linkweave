@@ -34,9 +34,11 @@ const closeSidebar = () => {
     <OfflineBanner />
     <HeaderCl>
       <template #leading>
-        <ButtonCl v-if="!hideSidebar" variant="ghost" size="icon" class="lg:hidden" data-testid="mobile-sidebar-toggle" @click="toggleSidebar">
-          <Menu class="h-5 w-5" />
-        </ButtonCl>
+        <slot name="header-leading">
+          <ButtonCl v-if="!hideSidebar" variant="ghost" size="icon" class="lg:hidden" data-testid="mobile-sidebar-toggle" @click="toggleSidebar">
+            <Menu class="h-5 w-5" />
+          </ButtonCl>
+        </slot>
       </template>
       <template #title>
         <slot name="header-title">
@@ -84,7 +86,7 @@ const closeSidebar = () => {
       </template>
 
       <!-- Main content -->
-      <main class="flex-1 overflow-y-auto p-6">
+      <main class="flex-1 overflow-y-auto p-3 sm:p-6">
         <slot />
       </main>
     </div>

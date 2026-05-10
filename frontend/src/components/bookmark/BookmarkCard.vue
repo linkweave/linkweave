@@ -12,11 +12,13 @@ import { useTagStore } from '@/stores/tag'
 import { useFolderStore } from '@/stores/folder'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { DRAG_TYPE_BOOKMARK, setDraggingBookmark } from '@/composables/useDragState'
+import { useMediaQuery } from '@/composables/useMediaQuery'
 import BookmarkFavicon from '@/components/bookmark/BookmarkFavicon.vue'
 
 const tagStore = useTagStore()
 const folderStore = useFolderStore()
 const bookmarkStore = useBookmarkStore()
+const isTouch = useMediaQuery('(hover: none) and (pointer: coarse)')
 
 const props = defineProps<{
   bookmark: BookmarkJson
@@ -53,7 +55,7 @@ function getFolderName(): string | null {
 
 <template>
   <div
-    draggable="true"
+    :draggable="!isTouch"
     class="group rounded-lg border border-border bg-card p-4 hover:ring-2 hover:ring-primary/50 hover:border-primary/30 transition-all text-muted-foreground hover:text-accent-foreground cursor-grab active:cursor-grabbing"
     @dragstart="onBookmarkDragStart"
     @dragend="onBookmarkDragEnd"

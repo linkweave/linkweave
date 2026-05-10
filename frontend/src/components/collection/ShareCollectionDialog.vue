@@ -160,13 +160,13 @@ function nonOwnerMembers() {
               <p class="text-sm font-medium leading-none truncate">{{ member.displayName }}</p>
               <p class="text-xs text-muted-foreground truncate mt-0.5">{{ member.email }}</p>
             </div>
-            <span class="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded border border-border shrink-0 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
+            <span class="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded border border-border shrink-0 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hidden [@media(hover:none)]:inline">
               {{ t('collectionManage.shareMemberBadge') }}
             </span>
             <ButtonCl
               variant="ghost"
               size="icon"
-              class="h-7 w-7 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+              class="h-8 w-8 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
               :disabled="revokingUserId === member.userId"
               :title="t('collectionManage.shareRevokeBtn')"
               :data-testid="`share-revoke-btn-${member.userId}`"
@@ -188,7 +188,7 @@ function nonOwnerMembers() {
 
       <div class="border-t border-border" />
 
-      <form class="flex gap-2 items-start" @submit.prevent="handleInvite">
+      <form class="flex flex-col sm:flex-row gap-2 sm:items-start" @submit.prevent="handleInvite">
         <div class="flex-1">
           <FormFieldCl :label="t('collectionManage.shareInvite')" for-id="share-email-input" :error="errors.email">
             <input
@@ -203,17 +203,17 @@ function nonOwnerMembers() {
             />
           </FormFieldCl>
         </div>
-          <ButtonCl
-            type="submit"
-            data-testid="share-invite-btn"
-            class="mt-[1.625rem]"
-            :disabled="isSubmitting || !inviteEmail?.trim()"
-          >
-            <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
-            <UserPlus v-else class="h-4 w-4" />
-            {{ t('collectionManage.shareInviteBtn') }}
-          </ButtonCl>
-        </form>
+        <ButtonCl
+          type="submit"
+          data-testid="share-invite-btn"
+          class="w-full sm:w-auto sm:mt-[1.625rem]"
+          :disabled="isSubmitting || !inviteEmail?.trim()"
+        >
+          <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
+          <UserPlus v-else class="h-4 w-4" />
+          {{ t('collectionManage.shareInviteBtn') }}
+        </ButtonCl>
+      </form>
     </div>
   </DialogCl>
 </template>

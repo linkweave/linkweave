@@ -7,6 +7,7 @@ import { useBookmarkStore } from '@/stores/bookmark'
 import { Folder, FolderOpen, MoreHorizontal } from 'lucide-vue-next'
 import { DRAG_TYPE_BOOKMARK, isDraggingBookmark, setDraggingBookmark } from '@/composables/useDragState'
 import { useDndMove } from '@/composables/useDndMove'
+import { useMediaQuery } from '@/composables/useMediaQuery'
 import BookmarkFavicon from '@/components/bookmark/BookmarkFavicon.vue'
 import {
   DropdownMenuRoot,
@@ -20,6 +21,7 @@ const { t } = useI18n()
 const folderStore = useFolderStore()
 const bookmarkStore = useBookmarkStore()
 const { moveBookmarkWithUndo } = useDndMove()
+const isTouch = useMediaQuery('(hover: none) and (pointer: coarse)')
 
 const props = defineProps<{
   bookmarks: BookmarkJson[]
@@ -222,7 +224,7 @@ async function onHeaderDrop(event: DragEvent, group: GroupCard) {
           <div
             v-for="bookmark in section.bookmarks"
             :key="bookmark.id"
-            draggable="true"
+            :draggable="!isTouch"
             class="group/row flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-accent/50 min-w-0 cursor-grab active:cursor-grabbing"
             @dragstart="onBookmarkDragStart($event, bookmark)"
             @dragend="onBookmarkDragEnd"
@@ -245,7 +247,7 @@ async function onHeaderDrop(event: DragEvent, group: GroupCard) {
             <DropdownMenuRoot>
               <DropdownMenuTrigger as-child>
                 <button
-                  class="shrink-0 h-6 w-6 inline-flex items-center justify-center rounded transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100 hover:bg-primary hover:text-primary-foreground"
+                  class="shrink-0 h-8 w-8 inline-flex items-center justify-center rounded transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100 hover:bg-primary hover:text-primary-foreground"
                   @click.stop
                 >
                   <MoreHorizontal class="h-3.5 w-3.5" />

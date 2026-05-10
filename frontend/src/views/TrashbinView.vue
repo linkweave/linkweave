@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Trash2, Undo2, ArrowLeft, Folder as FolderIcon, Bookmark as BookmarkIcon } from 'lucide-vue-next'
 import { MainLayout } from '@/components/layout'
-import { ButtonCl, ConfirmDialog } from '@/components/ui'
+import { ButtonCl, ConfirmDialog, ResponsiveButton } from '@/components/ui'
 import { useTrashbinStore } from '@/stores/trashbin'
 import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
@@ -81,24 +81,21 @@ function goBack() {
 
 <template>
   <MainLayout :hide-sidebar="true">
+    <template #header-leading>
+      <ButtonCl variant="ghost" size="icon" :aria-label="$t('common.back')" @click="goBack">
+        <ArrowLeft class="h-4 w-4" />
+      </ButtonCl>
+    </template>
+    <template #header-title>
+      <h1 class="text-base font-semibold text-foreground truncate">{{ $t('trashbin.title') }}</h1>
+    </template>
+    <template #header-actions>
+      <ResponsiveButton variant="destructive" :disabled="trashbin.isEmpty" :label="$t('trashbin.emptyTrashbin')" data-testid="trashbin-empty-btn" @click="emptyOpen = true">
+        <Trash2 />
+      </ResponsiveButton>
+    </template>
+
     <div class="container mx-auto max-w-4xl px-4 py-6">
-      <div class="mb-6 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <ButtonCl variant="ghost" size="icon" @click="goBack" :aria-label="$t('common.back')">
-            <ArrowLeft class="h-4 w-4" />
-          </ButtonCl>
-          <h1 class="text-2xl font-semibold">{{ $t('trashbin.title') }}</h1>
-        </div>
-        <ButtonCl
-          variant="destructive"
-          :disabled="trashbin.isEmpty"
-          data-testid="trashbin-empty-btn"
-          @click="emptyOpen = true"
-        >
-          <Trash2 class="mr-2 h-4 w-4" />
-          {{ $t('trashbin.emptyTrashbin') }}
-        </ButtonCl>
-      </div>
 
       <div v-if="trashbin.loading" class="text-muted-foreground">…</div>
       <div v-else-if="trashbin.isEmpty" class="rounded-md border border-dashed p-8 text-center text-muted-foreground">
@@ -118,24 +115,14 @@ function goBack() {
               {{ $t('trashbin.folderItem') }} · {{ $t('trashbin.deletedAt') }}: {{ formatDate(folder.deletedAt) }}<template v-if="collectionName(folder.data.collectionId)"> · {{ collectionName(folder.data.collectionId) }}</template>
             </div>
           </div>
-          <ButtonCl
-            variant="outline"
-            size="sm"
-            data-testid="trashbin-restore-folder-btn"
-            @click="handleRestoreFolder(folder.id)"
-          >
-            <Undo2 class="mr-1 h-4 w-4" />
-            {{ $t('trashbin.restore') }}
-          </ButtonCl>
-          <ButtonCl
-            variant="destructive"
-            size="sm"
-            data-testid="trashbin-purge-folder-btn"
-            @click="askPurge('folder', folder.id)"
-          >
-            <Trash2 class="mr-1 h-4 w-4" />
-            {{ $t('trashbin.deletePermanently') }}
-          </ButtonCl>
+          <div class="flex items-center gap-2 shrink-0">
+            <ResponsiveButton variant="outline" :label="$t('trashbin.restore')" data-testid="trashbin-restore-folder-btn" @click="handleRestoreFolder(folder.id)">
+              <Undo2 />
+            </ResponsiveButton>
+            <ResponsiveButton variant="destructive" :label="$t('trashbin.deletePermanently')" data-testid="trashbin-purge-folder-btn" @click="askPurge('folder', folder.id)">
+              <Trash2 />
+            </ResponsiveButton>
+          </div>
         </li>
         <li
           v-for="item in trashbin.bookmarks"
@@ -151,24 +138,14 @@ function goBack() {
               {{ $t('trashbin.deletedAt') }}: {{ formatDate(item.deletedAt) }}<template v-if="collectionName(item.data.collectionId)"> · {{ collectionName(item.data.collectionId) }}</template>
             </div>
           </div>
-          <ButtonCl
-            variant="outline"
-            size="sm"
-            data-testid="trashbin-restore-btn"
-            @click="handleRestoreBookmark(item.id)"
-          >
-            <Undo2 class="mr-1 h-4 w-4" />
-            {{ $t('trashbin.restore') }}
-          </ButtonCl>
-          <ButtonCl
-            variant="destructive"
-            size="sm"
-            data-testid="trashbin-purge-btn"
-            @click="askPurge('bookmark', item.id)"
-          >
-            <Trash2 class="mr-1 h-4 w-4" />
-            {{ $t('trashbin.deletePermanently') }}
-          </ButtonCl>
+          <div class="flex items-center gap-2 shrink-0">
+            <ResponsiveButton variant="outline" :label="$t('trashbin.restore')" data-testid="trashbin-restore-btn" @click="handleRestoreBookmark(item.id)">
+              <Undo2 />
+            </ResponsiveButton>
+            <ResponsiveButton variant="destructive" :label="$t('trashbin.deletePermanently')" data-testid="trashbin-purge-btn" @click="askPurge('bookmark', item.id)">
+              <Trash2 />
+            </ResponsiveButton>
+          </div>
         </li>
       </ul>
     </div>
