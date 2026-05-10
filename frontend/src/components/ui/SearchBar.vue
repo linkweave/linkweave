@@ -5,8 +5,10 @@ import { Search, X } from 'lucide-vue-next'
 const props = withDefaults(defineProps<{
   modelValue: string
   placeholder?: string
+  variant?: 'default' | 'header'
 }>(), {
   placeholder: 'Search...',
+  variant: 'default',
 })
 
 const emit = defineEmits<{
@@ -33,13 +35,23 @@ function handleShortcut(e: KeyboardEvent) {
   }
 }
 
+function onFocusSearch() {
+  inputRef.value?.focus()
+}
+
 function clear() {
   emit('update:modelValue', '')
   inputRef.value?.focus()
 }
 
-onMounted(() => globalThis.addEventListener('keydown', handleShortcut))
-onUnmounted(() => globalThis.removeEventListener('keydown', handleShortcut))
+onMounted(() => {
+  globalThis.addEventListener('keydown', handleShortcut)
+  globalThis.addEventListener('chainlink:focus-search', onFocusSearch)
+})
+onUnmounted(() => {
+  globalThis.removeEventListener('keydown', handleShortcut)
+  globalThis.removeEventListener('chainlink:focus-search', onFocusSearch)
+})
 </script>
 
 <template>
@@ -52,7 +64,12 @@ onUnmounted(() => globalThis.removeEventListener('keydown', handleShortcut))
       type="text"
       :value="props.modelValue"
       :placeholder="props.placeholder"
-      class="flex h-10 w-full rounded-md border border-border bg-secondary pl-10 pr-20 py-1 text-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      data-search-input
+      :class="[
+        'flex w-full rounded-md border bg-secondary pl-10 pr-20 py-1 text-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+        props.variant === 'header' ? 'h-9' : 'h-10',
+        props.modelValue ? 'border-primary/30 bg-primary/5' : 'border-border',
+      ]"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     />
     <kbd

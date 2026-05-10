@@ -199,7 +199,10 @@
     "unfiled": "Ohne Ordner"
   },
   "search": {
-    "placeholder": "Lesezeichen suchen (Leerzeichen für mehrere Begriffe, z.B. prod foobar)..."
+    "placeholder": "Lesezeichen suchen (Leerzeichen für mehrere Begriffe, z.B. prod foobar)...",
+    "placeholderShort": "Suchen…",
+    "resultCount": "{n} Ergebnis | {n} Ergebnisse",
+    "clear": "Suche löschen"
   },
   "collectionSearch": {
     "placeholder": "Sammlungen durchsuchen...",

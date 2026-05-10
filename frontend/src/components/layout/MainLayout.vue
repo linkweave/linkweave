@@ -43,6 +43,12 @@ const closeSidebar = () => {
           <CollectionSwitcher />
         </slot>
       </template>
+      <template #search>
+        <slot name="header-search" />
+      </template>
+      <template #search-mobile>
+        <slot name="header-search-mobile" />
+      </template>
       <template #actions>
         <slot name="header-actions" />
       </template>
