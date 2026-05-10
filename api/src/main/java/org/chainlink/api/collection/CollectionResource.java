@@ -27,6 +27,7 @@ import org.jspecify.annotations.NonNull;
 public class CollectionResource {
 
     private final CollectionService collectionService;
+    private final CollectionSettingsService collectionSettingsService;
     private final AuthorizationService authorizationService;
     private final CurrentUserService currentUserService;
 
@@ -101,6 +102,25 @@ public class CollectionResource {
         authorizationService.requireOwnerAccess(id);
         var currentUser = currentUserService.currentUser();
         return collectionService.shareWithUser(id, collectionShareJson.getEmail(), currentUser);
+    }
+
+    @GET
+    @Path("{id}/settings")
+    @NonNull
+    public CollectionSettingsJson getSettings(@PathParam("id") ID<Collection> id) {
+        authorizationService.requireCollectionAccess(id);
+        return collectionSettingsService.getSettings(id);
+    }
+
+    @PUT
+    @Path("{id}/settings")
+    @NonNull
+    public CollectionSettingsJson updateSettings(
+        @PathParam("id") ID<Collection> id,
+        @Valid CollectionSettingsJson json
+    ) {
+        authorizationService.requireCollectionAccess(id);
+        return collectionSettingsService.updateSettings(id, json);
     }
 
     @DELETE

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useBookmarkStore } from '@/stores/bookmark'
+import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
 import { useUiStore } from '@/stores/ui'
 import BookmarkCard from './BookmarkCard.vue'
@@ -15,6 +16,8 @@ const { t } = useI18n()
 const bookmarkStore = useBookmarkStore()
 const notification = useNotificationStore()
 const ui = useUiStore()
+const collectionStore = useCollectionStore()
+const effectiveLayout = computed(() => collectionStore.settingsLayout ?? ui.bookmarkLayout)
 
 const editingBookmark = ref<BookmarkJson | null>(null)
 const showEditDialog = ref(false)
@@ -75,7 +78,7 @@ async function confirmDelete() {
     <p class="text-muted-foreground">{{ t('bookmarkList.empty') }}</p>
   </div>
 
-  <div v-else-if="ui.bookmarkLayout === 'list'" class="space-y-3">
+  <div v-else-if="effectiveLayout === 'list'" class="space-y-3">
     <BookmarkCard
       v-for="bookmark in bookmarkStore.filteredBookmarks"
       :key="bookmark.id"
@@ -86,7 +89,7 @@ async function confirmDelete() {
     />
   </div>
 
-  <div v-else-if="ui.bookmarkLayout === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  <div v-else-if="effectiveLayout === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
     <BookmarkCard
       v-for="bookmark in bookmarkStore.filteredBookmarks"
       :key="bookmark.id"
