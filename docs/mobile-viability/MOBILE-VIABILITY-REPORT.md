@@ -1,9 +1,9 @@
 # Mobile Viability Review — Chainlink Frontend
 
-**Date:** 2026-05-03  
+**Date:** 2026-05-03 (audit) · 2026-05-10 (fixes applied)  
 **Viewport:** 375×812 (iPhone SE / standard mobile width)  
 **Scope:** All Vue components in `frontend/src/`  
-**Status:** Before — known issues documented with screenshots  
+**Status:** ✅ All issues resolved  
 
 ---
 
@@ -51,7 +51,7 @@ The app has several mobile-friendly patterns already in place:
 
 ## 2. Critical Issues
 
-### 2.1 Trashbin: Action Buttons Overflow
+### 2.1 Trashbin: Action Buttons Overflow ✅
 
 **Severity:** 🔴 Critical  
 **Confidence:** 95  
@@ -113,7 +113,7 @@ Show icon-only buttons on mobile, full labels on `sm+`:
 
 ---
 
-### 2.2 Dialogs: Content Overflows Viewport
+### 2.2 Dialogs: Content Overflows Viewport ✅
 
 **Severity:** 🔴 Critical  
 **Confidence:** 95  
@@ -169,7 +169,7 @@ Key changes:
 
 ---
 
-### 2.3 Collection Management: Row Actions Overflow
+### 2.3 Collection Management: Row Actions Overflow ✅
 
 **Severity:** 🔴 Critical  
 **Confidence:** 92  
@@ -234,7 +234,7 @@ Use a dropdown overflow menu on mobile, full icon row on desktop:
 
 ---
 
-### 2.4 Share Collection Dialog: Invite Form Breaks
+### 2.4 Share Collection Dialog: Invite Form Breaks ✅
 
 **Severity:** 🔴 Critical  
 **Confidence:** 90  
@@ -287,7 +287,7 @@ Also increase the revoke button touch target from `h-7 w-7` to `h-8 w-8` minimum
 
 ## 3. Important Issues
 
-### 3.1 Touch Targets Too Small
+### 3.1 Touch Targets Too Small ✅
 
 **Severity:** 🟡 Important  
 **Confidence:** 88  
@@ -329,7 +329,7 @@ For `TagList.vue`:
 
 ---
 
-### 3.2 Main Content Padding Too Generous
+### 3.2 Main Content Padding Too Generous ✅
 
 **Severity:** 🟡 Important  
 **Confidence:** 82  
@@ -355,7 +355,7 @@ For `TagList.vue`:
 
 ---
 
-### 3.3 Header Horizontal Space Competition
+### 3.3 Header Horizontal Space Competition ✅
 
 **Severity:** 🟡 Important  
 **Confidence:** 80  
@@ -400,7 +400,7 @@ With 375px - 16px×2 padding - 16px gap = 311px available, the left side takes ~
 
 ---
 
-### 3.4 Drag-and-Drop Non-Functional on Touch
+### 3.4 Drag-and-Drop Non-Functional on Touch ✅
 
 **Severity:** 🟡 Important  
 **Confidence:** 85  
@@ -433,7 +433,7 @@ Alternatively, consider adding a touch-friendly reorder using a library like `vu
 
 ---
 
-### 3.5 Sidebar Context Menu Buttons Too Small
+### 3.5 Sidebar Context Menu Buttons Too Small ✅
 
 **Severity:** 🟡 Important  
 **Confidence:** 85  
@@ -469,21 +469,21 @@ Increase sizes and spacing:
 
 ---
 
-## 4. Implementation Plan
+## 4. Implementation Plan — ✅ Complete (2026-05-10)
 
-Recommended order, prioritizing highest-impact changes first:
+| Priority | Issue | Status | Notes |
+|----------|-------|--------|-------|
+| 1 | **Dialog overflow fix** (§2.2) | ✅ Done | `max-h-[90dvh] overflow-y-auto overflow-x-hidden p-4 sm:p-6` in `DialogCl.vue` |
+| 2 | **Main layout padding** (§3.2) | ✅ Done | `p-3 sm:p-6` in `MainLayout.vue`; `SearchActiveChip` margins updated to match |
+| 3 | **Header spacing** (§3.3) | ✅ Done | `p-3 sm:p-4`, `gap-1 sm:gap-2` in `HeaderCl.vue`; avatar badge replaces username in `UserMenuCl.vue` |
+| 4 | **Trashbin responsive buttons** (§2.1) | ✅ Done | `ResponsiveButton` component; back arrow moved to header leading slot |
+| 5 | **Collection manage overflow** (§2.3) | ✅ Done | `flex-col sm:flex-row` row layout; back arrow in header; sidebar hidden; `ResponsiveButton` for create |
+| 6 | **Share dialog stacking** (§2.4) | ✅ Done | `flex-col sm:flex-row` on invite form; revoke button `h-8 w-8`; member badge always visible on touch |
+| 7 | **Touch target sizes** (§3.1 + §3.5) | ✅ Done | `BookmarkGroupedLayout` + `FolderTreeNode` `h-6→h-8`; `TagList` `h-5→h-7`, `gap-0.5→gap-1` |
+| 8 | **Drag-and-drop mobile** (§3.4) | ✅ Done | `:draggable="!isTouch"` via `useMediaQuery('(hover:none) and (pointer:coarse)')` in all three drag components |
 
-| Priority | Issue | Effort | Impact |
-|----------|-------|--------|--------|
-| 1 | **Dialog overflow fix** (§2.2) | Small — single file `DialogCl.vue` | Unblocks ALL dialogs on mobile |
-| 2 | **Main layout padding** (§3.2) | Trivial — single line | Better content area |
-| 3 | **Header spacing** (§3.3) | Small — 2 files | Prevents header overflow |
-| 4 | **Trashbin responsive buttons** (§2.1) | Medium — pattern for icon-only mobile buttons | Fixes unusable trashbin |
-| 5 | **Collection manage overflow** (§2.3) | Medium — add dropdown menu | Fixes collection row on mobile |
-| 6 | **Share dialog stacking** (§2.4) | Small — flex direction change | Fixes invite form |
-| 7 | **Touch target sizes** (§3.1 + §3.5) | Medium — systematic pass across 4 files | Better touch experience |
-| 8 | **Drag-and-drop mobile** (§3.4) | Medium — requires design decision | Prevents mobile confusion |
+### Additional improvements beyond the audit
 
-### After Fixes
-
-Once the improvements are implemented, a second set of screenshots will be captured at the same 375×812 viewport to document the "after" state in this report.
+- `TrashbinView` and `CollectionManageView` both use a new `#header-leading` slot in `MainLayout` to place the back arrow exactly where the burger menu sits — consistent across management pages.
+- New `ResponsiveButton` component (`frontend/src/components/ui/ResponsiveButton.vue`) encapsulates the icon-only mobile / labelled desktop pattern, replacing all manual dual-button pairs.
+- `CollectionManageView` hides the sidebar (`hide-sidebar`) since folder management is not relevant there.

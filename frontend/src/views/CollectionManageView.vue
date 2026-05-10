@@ -4,7 +4,7 @@ import EditCollectionDialog from '@/components/collection/EditCollectionDialog.v
 import DeleteCollectionDialog from '@/components/collection/DeleteCollectionDialog.vue'
 import ShareCollectionDialog from '@/components/collection/ShareCollectionDialog.vue'
 import {MainLayout} from '@/components/layout'
-import {ButtonCl, SearchBar} from '@/components/ui'
+import {ButtonCl, ResponsiveButton, SearchBar} from '@/components/ui'
 import router from '@/router'
 import {useCollectionStore} from '@/stores/collection'
 import {ArrowLeft, Pencil, Plus, Star, Trash2, Users} from 'lucide-vue-next'
@@ -60,21 +60,21 @@ function goBack() {
 </script>
 
 <template>
-  <MainLayout>
+  <MainLayout hide-sidebar>
+    <template #header-leading>
+      <ButtonCl variant="ghost" size="icon" data-testid="collection-manage-back-btn" :aria-label="t('common.back')" @click="goBack">
+        <ArrowLeft class="h-4 w-4" />
+      </ButtonCl>
+    </template>
+
     <template #header-title>
-      <div class="flex items-center gap-2">
-        <ButtonCl variant="ghost" size="icon" data-testid="collection-manage-back-btn" @click="goBack">
-          <ArrowLeft class="h-4 w-4" />
-        </ButtonCl>
-        <span class="text-xl font-semibold text-foreground truncate">{{ t('collectionManage.title') }}</span>
-      </div>
+      <span class="text-base font-semibold text-foreground truncate">{{ t('collectionManage.title') }}</span>
     </template>
 
     <template #header-actions>
-      <ButtonCl data-testid="collection-manage-create-btn" @click="createOpen = true">
-        <Plus class="h-4 w-4" />
-        {{ t('common.create') }}
-      </ButtonCl>
+      <ResponsiveButton :label="t('common.create')" data-testid="collection-manage-create-btn" @click="createOpen = true">
+        <Plus />
+      </ResponsiveButton>
     </template>
 
     <div class="max-w-2xl mx-auto space-y-4">
@@ -96,7 +96,7 @@ function goBack() {
           v-for="col in collections"
           :key="col.id"
           :data-testid="`collection-row-${col.id}`"
-          class="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
+          class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
         >
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2">

@@ -26,7 +26,8 @@ function clear() {
       'flex items-center gap-2 py-2 text-sm border border-primary/30',
       // mobile: sticky flush with header (-top-6 offsets main's pt-6 so chip lands at header edge),
       // full-bleed (-mx-6 px-6 cancels main's px-6), blur over scrolling cards
-      'sticky -top-6 z-30 -mx-6 px-6 rounded-none border-x-0 bg-primary/10 backdrop-blur supports-[backdrop-filter]:bg-primary/10',
+      'sticky -top-3 z-30 -mx-3 px-3 rounded-none border-x-0 bg-primary/10 backdrop-blur supports-[backdrop-filter]:bg-primary/10',
+      'sm:-top-6 sm:-mx-6 sm:px-6',
       // desktop: static, contained, normal corners
       'md:static md:top-auto md:mx-0 md:px-3 md:rounded-md md:border-x md:bg-primary/5 md:backdrop-blur-none',
     ]"

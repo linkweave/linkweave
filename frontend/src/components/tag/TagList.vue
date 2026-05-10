@@ -99,11 +99,11 @@ async function confirmDelete() {
         />
         <span class="truncate flex-1">{{ tag.data.name }}</span>
         <span v-if="(bookmarkCountByTag.get(tag.id) ?? 0) > 0" class="text-xs opacity-40 shrink-0">{{ bookmarkCountByTag.get(tag.id) }}</span>
-        <span class="inline-flex gap-0.5 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
+        <span class="inline-flex gap-1 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
           <button
             :aria-label="t('common.edit')"
             data-testid="tag-edit-btn"
-            class="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-primary hover:text-primary-foreground"
+            class="h-7 w-7 inline-flex items-center justify-center rounded hover:bg-primary hover:text-primary-foreground"
             @click.stop="handleEdit(tag)"
           >
             <Pencil class="h-3 w-3" />
@@ -111,7 +111,7 @@ async function confirmDelete() {
           <button
             :aria-label="t('common.delete')"
             data-testid="tag-delete-btn"
-            class="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-destructive hover:text-destructive-foreground"
+            class="h-7 w-7 inline-flex items-center justify-center rounded hover:bg-destructive hover:text-destructive-foreground"
             @click.stop="handleDelete(tag)"
           >
             <Trash2 class="h-3 w-3" />

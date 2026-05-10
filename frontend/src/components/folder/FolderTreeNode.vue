@@ -21,8 +21,10 @@ import {
   setDraggingFolderId,
 } from '@/composables/useDragState'
 import { useDndMove } from '@/composables/useDndMove'
+import { useMediaQuery } from '@/composables/useMediaQuery'
 
 const folderStore = useFolderStore()
+const isTouch = useMediaQuery('(hover: none) and (pointer: coarse)')
 const { moveBookmarkWithUndo, moveFolderWithUndo } = useDndMove()
 
 withDefaults(defineProps<{
@@ -92,8 +94,8 @@ function isDragAccepted(event: DragEvent, targetFolderId: string): boolean {
     // Prevent dropping a folder onto itself or one of its descendants
     if (!draggingId) return false
     if (draggingId === targetFolderId) return false
-    if (isDescendant(draggingId, targetFolderId)) return false
-    return true
+    return !isDescendant(draggingId, targetFolderId);
+
   }
   return false
 }
@@ -144,7 +146,7 @@ async function onDrop(event: DragEvent, targetFolder: FolderJson) {
     <li v-for="node in nodes" :key="node.folder.id">
       <DropdownMenuRoot>
         <div
-          draggable="true"
+          :draggable="!isTouch"
           class="group flex items-center gap-1 rounded-md py-1.5 pr-2 text-sm cursor-pointer transition-colors"
           :class="[
             folderStore.selectedFolderId === node.folder.id
@@ -181,7 +183,7 @@ async function onDrop(event: DragEvent, targetFolder: FolderJson) {
           <span class="flex-1 truncate">{{ node.folder.data.name }}</span>
           <DropdownMenuTrigger as-child>
             <button
-              class="ml-auto h-6 w-6 shrink-0 inline-flex items-center justify-center rounded-md transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground"
+              class="ml-auto h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-md transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground"
               @click.stop
             >
               <MoreHorizontal class="h-3.5 w-3.5" />
