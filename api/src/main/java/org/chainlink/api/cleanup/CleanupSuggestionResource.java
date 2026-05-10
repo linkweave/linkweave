@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.Bookmark;
 import org.chainlink.api.bookmark.BookmarkService;
 import org.chainlink.api.cleanup.json.CleanupSuggestionListJson;
+import org.chainlink.api.cleanup.json.CleanupThresholdsJson;
 import org.chainlink.api.cleanup.json.MoveToTrashJson;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.auth.AuthorizationService;
@@ -65,8 +66,8 @@ public class CleanupSuggestionResource {
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
     @Authenticated
-    public List<Integer> thresholds() {
-        return cleanupSuggestionService.getAvailableThresholds();
+    public CleanupThresholdsJson thresholds() {
+        return new CleanupThresholdsJson(cleanupSuggestionService.getAvailableThresholds());
     }
 
     @POST

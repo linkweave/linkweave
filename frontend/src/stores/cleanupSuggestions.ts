@@ -35,7 +35,7 @@ export const useCleanupSuggestionsStore = defineStore('cleanupSuggestions', () =
 
   async function fetchThresholds(): Promise<void> {
     try {
-      thresholds.value = await cleanupApi.apiCleanupSuggestionsThresholdsGet()
+      thresholds.value = (await cleanupApi.apiCleanupSuggestionsThresholdsGet()).thresholds
     } catch {
       // keep defaults
     }

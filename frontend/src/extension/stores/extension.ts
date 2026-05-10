@@ -155,7 +155,7 @@ export const useExtensionStore = defineStore('extension', () => {
   }
 
   async function loadCollections(): Promise<void> {
-    collections.value = await collectionApi.apiCollectionsGet()
+    collections.value = (await collectionApi.apiCollectionsGet()).collections
   }
 
   async function loadCollection(id: string): Promise<void> {

@@ -45,7 +45,7 @@ export const useCollectionStore = defineStore('collection', () => {
 
   async function fetchCollections() {
     try {
-      collections.value = await collectionApi.apiCollectionsGet()
+      collections.value = (await collectionApi.apiCollectionsGet()).collections
       const auth = useAuthStore()
       if (auth.user?.email) {
         offlineCache.saveCollections(auth.user.email, toSerializable(collections.value)).catch(err => console.error('Failed to cache collections for offline use:', err))
@@ -188,7 +188,7 @@ export const useCollectionStore = defineStore('collection', () => {
 
   async function fetchMembers(collectionId: string): Promise<CollectionMemberJson[]> {
     try {
-      return await collectionApi.apiCollectionsIdMembersGet({ id: collectionId })
+      return (await collectionApi.apiCollectionsIdMembersGet({ id: collectionId })).members
     } catch (err) {
       console.error('Failed to fetch members:', err)
       const notification = useNotificationStore()

@@ -43,8 +43,8 @@ class CollectionResourceListAndDefaultITest {
             .get("/collections")
             .then()
             .statusCode(200)
-            .body("id", hasItems(col1.getId().getUUID().toString(), col2.getId().getUUID().toString()))
-            .body("find { it.id == '" + col2.getId().getUUID() + "' }.name", equalTo("Work"));
+            .body("collections.id", hasItems(col1.getId().getUUID().toString(), col2.getId().getUUID().toString()))
+            .body("collections.find { it.id == '" + col2.getId().getUUID() + "' }.name", equalTo("Work"));
     }
 
     @Test
@@ -56,9 +56,9 @@ class CollectionResourceListAndDefaultITest {
             .get("/collections")
             .then()
             .statusCode(200)
-            .body("findAll { it.id == '" + col.getId().getUUID() + "' }.size()", equalTo(1))
-            .body("find { it.id == '" + col.getId().getUUID() + "' }.role", equalTo("OWNER"))
-            .body("find { it.id == '" + col.getId().getUUID() + "' }.isDefault", equalTo(false));
+            .body("collections.findAll { it.id == '" + col.getId().getUUID() + "' }.size()", equalTo(1))
+            .body("collections.find { it.id == '" + col.getId().getUUID() + "' }.role", equalTo("OWNER"))
+            .body("collections.find { it.id == '" + col.getId().getUUID() + "' }.isDefault", equalTo(false));
     }
 
     @Test
@@ -104,8 +104,8 @@ class CollectionResourceListAndDefaultITest {
             .get("/collections")
             .then()
             .statusCode(200)
-            .body("find { it.id == '" + col2.getId().getUUID() + "' }.isDefault", equalTo(true))
-            .body("find { it.id == '" + col1.getId().getUUID() + "' }.isDefault", equalTo(false));
+            .body("collections.find { it.id == '" + col2.getId().getUUID() + "' }.isDefault", equalTo(true))
+            .body("collections.find { it.id == '" + col1.getId().getUUID() + "' }.isDefault", equalTo(false));
     }
 
     @Test
@@ -134,8 +134,8 @@ class CollectionResourceListAndDefaultITest {
             .get("/collections")
             .then()
             .statusCode(200)
-            .body("find { it.id == '" + col3.getId().getUUID() + "' }.isDefault", equalTo(true))
-            .body("find { it.id == '" + col1.getId().getUUID() + "' }.isDefault", equalTo(false))
-            .body("find { it.id == '" + col2.getId().getUUID() + "' }.isDefault", equalTo(false));
+            .body("collections.find { it.id == '" + col3.getId().getUUID() + "' }.isDefault", equalTo(true))
+            .body("collections.find { it.id == '" + col1.getId().getUUID() + "' }.isDefault", equalTo(false))
+            .body("collections.find { it.id == '" + col2.getId().getUUID() + "' }.isDefault", equalTo(false));
     }
 }

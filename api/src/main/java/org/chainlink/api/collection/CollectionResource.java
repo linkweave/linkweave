@@ -1,6 +1,5 @@
 package org.chainlink.api.collection;
 
-import java.util.List;
 import java.time.temporal.ChronoUnit;
 
 import ch.dvbern.dvbstarter.types.id.ID;
@@ -37,9 +36,9 @@ public class CollectionResource {
     @GET
     @NonNull
     @Authenticated
-    public List<CollectionSummaryJson> listCollections() {
+    public CollectionSummaryListJson listCollections() {
         var currentUser = currentUserService.currentUser();
-        return collectionService.findCollectionsForUser(currentUser);
+        return new CollectionSummaryListJson(collectionService.findCollectionsForUser(currentUser));
     }
 
     @GET
@@ -97,9 +96,9 @@ public class CollectionResource {
     @Path("{id}/members")
     @NonNull
     @Authenticated
-    public List<CollectionMemberJson> listMembers(@PathParam("id") ID<Collection> id) {
+    public CollectionMemberListJson listMembers(@PathParam("id") ID<Collection> id) {
         authorizationService.requireOwnerAccess(id);
-        return collectionService.listMembers(id);
+        return new CollectionMemberListJson(collectionService.listMembers(id));
     }
 
     @POST

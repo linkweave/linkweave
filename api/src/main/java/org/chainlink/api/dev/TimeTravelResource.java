@@ -1,7 +1,6 @@
 package org.chainlink.api.dev;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 
@@ -19,6 +18,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import io.smallrye.faulttolerance.api.RateLimit;
+import org.chainlink.infrastructure.stereotypes.JaxDTO;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.Nullable;
 
@@ -37,9 +37,11 @@ public class TimeTravelResource {
 
     private final ClockProvider clockProvider;
 
+    @JaxDTO
     @PermitAll
     public record TimeTravelRequest(@Nullable String instant) {}
 
+    @JaxDTO
     @PermitAll
     public record TimeTravelStatus(boolean timeTravelling, String now) {}
 

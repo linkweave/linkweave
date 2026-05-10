@@ -88,11 +88,11 @@ class CollectionShareITest {
             .get("/collections/{id}/members")
             .then()
             .statusCode(200)
-            .body("size()", equalTo(1))
-            .body("[0].email", equalTo(OWNER))
-            .body("[0].role", equalTo("OWNER"))
-            .body("[0].displayName", notNullValue())
-            .body("[0].userId", notNullValue());
+            .body("members.size()", equalTo(1))
+            .body("members[0].email", equalTo(OWNER))
+            .body("members[0].role", equalTo("OWNER"))
+            .body("members[0].displayName", notNullValue())
+            .body("members[0].userId", notNullValue());
     }
 
     @Test
@@ -123,7 +123,7 @@ class CollectionShareITest {
             .get("/collections/{id}/members")
             .then()
             .statusCode(200)
-            .body("size()", equalTo(2));
+            .body("members.size()", equalTo(2));
     }
 
     @Test
@@ -134,7 +134,7 @@ class CollectionShareITest {
             .get("/collections")
             .then()
             .statusCode(200)
-            .body("find { it.id == '" + collectionId + "' }.shared", equalTo(true));
+            .body("collections.find { it.id == '" + collectionId + "' }.shared", equalTo(true));
     }
 
     @Test
@@ -250,8 +250,8 @@ class CollectionShareITest {
             .get("/collections/{id}/members")
             .then()
             .statusCode(200)
-            .body("size()", equalTo(1))
-            .body("[0].role", equalTo("OWNER"));
+            .body("members.size()", equalTo(1))
+            .body("members[0].role", equalTo("OWNER"));
     }
 
     @Test
