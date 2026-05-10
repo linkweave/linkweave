@@ -101,9 +101,12 @@ async function handleExport() {
       </div>
 
       <div>
-        <h3 class="text-sm font-medium text-foreground mb-3">
-          {{ t('settings.layout') }}
+        <h3 class="text-sm font-medium text-foreground mb-1">
+          {{ t('settings.defaultLayout') }}
         </h3>
+        <p class="text-sm text-muted-foreground mb-3">
+          {{ t('settings.defaultLayoutHint') }}
+        </p>
         <div class="flex gap-2">
           <button
             v-for="option in layouts"
