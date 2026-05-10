@@ -60,6 +60,8 @@
     "exportError": "Sammlung konnte nicht exportiert werden.",
     "importCollection": "Lesezeichen importieren",
     "layout": "Lesezeichen-Layout",
+    "defaultLayout": "Standard-Layout",
+    "defaultLayoutHint": "Wird verwendet, wenn eine Sammlung kein eigenes Layout hat. Jede Sammlung merkt sich ihre Auswahl, sobald du sie änderst.",
     "layoutList": "Liste",
     "layoutGrid": "Raster",
     "layoutGrouped": "Gruppiert"
