@@ -7,10 +7,12 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -37,6 +39,16 @@ import org.jspecify.annotations.NonNull;
 @Setter
 public class CollectionAccess extends AbstractEntity<CollectionAccess> {
 
+    public CollectionAccess(
+        @NonNull Collection collection,
+        @NonNull User user,
+        @NonNull CollectionRole role,
+        boolean isDefault
+    ) {
+        this(collection, user, role, isDefault, null);
+    }
+
+
     @NonNull
     @NotNull
     @ManyToOne(optional = false)
@@ -58,4 +70,8 @@ public class CollectionAccess extends AbstractEntity<CollectionAccess> {
     @NotNull
     @Column(nullable = false)
     private boolean isDefault = false;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private @Nullable String settings;
 }

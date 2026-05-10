@@ -1,5 +1,5 @@
 import {config} from '@/api'
-import type {CollectionInfoJson, CollectionMemberJson, CollectionSummaryJson} from '@/api/generated'
+import type {CollectionInfoJson, CollectionMemberJson, CollectionSettingsJson, CollectionSummaryJson} from '@/api/generated'
 import {CollectionResourceApi} from '@/api/generated'
 import * as offlineCache from '@/lib/offline-cache'
 import { toSerializable } from '@/lib/to-serializable'
@@ -15,10 +15,16 @@ export const useCollectionStore = defineStore('collection', () => {
   const currentCollectionId = ref<string | null>(null)
   const collectionInfo = ref<CollectionInfoJson | null>(null)
   const collections = ref<CollectionSummaryJson[]>([])
+  const settings = ref<CollectionSettingsJson | null>(null)
   const loading = ref(false)
   const searchQuery = ref('')
 
   const collectionName = computed(() => collectionInfo.value?.name ?? null)
+
+  const settingsLayout = computed<'list' | 'grid' | 'grouped' | null>(() => {
+    const v = settings.value?.layout
+    return v === 'list' || v === 'grid' || v === 'grouped' ? v : null
+  })
   const defaultCollectionId = computed(() =>
     collections.value.find(c => c.isDefault)?.id ?? null
   )
@@ -54,12 +60,18 @@ export const useCollectionStore = defineStore('collection', () => {
   async function fetchCollectionInfo(collectionId: string) {
     if (!collectionId) {
       collectionInfo.value = null
+      settings.value = null
       return
     }
 
     loading.value = true
     try {
-      collectionInfo.value = await collectionApi.apiCollectionsIdGet({ id: collectionId })
+      const [info, fetchedSettings] = await Promise.all([
+        collectionApi.apiCollectionsIdGet({ id: collectionId }),
+        collectionApi.apiCollectionsIdSettingsGet({ id: collectionId }).catch(() => null),
+      ])
+      collectionInfo.value = info
+      settings.value = fetchedSettings
       const auth = useAuthStore()
       if (auth.user?.email && collectionInfo.value) {
         offlineCache.saveCollectionInfo(auth.user.email, toSerializable(collectionInfo.value)).catch(err => console.error('Failed to cache collection info for offline use:', err))
@@ -155,7 +167,14 @@ export const useCollectionStore = defineStore('collection', () => {
     router.push({ name: 'collection', params: { id: collectionId } })
   }
 
-  watch(currentCollectionId, (id) => {
+  watch(currentCollectionId, (id, prevId) => {
+    if (prevId && pendingPatch) {
+      if (settingsFlushTimer) {
+        clearTimeout(settingsFlushTimer)
+        settingsFlushTimer = null
+      }
+      void flushSettings()
+    }
     if (id) {
       fetchCollectionInfo(id)
       if (!collectionsFetched.value) {
@@ -190,6 +209,50 @@ export const useCollectionStore = defineStore('collection', () => {
     }
   }
 
+  const SETTINGS_DEBOUNCE_MS = 400
+  let settingsFlushTimer: ReturnType<typeof setTimeout> | null = null
+  let pendingPatch: { collectionId: string; patch: CollectionSettingsJson } | null = null
+  let inFlight = false
+
+  async function flushSettings(): Promise<void> {
+    if (!pendingPatch || inFlight) return
+    const { collectionId, patch } = pendingPatch
+    pendingPatch = null
+    inFlight = true
+    try {
+      const result = await collectionApi.apiCollectionsIdSettingsPut({
+        id: collectionId,
+        collectionSettingsJson: patch,
+      })
+      // Only adopt the server response if the user hasn't queued another change.
+      if (!pendingPatch) {
+        settings.value = result
+      }
+    } catch (err) {
+      console.error('Failed to update collection settings:', err)
+      const notification = useNotificationStore()
+      notification.handleApiError(err, 'Failed to update collection settings')
+    } finally {
+      inFlight = false
+      if (pendingPatch) {
+        void flushSettings()
+      }
+    }
+  }
+
+  function updateSettings(collectionId: string, patch: CollectionSettingsJson): void {
+    settings.value = { ...(settings.value ?? {}), ...patch }
+    pendingPatch = {
+      collectionId,
+      patch: { ...(pendingPatch?.collectionId === collectionId ? pendingPatch.patch : {}), ...patch },
+    }
+    if (settingsFlushTimer) clearTimeout(settingsFlushTimer)
+    settingsFlushTimer = setTimeout(() => {
+      settingsFlushTimer = null
+      void flushSettings()
+    }, SETTINGS_DEBOUNCE_MS)
+  }
+
   async function revokeAccess(collectionId: string, userId: string): Promise<void> {
     try {
       await collectionApi.apiCollectionsIdMembersUserIdDelete({ id: collectionId, userId })
@@ -203,6 +266,9 @@ export const useCollectionStore = defineStore('collection', () => {
     currentCollectionId,
     collectionInfo,
     collections,
+    settings,
+    settingsLayout,
+    updateSettings,
     loading,
     searchQuery,
     collectionName,

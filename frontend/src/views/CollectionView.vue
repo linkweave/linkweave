@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { BookmarkList, SearchActiveChip } from '@/components/bookmark'
 import CreateBookmarkDialog from '@/components/bookmark/CreateBookmarkDialog.vue'
+import CollectionLayoutToggle from '@/components/collection/CollectionLayoutToggle.vue'
 import { FolderBreadcrumbCl } from '@/components/folder'
 import { MainLayout } from '@/components/layout'
 import { ResponsiveButton, SearchBar } from '@/components/ui'
@@ -25,8 +26,9 @@ const searchPlaceholder = computed(() =>
   isDesktop.value ? t('search.placeholder') : t('search.placeholderShort'),
 )
 
+const effectiveLayout = computed(() => collectionStore.settingsLayout ?? ui.bookmarkLayout)
 const containerClass = computed(() =>
-  ui.bookmarkLayout === 'grouped' || ui.bookmarkLayout === 'grid' ? 'max-w-7xl' : 'max-w-4xl',
+  effectiveLayout.value === 'grouped' || effectiveLayout.value === 'grid' ? 'max-w-7xl' : 'max-w-4xl',
 )
 </script>
 
@@ -53,7 +55,12 @@ const containerClass = computed(() =>
     </template>
 
     <div :class="[containerClass, 'mx-auto space-y-4']">
-      <FolderBreadcrumbCl />
+      <div class="flex items-center gap-3">
+        <div class="min-w-0 flex-1">
+          <FolderBreadcrumbCl />
+        </div>
+        <CollectionLayoutToggle />
+      </div>
       <SearchActiveChip />
       <BookmarkList />
     </div>
