@@ -8,6 +8,7 @@ import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import jakarta.persistence.Table;
 import lombok.experimental.UtilityClass;
+import org.chainlink.api.shared.archunit.ArchUtil;
 
 @UtilityClass
 public class TableAnnotationNaming {
@@ -30,8 +31,7 @@ public class TableAnnotationNaming {
         Function<T, String> valueName,
         Function<String, Pattern> namingPattern
     ) {
-        String classSimpleName = javaClass.getSimpleName()
-            .toLowerCase();
+        String classSimpleName = ArchUtil.tableNamePatternOf(javaClass.getSimpleName());
         Pattern pattern = namingPattern.apply(classSimpleName);
 
         return javaClass.tryGetAnnotationOfType(Table.class)

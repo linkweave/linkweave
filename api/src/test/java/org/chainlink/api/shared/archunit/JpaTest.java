@@ -33,7 +33,7 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.Valid;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
@@ -119,9 +119,13 @@ class JpaTest {
     // Currently missing
     // - handling of embeddables with foreignKey
     // - AssociationOverride handling
+    // The reference component accepts either the referenced table name (e.g.
+    // fk_collection_user) or any descriptive relationship name (e.g. fk_collection_owner,
+    // fk_folder_parent) — both are idiomatic, and pinning to the table name forces
+    // less-readable choices when an entity has multiple FKs to the same target.
     private static final DescribedPredicate<JavaField> NAMING_CONVENTION_FOR_FK = foreignKeyNaming(
         "the naming convention for FK",
-        (owner, reference) -> Pattern.compile("fk_" + owner + "_" + reference + "(_.*)?")
+        (owner, reference) -> Pattern.compile("fk_" + owner + "_(" + reference + "|\\w+)(_.*)?")
     );
 
     private static final DescribedPredicate<Enumerated> VALUE_STRING = describe(

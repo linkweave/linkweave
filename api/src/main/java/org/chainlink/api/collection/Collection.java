@@ -17,6 +17,7 @@ import org.chainlink.api.shared.abstractentity.AbstractEntity;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.infrastructure.db.DbConst;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 @Entity
 @Table(indexes = {
@@ -38,6 +39,7 @@ public class Collection extends AbstractEntity<Collection> {
     @JoinColumn(foreignKey = @ForeignKey(name = "fk_collection_owner"), nullable = false)
     private User owner;
 
+    @Nullable
     @Size(max = DbConst.DB_TEXTAREA_MAX_LENGTH_2000)
     @Column(length = DbConst.DB_TEXTAREA_MAX_LENGTH_2000)
     private String faviconAllowlist;

@@ -30,7 +30,7 @@ import org.jspecify.annotations.NonNull;
     indexes = {
         @Index(name = "ix_tag_collection_id", columnList = "collection_id, id"),
     },
-    uniqueConstraints = @UniqueConstraint(name = "uq_tag_name_collection", columnNames = {"name", "collection_id"})
+    uniqueConstraints = @UniqueConstraint(name = "uc_tag_name_collection", columnNames = {"name", "collection_id"})
 )
 @NoArgsConstructor
 @AllArgsConstructor

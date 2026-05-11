@@ -7,6 +7,7 @@ import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaField;
 import jakarta.persistence.JoinColumn;
 import lombok.experimental.UtilityClass;
+import org.chainlink.api.shared.archunit.ArchUtil;
 
 @UtilityClass
 public class ForeignKeyNaming {
@@ -28,8 +29,8 @@ public class ForeignKeyNaming {
         String fkName,
         BiFunction<String, String, Pattern> namingPattern
     ) {
-        String ownerSimpleName = field.getOwner().getSimpleName().toLowerCase();
-        String referenceSimpleName = field.getRawType().getSimpleName().toLowerCase();
+        String ownerSimpleName = ArchUtil.tableNamePatternOf(field.getOwner().getSimpleName());
+        String referenceSimpleName = ArchUtil.tableNamePatternOf(field.getRawType().getSimpleName());
         return namingPattern.apply(ownerSimpleName, referenceSimpleName)
             .matcher(fkName)
             .matches();
