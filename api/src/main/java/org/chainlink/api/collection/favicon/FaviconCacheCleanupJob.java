@@ -16,8 +16,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.chainlink.api.bookmark.Bookmark;
-import org.chainlink.api.bookmark.BookmarkRepo;
+import org.chainlink.api.bookmark.BookmarkService;
+import org.chainlink.api.bookmark.BookmarkService.FaviconEvictionCandidate;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jspecify.annotations.NonNull;
 
@@ -32,7 +32,7 @@ import org.jspecify.annotations.NonNull;
 @Slf4j
 public class FaviconCacheCleanupJob {
 
-    private final BookmarkRepo bookmarkRepo;
+    private final BookmarkService bookmarkService;
     private final FaviconCacheService cache;
     private final ClockProvider clockProvider;
 
@@ -81,13 +81,13 @@ public class FaviconCacheCleanupJob {
         long bytesFreed = 0L;
         Duration oldestEvictedAge = Duration.ZERO;
 
-        for (Bookmark bookmark : bookmarkRepo.findAllOldestFirstNotDeleted()) {
-            OffsetDateTime created = bookmark.getTimestampErstellt();
+        for (FaviconEvictionCandidate candidate : bookmarkService.findFaviconEvictionCandidatesOldestFirst()) {
+            OffsetDateTime created = candidate.createdAt();
             if (created != null && created.toInstant().isAfter(cutoff)) {
                 // BR-109: every remaining bookmark is younger than the minimum age.
                 break;
             }
-            String origin = FaviconFetcherService.canonicalOrigin(bookmark.getUrl());
+            String origin = FaviconFetcherService.canonicalOrigin(candidate.url());
             if (!seenOrigins.add(origin)) {
                 continue;
             }

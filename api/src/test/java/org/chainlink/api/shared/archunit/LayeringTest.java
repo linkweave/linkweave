@@ -106,20 +106,16 @@ class LayeringTest {
 
     @Test
     void app_package_exists() {
-        var packagePrefix = "%s.".formatted(APP_PACKAGE);
-
-        assertThat(Package.getPackages())
-            .extracting(Package::getName)
-            .anyMatch(name -> name.startsWith(packagePrefix));
+        assertThat(APP_CLASSES.stream().anyMatch(c -> c.getPackageName().startsWith(APP_PACKAGE + ".")))
+            .as("app package %s.* contains classes", APP_PACKAGE)
+            .isTrue();
     }
 
     @Test
     void starter_package_exists() {
-        var packagePrefix = "%s.".formatted(STARTER_PACKAGE);
-
-        assertThat(Package.getPackages())
-            .extracting(Package::getName)
-            .anyMatch(name -> name.startsWith(packagePrefix));
+        assertThat(APP_CLASSES.stream().anyMatch(c -> c.getPackageName().startsWith(STARTER_PACKAGE + ".")))
+            .as("starter package %s.* contains classes", STARTER_PACKAGE)
+            .isTrue();
     }
 
     @Test

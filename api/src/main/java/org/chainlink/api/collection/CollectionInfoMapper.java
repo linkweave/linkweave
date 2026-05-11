@@ -2,8 +2,6 @@ package org.chainlink.api.collection;
 
 import java.util.List;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.chainlink.api.bookmark.AutoTagRule;
 import org.chainlink.api.bookmark.AutoTagRuleMapper;
 import org.chainlink.api.bookmark.Bookmark;
@@ -12,14 +10,12 @@ import org.chainlink.api.bookmark.Tag;
 import org.chainlink.api.bookmark.TagMapper;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.bookmark.folder.FolderMapper;
-import org.chainlink.infrastructure.stereotypes.Service;
+import org.chainlink.infrastructure.stereotypes.JaxMapper;
 
-@Service
-@RequiredArgsConstructor
-@Slf4j
-public class CollectionInfoMapperService {
+@JaxMapper
+public class CollectionInfoMapper {
 
-    public CollectionInfoJson toCollectionInfoJson(
+    public static CollectionInfoJson toCollectionInfoJson(
         Collection collection,
         List<Bookmark> bookmarks,
         List<Folder> folders,

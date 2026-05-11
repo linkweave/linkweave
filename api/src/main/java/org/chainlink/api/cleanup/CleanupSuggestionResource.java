@@ -75,7 +75,7 @@ public class CleanupSuggestionResource {
     @Authenticated
     public void dismiss(@PathParam("bookmarkId") @NotNull @NonNull ID<Bookmark> bookmarkId) {
         Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
-        authorizationService.requireCollectionAccess(bookmark.getCollection().getId());
+        authorizationService.requireAccessTo(bookmark);
         cleanupSuggestionService.dismissSuggestion(bookmarkId);
     }
 

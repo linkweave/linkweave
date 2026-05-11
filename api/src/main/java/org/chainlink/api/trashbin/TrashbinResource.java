@@ -23,10 +23,8 @@ import org.chainlink.api.bookmark.folder.FolderService;
 import org.chainlink.api.bookmark.folder.json.FolderJson;
 import org.chainlink.api.bookmark.json.BookmarkJson;
 import org.chainlink.api.collection.Collection;
-import org.chainlink.api.collection.CollectionAccess;
-import org.chainlink.api.collection.CollectionAccessRepo;
+import org.chainlink.api.collection.CollectionService;
 import org.chainlink.api.shared.auth.AuthorizationService;
-import org.chainlink.api.shared.user.CurrentUserService;
 import io.smallrye.faulttolerance.api.RateLimit;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
@@ -41,8 +39,7 @@ public class TrashbinResource {
     private final BookmarkService bookmarkService;
     private final FolderService folderService;
     private final AuthorizationService authorizationService;
-    private final CurrentUserService currentUserService;
-    private final CollectionAccessRepo collectionAccessRepo;
+    private final CollectionService collectionService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -81,7 +78,7 @@ public class TrashbinResource {
         @PathParam("bookmarkId") @NotNull @NonNull ID<Bookmark> bookmarkId
     ) {
         Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
-        authorizationService.requireCollectionAccess(bookmark.getCollection().getId());
+        authorizationService.requireAccessTo(bookmark);
         return BookmarkMapper.toJson(bookmarkService.restoreBookmark(bookmarkId));
     }
 
@@ -92,7 +89,7 @@ public class TrashbinResource {
         @PathParam("bookmarkId") @NotNull @NonNull ID<Bookmark> bookmarkId
     ) {
         Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
-        authorizationService.requireCollectionAccess(bookmark.getCollection().getId());
+        authorizationService.requireAccessTo(bookmark);
         bookmarkService.purgeBookmark(bookmarkId);
     }
 
@@ -105,7 +102,7 @@ public class TrashbinResource {
         @PathParam("folderId") @NotNull @NonNull ID<Folder> folderId
     ) {
         Folder folder = folderService.getFolder(folderId);
-        authorizationService.requireCollectionAccess(folder.getCollection().getId());
+        authorizationService.requireAccessTo(folder);
         return FolderMapper.toJson(folderService.restoreFolder(folderId));
     }
 
@@ -116,7 +113,7 @@ public class TrashbinResource {
         @PathParam("folderId") @NotNull @NonNull ID<Folder> folderId
     ) {
         Folder folder = folderService.getFolder(folderId);
-        authorizationService.requireCollectionAccess(folder.getCollection().getId());
+        authorizationService.requireAccessTo(folder);
         folderService.purgeFolder(folderId);
     }
 
@@ -130,9 +127,6 @@ public class TrashbinResource {
 
     @NonNull
     private List<ID<Collection>> userCollectionIds() {
-        return collectionAccessRepo.findByUser(currentUserService.currentUserID()).stream()
-            .map(CollectionAccess::getCollection)
-            .map(Collection::getId)
-            .toList();
+        return collectionService.findCollectionIdsForCurrentUser();
     }
 }

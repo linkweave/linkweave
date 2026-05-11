@@ -99,7 +99,7 @@ public class BookmarkResource {
         @PathParam("bookmarkId") @NotNull @NonNull ID<Bookmark> bookmarkId
     ) {
         Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
-        authorizationService.requireCollectionAccess(bookmark.getCollection().getId());
+        authorizationService.requireAccessTo(bookmark);
         bookmarkService.removeBookmark(bookmarkId);
     }
 
@@ -110,7 +110,7 @@ public class BookmarkResource {
         @PathParam("bookmarkId") @NotNull @NonNull ID<Bookmark> bookmarkId
     ) {
         Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
-        authorizationService.requireCollectionAccess(bookmark.getCollection().getId());
+        authorizationService.requireAccessTo(bookmark);
         bookmarkService.trackClick(bookmarkId);
     }
 }

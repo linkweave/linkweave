@@ -13,6 +13,10 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.chainlink.api.bookmark.AutoTagRuleService;
+import org.chainlink.api.bookmark.BookmarkService;
+import org.chainlink.api.bookmark.TagService;
+import org.chainlink.api.bookmark.folder.FolderService;
 import org.chainlink.api.shared.auth.AuthorizationService;
 import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.api.shared.user.User;
@@ -32,6 +36,10 @@ public class CollectionResource {
     private final CollectionSettingsService collectionSettingsService;
     private final AuthorizationService authorizationService;
     private final CurrentUserService currentUserService;
+    private final BookmarkService bookmarkService;
+    private final FolderService folderService;
+    private final TagService tagService;
+    private final AutoTagRuleService autoTagRuleService;
 
     @GET
     @NonNull
@@ -47,7 +55,13 @@ public class CollectionResource {
     @Authenticated
     public CollectionInfoJson getCollectionInfoById(@PathParam("id") ID<Collection> id) {
         authorizationService.requireCollectionAccess(id);
-        return collectionService.getCollectionInfoById(id);
+        return CollectionInfoMapper.toCollectionInfoJson(
+            collectionService.getCollection(id),
+            bookmarkService.getBookmarksByCollection(id),
+            folderService.getFoldersByCollection(id),
+            tagService.findByCollection(id),
+            autoTagRuleService.findByCollection(id)
+        );
     }
 
     @POST

@@ -73,7 +73,7 @@ public class AutoTagRuleResource {
     ) {
         authorizationService.requireCollectionAccess(json.getCollectionId());
         AutoTagRule rule = autoTagRuleService.getRule(ruleId);
-        authorizationService.requireCollectionAccess(rule.getCollection().getId());
+        authorizationService.requireAccessTo(rule);
         AutoTagRule updated = autoTagRuleService.updateRule(rule, json);
         return AutoTagRuleMapper.toJson(updated);
     }
@@ -83,7 +83,7 @@ public class AutoTagRuleResource {
     @Authenticated
     public void delete(@PathParam("ruleId") @NotNull @NonNull ID<AutoTagRule> ruleId) {
         AutoTagRule rule = autoTagRuleService.getRule(ruleId);
-        authorizationService.requireCollectionAccess(rule.getCollection().getId());
+        authorizationService.requireAccessTo(rule);
         autoTagRuleService.removeRule(ruleId);
     }
 

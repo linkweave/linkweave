@@ -13,8 +13,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ch.dvbern.dvbstarter.types.id.ID;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.abstractentity.AbstractEntity;
+import org.chainlink.api.shared.auth.BelongsToCollection;
 import org.chainlink.infrastructure.db.DbConst;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -29,7 +31,13 @@ import org.jspecify.annotations.Nullable;
 @AllArgsConstructor
 @Getter
 @Setter
-public class AutoTagRule extends AbstractEntity<AutoTagRule> {
+public class AutoTagRule extends AbstractEntity<AutoTagRule> implements BelongsToCollection {
+
+    @Override
+    public @NonNull ID<Collection> getCollectionId() {
+        return collection.getId();
+    }
+
 
     @NonNull
     @ManyToOne(optional = false)

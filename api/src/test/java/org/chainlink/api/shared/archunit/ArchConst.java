@@ -13,11 +13,13 @@ public class ArchConst {
     public static final String APP_PACKAGE = "org.chainlink";
     public static final String STARTER_PACKAGE = "ch.dvbern.dvbstarter";
 
+    private static final ImportOption EXCLUDE_JPA_STATIC_METAMODEL =
+        location -> !location.asURI().getPath().matches(".*_\\.class");
+
     private static final Set<ImportOption> IMPORT_OPTIONS = Set.of(
         new ImportOption.DoNotIncludeTests(),
-        new ImportOption.DoNotIncludeArchives()
-        // example for excluding generated code
-        //         location -> !location.contains("ch/dvbern/my/project/my/module/generated")
+        new ImportOption.DoNotIncludeArchives(),
+        EXCLUDE_JPA_STATIC_METAMODEL
     );
     private static final Set<ImportOption> IMPORT_OPTIONS_FOR_TESTS = Set.of(
         new ImportOption.OnlyIncludeTests()

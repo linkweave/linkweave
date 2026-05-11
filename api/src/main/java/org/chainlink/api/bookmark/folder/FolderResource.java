@@ -73,7 +73,7 @@ public class FolderResource {
         @NotNull @Valid @NonNull FolderSaveJson json
     ) {
         Folder folder = folderService.getFolder(folderId);
-        authorizationService.requireCollectionAccess(folder.getCollection().getId());
+        authorizationService.requireAccessTo(folder);
         Folder renamed = folderService.updateFolder(folderId, json);
         return FolderMapper.toJson(renamed);
     }
@@ -100,7 +100,7 @@ public class FolderResource {
         @PathParam("folderId") @NotNull @NonNull ID<Folder> folderId
     ) {
         Folder folder = folderService.getFolder(folderId);
-        authorizationService.requireCollectionAccess(folder.getCollection().getId());
+        authorizationService.requireAccessTo(folder);
         folderService.removeFolder(folderId);
     }
 }

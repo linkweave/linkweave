@@ -17,6 +17,7 @@ import org.chainlink.api.bookmark.TagService;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.bookmark.folder.FolderService;
 import org.chainlink.api.collection.favicon.FaviconAllowlist;
+import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.infrastructure.errorhandling.AppValidationException;
 import org.chainlink.infrastructure.errorhandling.AppValidationMessage;
@@ -36,9 +37,9 @@ public class CollectionService {
     private final FolderService folderService;
     private final TagService tagService;
     private final AutoTagRuleService autoTagRuleService;
-    private final CollectionInfoMapperService collectionInfoMapperService;
     private final BookmarkService bookmarkService;
     private final UserRepo userRepo;
+    private final CurrentUserService currentUserService;
 
     public Collection getDefaultCollectionOrAutoprovision(@NonNull User user) {
 
@@ -70,24 +71,19 @@ public class CollectionService {
         return collectionAccessRepo.findCollectionSummariesForUser(user.getId());
     }
 
+    public List<ID<Collection>> findCollectionIdsForCurrentUser() {
+        return collectionAccessRepo.findByUser(currentUserService.currentUserID()).stream()
+            .map(CollectionAccess::getCollection)
+            .map(Collection::getId)
+            .toList();
+    }
+
     public void setDefaultCollection(@NonNull ID<Collection> collectionId, @NonNull User user) {
         collectionAccessRepo.setDefaultForUser(user.getId(), collectionId);
     }
 
-    public CollectionInfoJson getCollectionInfoById(@NonNull ID<Collection> collectionID) {
-
-        List<Bookmark> bookmarks = bookmarkService.getBookmarksByCollection(collectionID);
-        Collection collection = collectionRepo.getById(collectionID);
-        List<Folder> folders = folderService.getFoldersByCollection(collectionID);
-        List<Tag> tags = tagService.findByCollection(collectionID);
-        List<AutoTagRule> autoTagRules = autoTagRuleService.findByCollection(collectionID);
-        return collectionInfoMapperService.toCollectionInfoJson(
-            collection,
-            bookmarks,
-            folders,
-            tags,
-            autoTagRules
-        );
+    public Collection getCollection(@NonNull ID<Collection> collectionId) {
+        return collectionRepo.getById(collectionId);
     }
 
     @NonNull

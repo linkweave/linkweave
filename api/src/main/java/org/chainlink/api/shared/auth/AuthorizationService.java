@@ -27,6 +27,10 @@ public class AuthorizationService {
         }
     }
 
+    public void requireAccessTo(@NonNull BelongsToCollection entity) {
+        requireCollectionAccess(entity.getCollectionId());
+    }
+
     public boolean hasCollectionAccess(@NonNull ID<Collection> collectionId) {
         var currentUserId = currentUserService.currentUserID();
         return collectionAccessRepo.hasAccess(currentUserId, collectionId);
