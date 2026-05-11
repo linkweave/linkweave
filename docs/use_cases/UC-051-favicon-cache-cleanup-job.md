@@ -30,7 +30,7 @@
 3. Job compares the size to the configured threshold `chainlink.favicon.cache-cleanup.max-size` (default `40MB`).
 4. **If size is at or below the threshold:** job logs the current size and exits. Use case ends.
 5. **If size exceeds the threshold:**
-   1. Job loads bookmarks across **all collections** in ascending order of creation timestamp (`timestampErstellt`), excluding soft-deleted bookmarks.
+    1. Job loads bookmarks across **all collections** ordered by `lastClickedAt` ascending (nulls last), then by `timestampErstellt` ascending, excluding soft-deleted bookmarks. The effective eviction timestamp for each bookmark is `lastClickedAt` if present, falling back to `timestampErstellt`.
    2. For each bookmark, the job checks the bookmark's age: if it is younger than the configured minimum age `chainlink.favicon.cache-cleanup.min-bookmark-age` (default `28d` — four weeks), the bookmark and all subsequent (younger) bookmarks are skipped and the iteration ends.
    3. The job derives the **canonical origin** of the bookmark URL (same logic as UC-050) and computes the SHA-256 cache key.
    4. If `<key>.bin` and/or `<key>.meta` exist in the cache directory, they are deleted and the running cache-size estimate is decremented by their on-disk size.
@@ -98,7 +98,7 @@ A bookmark whose `timestampErstellt` is younger than `chainlink.favicon.cache-cl
 
 ### BR-110: Eviction Order
 
-When the threshold is exceeded, eligible bookmarks are processed in ascending order of `timestampErstellt` (oldest first). Iteration stops as soon as the running cache-size estimate falls back to the threshold.
+When the threshold is exceeded, eligible bookmarks are processed in ascending order of `lastClickedAt` (nulls last), then `timestampErstellt`. The effective eviction timestamp for ordering is `lastClickedAt` if present, falling back to `timestampErstellt`. Iteration stops as soon as the running cache-size estimate falls back to the threshold.
 
 ### BR-111: Origin-Level Granularity
 
