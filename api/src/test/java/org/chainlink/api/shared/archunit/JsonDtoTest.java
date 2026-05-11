@@ -6,6 +6,8 @@ import org.chainlink.api.shared.archunit.predicates.AnnotationPredicates;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.chainlink.api.shared.archunit.ArchConst.Pattern;
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
@@ -77,25 +79,45 @@ class JsonDtoTest {
     }
 
     @Test
-    void all_fields_of_dtos_must_declare_nullability_or_schema() {
+    void reference_fields_of_dtos_must_declare_nullability_or_schema() {
         // Modern Quarkus + jspecify already infers required/optional from @NonNull / @NotNull /
-        // @Nullable, so @Schema is only load-bearing for fields the generator can't infer:
-        // primitives and reference fields without any nullness annotation. This rule enforces
-        // that every DTO field has SOME explicit declaration, without forcing redundant @Schema
-        // annotations on top of @NonNull/@Nullable. jspecify's @NonNull/@Nullable are TYPE_USE
-        // annotations, so we have to inspect the field's type as well as the field itself.
+        // @Nullable, so @Schema is only load-bearing for fields the generator can't infer.
+        // For reference-typed fields this rule accepts any of the four annotations -- whichever
+        // is most natural for the field. jspecify's @NonNull/@Nullable are TYPE_USE
+        // annotations, so we inspect the type as well as the field itself.
         ArchRule rule = ArchRuleDefinition
             .fields().that()
             .areDeclaredInClassesThat(JSON_DTO)
             .and().areNotStatic()
+            .and().doNotHaveRawType(primitiveType())
             .should().beAnnotatedWith(Schema.class)
             .orShould().beAnnotatedWith(NotNull.class)
             .orShould(have(AnnotationPredicates.typeAnnotation(org.jspecify.annotations.NonNull.class)))
             .orShould(have(AnnotationPredicates.typeAnnotation(Nullable.class)))
-            .because("Every DTO field must declare its wire-format optionality: "
+            .because("Every DTO reference field must declare its wire-format optionality: "
                 + "via @NonNull / @NotNull (required), @Nullable (optional), "
-                + "or @Schema(required = ...) when neither nullness annotation applies (e.g. primitives).");
+                + "or @Schema(required = ...).");
         rule.allowEmptyShould(true).check(ArchConst.APP_CLASSES);
+    }
+
+    @Test
+    void primitive_fields_of_dtos_must_have_schema_annotation() {
+        // Primitives can't be null in Java, but the OpenAPI generator defaults them to
+        // optional in the wire schema unless told otherwise. @NotNull/@NonNull aren't
+        // generator-meaningful on primitives -- only @Schema(required = ...) is.
+        ArchRule rule = ArchRuleDefinition
+            .fields().that()
+            .areDeclaredInClassesThat(JSON_DTO)
+            .and().areNotStatic()
+            .and().haveRawType(primitiveType())
+            .should().beAnnotatedWith(Schema.class)
+            .because("Primitive DTO fields must use @Schema(required = ...) -- "
+                + "the OpenAPI generator otherwise defaults them to optional in the wire schema.");
+        rule.allowEmptyShould(true).check(ArchConst.APP_CLASSES);
+    }
+
+    private static DescribedPredicate<JavaClass> primitiveType() {
+        return DescribedPredicate.describe("primitive", JavaClass::isPrimitive);
     }
 
     @NonNull
