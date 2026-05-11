@@ -48,7 +48,7 @@ export interface CleanupSuggestionJson {
      * @type {number}
      * @memberof CleanupSuggestionJson
      */
-    clickCount?: number;
+    clickCount: number;
     /**
      * 
      * @type {Date}
@@ -66,7 +66,7 @@ export interface CleanupSuggestionJson {
      * @type {boolean}
      * @memberof CleanupSuggestionJson
      */
-    neverClicked?: boolean;
+    neverClicked: boolean;
 }
 
 /**
@@ -76,7 +76,9 @@ export function instanceOfCleanupSuggestionJson(value: object): value is Cleanup
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('title' in value) || value['title'] === undefined) return false;
     if (!('url' in value) || value['url'] === undefined) return false;
+    if (!('clickCount' in value) || value['clickCount'] === undefined) return false;
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
+    if (!('neverClicked' in value) || value['neverClicked'] === undefined) return false;
     return true;
 }
 
@@ -94,10 +96,10 @@ export function CleanupSuggestionJsonFromJSONTyped(json: any, ignoreDiscriminato
         'title': json['title'],
         'url': json['url'],
         'folderName': json['folderName'] == null ? undefined : json['folderName'],
-        'clickCount': json['clickCount'] == null ? undefined : json['clickCount'],
+        'clickCount': json['clickCount'],
         'lastClickedAt': json['lastClickedAt'] == null ? undefined : (new Date(json['lastClickedAt'])),
         'createdAt': (new Date(json['createdAt'])),
-        'neverClicked': json['neverClicked'] == null ? undefined : json['neverClicked'],
+        'neverClicked': json['neverClicked'],
     };
 }
 

@@ -71,25 +71,25 @@ export interface CollectionInfoJson {
      * @type {Array<BookmarkJson>}
      * @memberof CollectionInfoJson
      */
-    bookmarks?: Array<BookmarkJson>;
+    bookmarks: Array<BookmarkJson>;
     /**
      * 
      * @type {Array<TagJson>}
      * @memberof CollectionInfoJson
      */
-    tags?: Array<TagJson>;
+    tags: Array<TagJson>;
     /**
      * 
      * @type {Array<FolderJson>}
      * @memberof CollectionInfoJson
      */
-    folders?: Array<FolderJson>;
+    folders: Array<FolderJson>;
     /**
      * 
      * @type {Array<AutoTagRuleJson>}
      * @memberof CollectionInfoJson
      */
-    autoTagRules?: Array<AutoTagRuleJson>;
+    autoTagRules: Array<AutoTagRuleJson>;
 }
 
 /**
@@ -98,6 +98,10 @@ export interface CollectionInfoJson {
 export function instanceOfCollectionInfoJson(value: object): value is CollectionInfoJson {
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
+    if (!('bookmarks' in value) || value['bookmarks'] === undefined) return false;
+    if (!('tags' in value) || value['tags'] === undefined) return false;
+    if (!('folders' in value) || value['folders'] === undefined) return false;
+    if (!('autoTagRules' in value) || value['autoTagRules'] === undefined) return false;
     return true;
 }
 
@@ -114,10 +118,10 @@ export function CollectionInfoJsonFromJSONTyped(json: any, ignoreDiscriminator: 
         'id': json['id'],
         'name': json['name'],
         'faviconAllowlist': json['faviconAllowlist'] == null ? undefined : json['faviconAllowlist'],
-        'bookmarks': json['bookmarks'] == null ? undefined : ((json['bookmarks'] as Array<any>).map(BookmarkJsonFromJSON)),
-        'tags': json['tags'] == null ? undefined : ((json['tags'] as Array<any>).map(TagJsonFromJSON)),
-        'folders': json['folders'] == null ? undefined : ((json['folders'] as Array<any>).map(FolderJsonFromJSON)),
-        'autoTagRules': json['autoTagRules'] == null ? undefined : ((json['autoTagRules'] as Array<any>).map(AutoTagRuleJsonFromJSON)),
+        'bookmarks': ((json['bookmarks'] as Array<any>).map(BookmarkJsonFromJSON)),
+        'tags': ((json['tags'] as Array<any>).map(TagJsonFromJSON)),
+        'folders': ((json['folders'] as Array<any>).map(FolderJsonFromJSON)),
+        'autoTagRules': ((json['autoTagRules'] as Array<any>).map(AutoTagRuleJsonFromJSON)),
     };
 }
 
@@ -135,10 +139,10 @@ export function CollectionInfoJsonToJSONTyped(value?: CollectionInfoJson | null,
         'id': value['id'],
         'name': value['name'],
         'faviconAllowlist': value['faviconAllowlist'],
-        'bookmarks': value['bookmarks'] == null ? undefined : ((value['bookmarks'] as Array<any>).map(BookmarkJsonToJSON)),
-        'tags': value['tags'] == null ? undefined : ((value['tags'] as Array<any>).map(TagJsonToJSON)),
-        'folders': value['folders'] == null ? undefined : ((value['folders'] as Array<any>).map(FolderJsonToJSON)),
-        'autoTagRules': value['autoTagRules'] == null ? undefined : ((value['autoTagRules'] as Array<any>).map(AutoTagRuleJsonToJSON)),
+        'bookmarks': ((value['bookmarks'] as Array<any>).map(BookmarkJsonToJSON)),
+        'tags': ((value['tags'] as Array<any>).map(TagJsonToJSON)),
+        'folders': ((value['folders'] as Array<any>).map(FolderJsonToJSON)),
+        'autoTagRules': ((value['autoTagRules'] as Array<any>).map(AutoTagRuleJsonToJSON)),
     };
 }
 

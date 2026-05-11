@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.jspecify.annotations.Nullable;
 
 @Value
@@ -14,5 +15,5 @@ import org.jspecify.annotations.Nullable;
 @AllArgsConstructor
 public class CollectionSettingsJson {
 
-    @Nullable String layout;
+    @Nullable @Schema(required = false) String layout;
 }

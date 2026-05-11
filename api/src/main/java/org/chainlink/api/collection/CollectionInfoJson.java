@@ -10,6 +10,7 @@ import org.chainlink.api.bookmark.json.AutoTagRuleJson;
 import org.chainlink.api.bookmark.json.BookmarkJson;
 import org.chainlink.api.bookmark.json.TagJson;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -17,13 +18,13 @@ import org.jspecify.annotations.Nullable;
 @JaxDTO
 public class CollectionInfoJson {
 
-    @NotNull @NonNull ID<Collection> id;
-    @NotNull @NonNull String name;
-    @Nullable String faviconAllowlist;
-    List<BookmarkJson> bookmarks;
-    List<TagJson> tags;
-    List<FolderJson> folders;
-    List<AutoTagRuleJson> autoTagRules;
+    @NotNull @NonNull @Schema(required = true) ID<Collection> id;
+    @NotNull @NonNull @Schema(required = true) String name;
+    @Nullable @Schema(required = false) String faviconAllowlist;
+    @Schema(required = true) List<BookmarkJson> bookmarks;
+    @Schema(required = true) List<TagJson> tags;
+    @Schema(required = true) List<FolderJson> folders;
+    @Schema(required = true) List<AutoTagRuleJson> autoTagRules;
 
     public CollectionInfoJson(
         @NotNull @NonNull ID<Collection> id,

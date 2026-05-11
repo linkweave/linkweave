@@ -24,19 +24,21 @@ export interface TimeTravelStatus {
      * @type {boolean}
      * @memberof TimeTravelStatus
      */
-    timeTravelling?: boolean;
+    timeTravelling: boolean;
     /**
      * 
      * @type {string}
      * @memberof TimeTravelStatus
      */
-    now?: string;
+    now: string;
 }
 
 /**
  * Check if a given object implements the TimeTravelStatus interface.
  */
 export function instanceOfTimeTravelStatus(value: object): value is TimeTravelStatus {
+    if (!('timeTravelling' in value) || value['timeTravelling'] === undefined) return false;
+    if (!('now' in value) || value['now'] === undefined) return false;
     return true;
 }
 
@@ -50,8 +52,8 @@ export function TimeTravelStatusFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'timeTravelling': json['timeTravelling'] == null ? undefined : json['timeTravelling'],
-        'now': json['now'] == null ? undefined : json['now'],
+        'timeTravelling': json['timeTravelling'],
+        'now': json['now'],
     };
 }
 

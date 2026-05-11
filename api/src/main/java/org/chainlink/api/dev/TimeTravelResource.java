@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import io.smallrye.faulttolerance.api.RateLimit;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -39,17 +40,20 @@ public class TimeTravelResource {
 
     @JaxDTO
     @PermitAll
-    public record TimeTravelRequest(@Nullable String instant) {}
+    public record TimeTravelRequest(@Nullable @Schema(required = false) String instant) {}
 
     @JaxDTO
     @PermitAll
-    public record TimeTravelStatus(boolean timeTravelling, String now) {}
+    public record TimeTravelStatus(
+        @Schema(required = true) boolean timeTravelling,
+        @Schema(required = true) String now
+    ) {}
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Transactional(TxType.NOT_SUPPORTED)
     @PermitAll
-    public Response travelTo(TimeTravelRequest request) {
+    public Response travelTo(@jakarta.validation.Valid TimeTravelRequest request) {
         if (request == null || request.instant() == null || request.instant().isBlank()) {
             return Response.status(Response.Status.BAD_REQUEST)
                 .entity("missing 'instant' (ISO-8601 timestamp)")

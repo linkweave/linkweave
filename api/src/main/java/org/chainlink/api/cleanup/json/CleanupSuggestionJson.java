@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -14,29 +15,27 @@ import org.jspecify.annotations.Nullable;
 @JaxDTO
 public class CleanupSuggestionJson {
 
-    @NotNull
-    @NonNull
+    @NotNull @NonNull @Schema(required = true)
     String id;
 
-    @NotNull
-    @NonNull
+    @NotNull @NonNull @Schema(required = true)
     String title;
 
-    @NotNull
-    @NonNull
+    @NotNull @NonNull @Schema(required = true)
     String url;
 
-    @Nullable
+    @Nullable @Schema(required = false)
     String folderName;
 
+    @Schema(required = true)
     int clickCount;
 
-    @Nullable
+    @Nullable @Schema(required = false)
     OffsetDateTime lastClickedAt;
 
-    @NotNull
-    @NonNull
+    @NotNull @NonNull @Schema(required = true)
     OffsetDateTime createdAt;
 
+    @Schema(required = true)
     boolean neverClicked;
 }

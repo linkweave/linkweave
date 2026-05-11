@@ -40,6 +40,7 @@ public class AutoTagRuleSaveJson {
 
     @Nullable
     @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH)
+    @Schema(required = false)
     String description;
 
     @Schema(required = true)
