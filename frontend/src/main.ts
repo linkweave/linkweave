@@ -26,6 +26,12 @@ async function initializeApp() {
   // Auth and collection initialization is handled by the router guard
   // before any navigation proceeds, so we can mount immediately
   app.mount('#app')
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload()
+    })
+  }
 }
 
 try {
