@@ -20,6 +20,6 @@ public class MoveToTrashJson {
     @NotNull @NonNull
     ID<Collection> collectionId;
 
-    @NotEmpty @NonNull
+    @NotNull @NotEmpty @NonNull
     List<ID<Bookmark>> bookmarkIds;
 }

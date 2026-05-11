@@ -7,6 +7,7 @@ import java.time.temporal.ChronoUnit;
 import ch.dvbern.dvbstarter.clock.ClockProvider;
 import io.quarkus.arc.profile.UnlessBuildProfile;
 import jakarta.annotation.security.PermitAll;
+import jakarta.validation.constraints.NotNull;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
 import jakarta.ws.rs.DELETE;
@@ -47,7 +48,7 @@ public class TimeTravelResource {
     @PermitAll
     public record TimeTravelStatus(
         @Schema(required = true) boolean timeTravelling,
-        @NonNull String now
+        @NotNull @NonNull String now
     ) {}
 
     @POST

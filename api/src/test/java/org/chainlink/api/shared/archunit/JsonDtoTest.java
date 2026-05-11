@@ -80,11 +80,13 @@ class JsonDtoTest {
 
     @Test
     void reference_fields_of_dtos_must_declare_nullability_or_schema() {
-        // Modern Quarkus + jspecify already infers required/optional from @NonNull / @NotNull /
-        // @Nullable, so @Schema is only load-bearing for fields the generator can't infer.
-        // For reference-typed fields this rule accepts any of the four annotations -- whichever
-        // is most natural for the field. jspecify's @NonNull/@Nullable are TYPE_USE
-        // annotations, so we inspect the type as well as the field itself.
+        // Modern Quarkus + jspecify infers the wire-schema nullability from @NotNull
+        // (required) and @Nullable (optional), so @Schema is only load-bearing for
+        // fields the generator can't infer. jspecify's @NonNull alone is NOT honored
+        // by the OpenAPI generator for required-ness -- the field still ends up
+        // optional in the generated TS. Hence the accept list here uses @NotNull
+        // (which the generator does honor) and not jspecify's @NonNull. @Nullable is
+        // a TYPE_USE annotation so we inspect the type as well as the field itself.
         ArchRule rule = ArchRuleDefinition
             .fields().that()
             .areDeclaredInClassesThat(JSON_DTO)
@@ -92,11 +94,10 @@ class JsonDtoTest {
             .and().doNotHaveRawType(primitiveType())
             .should().beAnnotatedWith(Schema.class)
             .orShould().beAnnotatedWith(NotNull.class)
-            .orShould(have(AnnotationPredicates.typeAnnotation(org.jspecify.annotations.NonNull.class)))
             .orShould(have(AnnotationPredicates.typeAnnotation(Nullable.class)))
             .because("Every DTO reference field must declare its wire-format optionality: "
-                + "via @NonNull / @NotNull (required), @Nullable (optional), "
-                + "or @Schema(required = ...).");
+                + "via @NotNull (required), @Nullable (optional), or @Schema(required = ...). "
+                + "jspecify @NonNull on its own does NOT flip the generator's output to required.");
         rule.allowEmptyShould(true).check(ArchConst.APP_CLASSES);
     }
 

@@ -20,10 +20,10 @@ public class CollectionInfoJson {
     @NotNull @NonNull ID<Collection> id;
     @NotNull @NonNull String name;
     @Nullable String faviconAllowlist;
-    @NonNull List<BookmarkJson> bookmarks;
-    @NonNull List<TagJson> tags;
-    @NonNull List<FolderJson> folders;
-    @NonNull List<AutoTagRuleJson> autoTagRules;
+    @NotNull @NonNull List<BookmarkJson> bookmarks;
+    @NotNull @NonNull List<TagJson> tags;
+    @NotNull @NonNull List<FolderJson> folders;
+    @NotNull @NonNull List<AutoTagRuleJson> autoTagRules;
 
     public CollectionInfoJson(
         @NotNull @NonNull ID<Collection> id,
