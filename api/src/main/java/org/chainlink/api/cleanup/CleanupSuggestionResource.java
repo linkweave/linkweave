@@ -1,6 +1,5 @@
 package org.chainlink.api.cleanup;
 
-import java.util.List;
 import java.time.temporal.ChronoUnit;
 
 import ch.dvbern.dvbstarter.types.id.ID;
@@ -84,11 +83,7 @@ public class CleanupSuggestionResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Authenticated
     public void moveToTrash(@NotNull @Valid @NonNull MoveToTrashJson json) {
-        ID<Collection> collectionId = ID.parse(json.getCollectionId(), Collection.class);
-        authorizationService.requireCollectionAccess(collectionId);
-        List<ID<Bookmark>> bookmarkIds = json.getBookmarkIds().stream()
-            .map(id -> ID.parse(id, Bookmark.class))
-            .toList();
-        cleanupSuggestionService.moveToTrash(bookmarkIds);
+        authorizationService.requireCollectionAccess(json.getCollectionId());
+        cleanupSuggestionService.moveToTrash(json.getBookmarkIds());
     }
 }

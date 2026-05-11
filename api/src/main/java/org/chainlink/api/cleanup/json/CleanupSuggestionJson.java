@@ -2,9 +2,11 @@ package org.chainlink.api.cleanup.json;
 
 import java.time.OffsetDateTime;
 
+import ch.dvbern.dvbstarter.types.id.ID;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import org.chainlink.api.bookmark.Bookmark;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.jspecify.annotations.NonNull;
@@ -16,7 +18,7 @@ import org.jspecify.annotations.Nullable;
 public class CleanupSuggestionJson {
 
     @NotNull @NonNull @Schema(required = true)
-    String id;
+    ID<Bookmark> id;
 
     @NotNull @NonNull @Schema(required = true)
     String title;

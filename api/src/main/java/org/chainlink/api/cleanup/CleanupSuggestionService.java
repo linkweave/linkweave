@@ -63,7 +63,7 @@ public class CleanupSuggestionService {
     private CleanupSuggestionJson toSuggestionJson(@NonNull Bookmark bookmark) {
         boolean neverClicked = bookmark.getClickCount() == 0 && bookmark.getLastClickedAt() == null;
         return new CleanupSuggestionJson(
-            bookmark.getId().getId(),
+            bookmark.getId(),
             bookmark.getTitle(),
             bookmark.getUrl().toString(),
             bookmark.getFolder() != null ? Objects.requireNonNull(bookmark.getFolder()).getName() : null,

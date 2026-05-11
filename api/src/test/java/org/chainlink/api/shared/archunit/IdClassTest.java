@@ -18,6 +18,7 @@ import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition;
 import lombok.Generated;
 import lombok.extern.slf4j.Slf4j;
+import org.chainlink.infrastructure.types.IgnoreForIdClassTest;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
@@ -50,10 +51,12 @@ class IdClassTest {
             .haveName("id")
             .or()
             .haveNameEndingWith("Id")
+            .and().areNotAnnotatedWith(IgnoreForIdClassTest.class)
             .and().doNotHaveRawType(Predicates.assignableTo(Path.class))
             .should()
             .haveRawType(ID.class.getName())
-            .because("All Id-Fields must be of Type ID to prevent mixing up IDs of different entities.");
+            .because("All Id-Fields must be of Type ID to prevent mixing up IDs of different entities. "
+                + "If this is a false positive, annotate the field with @IgnoreForIdClassTest.");
         rule.check(ArchConst.APP_CLASSES);
     }
 
@@ -73,13 +76,17 @@ class IdClassTest {
                     boolean isIdClass = Objects.equals(parameter.getType().getName(), ID.class.getName());
 
                     if (isIdParam && !isIdClass) {
+                        if (parameter.isAnnotationPresent(IgnoreForIdClassTest.class)) {
+                            continue;
+                        }
                         if (method.isAnnotatedWith(Generated.class)) {
                             continue;
                         }
                         events.add(SimpleConditionEvent.violated(
                             method,
                             "Id-Parameter " + (parameter.getName()) + " of method " +
-                                method.getFullName() + " is not of type ch.dvbern.dvbstarter.types.id.ID."));
+                                method.getFullName() + " is not of type ch.dvbern.dvbstarter.types.id.ID. "
+                                + "If this is a false positive, annotate the parameter with @IgnoreForIdClassTest."));
                     }
                 }
             }
@@ -109,13 +116,17 @@ class IdClassTest {
                     }
 
                     if (isIdParam && isCollection && !isIdCollection) {
+                        if (parameter.isAnnotationPresent(IgnoreForIdClassTest.class)) {
+                            continue;
+                        }
                         if (method.isAnnotatedWith(Generated.class)) {
                             continue;
                         }
                         events.add(SimpleConditionEvent.violated(
                             method,
                             "Id-Collection-Parameter " + (parameter.getName()) + " of method " +
-                                method.getFullName() + " is not of type ch.dvbern.dvbstarter.types.id.ID."));
+                                method.getFullName() + " is not of type ch.dvbern.dvbstarter.types.id.ID. "
+                                + "If this is a false positive, annotate the parameter with @IgnoreForIdClassTest."));
                     }
                 }
             }

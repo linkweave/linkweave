@@ -13,8 +13,14 @@ public class ArchConst {
     public static final String APP_PACKAGE = "org.chainlink";
     public static final String STARTER_PACKAGE = "ch.dvbern.dvbstarter";
 
+    // Excludes both Hibernate's "EntityName_.class" JPA static metamodel and the
+    // jakarta.data "_EntityName.class" variant -- both are framework-generated.
     private static final ImportOption EXCLUDE_JPA_STATIC_METAMODEL =
-        location -> !location.asURI().getPath().matches(".*_\\.class");
+        location -> {
+            String path = location.asURI().getPath();
+            return !path.matches(".*_\\.class")
+                && !path.matches(".*/_[A-Z][A-Za-z0-9]*\\.class");
+        };
 
     private static final Set<ImportOption> IMPORT_OPTIONS = Set.of(
         new ImportOption.DoNotIncludeTests(),
