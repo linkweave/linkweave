@@ -15,12 +15,12 @@ import org.jspecify.annotations.NonNull;
 @JaxDTO
 public class CollectionSummaryJson {
 
-    @NotNull @NonNull @Schema(required = true) ID<Collection> id;
-    @NotNull @NonNull @Schema(required = true) String name;
+    @NotNull @NonNull ID<Collection> id;
+    @NotNull @NonNull String name;
     @JsonProperty("isDefault")
     @Schema(required = true)
     boolean isDefault;
-    @NotNull @NonNull @Schema(required = true) CollectionRole role;
+    @NotNull @NonNull CollectionRole role;
     @Schema(required = true) boolean shared;
 
     CollectionSummaryJson(

@@ -17,27 +17,12 @@ import org.jspecify.annotations.Nullable;
 @JaxDTO
 public class CleanupSuggestionJson {
 
-    @NotNull @NonNull @Schema(required = true)
-    ID<Bookmark> id;
-
-    @NotNull @NonNull @Schema(required = true)
-    String title;
-
-    @NotNull @NonNull @Schema(required = true)
-    String url;
-
-    @Nullable @Schema(required = false)
-    String folderName;
-
-    @Schema(required = true)
-    int clickCount;
-
-    @Nullable @Schema(required = false)
-    OffsetDateTime lastClickedAt;
-
-    @NotNull @NonNull @Schema(required = true)
-    OffsetDateTime createdAt;
-
-    @Schema(required = true)
-    boolean neverClicked;
+    @NotNull @NonNull ID<Bookmark> id;
+    @NotNull @NonNull String title;
+    @NotNull @NonNull String url;
+    @Nullable String folderName;
+    @Schema(required = true) int clickCount;
+    @Nullable OffsetDateTime lastClickedAt;
+    @NotNull @NonNull OffsetDateTime createdAt;
+    @Schema(required = true) boolean neverClicked;
 }

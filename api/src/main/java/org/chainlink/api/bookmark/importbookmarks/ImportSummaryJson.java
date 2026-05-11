@@ -14,7 +14,7 @@ import org.jspecify.annotations.NonNull;
 @JaxDTO
 public class ImportSummaryJson {
 
-    @NotNull @NonNull @Schema(required = true)
+    @NotNull @NonNull
     String importTag;
 
     @Schema(required = true)

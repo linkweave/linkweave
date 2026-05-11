@@ -21,6 +21,7 @@ import io.smallrye.faulttolerance.api.RateLimit;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -40,13 +41,13 @@ public class TimeTravelResource {
 
     @JaxDTO
     @PermitAll
-    public record TimeTravelRequest(@Nullable @Schema(required = false) String instant) {}
+    public record TimeTravelRequest(@Nullable String instant) {}
 
     @JaxDTO
     @PermitAll
     public record TimeTravelStatus(
         @Schema(required = true) boolean timeTravelling,
-        @Schema(required = true) String now
+        @NonNull String now
     ) {}
 
     @POST

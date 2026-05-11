@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.chainlink.infrastructure.db.DbConst;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -16,9 +15,9 @@ import org.jspecify.annotations.Nullable;
 @AllArgsConstructor
 public class CollectionUpdateJson {
 
-    @NotBlank @NotNull @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH) @NonNull @Schema(required = true)
+    @NotBlank @NotNull @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH) @NonNull
     String name;
 
-    @Size(max = DbConst.DB_TEXTAREA_MAX_LENGTH_2000) @Nullable @Schema(required = false)
+    @Size(max = DbConst.DB_TEXTAREA_MAX_LENGTH_2000) @Nullable
     String faviconAllowlist;
 }

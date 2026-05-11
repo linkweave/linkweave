@@ -2,6 +2,7 @@ package org.chainlink.api.shared.archunit;
 
 import java.lang.reflect.Parameter;
 
+import org.chainlink.api.shared.archunit.predicates.AnnotationPredicates;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.chainlink.api.shared.archunit.ArchConst.Pattern;
@@ -12,13 +13,16 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
 
 import static org.chainlink.api.shared.archunit.LayeringTest.JSON_DTO;
+import static com.tngtech.archunit.lang.conditions.ArchConditions.have;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 
@@ -73,13 +77,24 @@ class JsonDtoTest {
     }
 
     @Test
-    void all_fields_of_dtos_should_have_schema_annotation() {
+    void all_fields_of_dtos_must_declare_nullability_or_schema() {
+        // Modern Quarkus + jspecify already infers required/optional from @NonNull / @NotNull /
+        // @Nullable, so @Schema is only load-bearing for fields the generator can't infer:
+        // primitives and reference fields without any nullness annotation. This rule enforces
+        // that every DTO field has SOME explicit declaration, without forcing redundant @Schema
+        // annotations on top of @NonNull/@Nullable. jspecify's @NonNull/@Nullable are TYPE_USE
+        // annotations, so we have to inspect the field's type as well as the field itself.
         ArchRule rule = ArchRuleDefinition
             .fields().that()
             .areDeclaredInClassesThat(JSON_DTO)
             .and().areNotStatic()
             .should().beAnnotatedWith(Schema.class)
-            .because("All fields of json-dto-classes must be annoated with '@Schema(required = x)'");
+            .orShould().beAnnotatedWith(NotNull.class)
+            .orShould(have(AnnotationPredicates.typeAnnotation(org.jspecify.annotations.NonNull.class)))
+            .orShould(have(AnnotationPredicates.typeAnnotation(Nullable.class)))
+            .because("Every DTO field must declare its wire-format optionality: "
+                + "via @NonNull / @NotNull (required), @Nullable (optional), "
+                + "or @Schema(required = ...) when neither nullness annotation applies (e.g. primitives).");
         rule.allowEmptyShould(true).check(ArchConst.APP_CLASSES);
     }
 

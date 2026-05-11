@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.jspecify.annotations.NonNull;
 
 @Value
@@ -14,8 +13,8 @@ import org.jspecify.annotations.NonNull;
 @AllArgsConstructor
 public class CollectionMemberJson {
 
-    @NotNull @NonNull @Schema(required = true) ID<User> userId;
-    @NotNull @NonNull @Schema(required = true) String email;
-    @NotNull @NonNull @Schema(required = true) String displayName;
-    @NotNull @NonNull @Schema(required = true) CollectionRole role;
+    @NotNull @NonNull ID<User> userId;
+    @NotNull @NonNull String email;
+    @NotNull @NonNull String displayName;
+    @NotNull @NonNull CollectionRole role;
 }

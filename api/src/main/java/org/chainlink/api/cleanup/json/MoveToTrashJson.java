@@ -10,7 +10,6 @@ import lombok.Value;
 import org.chainlink.api.bookmark.Bookmark;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.jspecify.annotations.NonNull;
 
 @Value
@@ -18,9 +17,9 @@ import org.jspecify.annotations.NonNull;
 @JaxDTO
 public class MoveToTrashJson {
 
-    @NotNull @NonNull @Schema(required = true)
+    @NotNull @NonNull
     ID<Collection> collectionId;
 
-    @NotEmpty @NonNull @Schema(required = true)
+    @NotEmpty @NonNull
     List<ID<Bookmark>> bookmarkIds;
 }
