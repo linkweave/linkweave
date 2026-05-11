@@ -17,5 +17,5 @@ public class CleanupThresholdsJson {
     @NotNull
     @NonNull
     @Schema(required = true)
-    List<Integer> thresholds;
+    List<Integer> thresholds; // used to allow user to select the threshold he likes
 }
