@@ -15,36 +15,31 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.chainlink.api.shared.config.ConfigService;
 import org.chainlink.infrastructure.stereotypes.Service;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class FaviconFetcherService {
 
-    @ConfigProperty(name = "chainlink.favicon.timeout", defaultValue = "5S")
-    Duration timeout;
-
-    @ConfigProperty(name = "chainlink.favicon.max-bytes", defaultValue = "262144")
-    int maxBytes;
-
-    @ConfigProperty(name = "chainlink.favicon.max-redirects", defaultValue = "3")
-    int maxRedirects;
+    private final ConfigService configService;
 
     public @NonNull Optional<FetchedFavicon> fetchFor(@NonNull URL bookmarkUrl) {
         try {
             URI origin = URI.create(canonicalOrigin(bookmarkUrl));
             URI declared = discoverIconFromHtml(origin);
             if (declared != null) {
-                Optional<FetchedFavicon> img = fetchImage(declared, maxRedirects);
+                Optional<FetchedFavicon> img = fetchImage(declared, configService.getFaviconMaxRedirects());
                 if (img.isPresent()) {
                     return img;
                 }
             }
-            return fetchImage(origin.resolve("/favicon.ico"), maxRedirects);
+            return fetchImage(origin.resolve("/favicon.ico"), configService.getFaviconMaxRedirects());
         } catch (Exception e) {
             LOG.debug("Favicon fetch failed for {}: {}", bookmarkUrl, e.getMessage());
             return Optional.empty();
@@ -53,7 +48,7 @@ public class FaviconFetcherService {
 
     private @Nullable URI discoverIconFromHtml(@NonNull URI origin) {
         try {
-            Optional<String> html = fetchHtml(origin, maxRedirects);
+            Optional<String> html = fetchHtml(origin, configService.getFaviconMaxRedirects());
             return html.map(s -> parseIconLink(s, origin)).orElse(null);
         } catch (IOException e) {
             return null;
@@ -99,8 +94,8 @@ public class FaviconFetcherService {
 
     private @NonNull HttpURLConnection openConnection(@NonNull URI uri, @NonNull String accept) throws IOException {
         HttpURLConnection conn = (HttpURLConnection) uri.toURL().openConnection();
-        conn.setConnectTimeout((int) timeout.toMillis());
-        conn.setReadTimeout((int) timeout.toMillis());
+        conn.setConnectTimeout((int) configService.getFaviconTimeout().toMillis());
+        conn.setReadTimeout((int) configService.getFaviconTimeout().toMillis());
         conn.setInstanceFollowRedirects(false);
         conn.setRequestProperty("User-Agent", "Chainlink-FaviconProxy/1.0");
         conn.setRequestProperty("Accept", accept);
@@ -117,7 +112,7 @@ public class FaviconFetcherService {
             return Optional.empty();
         }
         try (InputStream in = conn.getInputStream()) {
-            byte[] bytes = readAtMost(in, maxBytes);
+            byte[] bytes = readAtMost(in, configService.getFaviconMaxBytes());
             if (bytes == null) {
                 return Optional.empty();
             }
@@ -135,7 +130,7 @@ public class FaviconFetcherService {
             return Optional.empty();
         }
         try (InputStream in = conn.getInputStream()) {
-            byte[] bytes = readAtMost(in, maxBytes);
+            byte[] bytes = readAtMost(in, configService.getFaviconMaxBytes());
             if (bytes == null) {
                 return Optional.empty();
             }

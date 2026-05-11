@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.chainlink.api.bookmark.BookmarkService;
 import org.chainlink.api.bookmark.BookmarkService.FaviconEvictionCandidate;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.chainlink.api.shared.config.ConfigService;
 import org.jspecify.annotations.NonNull;
 
 /**
@@ -35,12 +35,7 @@ public class FaviconCacheCleanupJob {
     private final BookmarkService bookmarkService;
     private final FaviconCacheService cache;
     private final ClockProvider clockProvider;
-
-    @ConfigProperty(name = "chainlink.favicon.cache-cleanup.max-size", defaultValue = "40MB")
-    String maxSizeRaw;
-
-    @ConfigProperty(name = "chainlink.favicon.cache-cleanup.min-bookmark-age", defaultValue = "28D")
-    Duration minBookmarkAge;
+    private final ConfigService configService;
 
     @Scheduled(
         cron = "{chainlink.favicon.cache-cleanup.cron:0 0 3 ? * SUN}",
@@ -57,7 +52,7 @@ public class FaviconCacheCleanupJob {
      */
     @NonNull
     Result run() {
-        return run(parseSize(maxSizeRaw), minBookmarkAge);
+        return run(parseSize(configService.getFaviconCacheCleanupMaxSize()), configService.getFaviconCacheCleanupMinBookmarkAge());
     }
 
     @NonNull
@@ -172,14 +167,14 @@ public class FaviconCacheCleanupJob {
 
     /** Skip predicate honoured by quarkus-scheduler when {@code chainlink.favicon.cache-cleanup.enabled=false}. */
     @ApplicationScoped
+    @RequiredArgsConstructor
     public static class DisabledPredicate implements Scheduled.SkipPredicate {
 
-        @ConfigProperty(name = "chainlink.favicon.cache-cleanup.enabled", defaultValue = "true")
-        boolean enabled;
+        private final ConfigService configService;
 
         @Override
         public boolean test(io.quarkus.scheduler.ScheduledExecution execution) {
-            return !enabled;
+            return !configService.isFaviconCacheCleanupEnabled();
         }
     }
 }
