@@ -178,6 +178,8 @@
     "deleteTitle": "Delete Bookmark",
     "deleteConfirm": "Are you sure you want to delete this bookmark? This action cannot be undone.",
     "deleteError": "Failed to delete bookmark.",
+    "statClicks": "Clicks",
+    "statLastClicked": "Last clicked",
     "duplicateWarning": "A bookmark with this URL already exists:",
     "duplicateWarningPlural": "{count} bookmarks with this URL already exist:",
     "duplicateInFolder": "in {folder}"
@@ -197,6 +199,15 @@
     "deleteConfirm": "Are you sure you want to delete this tag? The tag will be removed from all bookmarks.",
     "deleteError": "Failed to delete tag.",
     "clearFilter": "Clear filter"
+  },
+  "relativeTime": {
+    "justNow": "just now",
+    "minutes": "{count} min ago | {count} mins ago",
+    "hours": "{count} hr ago | {count} hrs ago",
+    "days": "{count} day ago | {count} days ago",
+    "weeks": "{count} wk ago | {count} wks ago",
+    "months": "{count} mo ago | {count} mos ago",
+    "years": "{count} yr ago | {count} yrs ago"
   },
   "bookmarkList": {
     "empty": "No bookmarks yet. Click \"Add Bookmark\" to get started.",

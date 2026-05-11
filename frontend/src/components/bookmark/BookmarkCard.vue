@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ExternalLink, MoreHorizontal } from 'lucide-vue-next'
+import { ExternalLink, MoreHorizontal, MousePointerClick, Clock } from 'lucide-vue-next'
 import {
   DropdownMenuRoot,
   DropdownMenuTrigger,
@@ -13,15 +13,18 @@ import { useFolderStore } from '@/stores/folder'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { DRAG_TYPE_BOOKMARK, setDraggingBookmark } from '@/composables/useDragState'
 import { useMediaQuery } from '@/composables/useMediaQuery'
+import { useRelativeTime } from '@/composables/useRelativeTime'
 import BookmarkFavicon from '@/components/bookmark/BookmarkFavicon.vue'
 
 const tagStore = useTagStore()
 const folderStore = useFolderStore()
 const bookmarkStore = useBookmarkStore()
 const isTouch = useMediaQuery('(hover: none) and (pointer: coarse)')
+const { formatRelativeTime } = useRelativeTime()
 
 const props = defineProps<{
   bookmark: BookmarkJson
+  showStats?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -56,7 +59,7 @@ function getFolderName(): string | null {
 <template>
   <div
     :draggable="!isTouch"
-    class="group rounded-lg border border-border bg-card p-4 hover:ring-2 hover:ring-primary/50 hover:border-primary/30 transition-all text-muted-foreground hover:text-accent-foreground cursor-grab active:cursor-grabbing"
+    class="group relative rounded-lg border border-border bg-card p-4 hover:ring-2 hover:ring-primary/50 hover:border-primary/30 transition-all text-muted-foreground hover:text-accent-foreground cursor-grab active:cursor-grabbing"
     @dragstart="onBookmarkDragStart"
     @dragend="onBookmarkDragEnd"
   >
@@ -143,5 +146,21 @@ function getFolderName(): string | null {
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenuRoot>
+
+    <div
+      v-if="showStats"
+      class="absolute bottom-3 right-4 hidden xl:flex flex-col items-end gap-0.5 text-xs text-muted-foreground/40"
+    >
+      <span class="group/clicks inline-flex items-center gap-1">
+        <span class="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover/clicks:max-w-20 group-hover/clicks:opacity-100 opacity-0">{{ $t('bookmark.statClicks') }}</span>
+        <MousePointerClick class="h-3 w-3 shrink-0" />
+        {{ props.bookmark.clickCount }}
+      </span>
+      <span v-if="props.bookmark.lastClickedAt" class="group/lastClicked inline-flex items-center gap-1">
+        <span class="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover/lastClicked:max-w-28 group-hover/lastClicked:opacity-100 opacity-0">{{ $t('bookmark.statLastClicked') }}</span>
+        <Clock class="h-3 w-3 shrink-0" />
+        {{ formatRelativeTime(props.bookmark.lastClickedAt) }}
+      </span>
+    </div>
   </div>
 </template>

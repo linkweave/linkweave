@@ -83,6 +83,7 @@ async function confirmDelete() {
       v-for="bookmark in bookmarkStore.filteredBookmarks"
       :key="bookmark.id"
       :bookmark="bookmark"
+      :show-stats="true"
       @edit="handleEdit"
       @delete="handleDelete"
       @move="handleMove"

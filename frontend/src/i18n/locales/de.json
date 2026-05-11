@@ -177,7 +177,9 @@
     "moveToFolder": "In Ordner verschieben",
     "deleteTitle": "Lesezeichen löschen",
     "deleteConfirm": "Möchten Sie dieses Lesezeichen wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
-    "deleteError": "Lesezeichen konnte nicht gelöscht werden."
+    "deleteError": "Lesezeichen konnte nicht gelöscht werden.",
+    "statClicks": "Klicks",
+    "statLastClicked": "Zuletzt geklickt"
   },
   "tag": {
     "none": "Noch keine Tags",
@@ -194,6 +196,15 @@
     "deleteConfirm": "Möchten Sie diesen Tag wirklich löschen? Er wird von allen Lesezeichen entfernt.",
     "deleteError": "Tag konnte nicht gelöscht werden.",
     "clearFilter": "Filter zurücksetzen"
+  },
+  "relativeTime": {
+    "justNow": "gerade eben",
+    "minutes": "vor {count} Min. | vor {count} Min.",
+    "hours": "vor {count} Std. | vor {count} Std.",
+    "days": "vor {count} Tag | vor {count} Tagen",
+    "weeks": "vor {count} Wo. | vor {count} Wo.",
+    "months": "vor {count} Monat | vor {count} Monaten",
+    "years": "vor {count} Jahr | vor {count} Jahren"
   },
   "bookmarkList": {
     "empty": "Noch keine Lesezeichen. Klicken Sie auf 'Lesezeichen hinzufügen', um zu beginnen.",
