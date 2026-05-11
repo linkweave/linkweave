@@ -18,6 +18,7 @@
 
 package org.chainlink.api.shared.config;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 
@@ -103,6 +104,33 @@ public class ConfigService {
 
     @ConfigProperty(name = "chainlink.cleanup.available-thresholds", defaultValue = "3,6,12")
     List<Integer> cleanupAvailableThresholds;
+
+    @ConfigProperty(name = "chainlink.favicon.cache-dir", defaultValue = "developer-local-settings/favicon-cache")
+    String faviconCacheDir;
+
+    @ConfigProperty(name = "chainlink.favicon.success-ttl", defaultValue = "30D")
+    Duration faviconSuccessTtl;
+
+    @ConfigProperty(name = "chainlink.favicon.negative-ttl", defaultValue = "6H")
+    Duration faviconNegativeTtl;
+
+    @ConfigProperty(name = "chainlink.favicon.timeout", defaultValue = "5S")
+    Duration faviconTimeout;
+
+    @ConfigProperty(name = "chainlink.favicon.max-bytes", defaultValue = "262144")
+    int faviconMaxBytes;
+
+    @ConfigProperty(name = "chainlink.favicon.max-redirects", defaultValue = "3")
+    int faviconMaxRedirects;
+
+    @ConfigProperty(name = "chainlink.favicon.cache-cleanup.max-size", defaultValue = "40MB")
+    String faviconCacheCleanupMaxSize;
+
+    @ConfigProperty(name = "chainlink.favicon.cache-cleanup.min-bookmark-age", defaultValue = "28D")
+    Duration faviconCacheCleanupMinBookmarkAge;
+
+    @ConfigProperty(name = "chainlink.favicon.cache-cleanup.enabled", defaultValue = "true")
+    boolean faviconCacheCleanupEnabled;
 
 
 

@@ -15,11 +15,9 @@ import org.jspecify.annotations.Nullable;
 @AllArgsConstructor
 public class CollectionUpdateJson {
 
-    @NotBlank
-    @NotNull
-    @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH)
-    @NonNull String name;
+    @NotBlank @NotNull @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH) @NonNull
+    String name;
 
-    @Size(max = DbConst.DB_TEXTAREA_MAX_LENGTH_2000)
-    @Nullable String faviconAllowlist;
+    @Size(max = DbConst.DB_TEXTAREA_MAX_LENGTH_2000) @Nullable
+    String faviconAllowlist;
 }

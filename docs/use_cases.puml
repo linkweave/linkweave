@@ -9,8 +9,10 @@ actor "Collection Owner" as owner
 actor "Developer" as developer
 actor "Operator" as operator
 actor "Scheduler" as scheduler
+actor "CLI User" as cliuser
 
 owner --|> user
+cliuser --|> user
 
 rectangle "Chainlink Bookmark Manager" {
 
@@ -146,6 +148,16 @@ rectangle "Chainlink Bookmark Manager" {
 
     rectangle "Backup" {
         usecase "UC-061\nAutomated Backup\nCreation" as UC061
+    }
+
+    rectangle "API Access" {
+        usecase "UC-077\nManage API Keys" as UC077
+        usecase "UC-078\nAuthenticate via\nAPI Key" as UC078
+    }
+
+    rectangle "CLI" {
+        usecase "UC-079\nManage Bookmarks\nvia CLI" as UC079
+        usecase "UC-080\nConfigure CLI\nLogin" as UC080
     }
 }
 
@@ -295,6 +307,28 @@ note right of UC048
   Offline mode is read-only.
   Cache keys are scoped per user
   ({email}:...) for data isolation.
+end note
+
+' API Access
+user --> UC077
+cliuser --> UC078
+cliuser --> UC079
+cliuser --> UC080
+
+UC077 ..> UC078 : <<include>>
+UC080 ..> UC078 : <<include>>
+UC079 ..> UC080 : <<include>>
+
+note right of UC077
+  See docs/cli-tool.md
+  for architecture & design
+end note
+
+note right of UC079
+  CLI authenticates via
+  API key (X-API-Key header).
+  All commands go through
+  the HTTP API.
 end note
 
 legend right

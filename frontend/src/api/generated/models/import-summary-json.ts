@@ -30,19 +30,19 @@ export interface ImportSummaryJson {
      * @type {number}
      * @memberof ImportSummaryJson
      */
-    foldersCreated?: number;
+    foldersCreated: number;
     /**
      * 
      * @type {number}
      * @memberof ImportSummaryJson
      */
-    bookmarksCreated?: number;
+    bookmarksCreated: number;
     /**
      * 
      * @type {number}
      * @memberof ImportSummaryJson
      */
-    bookmarksSkipped?: number;
+    bookmarksSkipped: number;
 }
 
 /**
@@ -50,6 +50,9 @@ export interface ImportSummaryJson {
  */
 export function instanceOfImportSummaryJson(value: object): value is ImportSummaryJson {
     if (!('importTag' in value) || value['importTag'] === undefined) return false;
+    if (!('foldersCreated' in value) || value['foldersCreated'] === undefined) return false;
+    if (!('bookmarksCreated' in value) || value['bookmarksCreated'] === undefined) return false;
+    if (!('bookmarksSkipped' in value) || value['bookmarksSkipped'] === undefined) return false;
     return true;
 }
 
@@ -64,9 +67,9 @@ export function ImportSummaryJsonFromJSONTyped(json: any, ignoreDiscriminator: b
     return {
         
         'importTag': json['importTag'],
-        'foldersCreated': json['foldersCreated'] == null ? undefined : json['foldersCreated'],
-        'bookmarksCreated': json['bookmarksCreated'] == null ? undefined : json['bookmarksCreated'],
-        'bookmarksSkipped': json['bookmarksSkipped'] == null ? undefined : json['bookmarksSkipped'],
+        'foldersCreated': json['foldersCreated'],
+        'bookmarksCreated': json['bookmarksCreated'],
+        'bookmarksSkipped': json['bookmarksSkipped'],
     };
 }
 

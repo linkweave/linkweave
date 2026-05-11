@@ -1,5 +1,7 @@
 package org.chainlink.api.bookmark.export_;
 
+import java.time.temporal.ChronoUnit;
+
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.Authenticated;
 import jakarta.validation.constraints.NotNull;
@@ -12,9 +14,11 @@ import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.auth.AuthorizationService;
+import io.smallrye.faulttolerance.api.RateLimit;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
+@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated
@@ -27,6 +31,7 @@ public class ExportResource {
     @GET
     @Produces(MediaType.TEXT_HTML)
     @NonNull
+    @Authenticated
     public Response exportBookmarks(
         @PathParam("collectionId") @NotNull @NonNull ID<Collection> collectionId
     ) {

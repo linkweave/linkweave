@@ -24,23 +24,21 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.chainlink.api.collection.Collection;
-import org.chainlink.api.collection.CollectionService;
 import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.api.shared.user.User;
-import org.chainlink.infrastructure.errorhandling.AppAuthException;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
+@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @RequiredArgsConstructor
 @Path("/auth")
+@Authenticated
 @Slf4j
 public class AuthResource {
 
     private final SecurityIdentity identity;
     private final CurrentUserService currentUserService;
-    private final CollectionService collectionService;
     private final Instance<OidcSession> oidcSessionInstance;
     private final EnsureUserService ensureUserService;
     private final RegistrationService registrationService;
@@ -51,27 +49,9 @@ public class AuthResource {
     @GET
     @Path("/me")
     @Produces(MediaType.APPLICATION_JSON)
+    @Authenticated
     public UserInfoJson me() {
-        if (identity.isAnonymous()) {
-            throw new AppAuthException();
-        }
-
-        User user = currentUserService.findCurrentUser().orElse(null);
-        if (user == null) {
-            throw new AppAuthException();
-        }
-
-        Collection collection = collectionService.getDefaultCollectionOrAutoprovision(user);
-
-        ID<Collection> defaultCollectionId = collection.getId();
-
-        return new UserInfoJson(
-            identity.getPrincipal().getName(),
-            user.getVorname(),
-            user.getNachname(),
-            identity.getRoles(),
-            defaultCollectionId
-        );
+        return userService.buildCurrentUserInfo(identity.getPrincipal().getName(), identity.getRoles());
     }
 
     @GET

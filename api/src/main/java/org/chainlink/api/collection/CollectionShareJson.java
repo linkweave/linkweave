@@ -12,7 +12,6 @@ import org.jspecify.annotations.NonNull;
 @AllArgsConstructor
 public class CollectionShareJson {
 
-    @NotNull
-    @NonNull
+    @NotNull @NonNull
     EmailAddress email;
 }

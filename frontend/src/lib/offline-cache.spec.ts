@@ -21,8 +21,8 @@ const fakeUser: UserInfoJson = {
 }
 
 const fakeCollections: CollectionSummaryJson[] = [
-  { id: 'col-1', name: 'Default', isDefault: true, role: 'ADMIN' as CollectionSummaryJson['role'] },
-  { id: 'col-2', name: 'Other', role: 'READER' as CollectionSummaryJson['role'] },
+  { id: 'col-1', name: 'Default', isDefault: true, role: 'ADMIN' as CollectionSummaryJson['role'], shared: false },
+  { id: 'col-2', name: 'Other', isDefault: false, role: 'READER' as CollectionSummaryJson['role'], shared: false },
 ]
 
 const fakeCollectionInfo: CollectionInfoJson = {
@@ -31,6 +31,7 @@ const fakeCollectionInfo: CollectionInfoJson = {
   bookmarks: [],
   tags: [],
   folders: [],
+  autoTagRules: [],
 }
 
 beforeEach(async () => {
@@ -86,7 +87,7 @@ describe('offline-cache', () => {
 
     it('should isolate collections between users', async () => {
       await saveCollections('alice@example.com', fakeCollections)
-      await saveCollections('bob@example.com', [{ id: 'col-bob', name: 'Bobs Collection', role: 'ADMIN' as CollectionSummaryJson['role'] }])
+      await saveCollections('bob@example.com', [{ id: 'col-bob', name: 'Bobs Collection', isDefault: false, role: 'ADMIN' as CollectionSummaryJson['role'], shared: false }])
 
       const aliceResult = await loadCollections('alice@example.com')
       const bobResult = await loadCollections('bob@example.com')

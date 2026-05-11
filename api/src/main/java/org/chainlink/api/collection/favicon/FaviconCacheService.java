@@ -16,8 +16,8 @@ import ch.dvbern.dvbstarter.clock.AppClock;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.chainlink.api.shared.config.ConfigService;
 import org.chainlink.infrastructure.stereotypes.Service;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jspecify.annotations.NonNull;
 
 @Service
@@ -26,6 +26,7 @@ import org.jspecify.annotations.NonNull;
 public class FaviconCacheService {
 
     private final AppClock appClock;
+    private final ConfigService configService;
 
     /**
      * The file extension for the raw favicon bytes on disk. Each cached origin
@@ -61,20 +62,11 @@ public class FaviconCacheService {
      */
     private static final String SUFFIX_PAYLOAD_TMP = ".bin.tmp";
 
-    @ConfigProperty(name = "chainlink.favicon.cache-dir", defaultValue = "developer-local-settings/favicon-cache")
-    String cacheDirRaw;
-
-    @ConfigProperty(name = "chainlink.favicon.success-ttl", defaultValue = "30D")
-    Duration successTtl;
-
-    @ConfigProperty(name = "chainlink.favicon.negative-ttl", defaultValue = "6H")
-    Duration negativeTtl;
-
     private Path cacheDir;
 
     @PostConstruct
     void init() {
-        cacheDir = Path.of(cacheDirRaw);
+        cacheDir = Path.of(configService.getFaviconCacheDir());
         try {
             Files.createDirectories(cacheDir);
         } catch (IOException e) {
@@ -95,7 +87,7 @@ public class FaviconCacheService {
             boolean negative = lines.length > 2 && "negative".equals(lines[2]);
 
             Duration age = Duration.between(Instant.ofEpochSecond(fetchedAt), appClock.instant().now());
-            Duration ttl = negative ? negativeTtl : successTtl;
+            Duration ttl = negative ? configService.getFaviconNegativeTtl() : configService.getFaviconSuccessTtl();
             if (age.compareTo(ttl) > 0) {
                 return Optional.empty();
             }

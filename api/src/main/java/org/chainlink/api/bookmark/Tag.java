@@ -18,8 +18,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ch.dvbern.dvbstarter.types.id.ID;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.abstractentity.AbstractEntity;
+import org.chainlink.api.shared.auth.BelongsToCollection;
 import org.chainlink.infrastructure.db.DbConst;
 import org.jspecify.annotations.NonNull;
 
@@ -28,13 +30,13 @@ import org.jspecify.annotations.NonNull;
     indexes = {
         @Index(name = "ix_tag_collection_id", columnList = "collection_id, id"),
     },
-    uniqueConstraints = @UniqueConstraint(name = "uq_tag_name_collection", columnNames = {"name", "collection_id"})
+    uniqueConstraints = @UniqueConstraint(name = "uc_tag_name_collection", columnNames = {"name", "collection_id"})
 )
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class Tag extends AbstractEntity<Tag> {
+public class Tag extends AbstractEntity<Tag> implements BelongsToCollection {
 
     @NonNull
     @ManyToOne(optional = false)
@@ -53,4 +55,9 @@ public class Tag extends AbstractEntity<Tag> {
 
     @ManyToMany(mappedBy = "tags")
     private Set<Bookmark> bookmarks = new HashSet<>();
+
+    @Override
+    public @NonNull ID<Collection> getCollectionId() {
+        return collection.getId();
+    }
 }

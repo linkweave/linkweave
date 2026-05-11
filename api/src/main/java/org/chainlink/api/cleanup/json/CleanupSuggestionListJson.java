@@ -13,7 +13,6 @@ import org.jspecify.annotations.NonNull;
 @JaxDTO
 public class CleanupSuggestionListJson {
 
-    @NotNull
-    @NonNull
+    @NotNull @NonNull
     List<CleanupSuggestionJson> suggestions;
 }

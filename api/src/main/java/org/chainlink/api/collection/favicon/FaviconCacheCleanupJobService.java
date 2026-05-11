@@ -16,9 +16,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.chainlink.api.bookmark.Bookmark;
-import org.chainlink.api.bookmark.BookmarkRepo;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.chainlink.api.bookmark.BookmarkService;
+import org.chainlink.api.bookmark.BookmarkService.FaviconEvictionCandidate;
+import org.chainlink.api.shared.config.ConfigService;
+import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
 
 /**
@@ -27,28 +28,24 @@ import org.jspecify.annotations.NonNull;
  *
  * <p>Touches files only — never deletes or mutates any database row.
  */
+@Service
 @ApplicationScoped
 @RequiredArgsConstructor
 @Slf4j
-public class FaviconCacheCleanupJob {
+public class FaviconCacheCleanupJobService {
 
-    private final BookmarkRepo bookmarkRepo;
+    private final BookmarkService bookmarkService;
     private final FaviconCacheService cache;
     private final ClockProvider clockProvider;
-
-    @ConfigProperty(name = "chainlink.favicon.cache-cleanup.max-size", defaultValue = "40MB")
-    String maxSizeRaw;
-
-    @ConfigProperty(name = "chainlink.favicon.cache-cleanup.min-bookmark-age", defaultValue = "28D")
-    Duration minBookmarkAge;
+    private final ConfigService configService;
 
     @Scheduled(
         cron = "{chainlink.favicon.cache-cleanup.cron:0 0 3 ? * SUN}",
         skipExecutionIf = DisabledPredicate.class,
         identity = "favicon-cache-cleanup"
     )
-    @Transactional
-    void scheduledRun() {
+    @Transactional(Transactional.TxType.NOT_SUPPORTED)
+    public void scheduledRun() {
         run();
     }
 
@@ -57,7 +54,7 @@ public class FaviconCacheCleanupJob {
      */
     @NonNull
     Result run() {
-        return run(parseSize(maxSizeRaw), minBookmarkAge);
+        return run(parseSize(configService.getFaviconCacheCleanupMaxSize()), configService.getFaviconCacheCleanupMinBookmarkAge());
     }
 
     @NonNull
@@ -81,13 +78,13 @@ public class FaviconCacheCleanupJob {
         long bytesFreed = 0L;
         Duration oldestEvictedAge = Duration.ZERO;
 
-        for (Bookmark bookmark : bookmarkRepo.findAllOldestFirstNotDeleted()) {
-            OffsetDateTime created = bookmark.getTimestampErstellt();
+        for (FaviconEvictionCandidate candidate : bookmarkService.findFaviconEvictionCandidatesOldestFirst()) {
+            OffsetDateTime created = candidate.createdAt();
             if (created != null && created.toInstant().isAfter(cutoff)) {
                 // BR-109: every remaining bookmark is younger than the minimum age.
                 break;
             }
-            String origin = FaviconFetcherService.canonicalOrigin(bookmark.getUrl());
+            String origin = FaviconFetcherService.canonicalOrigin(candidate.url());
             if (!seenOrigins.add(origin)) {
                 continue;
             }
@@ -172,14 +169,14 @@ public class FaviconCacheCleanupJob {
 
     /** Skip predicate honoured by quarkus-scheduler when {@code chainlink.favicon.cache-cleanup.enabled=false}. */
     @ApplicationScoped
+    @RequiredArgsConstructor
     public static class DisabledPredicate implements Scheduled.SkipPredicate {
 
-        @ConfigProperty(name = "chainlink.favicon.cache-cleanup.enabled", defaultValue = "true")
-        boolean enabled;
+        private final ConfigService configService;
 
         @Override
         public boolean test(io.quarkus.scheduler.ScheduledExecution execution) {
-            return !enabled;
+            return !configService.isFaviconCacheCleanupEnabled();
         }
     }
 }

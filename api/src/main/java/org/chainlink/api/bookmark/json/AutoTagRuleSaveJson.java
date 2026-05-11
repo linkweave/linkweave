@@ -20,14 +20,12 @@ public class AutoTagRuleSaveJson {
 
     @NotNull
     @NonNull
-    @Schema(required = true)
     ID<Collection> collectionId;
 
     @NotNull
     @NonNull
     @NotBlank
     @Size(max = DbConst.DB_ENUM_LIST_LENGTH)
-    @Schema(required = true)
     String pattern;
 
     /** Comma-separated list of tag names (1..8), e.g. "pr, github". */
@@ -35,7 +33,6 @@ public class AutoTagRuleSaveJson {
     @NonNull
     @NotBlank
     @Size(max = DbConst.DB_ENUM_LIST_LENGTH)
-    @Schema(required = true)
     String tagNames;
 
     @Nullable

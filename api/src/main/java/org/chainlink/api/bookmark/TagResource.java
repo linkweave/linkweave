@@ -1,5 +1,7 @@
 package org.chainlink.api.bookmark;
 
+import java.time.temporal.ChronoUnit;
+
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.Authenticated;
 import jakarta.validation.Valid;
@@ -20,9 +22,11 @@ import org.chainlink.api.bookmark.json.TagListJson;
 import org.chainlink.api.bookmark.json.TagSaveJson;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.auth.AuthorizationService;
+import io.smallrye.faulttolerance.api.RateLimit;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
+@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated
@@ -35,6 +39,7 @@ public class TagResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public TagListJson list(@QueryParam("collectionId") @NotNull @NonNull ID<Collection> collectionId) {
         authorizationService.requireCollectionAccess(collectionId);
         return new TagListJson(
@@ -48,6 +53,7 @@ public class TagResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public TagJson create(@NotNull @Valid @NonNull TagSaveJson json) {
         authorizationService.requireCollectionAccess(json.getCollectionId());
         Tag tag = tagService.createTag(json);
@@ -59,6 +65,7 @@ public class TagResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public TagJson update(
         @PathParam("tagId") @NotNull @NonNull ID<Tag> tagId,
         @NotNull @Valid @NonNull TagSaveJson json
@@ -66,18 +73,19 @@ public class TagResource {
 
         authorizationService.requireCollectionAccess(json.getCollectionId());
         Tag tag = tagService.getTag(tagId);
-        authorizationService.requireCollectionAccess(tag.getCollection().getId());
+        authorizationService.requireAccessTo(tag);
         Tag updated = tagService.updateTag(tag, json);
         return TagMapper.toJson(updated);
     }
 
     @DELETE
     @Path("/{tagId}")
+    @Authenticated
     public void delete(
         @PathParam("tagId") @NotNull @NonNull ID<Tag> tagId
     ) {
         Tag tag = tagService.getTag(tagId);
-        authorizationService.requireCollectionAccess(tag.getCollection().getId());
+        authorizationService.requireAccessTo(tag);
         tagService.removeTag(tagId);
     }
 }

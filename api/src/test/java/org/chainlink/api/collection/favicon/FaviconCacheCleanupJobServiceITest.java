@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
 @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
-class FaviconCacheCleanupJobITest {
+class FaviconCacheCleanupJobServiceITest {
 
     @Inject
     FixtureService fixtureService;
@@ -31,7 +31,7 @@ class FaviconCacheCleanupJobITest {
     FaviconCacheService cacheService;
 
     @Inject
-    FaviconCacheCleanupJob cleanupJob;
+    FaviconCacheCleanupJobService cleanupJob;
 
     @Inject
     BookmarkRepo bookmarkRepo;
@@ -57,7 +57,7 @@ class FaviconCacheCleanupJobITest {
         String origin = FaviconFetcherService.canonicalOrigin(bookmark.getUrl());
         cacheService.putSuccess(origin, bytes(64), "image/png");
 
-        FaviconCacheCleanupJob.Result result = cleanupJob.run(1024L * 1024L, Duration.ofDays(28));
+        FaviconCacheCleanupJobService.Result result = cleanupJob.run(1024L * 1024L, Duration.ofDays(28));
 
         assertThat(result.evictedFiles()).isZero();
         assertThat(payloadFile(origin)).exists();
@@ -77,7 +77,7 @@ class FaviconCacheCleanupJobITest {
 
         // Budget is 3000 bytes; cache holds 4096 + 4096 (and metadata sidecars); after evicting
         // the older entry the size drops below the threshold so iteration stops.
-        FaviconCacheCleanupJob.Result result = cleanupJob.run(3000L, Duration.ofDays(28));
+        FaviconCacheCleanupJobService.Result result = cleanupJob.run(3000L, Duration.ofDays(28));
 
         assertThat(result.evictedFiles()).isEqualTo(1);
         assertThat(payloadFile(oldOrigin)).doesNotExist();
@@ -91,7 +91,7 @@ class FaviconCacheCleanupJobITest {
         String origin = FaviconFetcherService.canonicalOrigin(fresh.getUrl());
         cacheService.putSuccess(origin, bytes(8192), "image/png");
 
-        FaviconCacheCleanupJob.Result result = cleanupJob.run(1L, Duration.ofDays(28));
+        FaviconCacheCleanupJobService.Result result = cleanupJob.run(1L, Duration.ofDays(28));
 
         assertThat(result.evictedFiles()).isZero();
         assertThat(payloadFile(origin)).exists();
@@ -99,16 +99,16 @@ class FaviconCacheCleanupJobITest {
 
     @Test
     void shouldHandleEmptyCacheGracefully() {
-        FaviconCacheCleanupJob.Result result = cleanupJob.run(1L, Duration.ofDays(28));
+        FaviconCacheCleanupJobService.Result result = cleanupJob.run(1L, Duration.ofDays(28));
         assertThat(result).isNotNull();
     }
 
     @Test
     void shouldParseSizeStrings() {
-        assertThat(FaviconCacheCleanupJob.parseSize("40MB")).isEqualTo(40L * 1024 * 1024);
-        assertThat(FaviconCacheCleanupJob.parseSize("1G")).isEqualTo(1024L * 1024 * 1024);
-        assertThat(FaviconCacheCleanupJob.parseSize("512")).isEqualTo(512L);
-        assertThat(FaviconCacheCleanupJob.parseSize("2KB")).isEqualTo(2048L);
+        assertThat(FaviconCacheCleanupJobService.parseSize("40MB")).isEqualTo(40L * 1024 * 1024);
+        assertThat(FaviconCacheCleanupJobService.parseSize("1G")).isEqualTo(1024L * 1024 * 1024);
+        assertThat(FaviconCacheCleanupJobService.parseSize("512")).isEqualTo(512L);
+        assertThat(FaviconCacheCleanupJobService.parseSize("2KB")).isEqualTo(2048L);
     }
 
     void backdateCreated(Bookmark bookmark, int daysAgo) {

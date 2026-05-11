@@ -14,8 +14,6 @@ import org.jspecify.annotations.NonNull;
 @AllArgsConstructor
 public class CollectionCreateJson {
 
-    @NotBlank
-    @NotNull
-    @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH)
-    @NonNull String name;
+    @NotBlank @NotNull @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH) @NonNull
+    String name;
 }

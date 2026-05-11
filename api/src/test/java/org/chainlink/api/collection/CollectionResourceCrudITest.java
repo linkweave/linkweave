@@ -52,7 +52,7 @@ class CollectionResourceCrudITest {
             .get("/collections")
             .then()
             .statusCode(200)
-            .body("findAll { it.name == '" + uniqueName + "' }.size()", equalTo(1));
+            .body("collections.findAll { it.name == '" + uniqueName + "' }.size()", equalTo(1));
     }
 
     @Test
@@ -151,7 +151,7 @@ class CollectionResourceCrudITest {
             .get("/collections")
             .then()
             .statusCode(200)
-            .body("find { it.id == '" + colId + "' }.name", equalTo(newName));
+            .body("collections.find { it.id == '" + colId + "' }.name", equalTo(newName));
     }
 
     @Test
@@ -216,7 +216,7 @@ class CollectionResourceCrudITest {
             .get("/collections")
             .then()
             .statusCode(200)
-            .body("findAll { it.id == '" + col2Id + "' }.size()", equalTo(0));
+            .body("collections.findAll { it.id == '" + col2Id + "' }.size()", equalTo(0));
     }
 
     @Test
@@ -242,7 +242,7 @@ class CollectionResourceCrudITest {
             .get("/collections")
             .then()
             .statusCode(200)
-            .body("findAll { it.isDefault == true }.size()", equalTo(1));
+            .body("collections.findAll { it.isDefault == true }.size()", equalTo(1));
     }
 }
 

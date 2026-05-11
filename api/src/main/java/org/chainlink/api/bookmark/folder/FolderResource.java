@@ -1,5 +1,7 @@
 package org.chainlink.api.bookmark.folder;
 
+import java.time.temporal.ChronoUnit;
+
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.Authenticated;
 import jakarta.validation.Valid;
@@ -22,9 +24,11 @@ import org.chainlink.api.bookmark.folder.json.FolderMoveJson;
 import org.chainlink.api.bookmark.folder.json.FolderSaveJson;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.auth.AuthorizationService;
+import io.smallrye.faulttolerance.api.RateLimit;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
+@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated
@@ -37,6 +41,7 @@ public class FolderResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public FolderListJson getAll(@QueryParam("collectionId") @NotNull @NonNull ID<Collection> collectionId) {
         authorizationService.requireCollectionAccess(collectionId);
         return new FolderListJson(
@@ -50,6 +55,7 @@ public class FolderResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public FolderJson create(@NotNull @Valid @NonNull FolderSaveJson json) {
         authorizationService.requireCollectionAccess(json.getCollectionId());
         Folder folder = folderService.createFolder(json);
@@ -61,12 +67,13 @@ public class FolderResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public FolderJson rename(
         @PathParam("folderId") @NotNull @NonNull ID<Folder> folderId,
         @NotNull @Valid @NonNull FolderSaveJson json
     ) {
         Folder folder = folderService.getFolder(folderId);
-        authorizationService.requireCollectionAccess(folder.getCollection().getId());
+        authorizationService.requireAccessTo(folder);
         Folder renamed = folderService.updateFolder(folderId, json);
         return FolderMapper.toJson(renamed);
     }
@@ -76,6 +83,7 @@ public class FolderResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public FolderJson move(
         @PathParam("folderId") @NotNull @NonNull ID<Folder> folderId,
         @NotNull @Valid @NonNull FolderMoveJson json
@@ -87,11 +95,12 @@ public class FolderResource {
 
     @DELETE
     @Path("/{folderId}")
+    @Authenticated
     public void delete(
         @PathParam("folderId") @NotNull @NonNull ID<Folder> folderId
     ) {
         Folder folder = folderService.getFolder(folderId);
-        authorizationService.requireCollectionAccess(folder.getCollection().getId());
+        authorizationService.requireAccessTo(folder);
         folderService.removeFolder(folderId);
     }
 }

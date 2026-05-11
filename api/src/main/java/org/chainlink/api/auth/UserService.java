@@ -1,6 +1,7 @@
 package org.chainlink.api.auth;
 
 import java.util.List;
+import java.util.Set;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import jakarta.transaction.Transactional;
@@ -14,7 +15,10 @@ import org.chainlink.api.collection.Collection;
 import org.chainlink.api.collection.CollectionAccess;
 import org.chainlink.api.collection.CollectionAccessRepo;
 import org.chainlink.api.collection.CollectionRepo;
+import org.chainlink.api.collection.CollectionService;
+import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.api.shared.user.User;
+import org.chainlink.infrastructure.errorhandling.AppAuthException;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
 
@@ -29,6 +33,20 @@ public class UserService {
     private final BookmarkService bookmarkService;
     private final FolderService folderService;
     private final TagService tagService;
+    private final CollectionService collectionService;
+    private final CurrentUserService currentUserService;
+
+    public @NonNull UserInfoJson buildCurrentUserInfo(@NonNull String email, @NonNull Set<String> roles) {
+        User user = currentUserService.findCurrentUser().orElseThrow(AppAuthException::new);
+        Collection collection = collectionService.getDefaultCollectionOrAutoprovision(user);
+        return new UserInfoJson(
+            email,
+            user.getVorname(),
+            user.getNachname(),
+            roles,
+            collection.getId()
+        );
+    }
 
     /**
      * Hard-deletes the given user and everything they own — collections,

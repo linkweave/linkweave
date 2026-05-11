@@ -16,11 +16,14 @@
 import * as runtime from '../runtime';
 import type {
   CleanupSuggestionListJson,
+  CleanupThresholdsJson,
   MoveToTrashJson,
 } from '../models/index';
 import {
     CleanupSuggestionListJsonFromJSON,
     CleanupSuggestionListJsonToJSON,
+    CleanupThresholdsJsonFromJSON,
+    CleanupThresholdsJsonToJSON,
     MoveToTrashJsonFromJSON,
     MoveToTrashJsonToJSON,
 } from '../models/index';
@@ -207,17 +210,17 @@ export class CleanupSuggestionResourceApi extends runtime.BaseAPI {
     /**
      * Thresholds
      */
-    async apiCleanupSuggestionsThresholdsGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<number>>> {
+    async apiCleanupSuggestionsThresholdsGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CleanupThresholdsJson>> {
         const requestOptions = await this.apiCleanupSuggestionsThresholdsGetRequestOpts();
         const response = await this.request(requestOptions, initOverrides);
 
-        return new runtime.JSONApiResponse<any>(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => CleanupThresholdsJsonFromJSON(jsonValue));
     }
 
     /**
      * Thresholds
      */
-    async apiCleanupSuggestionsThresholdsGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<number>> {
+    async apiCleanupSuggestionsThresholdsGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CleanupThresholdsJson> {
         const response = await this.apiCleanupSuggestionsThresholdsGetRaw(initOverrides);
         return await response.value();
     }

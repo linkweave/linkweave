@@ -1,6 +1,6 @@
 package org.chainlink.api.cleanup;
 
-import java.util.List;
+import java.time.temporal.ChronoUnit;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.Authenticated;
@@ -18,12 +18,15 @@ import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.Bookmark;
 import org.chainlink.api.bookmark.BookmarkService;
 import org.chainlink.api.cleanup.json.CleanupSuggestionListJson;
+import org.chainlink.api.cleanup.json.CleanupThresholdsJson;
 import org.chainlink.api.cleanup.json.MoveToTrashJson;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.auth.AuthorizationService;
+import io.smallrye.faulttolerance.api.RateLimit;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
+@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated
@@ -46,6 +49,7 @@ public class CleanupSuggestionResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
+    @Authenticated
     public CleanupSuggestionListJson list(
         @QueryParam("collectionId") @NotNull @NonNull ID<Collection> collectionId,
         @QueryParam("thresholdMonths") Integer thresholdMonths
@@ -60,27 +64,26 @@ public class CleanupSuggestionResource {
     @Path("/thresholds")
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
-    public List<Integer> thresholds() {
-        return cleanupSuggestionService.getAvailableThresholds();
+    @Authenticated
+    public CleanupThresholdsJson thresholds() {
+        return new CleanupThresholdsJson(cleanupSuggestionService.getAvailableThresholds());
     }
 
     @POST
     @Path("/{bookmarkId}/dismiss")
+    @Authenticated
     public void dismiss(@PathParam("bookmarkId") @NotNull @NonNull ID<Bookmark> bookmarkId) {
         Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
-        authorizationService.requireCollectionAccess(bookmark.getCollection().getId());
+        authorizationService.requireAccessTo(bookmark);
         cleanupSuggestionService.dismissSuggestion(bookmarkId);
     }
 
     @POST
     @Path("/move-to-trash")
     @Consumes(MediaType.APPLICATION_JSON)
+    @Authenticated
     public void moveToTrash(@NotNull @Valid @NonNull MoveToTrashJson json) {
-        ID<Collection> collectionId = ID.parse(json.getCollectionId(), Collection.class);
-        authorizationService.requireCollectionAccess(collectionId);
-        List<ID<Bookmark>> bookmarkIds = json.getBookmarkIds().stream()
-            .map(id -> ID.parse(id, Bookmark.class))
-            .toList();
-        cleanupSuggestionService.moveToTrash(bookmarkIds);
+        authorizationService.requireCollectionAccess(json.getCollectionId());
+        cleanupSuggestionService.moveToTrash(json.getBookmarkIds());
     }
 }

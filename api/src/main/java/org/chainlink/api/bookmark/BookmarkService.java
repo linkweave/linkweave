@@ -3,6 +3,7 @@ package org.chainlink.api.bookmark;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,6 +21,8 @@ import org.chainlink.infrastructure.errorhandling.AppFailureException;
 import org.chainlink.infrastructure.errorhandling.AppFailureMessage;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
+import org.chainlink.api.shared.Util;
+import org.jspecify.annotations.Nullable;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +33,19 @@ public class BookmarkService {
     private final FolderRepo folderRepo;
     private final TagRepo tagRepo;
     private final AppClock appClock;
+
+    /**
+     * Returned shape for {@link #findFaviconEvictionCandidatesOldestFirst()}. Keeps the entity
+     * graph from leaking into background-job callers.
+     */
+    public record FaviconEvictionCandidate(@NonNull URL url, @Nullable OffsetDateTime createdAt) {}
+
+    @NonNull
+    public List<FaviconEvictionCandidate> findFaviconEvictionCandidatesOldestFirst() {
+        return bookmarkRepo.findAllOldestFirstNotDeleted().stream()
+            .map(b -> new FaviconEvictionCandidate(b.getUrl(), Util.coalesce(b.getLastClickedAt(), b.getTimestampErstellt()).orElse(null)))
+            .toList();
+    }
 
     @NonNull
     public List<Bookmark> getBookmarksByCollection(@NonNull ID<Collection> collectionId) {

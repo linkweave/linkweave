@@ -123,6 +123,7 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
     public List<Bookmark> findAllOldestFirstNotDeleted() {
         return db.selectFrom(QBookmark.bookmark)
             .where(notDeleted())
+            .orderBy(QBookmark.bookmark.lastClickedAt.asc().nullsLast())
             .orderBy(QBookmark.bookmark.timestampErstellt.asc())
             .fetch();
     }

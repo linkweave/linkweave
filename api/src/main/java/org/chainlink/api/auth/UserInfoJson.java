@@ -10,24 +10,10 @@ import org.jspecify.annotations.NonNull;
 
 @JaxDTO
 public record UserInfoJson(
-    @NotNull
-    @NonNull
-    String email,
-
-    @NotNull
-    @NonNull
-    String firstName,
-
-    @NotNull
-    @NonNull
-    String lastName,
-
-    @NotNull
-    @NonNull
-    Set<String> roles,
-
-    @NotNull
-    @NonNull
-    ID<Collection> defaultCollectionId
+    @NotNull @NonNull String email,
+    @NotNull @NonNull String firstName,
+    @NotNull @NonNull String lastName,
+    @NotNull @NonNull Set<String> roles,
+    @NotNull @NonNull ID<Collection> defaultCollectionId
 ) {
 }

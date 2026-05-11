@@ -44,7 +44,7 @@ export interface CollectionSummaryJson {
      * @type {boolean}
      * @memberof CollectionSummaryJson
      */
-    isDefault?: boolean;
+    isDefault: boolean;
     /**
      * 
      * @type {CollectionRole}
@@ -56,7 +56,7 @@ export interface CollectionSummaryJson {
      * @type {boolean}
      * @memberof CollectionSummaryJson
      */
-    shared?: boolean;
+    shared: boolean;
 }
 
 
@@ -67,7 +67,9 @@ export interface CollectionSummaryJson {
 export function instanceOfCollectionSummaryJson(value: object): value is CollectionSummaryJson {
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
+    if (!('isDefault' in value) || value['isDefault'] === undefined) return false;
     if (!('role' in value) || value['role'] === undefined) return false;
+    if (!('shared' in value) || value['shared'] === undefined) return false;
     return true;
 }
 
@@ -83,9 +85,9 @@ export function CollectionSummaryJsonFromJSONTyped(json: any, ignoreDiscriminato
         
         'id': json['id'],
         'name': json['name'],
-        'isDefault': json['isDefault'] == null ? undefined : json['isDefault'],
+        'isDefault': json['isDefault'],
         'role': CollectionRoleFromJSON(json['role']),
-        'shared': json['shared'] == null ? undefined : json['shared'],
+        'shared': json['shared'],
     };
 }
 
