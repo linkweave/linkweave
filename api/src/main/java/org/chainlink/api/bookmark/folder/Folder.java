@@ -35,12 +35,6 @@ import org.jspecify.annotations.Nullable;
 @Setter
 public class Folder extends AbstractEntity<Folder> implements BelongsToCollection {
 
-    @Override
-    public @NonNull ID<Collection> getCollectionId() {
-        return collection.getId();
-    }
-
-
     @NonNull
     @ManyToOne(optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "fk_folder_collection"), nullable = false)
@@ -64,4 +58,9 @@ public class Folder extends AbstractEntity<Folder> implements BelongsToCollectio
     @Nullable
     @Column(name = "deleted_at", nullable = true)
     private OffsetDateTime deletedAt;
+
+    @Override
+    public @NonNull ID<Collection> getCollectionId() {
+        return collection.getId();
+    }
 }

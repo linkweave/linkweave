@@ -21,6 +21,7 @@ import org.chainlink.infrastructure.errorhandling.AppFailureException;
 import org.chainlink.infrastructure.errorhandling.AppFailureMessage;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
+import org.chainlink.api.shared.Util;
 import org.jspecify.annotations.Nullable;
 
 @Service
@@ -42,7 +43,7 @@ public class BookmarkService {
     @NonNull
     public List<FaviconEvictionCandidate> findFaviconEvictionCandidatesOldestFirst() {
         return bookmarkRepo.findAllOldestFirstNotDeleted().stream()
-            .map(b -> new FaviconEvictionCandidate(b.getUrl(), b.getTimestampErstellt()))
+            .map(b -> new FaviconEvictionCandidate(b.getUrl(), Util.coalesce(b.getLastClickedAt(), b.getTimestampErstellt()).orElse(null)))
             .toList();
     }
 

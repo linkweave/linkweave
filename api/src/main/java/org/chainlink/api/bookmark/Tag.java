@@ -38,12 +38,6 @@ import org.jspecify.annotations.NonNull;
 @Setter
 public class Tag extends AbstractEntity<Tag> implements BelongsToCollection {
 
-    @Override
-    public @NonNull ID<Collection> getCollectionId() {
-        return collection.getId();
-    }
-
-
     @NonNull
     @ManyToOne(optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "fk_tag_collection"), nullable = false)
@@ -61,4 +55,9 @@ public class Tag extends AbstractEntity<Tag> implements BelongsToCollection {
 
     @ManyToMany(mappedBy = "tags")
     private Set<Bookmark> bookmarks = new HashSet<>();
+
+    @Override
+    public @NonNull ID<Collection> getCollectionId() {
+        return collection.getId();
+    }
 }

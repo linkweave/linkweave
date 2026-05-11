@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.chainlink.api.bookmark.BookmarkService;
 import org.chainlink.api.bookmark.BookmarkService.FaviconEvictionCandidate;
 import org.chainlink.api.shared.config.ConfigService;
+import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
 
 /**
@@ -27,10 +28,11 @@ import org.jspecify.annotations.NonNull;
  *
  * <p>Touches files only — never deletes or mutates any database row.
  */
+@Service
 @ApplicationScoped
 @RequiredArgsConstructor
 @Slf4j
-public class FaviconCacheCleanupJob {
+public class FaviconCacheCleanupJobService {
 
     private final BookmarkService bookmarkService;
     private final FaviconCacheService cache;

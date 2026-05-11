@@ -41,11 +41,6 @@ import org.jspecify.annotations.Nullable;
 @NoArgsConstructor
 public class Bookmark extends AbstractEntity<Bookmark> implements BelongsToCollection {
 
-    @Override
-    public @NonNull ID<Collection> getCollectionId() {
-        return collection.getId();
-    }
-
 
     @NonNull
     @ManyToOne(optional = false)
@@ -100,5 +95,10 @@ public class Bookmark extends AbstractEntity<Bookmark> implements BelongsToColle
     @Nullable
     @Column(name = "suggestion_dismissed_at", nullable = true)
     private OffsetDateTime suggestionDismissedAt;
+
+    @Override
+    public @NonNull ID<Collection> getCollectionId() {
+        return collection.getId();
+    }
 
 }

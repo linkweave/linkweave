@@ -33,12 +33,6 @@ import org.jspecify.annotations.Nullable;
 @Setter
 public class AutoTagRule extends AbstractEntity<AutoTagRule> implements BelongsToCollection {
 
-    @Override
-    public @NonNull ID<Collection> getCollectionId() {
-        return collection.getId();
-    }
-
-
     @NonNull
     @ManyToOne(optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "fk_auto_tag_rule_collection"), nullable = false)
@@ -65,4 +59,9 @@ public class AutoTagRule extends AbstractEntity<AutoTagRule> implements BelongsT
 
     @Column(nullable = false)
     private int sortOrder;
+
+    @Override
+    public @NonNull ID<Collection> getCollectionId() {
+        return collection.getId();
+    }
 }
