@@ -1,13 +1,8 @@
 <script setup lang="ts">
 import { requireValue } from '@/lib/nullish.ts'
 import { Folder, FolderOpen, ChevronRight, MoreHorizontal } from 'lucide-vue-next'
-import {
-  DropdownMenuRoot,
-  DropdownMenuTrigger,
-  DropdownMenuPortal,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from 'radix-vue'
+import { DropdownMenuRoot, DropdownMenuTrigger } from 'radix-vue'
+import { DropdownMenuContentCl, DropdownMenuItemCl } from '@/components/ui'
 import type { FolderJson } from '@/api/generated'
 import { reactive, ref } from 'vue'
 import { useFolderStore } from '@/stores/folder'
@@ -190,32 +185,17 @@ async function onDrop(event: DragEvent, targetFolder: FolderJson) {
             </button>
           </DropdownMenuTrigger>
         </div>
-        <DropdownMenuPortal>
-          <DropdownMenuContent
-            class="min-w-[160px] z-50 rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-xl ring-1 ring-black/5 dark:ring-white/10 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
-            align="end"
-            :side-offset="4"
-          >
-            <DropdownMenuItem
-              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-              @select="emit('createSubfolder', node.folder.id)"
-            >
-              {{ $t('folder.createSubfolder') }}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-              @select="emit('rename', node.folder)"
-            >
-              {{ $t('common.edit') }}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors text-destructive focus:text-destructive data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-              @select="emit('delete', node.folder)"
-            >
-              {{ $t('common.delete') }}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenuPortal>
+        <DropdownMenuContentCl class="min-w-[160px] z-50">
+          <DropdownMenuItemCl @select="emit('createSubfolder', node.folder.id)">
+            {{ $t('folder.createSubfolder') }}
+          </DropdownMenuItemCl>
+          <DropdownMenuItemCl @select="emit('rename', node.folder)">
+            {{ $t('common.edit') }}
+          </DropdownMenuItemCl>
+          <DropdownMenuItemCl variant="destructive" @select="emit('delete', node.folder)">
+            {{ $t('common.delete') }}
+          </DropdownMenuItemCl>
+        </DropdownMenuContentCl>
       </DropdownMenuRoot>
 
       <FolderTreeNode

@@ -21,6 +21,8 @@
   --color-destructive-foreground: #ffffff;
   --color-popover: #ffffff;
   --color-popover-foreground: #111827;
+  --color-popover-hover: #f3f4f6;
+  --color-popover-selected: #e5e7eb;
   --color-border: #e5e7eb;
   --color-input: #e5e7eb;
   --color-ring: #2563eb;
@@ -50,6 +52,8 @@
   --color-destructive-foreground: #ffffff;
   --color-popover: #2a2e3a;
   --color-popover-foreground: #ededed;
+  --color-popover-hover: #363d4b;
+  --color-popover-selected: #3d4554;
   --color-border: #363d49;
   --color-input: #252a32;
   --color-ring: #3b82f6;

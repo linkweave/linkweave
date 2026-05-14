@@ -1,14 +1,20 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { toTypedSchema } from '@vee-validate/zod'
-import { useForm } from 'vee-validate'
-import { DialogCl, ButtonCl, FormFieldCl, FolderSelectCl, ColorInputCl } from '@/components/ui'
+import {
+  ColorInputCl,
+  DialogCl,
+  DialogFooterCl,
+  FolderSelectCl,
+  FormFieldCl,
+  InputCl,
+} from '@/components/ui'
+import { useFormDialog } from '@/composables/useFormDialog'
+import { folderSaveSchema } from '@/schemas/folder'
 import { useFolderStore } from '@/stores/folder'
 import { useNotificationStore } from '@/stores/notification'
-import { folderSaveSchema } from '@/schemas/folder'
-import { useFormDialog } from '@/composables/useFormDialog'
-import { toRef } from 'vue'
+import { toTypedSchema } from '@vee-validate/zod'
+import { useForm } from 'vee-validate'
+import { computed, toRef } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const folderStore = useFolderStore()
@@ -38,7 +44,7 @@ const { defineField, handleSubmit, errors, resetForm, isSubmitting } = useForm({
 })
 
 const [name, nameAttrs] = defineField('name')
-const [parentId] = defineField('parentId')
+const [selectedParentId] = defineField('parentId')
 const [color, colorAttrs] = defineField('color')
 
 const folders = computed(() => folderStore.folders)
@@ -66,20 +72,19 @@ const onSubmit = handleSubmit(async (values) => {
 
     <form @submit.prevent="onSubmit" class="space-y-4">
       <FormFieldCl :label="t('folder.name')" for-id="folder-name" :error="errors.name" required>
-        <input
+        <InputCl
           id="folder-name"
           v-model="name"
           v-bind="nameAttrs"
           type="text"
           :placeholder="t('folder.namePlaceholder')"
-          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </FormFieldCl>
 
       <FormFieldCl :label="t('folder.parentFolder')" for-id="folder-parent">
         <FolderSelectCl
           id="folder-parent"
-          v-model="parentId"
+          v-model="selectedParentId"
           :folders="folders"
           :placeholder="t('folder.noParent')"
           direction="down"
@@ -95,14 +100,11 @@ const onSubmit = handleSubmit(async (values) => {
         />
       </FormFieldCl>
 
-      <div class="flex justify-end gap-2">
-        <ButtonCl type="button" variant="outline" @click="emit('update:open', false)">
-          {{ t('common.cancel') }}
-        </ButtonCl>
-        <ButtonCl type="submit" :disabled="isSubmitting">
-          {{ isSubmitting ? t('common.loading') : t('common.create') }}
-        </ButtonCl>
-      </div>
+      <DialogFooterCl
+        :submit-label="t('common.create')"
+        :submitting="isSubmitting"
+        @cancel="emit('update:open', false)"
+      />
     </form>
   </DialogCl>
 </template>

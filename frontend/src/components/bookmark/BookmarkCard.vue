@@ -1,12 +1,8 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { ExternalLink, MoreHorizontal, MousePointerClick, Clock } from 'lucide-vue-next'
-import {
-  DropdownMenuRoot,
-  DropdownMenuTrigger,
-  DropdownMenuPortal,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from 'radix-vue'
+import { DropdownMenuRoot, DropdownMenuTrigger } from 'radix-vue'
+import { DropdownMenuContentCl, DropdownMenuItemCl } from '@/components/ui'
 import type { BookmarkJson } from '@/api/generated'
 import { useTagStore } from '@/stores/tag'
 import { useFolderStore } from '@/stores/folder'
@@ -54,6 +50,14 @@ function getFolderName(): string | null {
   const folder = folderStore.folders.find(f => f.id === folderId)
   return folder?.data.name ?? null
 }
+
+// Lazy mount of the radix DropdownMenu. With N cards on screen, mounting an
+// open-able menu per card (Portal context, popper, listeners) is the dominant
+// cost of rendering the bookmark list. Most cards never have their menu
+// opened, so we render a plain trigger button until first click and only then
+// swap in the full radix tree (auto-opened so the user sees the menu on that
+// very first click, just one tick later).
+const menuActivated = ref(false)
 </script>
 
 <template>
@@ -63,19 +67,27 @@ function getFolderName(): string | null {
     @dragstart="onBookmarkDragStart"
     @dragend="onBookmarkDragEnd"
   >
-    <DropdownMenuRoot>
-      <div class="flex items-start gap-3">
-        <BookmarkFavicon
-          :bookmark-id="props.bookmark.id"
-          :url="props.bookmark.data.url"
-          :size="20"
-          class="mt-0.5"
-        />
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2">
-            <h3 class="font-medium text-foreground truncate">
-              {{ props.bookmark.data.title }}
-            </h3>
+    <div class="flex items-start gap-3">
+      <BookmarkFavicon
+        :bookmark-id="props.bookmark.id"
+        :url="props.bookmark.data.url"
+        :size="20"
+        class="mt-0.5"
+      />
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2">
+          <h3 class="font-medium text-foreground truncate">
+            {{ props.bookmark.data.title }}
+          </h3>
+          <!-- Lazy radix mount: see `menuActivated` in script -->
+          <button
+            v-if="!menuActivated"
+            class="ml-auto h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-md transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground"
+            @click.stop="menuActivated = true"
+          >
+            <MoreHorizontal class="h-4 w-4" />
+          </button>
+          <DropdownMenuRoot v-else :default-open="true">
             <DropdownMenuTrigger as-child>
               <button
                 class="ml-auto h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-md transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground"
@@ -84,68 +96,53 @@ function getFolderName(): string | null {
                 <MoreHorizontal class="h-4 w-4" />
               </button>
             </DropdownMenuTrigger>
-          </div>
+            <DropdownMenuContentCl class="min-w-[160px] z-50">
+              <DropdownMenuItemCl @select="emit('edit', props.bookmark)">
+                {{ $t('common.edit') }}
+              </DropdownMenuItemCl>
+              <DropdownMenuItemCl @select="emit('move', props.bookmark)">
+                {{ $t('bookmark.moveToFolder') }}
+              </DropdownMenuItemCl>
+              <DropdownMenuItemCl variant="destructive" @select="emit('delete', props.bookmark)">
+                {{ $t('common.delete') }}
+              </DropdownMenuItemCl>
+            </DropdownMenuContentCl>
+          </DropdownMenuRoot>
+        </div>
 
-          <a
-            :href="props.bookmark.data.url"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors mt-0.5"
-            @click="bookmarkStore.trackClick(props.bookmark.id)"
+        <a
+          :href="props.bookmark.data.url"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors mt-0.5"
+          @click="bookmarkStore.trackClick(props.bookmark.id)"
+        >
+          <span class="truncate">{{ props.bookmark.data.url }}</span>
+          <ExternalLink class="h-3 w-3 shrink-0" />
+        </a>
+
+        <p
+          v-if="props.bookmark.data.description"
+          class="text-sm text-muted-foreground mt-2 line-clamp-2"
+        >
+          {{ props.bookmark.data.description }}
+        </p>
+
+        <div v-if="props.bookmark.data.tagIds && props.bookmark.data.tagIds.size > 0 || getFolderName()" class="flex flex-wrap items-center gap-1 mt-2">
+          <span v-if="getFolderName()" class="text-xs text-muted-foreground">
+            in {{ getFolderName() }}
+          </span>
+          <span
+            v-for="tagId in props.bookmark.data.tagIds"
+            :key="tagId"
+            class="inline-flex items-center rounded-full px-2 py-0.5 text-xs text-white"
+            :style="{ backgroundColor: getTagById(tagId)?.data.color ?? '#64748b' }"
           >
-            <span class="truncate">{{ props.bookmark.data.url }}</span>
-            <ExternalLink class="h-3 w-3 shrink-0" />
-          </a>
-
-          <p
-            v-if="props.bookmark.data.description"
-            class="text-sm text-muted-foreground mt-2 line-clamp-2"
-          >
-            {{ props.bookmark.data.description }}
-          </p>
-
-          <div v-if="props.bookmark.data.tagIds && props.bookmark.data.tagIds.size > 0 || getFolderName()" class="flex flex-wrap items-center gap-1 mt-2">
-            <span v-if="getFolderName()" class="text-xs text-muted-foreground">
-              in {{ getFolderName() }}
-            </span>
-            <span
-              v-for="tagId in props.bookmark.data.tagIds"
-              :key="tagId"
-              class="inline-flex items-center rounded-full px-2 py-0.5 text-xs text-white"
-              :style="{ backgroundColor: getTagById(tagId)?.data.color ?? '#64748b' }"
-            >
-              {{ getTagById(tagId)?.data.name ?? tagId.substring(0, 8) }}
-            </span>
-          </div>
+            {{ getTagById(tagId)?.data.name ?? tagId.substring(0, 8) }}
+          </span>
         </div>
       </div>
-      <DropdownMenuPortal>
-        <DropdownMenuContent
-          class="min-w-[160px] z-50 rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-xl ring-1 ring-black/5 dark:ring-white/10 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
-          align="end"
-          :side-offset="4"
-        >
-          <DropdownMenuItem
-            class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-            @select="emit('edit', props.bookmark)"
-          >
-            {{ $t('common.edit') }}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-            @select="emit('move', props.bookmark)"
-          >
-            {{ $t('bookmark.moveToFolder') }}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors text-destructive focus:text-destructive data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-            @select="emit('delete', props.bookmark)"
-          >
-            {{ $t('common.delete') }}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenuPortal>
-    </DropdownMenuRoot>
+    </div>
 
     <div
       v-if="showStats"

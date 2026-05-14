@@ -8,7 +8,7 @@ const auth = useAuthStore()
 </script>
 
 <template>
-  <header class="relative z-[60] flex items-center gap-3 sm:gap-4 p-3 sm:p-4 border-b border-border bg-card shrink-0">
+  <header class="relative z-[60] flex items-center gap-3 sm:gap-4 px-3 sm:px-4 py-2 border-b border-border bg-card shrink-0">
     <!-- Leading: hamburger + logo + collection switcher -->
     <div class="flex items-center gap-2 sm:gap-3 shrink-0">
       <slot name="leading" />

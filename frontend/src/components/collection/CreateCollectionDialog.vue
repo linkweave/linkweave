@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
-import { DialogCl, ButtonCl, FormFieldCl } from '@/components/ui'
+import { DialogCl, DialogFooterCl, FormFieldCl, InputCl } from '@/components/ui'
 import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
 import { collectionCreateSchema } from '@/schemas/collection'
@@ -45,7 +45,7 @@ const onSubmit = handleSubmit(async (values) => {
     <template #title>{{ t('collectionManage.createTitle') }}</template>
     <form @submit.prevent="onSubmit" class="space-y-4">
       <FormFieldCl :label="t('collectionManage.name')" for-id="create-collection-name" :error="errors.name" required>
-        <input
+        <InputCl
           id="create-collection-name"
           v-model="name"
           v-bind="nameAttrs"
@@ -53,17 +53,14 @@ const onSubmit = handleSubmit(async (values) => {
           maxlength="255"
           data-testid="create-collection-name-input"
           :placeholder="t('collectionManage.namePlaceholder')"
-          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </FormFieldCl>
-      <div class="flex justify-end gap-2">
-        <ButtonCl type="button" variant="outline" @click="emit('update:open', false)">
-          {{ t('common.cancel') }}
-        </ButtonCl>
-        <ButtonCl type="submit" data-testid="collection-create-submit-btn" :disabled="isSubmitting">
-          {{ isSubmitting ? t('common.loading') : t('common.create') }}
-        </ButtonCl>
-      </div>
+      <DialogFooterCl
+        :submit-label="t('common.create')"
+        :submitting="isSubmitting"
+        submit-testid="collection-create-submit-btn"
+        @cancel="emit('update:open', false)"
+      />
     </form>
   </DialogCl>
 </template>
