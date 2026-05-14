@@ -66,6 +66,12 @@
     "layoutGrid": "Grid",
     "layoutGrouped": "Grouped"
   },
+  "toolbar": {
+    "layoutGrid": "Grid view",
+    "layoutList": "List view",
+    "layoutGrouped": "Grouped view",
+    "changeLayout": "Change layout"
+  },
   "import": {
     "title": "Import Bookmarks",
     "description": "Upload a Netscape HTML bookmark file to import into this collection. All folders and bookmarks will be created at the root level.",

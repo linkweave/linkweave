@@ -86,8 +86,11 @@ const closeSidebar = () => {
       </template>
 
       <!-- Main content -->
-      <main class="flex-1 overflow-y-auto p-3 sm:p-6">
-        <slot />
+      <main class="flex-1 overflow-y-auto">
+        <slot name="toolbar" />
+        <div class="p-3 sm:p-6">
+          <slot />
+        </div>
       </main>
     </div>
   </div>

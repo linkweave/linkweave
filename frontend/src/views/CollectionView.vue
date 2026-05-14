@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { BookmarkList, SearchActiveChip } from '@/components/bookmark'
+import { BookmarkList, BookmarkListToolbar, SearchActiveChip } from '@/components/bookmark'
 import CreateBookmarkDialog from '@/components/bookmark/CreateBookmarkDialog.vue'
-import CollectionLayoutToggle from '@/components/collection/CollectionLayoutToggle.vue'
-import { FolderBreadcrumbCl } from '@/components/folder'
 import { MainLayout } from '@/components/layout'
 import { ResponsiveButton, SearchBar } from '@/components/ui'
 import HeaderSearchMobile from '@/components/ui/HeaderSearchMobile.vue'
@@ -54,13 +52,10 @@ const containerClass = computed(() =>
       </ResponsiveButton>
     </template>
 
+    <template #toolbar>
+      <BookmarkListToolbar />
+    </template>
     <div :class="[containerClass, 'mx-auto space-y-4']">
-      <div class="flex items-center gap-3">
-        <div class="min-w-0 flex-1">
-          <FolderBreadcrumbCl />
-        </div>
-        <CollectionLayoutToggle />
-      </div>
       <SearchActiveChip />
       <BookmarkList />
     </div>

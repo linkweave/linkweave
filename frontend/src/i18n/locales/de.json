@@ -66,6 +66,12 @@
     "layoutGrid": "Raster",
     "layoutGrouped": "Gruppiert"
   },
+  "toolbar": {
+    "layoutGrid": "Rasteransicht",
+    "layoutList": "Listenansicht",
+    "layoutGrouped": "Gruppierte Ansicht",
+    "changeLayout": "Ansicht ändern"
+  },
   "import": {
     "title": "Lesezeichen importieren",
     "description": "Laden Sie eine Lesezeichen-Datei im Netscape-HTML-Format hoch, um sie in diese Sammlung zu importieren. Alle Ordner und Lesezeichen werden auf der Stammebene erstellt.",

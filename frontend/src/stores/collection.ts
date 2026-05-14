@@ -1,6 +1,7 @@
 import {config} from '@/api'
 import type {CollectionInfoJson, CollectionMemberJson, CollectionSettingsJson, CollectionSummaryJson} from '@/api/generated'
 import {CollectionResourceApi} from '@/api/generated'
+import {useCollectionSettingsWriter} from '@/composables/useCollectionSettingsWriter'
 import * as offlineCache from '@/lib/offline-cache'
 import { toSerializable } from '@/lib/to-serializable'
 import router from '@/router'
@@ -167,14 +168,9 @@ export const useCollectionStore = defineStore('collection', () => {
     router.push({ name: 'collection', params: { id: collectionId } })
   }
 
-  watch(currentCollectionId, (id, prevId) => {
-    if (prevId && pendingPatch) {
-      if (settingsFlushTimer) {
-        clearTimeout(settingsFlushTimer)
-        settingsFlushTimer = null
-      }
-      void flushSettings()
-    }
+  const {updateSettings} = useCollectionSettingsWriter(settings, () => currentCollectionId.value)
+
+  watch(currentCollectionId, (id, _prevId) => {
     if (id) {
       fetchCollectionInfo(id)
       if (!collectionsFetched.value) {
@@ -207,50 +203,6 @@ export const useCollectionStore = defineStore('collection', () => {
       console.error('Failed to share collection:', err)
       throw err
     }
-  }
-
-  const SETTINGS_DEBOUNCE_MS = 400
-  let settingsFlushTimer: ReturnType<typeof setTimeout> | null = null
-  let pendingPatch: { collectionId: string; patch: CollectionSettingsJson } | null = null
-  let inFlight = false
-
-  async function flushSettings(): Promise<void> {
-    if (!pendingPatch || inFlight) return
-    const { collectionId, patch } = pendingPatch
-    pendingPatch = null
-    inFlight = true
-    try {
-      const result = await collectionApi.apiCollectionsIdSettingsPut({
-        id: collectionId,
-        collectionSettingsJson: patch,
-      })
-      // Only adopt the server response if the user hasn't queued another change.
-      if (!pendingPatch) {
-        settings.value = result
-      }
-    } catch (err) {
-      console.error('Failed to update collection settings:', err)
-      const notification = useNotificationStore()
-      notification.handleApiError(err, 'Failed to update collection settings')
-    } finally {
-      inFlight = false
-      if (pendingPatch) {
-        void flushSettings()
-      }
-    }
-  }
-
-  function updateSettings(collectionId: string, patch: CollectionSettingsJson): void {
-    settings.value = { ...(settings.value ?? {}), ...patch }
-    pendingPatch = {
-      collectionId,
-      patch: { ...(pendingPatch?.collectionId === collectionId ? pendingPatch.patch : {}), ...patch },
-    }
-    if (settingsFlushTimer) clearTimeout(settingsFlushTimer)
-    settingsFlushTimer = setTimeout(() => {
-      settingsFlushTimer = null
-      void flushSettings()
-    }, SETTINGS_DEBOUNCE_MS)
   }
 
   async function revokeAccess(collectionId: string, userId: string): Promise<void> {
