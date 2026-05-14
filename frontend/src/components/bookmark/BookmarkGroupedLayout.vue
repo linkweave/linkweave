@@ -9,13 +9,8 @@ import { DRAG_TYPE_BOOKMARK, isDraggingBookmark, setDraggingBookmark } from '@/c
 import { useDndMove } from '@/composables/useDndMove'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import BookmarkFavicon from '@/components/bookmark/BookmarkFavicon.vue'
-import {
-  DropdownMenuRoot,
-  DropdownMenuTrigger,
-  DropdownMenuPortal,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from 'radix-vue'
+import { DropdownMenuRoot, DropdownMenuTrigger } from 'radix-vue'
+import { DropdownMenuContentCl, DropdownMenuItemCl } from '@/components/ui'
 
 const { t } = useI18n()
 const folderStore = useFolderStore()
@@ -253,32 +248,17 @@ async function onHeaderDrop(event: DragEvent, group: GroupCard) {
                   <MoreHorizontal class="h-3.5 w-3.5" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuContent
-                  class="min-w-[160px] z-50 rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-xl ring-1 ring-black/5 dark:ring-white/10 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
-                  align="end"
-                  :side-offset="4"
-                >
-                  <DropdownMenuItem
-                    class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                    @select="emit('edit', bookmark)"
-                  >
-                    {{ $t('common.edit') }}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                    @select="emit('move', bookmark)"
-                  >
-                    {{ $t('bookmark.moveToFolder') }}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors text-destructive focus:text-destructive data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                    @select="emit('delete', bookmark)"
-                  >
-                    {{ $t('common.delete') }}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenuPortal>
+              <DropdownMenuContentCl class="min-w-[160px] z-50">
+                <DropdownMenuItemCl @select="emit('edit', bookmark)">
+                  {{ $t('common.edit') }}
+                </DropdownMenuItemCl>
+                <DropdownMenuItemCl @select="emit('move', bookmark)">
+                  {{ $t('bookmark.moveToFolder') }}
+                </DropdownMenuItemCl>
+                <DropdownMenuItemCl variant="destructive" @select="emit('delete', bookmark)">
+                  {{ $t('common.delete') }}
+                </DropdownMenuItemCl>
+              </DropdownMenuContentCl>
             </DropdownMenuRoot>
           </div>
         </template>

@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { toTypedSchema } from '@vee-validate/zod'
-import { useForm } from 'vee-validate'
-import { DialogCl, ButtonCl, FormFieldCl, FolderSelectCl } from '@/components/ui'
+import type { BookmarkJson } from '@/api/generated'
+import { DialogCl, DialogFooterCl, FolderSelectCl, FormFieldCl } from '@/components/ui'
+import { useFormDialog } from '@/composables/useFormDialog'
+import { bookmarkMoveSchema } from '@/schemas/bookmark'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useFolderStore } from '@/stores/folder'
 import { useNotificationStore } from '@/stores/notification'
-import { bookmarkMoveSchema } from '@/schemas/bookmark'
-import { useFormDialog } from '@/composables/useFormDialog'
-import type { BookmarkJson } from '@/api/generated'
-import { toRef } from 'vue'
+import { toTypedSchema } from '@vee-validate/zod'
+import { useForm } from 'vee-validate'
+import { computed, toRef } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const bookmarkStore = useBookmarkStore()
@@ -77,14 +76,11 @@ const onSubmit = handleSubmit(async (values) => {
         />
       </FormFieldCl>
 
-      <div class="flex justify-end gap-2">
-        <ButtonCl type="button" variant="outline" @click="emit('update:open', false)">
-          {{ t('common.cancel') }}
-        </ButtonCl>
-        <ButtonCl type="submit" :disabled="isSubmitting">
-          {{ isSubmitting ? t('common.loading') : t('common.save') }}
-        </ButtonCl>
-      </div>
+      <DialogFooterCl
+        :submit-label="t('common.save')"
+        :submitting="isSubmitting"
+        @cancel="emit('update:open', false)"
+      />
     </form>
   </DialogCl>
 </template>

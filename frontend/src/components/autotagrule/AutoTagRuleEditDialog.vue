@@ -3,7 +3,7 @@ import { computed, ref, toRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
-import { ButtonCl, DialogCl, FormFieldCl, HelpPopoverCl } from '@/components/ui'
+import { DialogCl, DialogFooterCl, FormFieldCl, HelpPopoverCl, InputCl } from '@/components/ui'
 import { useAutoTagRuleStore } from '@/stores/autoTagRule'
 import { useNotificationStore } from '@/stores/notification'
 import { useFormDialog } from '@/composables/useFormDialog'
@@ -216,14 +216,13 @@ watch(testUrl, () => {})
       </div>
 <!-- Tag names-->
       <FormFieldCl :label="t('autoTagRule.tagNames')" for-id="auto-tag-rule-tags" :error="errors.tagNames" required>
-        <input
+        <InputCl
           id="auto-tag-rule-tags"
           v-model="tagNames"
           type="text"
           maxlength="2000"
           data-testid="auto-tag-rule-tags"
           :placeholder="t('autoTagRule.tagNamesPlaceholder')"
-          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
         <div v-if="tagPreview.length > 0" class="mt-1.5 flex flex-wrap gap-1">
           <span
@@ -252,18 +251,12 @@ watch(testUrl, () => {})
         {{ t('autoTagRule.enabled') }}
       </label>
 
-      <div class="flex justify-end gap-2">
-        <ButtonCl type="button" variant="outline" @click="emit('update:open', false)">
-          {{ t('common.cancel') }}
-        </ButtonCl>
-        <ButtonCl
-          type="submit"
-          data-testid="auto-tag-rule-submit"
-          :disabled="isSubmitting"
-        >
-          {{ isSubmitting ? t('common.loading') : isEditing ? t('common.save') : t('common.create') }}
-        </ButtonCl>
-      </div>
+      <DialogFooterCl
+        :submit-label="isEditing ? t('common.save') : t('common.create')"
+        :submitting="isSubmitting"
+        submit-testid="auto-tag-rule-submit"
+        @cancel="emit('update:open', false)"
+      />
     </form>
   </DialogCl>
 </template>

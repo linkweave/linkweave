@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { BookmarkJson } from '@/api/generated'
 import AutoTagRulesDialog from '@/components/autotagrule/AutoTagRulesDialog.vue'
-import { ButtonCl, DialogCl, FolderSelectCl, FormFieldCl } from '@/components/ui'
+import { ButtonCl, DialogCl, DialogFooterCl, FolderSelectCl, FormFieldCl, InputCl } from '@/components/ui'
 import { useDuplicateCheck } from '@/composables/useDuplicateCheck'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { useTagSuggestions } from '@/composables/useTagSuggestions'
@@ -154,13 +154,12 @@ const onSubmit = handleSubmit(async (values) => {
         :error="errors.url"
         required
       >
-        <input
+        <InputCl
           id="edit-bookmark-url"
           v-model="url"
           v-bind="urlAttrs"
           type="url"
           :placeholder="t('bookmark.urlPlaceholder')"
-          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           @blur="onUrlBlur"
         />
       </FormFieldCl>
@@ -193,13 +192,12 @@ const onSubmit = handleSubmit(async (values) => {
         :error="errors.title"
         required
       >
-        <input
+        <InputCl
           id="edit-bookmark-title"
           v-model="title"
           v-bind="titleAttrs"
           type="text"
           :placeholder="t('bookmark.titlePlaceholder')"
-          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </FormFieldCl>
 
@@ -298,14 +296,11 @@ const onSubmit = handleSubmit(async (values) => {
         </template>
       </div>
 
-      <div class="flex justify-end gap-2">
-        <ButtonCl type="button" variant="outline" @click="emit('update:open', false)">
-          {{ t('common.cancel') }}
-        </ButtonCl>
-        <ButtonCl type="submit" :disabled="isSubmitting">
-          {{ isSubmitting ? t('common.loading') : t('common.save') }}
-        </ButtonCl>
-      </div>
+      <DialogFooterCl
+        :submit-label="t('common.save')"
+        :submitting="isSubmitting"
+        @cancel="emit('update:open', false)"
+      />
     </form>
   </DialogCl>
 

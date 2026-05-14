@@ -3,7 +3,7 @@ import type {CollectionMemberJson} from '@/api/generated'
 import {ResponseError} from '@/api/generated'
 import {toTypedSchema} from '@vee-validate/zod'
 import {useForm} from 'vee-validate'
-import {ButtonCl, DialogCl, FormFieldCl} from '@/components/ui'
+import {ButtonCl, DialogCl, FormFieldCl, InputCl} from '@/components/ui'
 import {useCollectionStore} from '@/stores/collection'
 import {useNotificationStore} from '@/stores/notification'
 import {collectionShareSchema} from '@/schemas/collection'
@@ -191,7 +191,7 @@ function nonOwnerMembers() {
       <form class="flex flex-col sm:flex-row gap-2 sm:items-start" @submit.prevent="handleInvite">
         <div class="flex-1">
           <FormFieldCl :label="t('collectionManage.shareInvite')" for-id="share-email-input" :error="errors.email">
-            <input
+            <InputCl
               id="share-email-input"
               v-model="inviteEmail"
               v-bind="inviteEmailAttrs"
@@ -199,7 +199,6 @@ function nonOwnerMembers() {
               autocomplete="off"
               data-testid="share-email-input"
               :placeholder="t('collectionManage.shareEmailPlaceholder')"
-              class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
           </FormFieldCl>
         </div>

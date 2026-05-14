@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
-import { DialogCl, ButtonCl, FormFieldCl } from '@/components/ui'
+import { DialogCl, DialogFooterCl, FormFieldCl, InputCl } from '@/components/ui'
 import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
 import { collectionDeleteSchema } from '@/schemas/collection'
@@ -56,29 +56,23 @@ const onSubmit = handleSubmit(async () => {
         for-id="delete-confirm-name"
         :error="errors.confirmName"
       >
-        <input
+        <InputCl
           id="delete-confirm-name"
           v-model="confirmName"
           v-bind="confirmNameAttrs"
           type="text"
           data-testid="delete-confirm-name-input"
           :placeholder="collectionName"
-          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </FormFieldCl>
-      <div class="flex justify-end gap-2">
-        <ButtonCl type="button" variant="outline" @click="emit('update:open', false)">
-          {{ t('common.cancel') }}
-        </ButtonCl>
-        <ButtonCl
-          type="submit"
-          variant="destructive"
-          data-testid="collection-delete-submit-btn"
-          :disabled="isSubmitting || !canDelete"
-        >
-          {{ isSubmitting ? t('common.loading') : t('common.delete') }}
-        </ButtonCl>
-      </div>
+      <DialogFooterCl
+        :submit-label="t('common.delete')"
+        :submitting="isSubmitting"
+        :submit-disabled="!canDelete"
+        submit-variant="destructive"
+        submit-testid="collection-delete-submit-btn"
+        @cancel="emit('update:open', false)"
+      />
     </form>
   </DialogCl>
 </template>
