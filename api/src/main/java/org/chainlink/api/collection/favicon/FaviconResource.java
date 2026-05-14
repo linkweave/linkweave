@@ -15,7 +15,9 @@ import org.chainlink.api.shared.auth.AuthorizationService;
 import io.smallrye.faulttolerance.api.RateLimit;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 
-@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
+// SmallRye @RateLimit is a per-method global bucket (not per-user / per-IP), so
+// this guard has to accommodate the legitimate fan-out of a fresh page load.
+@RateLimit(value = 15000, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated
