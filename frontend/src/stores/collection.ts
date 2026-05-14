@@ -1,6 +1,7 @@
 import {config} from '@/api'
 import type {CollectionInfoJson, CollectionMemberJson, CollectionSettingsJson, CollectionSummaryJson} from '@/api/generated'
 import {CollectionResourceApi} from '@/api/generated'
+import {SYSTEM_DEFAULT_SORT} from '@/utils/bookmarkSort'
 import {useCollectionSettingsWriter} from '@/composables/useCollectionSettingsWriter'
 import * as offlineCache from '@/lib/offline-cache'
 import { toSerializable } from '@/lib/to-serializable'
@@ -26,6 +27,29 @@ export const useCollectionStore = defineStore('collection', () => {
     const v = settings.value?.layout
     return v === 'list' || v === 'grid' || v === 'grouped' ? v : null
   })
+
+  // Two primitive computeds (rather than a packed {field, direction} object)
+  // so that unrelated settings changes — e.g. flipping layout — don't
+  // invalidate downstream computeds that depend on the sort.
+  const sortField = computed(() => settings.value?.sortField ?? SYSTEM_DEFAULT_SORT.field)
+  const sortDirection = computed(() => settings.value?.sortDirection ?? SYSTEM_DEFAULT_SORT.direction)
+
+  const hasSortOverride = computed(
+    () => settings.value?.sortField != null || settings.value?.sortDirection != null,
+  )
+
+  async function resetSortPreference(collectionId: string) {
+    try {
+      await collectionApi.apiCollectionsIdSettingsSortDelete({ id: collectionId })
+      if (settings.value) {
+        settings.value = { ...settings.value, sortField: undefined, sortDirection: undefined }
+      }
+    } catch (err) {
+      console.error('Failed to reset sort preference:', err)
+      const notification = useNotificationStore()
+      notification.handleApiError(err, 'Failed to reset sort preference')
+    }
+  }
   const defaultCollectionId = computed(() =>
     collections.value.find(c => c.isDefault)?.id ?? null
   )
@@ -220,7 +244,11 @@ export const useCollectionStore = defineStore('collection', () => {
     collections,
     settings,
     settingsLayout,
+    sortField,
+    sortDirection,
+    hasSortOverride,
     updateSettings,
+    resetSortPreference,
     loading,
     searchQuery,
     collectionName,

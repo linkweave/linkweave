@@ -6,6 +6,7 @@ import type { BookmarkJson, BookmarkSaveJson, BookmarkMoveJson } from '@/api/gen
 import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { useTagStore } from '@/stores/tag'
+import { sortBookmarks } from '@/utils/bookmarkSort'
 import { parseSearchQuery, bookmarkMatchesTerms } from '@/utils/search'
 
 const bookmarkApi = new BookmarkResourceApi(config)
@@ -29,7 +30,11 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     searchQuery.value = ''
   }
 
-  const filteredBookmarks = computed(() => {
+  // Combined filter + sort pass. Splitting into separate `filteredBookmarks`
+  // and `neverOpenedCount` computeds (each consuming the sort util) would mean
+  // running the partition twice; instead we let `sortBookmarks` report both
+  // and expose two cheap getter-style computeds derived from this one.
+  const sortedAndFiltered = computed(() => {
     const folderStore = useFolderStore()
     const tagStore = useTagStore()
     let result = bookmarks.value
@@ -57,8 +62,14 @@ export const useBookmarkStore = defineStore('bookmark', () => {
       }
     }
 
-    return result
+    return sortBookmarks(result, {
+      field: collectionStore.sortField,
+      direction: collectionStore.sortDirection,
+    })
   })
+
+  const filteredBookmarks = computed(() => sortedAndFiltered.value.items)
+  const neverOpenedCount = computed(() => sortedAndFiltered.value.neverOpenedCount)
 
   function patchBookmarks(updater: (list: BookmarkJson[]) => BookmarkJson[]) {
     const info = collectionStore.collectionInfo
@@ -119,6 +130,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     loading,
     searchQuery,
     filteredBookmarks,
+    neverOpenedCount,
     setSearchQuery,
     clearSearchQuery,
     createBookmark,
