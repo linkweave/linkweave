@@ -91,7 +91,7 @@ test.describe('Collection layout toggle', () => {
           '[role="group"][aria-label="Bookmark Layout"] button',
         ),
       )
-      const byTitle = (t: string) => buttons.find((b) => b.title === t)
+      const byTitle = (t: string) => buttons.find((b) => b.title.startsWith(t))
       byTitle('List')?.click()
       byTitle('Grouped')?.click()
       byTitle('Grid')?.click()

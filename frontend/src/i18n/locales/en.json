@@ -67,6 +67,7 @@
     "layoutGrouped": "Grouped"
   },
   "toolbar": {
+    "layout": "Bookmark Layout",
     "layoutGrid": "Grid view",
     "layoutList": "List view",
     "layoutGrouped": "Grouped view",
@@ -331,5 +332,33 @@
     "suggestions": "suggestions",
     "thresholdLabel": "Inactivity period",
     "thresholdMonths": "{months} months"
+  },
+  "sort": {
+    "label": "Sort",
+    "neverOpened": "Never opened · {n}",
+    "menu": {
+      "title": "Sort · this collection",
+      "reset": "Reset",
+      "sharedClicksNote": "\"Last clicked\" and \"Click count\" reflect everyone in this collection."
+    },
+    "field": {
+      "title": "Title",
+      "titleSub": "A → Z by title",
+      "dateAdded": "Date added",
+      "date_addedSub": "When you saved it",
+      "lastClicked": "Last clicked",
+      "last_clickedSub": "Most recently opened",
+      "clickCount": "Click count",
+      "click_countSub": "How often it gets visited"
+    },
+    "dir": {
+      "az": "A → Z",
+      "za": "Z → A",
+      "oldestFirst": "Oldest first",
+      "newestFirst": "Newest first",
+      "mostRecent": "Most recent first",
+      "leastVisited": "Least visited first",
+      "mostVisited": "Most visited first"
+    }
   }
 }

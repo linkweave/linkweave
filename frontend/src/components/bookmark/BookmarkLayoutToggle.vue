@@ -69,7 +69,11 @@ onBeforeUnmount(() => {
 
 <template>
   <!-- Desktop: segmented button group -->
-  <div class="hidden sm:flex items-center rounded-md border border-border bg-card overflow-hidden">
+  <div
+    class="hidden sm:flex items-center rounded-md border border-border bg-card overflow-hidden"
+    role="group"
+    :aria-label="t('toolbar.layout')"
+  >
     <button
       v-for="option in options"
       :key="option.value"
@@ -100,7 +104,7 @@ onBeforeUnmount(() => {
     </ButtonCl>
     <div
       v-if="mobileMenuOpen"
-      class="absolute right-0 top-full mt-1 z-40 min-w-[8rem] rounded-md border border-border bg-popover shadow-md py-1"
+      class="absolute right-0 top-full mt-1 z-40 min-w-[8rem] rounded-md border border-border bg-popover shadow-xl ring-1 ring-black/5 dark:ring-white/10 py-1"
       role="menu"
     >
       <button

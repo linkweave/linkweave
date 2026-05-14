@@ -86,6 +86,10 @@ export interface CollectionResourceApiApiCollectionsIdSettingsPutRequest {
     collectionSettingsJson: CollectionSettingsJson;
 }
 
+export interface CollectionResourceApiApiCollectionsIdSettingsSortDeleteRequest {
+    id: string;
+}
+
 export interface CollectionResourceApiApiCollectionsPostRequest {
     collectionCreateJson: CollectionCreateJson;
 }
@@ -570,6 +574,50 @@ export class CollectionResourceApi extends runtime.BaseAPI {
     async apiCollectionsIdSettingsPut(requestParameters: CollectionResourceApiApiCollectionsIdSettingsPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CollectionSettingsJson> {
         const response = await this.apiCollectionsIdSettingsPutRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Creates request options for apiCollectionsIdSettingsSortDelete without sending the request
+     */
+    async apiCollectionsIdSettingsSortDeleteRequestOpts(requestParameters: CollectionResourceApiApiCollectionsIdSettingsSortDeleteRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiCollectionsIdSettingsSortDelete().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/api/collections/{id}/settings/sort`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        return {
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * Reset Sort Preference
+     */
+    async apiCollectionsIdSettingsSortDeleteRaw(requestParameters: CollectionResourceApiApiCollectionsIdSettingsSortDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.apiCollectionsIdSettingsSortDeleteRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Reset Sort Preference
+     */
+    async apiCollectionsIdSettingsSortDelete(requestParameters: CollectionResourceApiApiCollectionsIdSettingsSortDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiCollectionsIdSettingsSortDeleteRaw(requestParameters, initOverrides);
     }
 
     /**

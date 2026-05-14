@@ -31,7 +31,7 @@ defineExpose({ close })
         side="bottom"
         align="end"
         :side-offset="4"
-        class="z-50 rounded-md border border-border bg-popover p-3 text-popover-foreground shadow-md text-xs overflow-auto"
+        class="z-50 rounded-md border border-border bg-popover p-3 text-popover-foreground shadow-xl ring-1 ring-black/5 dark:ring-white/10 text-xs overflow-auto"
         :style="{ width: width ?? '22rem', maxWidth: 'calc(100vw - 2rem)' }"
       >
         <slot />

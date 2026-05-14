@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BookmarkList, BookmarkListToolbar, SearchActiveChip } from '@/components/bookmark'
+import { BookmarkList, BookmarkListToolbar, BookmarkSortMenu, SearchActiveChip } from '@/components/bookmark'
 import CreateBookmarkDialog from '@/components/bookmark/CreateBookmarkDialog.vue'
 import { MainLayout } from '@/components/layout'
 import { ResponsiveButton, SearchBar } from '@/components/ui'
@@ -53,7 +53,11 @@ const containerClass = computed(() =>
     </template>
 
     <template #toolbar>
-      <BookmarkListToolbar />
+      <BookmarkListToolbar>
+        <template #sort>
+          <BookmarkSortMenu />
+        </template>
+      </BookmarkListToolbar>
     </template>
     <div :class="[containerClass, 'mx-auto space-y-4']">
       <SearchActiveChip />

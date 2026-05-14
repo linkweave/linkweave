@@ -9,6 +9,7 @@ import BookmarkCard from './BookmarkCard.vue'
 import BookmarkGroupedLayout from './BookmarkGroupedLayout.vue'
 import EditBookmarkDialog from './EditBookmarkDialog.vue'
 import MoveBookmarkDialog from './MoveBookmarkDialog.vue'
+import NeverOpenedDivider from './NeverOpenedDivider.vue'
 import { ConfirmDialog } from '@/components/ui'
 import type { BookmarkJson } from '@/api/generated'
 
@@ -18,6 +19,15 @@ const notification = useNotificationStore()
 const ui = useUiStore()
 const collectionStore = useCollectionStore()
 const effectiveLayout = computed(() => collectionStore.settingsLayout ?? ui.bookmarkLayout)
+
+// Index at which the "Never opened" divider should be rendered.
+// `neverOpenedCount` is 0 for non-click-based sorts, so the divider never
+// renders in those cases.
+const neverOpenedDividerAt = computed(() => {
+  const n = bookmarkStore.neverOpenedCount
+  if (n === 0) return -1
+  return bookmarkStore.filteredBookmarks.length - n
+})
 
 const editingBookmark = ref<BookmarkJson | null>(null)
 const showEditDialog = ref(false)
@@ -79,26 +89,34 @@ async function confirmDelete() {
   </div>
 
   <div v-else-if="effectiveLayout === 'list'" class="space-y-3">
-    <BookmarkCard
-      v-for="bookmark in bookmarkStore.filteredBookmarks"
-      :key="bookmark.id"
-      :bookmark="bookmark"
-      :show-stats="true"
-      @edit="handleEdit"
-      @delete="handleDelete"
-      @move="handleMove"
-    />
+    <template v-for="(bookmark, idx) in bookmarkStore.filteredBookmarks" :key="bookmark.id">
+      <NeverOpenedDivider
+        v-if="idx === neverOpenedDividerAt"
+        :count="bookmarkStore.neverOpenedCount"
+      />
+      <BookmarkCard
+        :bookmark="bookmark"
+        :show-stats="true"
+        @edit="handleEdit"
+        @delete="handleDelete"
+        @move="handleMove"
+      />
+    </template>
   </div>
 
   <div v-else-if="effectiveLayout === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-    <BookmarkCard
-      v-for="bookmark in bookmarkStore.filteredBookmarks"
-      :key="bookmark.id"
-      :bookmark="bookmark"
-      @edit="handleEdit"
-      @delete="handleDelete"
-      @move="handleMove"
-    />
+    <template v-for="(bookmark, idx) in bookmarkStore.filteredBookmarks" :key="bookmark.id">
+      <NeverOpenedDivider
+        v-if="idx === neverOpenedDividerAt"
+        :count="bookmarkStore.neverOpenedCount"
+      />
+      <BookmarkCard
+        :bookmark="bookmark"
+        @edit="handleEdit"
+        @delete="handleDelete"
+        @move="handleMove"
+      />
+    </template>
   </div>
 
   <BookmarkGroupedLayout

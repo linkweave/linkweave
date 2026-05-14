@@ -90,7 +90,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', handleOutsideCli
     <!-- Dropdown -->
     <div
       v-if="open"
-      class="absolute z-50 w-full rounded-md border border-border bg-popover shadow-md overflow-y-auto max-h-56 py-1"
+      class="absolute z-50 w-full rounded-md border border-border bg-popover shadow-xl ring-1 ring-black/5 dark:ring-white/10 overflow-y-auto max-h-56 py-1"
       :class="direction === 'up' ? 'bottom-full mb-1' : 'top-full mt-1'"
     >
       <!-- Empty option -->
