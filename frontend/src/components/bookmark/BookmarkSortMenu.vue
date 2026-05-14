@@ -7,7 +7,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from 'radix-vue'
-import { ArrowDown, ArrowUp, Check, ChevronDown, Info, RotateCcw } from 'lucide-vue-next'
+import { ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Info, RotateCcw } from 'lucide-vue-next'
 import { SortDirection, SortField } from '@/api/generated'
 import { DropdownMenuContentCl, DropdownMenuItemCl } from '@/components/ui'
 import { useCollectionStore } from '@/stores/collection'
@@ -69,12 +69,14 @@ function reset() {
         type="button"
         data-testid="bookmark-sort-trigger"
         class="inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-card px-2 text-xs text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        :aria-label="t('sort.label') + ': ' + currentFieldLabel"
       >
-        <span class="text-muted-foreground">{{ t('sort.label') }}:</span>
-        <span class="font-medium">{{ currentFieldLabel }}</span>
+        <ArrowUpDown class="h-3.5 w-3.5 sm:hidden" />
+        <span class="hidden sm:inline text-muted-foreground">{{ t('sort.label') }}:</span>
+        <span class="hidden sm:inline font-medium">{{ currentFieldLabel }}</span>
         <component
           :is="currentDir === SortDirection.Desc ? ArrowDown : ArrowUp"
-          class="h-3 w-3 text-muted-foreground"
+          class="hidden sm:inline h-3 w-3 text-muted-foreground"
         />
         <ChevronDown class="h-3 w-3 text-muted-foreground" />
       </button>
