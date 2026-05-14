@@ -50,6 +50,7 @@ jobs:
           tags: |
             git.markushofstetter.com/dividbzero/chainlink-api:latest
             git.markushofstetter.com/dividbzero/chainlink-api:${{ steps.commit-hash.outputs.COMMIT_HASH }}
+            ${{ startsWith(gitea.ref, 'refs/tags/v') && format('git.markushofstetter.com/dividbzero/chainlink-api:{0}', gitea.ref_name) || '' }}
           file: api/src/main/docker/Dockerfile.jvm
           build-args: |
             COMMIT_HASH=${{ steps.commit-hash.outputs.COMMIT_HASH }}
@@ -104,6 +105,7 @@ jobs:
           tags: |
             git.markushofstetter.com/dividbzero/chainlink-frontend:latest
             git.markushofstetter.com/dividbzero/chainlink-frontend:${{ steps.commit-hash.outputs.COMMIT_HASH }}
+            ${{ startsWith(gitea.ref, 'refs/tags/v') && format('git.markushofstetter.com/dividbzero/chainlink-frontend:{0}', gitea.ref_name) || '' }}
           file: frontend/Dockerfile
           build-args: |
             COMMIT_HASH=${{ steps.commit-hash.outputs.COMMIT_HASH }}

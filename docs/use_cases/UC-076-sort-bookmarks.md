@@ -6,7 +6,7 @@
 **Use Case Name:** Sort Bookmarks   
 **Primary Actor:** User   
 **Goal:** Choose how bookmarks are sorted in the bookmark list and have the preference remembered per collection.
-**Status:** Implemented
+**Status:** Done
 
 ## Traceability
 

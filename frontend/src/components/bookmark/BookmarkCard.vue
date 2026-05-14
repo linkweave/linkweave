@@ -63,7 +63,7 @@ const menuActivated = ref(false)
 <template>
   <div
     :draggable="!isTouch"
-    class="group relative rounded-lg border border-border bg-card p-4 hover:ring-2 hover:ring-primary/50 hover:border-primary/30 transition-all text-muted-foreground hover:text-accent-foreground cursor-grab active:cursor-grabbing"
+    class="group relative rounded-lg border border-border bg-card p-4 hover:ring-2 hover:ring-primary/50 hover:border-primary/30 transition-[box-shadow,border-color,color] duration-150 text-muted-foreground hover:text-accent-foreground cursor-grab active:cursor-grabbing"
     @dragstart="onBookmarkDragStart"
     @dragend="onBookmarkDragEnd"
   >
