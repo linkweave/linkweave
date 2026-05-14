@@ -69,7 +69,11 @@ onBeforeUnmount(() => {
 
 <template>
   <!-- Desktop: segmented button group -->
-  <div class="hidden sm:flex items-center rounded-md border border-border bg-card overflow-hidden">
+  <div
+    class="hidden sm:flex items-center rounded-md border border-border bg-card overflow-hidden"
+    role="group"
+    :aria-label="t('toolbar.layout')"
+  >
     <button
       v-for="option in options"
       :key="option.value"

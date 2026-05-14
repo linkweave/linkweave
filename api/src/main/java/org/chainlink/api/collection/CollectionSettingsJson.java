@@ -15,4 +15,6 @@ import org.jspecify.annotations.Nullable;
 public class CollectionSettingsJson {
 
     @Nullable String layout;
+    @Nullable SortField sortField;
+    @Nullable SortDirection sortDirection;
 }

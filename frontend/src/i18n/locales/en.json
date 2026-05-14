@@ -67,6 +67,7 @@
     "layoutGrouped": "Grouped"
   },
   "toolbar": {
+    "layout": "Bookmark Layout",
     "layoutGrid": "Grid view",
     "layoutList": "List view",
     "layoutGrouped": "Grouped view",

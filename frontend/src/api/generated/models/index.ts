@@ -32,6 +32,8 @@ export * from './folder-save-json';
 export * from './import-summary-json';
 export * from './move-to-trash-json';
 export * from './registration-request-json';
+export * from './sort-direction';
+export * from './sort-field';
 export * from './tag-json';
 export * from './tag-list-json';
 export * from './tag-save-json';

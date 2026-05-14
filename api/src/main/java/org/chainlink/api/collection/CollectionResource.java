@@ -137,6 +137,14 @@ public class CollectionResource {
     }
 
     @DELETE
+    @Path("{id}/settings/sort")
+    @Authenticated
+    public void resetSortPreference(@PathParam("id") ID<Collection> id) {
+        authorizationService.requireCollectionAccess(id);
+        collectionSettingsService.resetSortPreference(id);
+    }
+
+    @DELETE
     @Path("{id}/members/{userId}")
     @Authenticated
     public void revokeAccess(

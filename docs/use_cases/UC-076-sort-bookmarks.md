@@ -12,6 +12,8 @@
 
 **Maps to:** FR-082
 
+> **Note on shared collections:** "Last clicked" and "Click count" reflect aggregate click activity across all members of a shared collection — they are *not* per-user. Sorting by these criteria will therefore reflect what everyone in the collection clicks, not only the current user.
+
 ---
 
 ## Preconditions
@@ -43,14 +45,6 @@
 **Flow:**
 
 1. System sorts the filtered result set, not the entire collection.
-
-### A3: Change Default Sort
-
-**Trigger:** User opens Settings dialog and changes the default sort preference for new collections (step 3).
-**Flow:**
-
-1. System saves the global default.
-2. Existing collections are not affected.
 
 ## Postconditions
 

@@ -13,6 +13,21 @@
  */
 
 import { mapValues } from '../runtime';
+import type { SortDirection } from './sort-direction';
+import {
+    SortDirectionFromJSON,
+    SortDirectionFromJSONTyped,
+    SortDirectionToJSON,
+    SortDirectionToJSONTyped,
+} from './sort-direction';
+import type { SortField } from './sort-field';
+import {
+    SortFieldFromJSON,
+    SortFieldFromJSONTyped,
+    SortFieldToJSON,
+    SortFieldToJSONTyped,
+} from './sort-field';
+
 /**
  * 
  * @export
@@ -25,7 +40,21 @@ export interface CollectionSettingsJson {
      * @memberof CollectionSettingsJson
      */
     layout?: string;
+    /**
+     * 
+     * @type {SortField}
+     * @memberof CollectionSettingsJson
+     */
+    sortField?: SortField;
+    /**
+     * 
+     * @type {SortDirection}
+     * @memberof CollectionSettingsJson
+     */
+    sortDirection?: SortDirection;
 }
+
+
 
 /**
  * Check if a given object implements the CollectionSettingsJson interface.
@@ -45,6 +74,8 @@ export function CollectionSettingsJsonFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'layout': json['layout'] == null ? undefined : json['layout'],
+        'sortField': json['sortField'] == null ? undefined : SortFieldFromJSON(json['sortField']),
+        'sortDirection': json['sortDirection'] == null ? undefined : SortDirectionFromJSON(json['sortDirection']),
     };
 }
 
@@ -60,6 +91,8 @@ export function CollectionSettingsJsonToJSONTyped(value?: CollectionSettingsJson
     return {
         
         'layout': value['layout'],
+        'sortField': SortFieldToJSON(value['sortField']),
+        'sortDirection': SortDirectionToJSON(value['sortDirection']),
     };
 }
 

@@ -1,9 +1,11 @@
 # PR 5 — Sort Preferences: Frontend
 
-**Goal.** Wire the backend sort preference (PR4) into the bookmark list, surface a Sort dropdown in the sticky toolbar (PR2), and expose the user default in the Settings dialog.
+**Goal.** Wire the backend sort preference (PR4) into the bookmark list and surface a Sort dropdown in the sticky toolbar (PR2).
 
 **Depends on.** PR 2 (sticky toolbar with `<slot name="sort">`) and PR 4 (backend endpoints + DTOs).
 **Scope.** Pure frontend. Click tracking already wired (`useBookmarkStore.trackClick`). Sort is applied client-side on top of the existing `filteredBookmarks` computed.
+
+> **Scope note — per-user default sort dropped.** PR4 cut the user-level default sort. PR5 follows: no Settings-dialog section, no `userDefault` state in the store, no `pinAsUserDefault` / "Use as default" action, no hydration from `/auth/me`. Sort resolves to `per-collection preference ?? system default`.
 
 ---
 
@@ -14,13 +16,11 @@
 | `frontend/src/api/generated/**` | Regenerate after PR4 lands — `npm run generate-api`. |
 | `frontend/src/stores/sort.ts` | **New.** Pinia store: hydrate, resolve, persist sort preference. |
 | `frontend/src/stores/bookmark.ts` | Extend `filteredBookmarks` to sort using `useSortStore`. Add a "never clicked" split for click-based sorts. |
-| `frontend/src/stores/auth.ts` | Read `defaultSortField` / `defaultSortDirection` off `/auth/me` payload into the sort store. |
 | `frontend/src/stores/collection.ts` | When the active collection loads, ensure its settings (including sort) are hydrated into the sort store. |
-| `frontend/src/components/bookmark/BookmarkSortMenu.vue` | **New.** The dropdown — title/date/last-clicked/click-count + direction toggle + reset + "use as default". |
+| `frontend/src/components/bookmark/BookmarkSortMenu.vue` | **New.** The dropdown — title/date/last-clicked/click-count + direction toggle + reset. |
 | `frontend/src/components/bookmark/BookmarkList.vue` | Render the `<NeverOpenedDivider>` between the primary and never-opened groups when applicable. |
 | `frontend/src/components/bookmark/NeverOpenedDivider.vue` | **New.** Small inline divider with label + count. |
 | `frontend/src/views/CollectionView.vue` | Pass `<BookmarkSortMenu>` into the toolbar's `#sort` slot. |
-| `frontend/src/components/settings/SettingsDialog.vue` (or wherever your Settings UI lives) | Add a "Bookmarks" section: default sort field + direction. |
 | `frontend/src/locales/*` | New i18n strings (listed at end). |
 | `frontend/src/utils/bookmarkSort.ts` | **New.** Pure comparator + grouper. Unit-tested. |
 | `frontend/e2e/sort-preferences.spec.ts` | **New.** Playwright spec. |
@@ -52,38 +52,28 @@ export const SYSTEM_DEFAULT_SORT: SortPref = {
 // frontend/src/stores/sort.ts
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import type { SortField, SortDirection } from '@/api/generated'
-import { CollectionResourceApi, UserSettingsResourceApi } from '@/api/generated'
+import { CollectionResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import { useCollectionStore } from '@/stores/collection'
 import type { SortPref } from '@/types/sort'
 import { SYSTEM_DEFAULT_SORT } from '@/types/sort'
 
 const collectionApi = new CollectionResourceApi(config)
-const userSettingsApi = new UserSettingsResourceApi(config)
 
 export const useSortStore = defineStore('sort', () => {
-  // Per-collection overrides keyed by collectionId. null = "no override, fall through".
+  // Per-collection overrides keyed by collectionId. Missing entry = "no override, fall through to system default".
   const perCollection = ref<Map<string, Partial<SortPref>>>(new Map())
-  // User default. null = "no default set, use system default".
-  const userDefault = ref<Partial<SortPref> | null>(null)
-  // Current collection id (for the computed effective sort).
   const collectionStore = useCollectionStore()
 
-  // Resolution: per-collection ?? user-default ?? system-default
+  // Resolution: per-collection ?? system-default
   const effective = computed<SortPref>(() => {
     const cid = collectionStore.currentCollectionId
     const c = cid ? perCollection.value.get(cid) : undefined
     return {
-      field: c?.field ?? userDefault.value?.field ?? SYSTEM_DEFAULT_SORT.field,
-      direction: c?.direction ?? userDefault.value?.direction ?? SYSTEM_DEFAULT_SORT.direction,
+      field: c?.field ?? SYSTEM_DEFAULT_SORT.field,
+      direction: c?.direction ?? SYSTEM_DEFAULT_SORT.direction,
     }
   })
-
-  /** Hydrate user-default from /auth/me response (called from auth store on login). */
-  function hydrateUserDefault(field?: SortField | null, direction?: SortDirection | null) {
-    userDefault.value = (field || direction) ? { field: field ?? undefined, direction: direction ?? undefined } : null
-  }
 
   /** Hydrate per-collection from GET /collections/{id}/settings (called on collection load). */
   async function hydrateCollection(collectionId: string) {
@@ -101,33 +91,19 @@ export const useSortStore = defineStore('sort', () => {
     const current = perCollection.value.get(cid) ?? {}
     const next = { ...current, ...patch }
     perCollection.value.set(cid, next)
-    // Persist. Partial PUT — backend merges with existing layout pref.
+    // Partial PUT — backend merges with existing layout pref.
     await collectionApi.apiCollectionsIdSettingsPut({
       id: cid,
       collectionSettingsJson: { sortField: next.field, sortDirection: next.direction },
     })
   }
 
-  /** Reset per-collection override → falls back to user default. */
+  /** Reset per-collection override → falls back to system default. */
   async function resetForCurrentCollection() {
     const cid = collectionStore.currentCollectionId
     if (!cid) return
     perCollection.value.set(cid, {})
     await collectionApi.apiCollectionsIdSettingsSortDelete({ id: cid })
-  }
-
-  /** Set user default. Used by Settings dialog. */
-  async function setUserDefault(patch: Partial<SortPref>) {
-    const next = { ...(userDefault.value ?? {}), ...patch }
-    userDefault.value = next
-    await userSettingsApi.apiUsersMeSettingsPut({
-      userSettingsJson: { defaultSortField: next.field, defaultSortDirection: next.direction },
-    })
-  }
-
-  /** Pin current effective sort as the user default. Convenient action from the sort menu. */
-  async function pinAsUserDefault() {
-    await setUserDefault({ field: effective.value.field, direction: effective.value.direction })
   }
 
   /** Detect whether the current collection has its own override. */
@@ -139,21 +115,16 @@ export const useSortStore = defineStore('sort', () => {
 
   return {
     effective,
-    userDefault,
     hasCollectionOverride,
-    hydrateUserDefault,
     hydrateCollection,
     setForCurrentCollection,
     resetForCurrentCollection,
-    setUserDefault,
-    pinAsUserDefault,
   }
 })
 ```
 
 ### Hydration wiring
 
-- **`auth.ts`** — after `apiAuthMeGet()` resolves, call `useSortStore().hydrateUserDefault(me.defaultSortField, me.defaultSortDirection)`.
 - **`collection.ts`** — after `apiCollectionsIdGet({ id })` resolves and a collection is selected, call `useSortStore().hydrateCollection(id)`. Cheap, one extra request; can be in parallel with the existing collection-info load.
 
 ---
@@ -292,7 +263,7 @@ Use shadcn/vue's `DropdownMenu` for the popover so behaviour, keyboard nav, and 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ArrowDown, ArrowUp, Check, ChevronDown, Pin, RotateCcw } from 'lucide-vue-next'
+import { ArrowDown, ArrowUp, Check, ChevronDown, RotateCcw } from 'lucide-vue-next'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -327,7 +298,6 @@ function flipDir(e: Event) {
   sortStore.setForCurrentCollection({ direction: currentDir.value === 'ASC' ? 'DESC' : 'ASC' })
 }
 function reset() { sortStore.resetForCurrentCollection() }
-function pinDefault() { sortStore.pinAsUserDefault() }
 </script>
 
 <template>
@@ -391,12 +361,6 @@ function pinDefault() { sortStore.pinAsUserDefault() }
           </button>
         </div>
       </DropdownMenuItem>
-
-      <DropdownMenuSeparator />
-      <DropdownMenuItem class="text-xs text-muted-foreground gap-2" @click.prevent="pinDefault">
-        <Pin class="h-3 w-3" />
-        {{ t('sort.menu.useAsDefault') }}
-      </DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
 </template>
@@ -443,58 +407,16 @@ Render in `BookmarkList.vue` between the two groups for the `grid`, `list`, and 
 
 ---
 
-## Settings dialog — "Bookmarks" section
+## Shared click data — disclosure
 
-Locate or create the settings dialog (project may not have one yet; if not, this PR depends on / creates a minimal version). Add a section:
-
-```vue
-<section class="space-y-2">
-  <h3 class="text-sm font-semibold">{{ t('settings.bookmarks.defaultSort') }}</h3>
-  <p class="text-xs text-muted-foreground">{{ t('settings.bookmarks.defaultSortHelp') }}</p>
-
-  <div class="flex gap-2">
-    <Select
-      :model-value="userDefaultField"
-      @update:model-value="(v) => sortStore.setUserDefault({ field: v })"
-    >
-      <SelectTrigger class="flex-1"><SelectValue /></SelectTrigger>
-      <SelectContent>
-        <SelectItem v-for="f in FIELDS" :key="f.id" :value="f.id">{{ t(f.label) }}</SelectItem>
-      </SelectContent>
-    </Select>
-
-    <div class="flex border border-border rounded-md overflow-hidden">
-      <button
-        type="button"
-        :class="['px-3', userDefaultDir === 'ASC' ? 'bg-accent text-foreground' : 'text-muted-foreground']"
-        @click="sortStore.setUserDefault({ direction: 'ASC' })"
-      >↑</button>
-      <button
-        type="button"
-        :class="['px-3', userDefaultDir === 'DESC' ? 'bg-accent text-foreground' : 'text-muted-foreground']"
-        @click="sortStore.setUserDefault({ direction: 'DESC' })"
-      >↓</button>
-    </div>
-  </div>
-
-  <p v-if="userDefault" class="text-xs">
-    <button class="text-muted-foreground hover:text-foreground underline" @click="resetUserDefault">
-      {{ t('settings.bookmarks.resetDefault') }}
-    </button>
-  </p>
-</section>
-```
-
-Where `userDefaultField = computed(() => sortStore.userDefault?.field ?? 'DATE_ADDED')` etc.
-
-`resetUserDefault` calls `userSettingsApi.apiUsersMeSettingsSortDelete()` and sets `sortStore.userDefault = null`.
-
-A second sub-section for **click-tracking transparency**: a short note explaining that "Last clicked" and "Click count" use the data shared by all collection members. This pre-empts confusion in shared collections. No toggle — there's nothing to toggle since click data is already on the server.
+Sorting by "Last clicked" or "Click count" exposes aggregate data across collection members. We do **not** add a separate Settings dialog for this — there's nothing to toggle. Instead, surface a small helper line directly under the sort menu trigger (or as a tooltip on the LAST_CLICKED / CLICK_COUNT rows) when one of those modes is active:
 
 ```
-"settings.bookmarks.clickTrackingNote":
-"\"Last clicked\" and \"Click count\" use shared click data across all members of a collection. Your activity contributes to the same counts everyone else sees."
+"sort.menu.sharedClicksNote":
+"\"Last clicked\" and \"Click count\" reflect everyone in this collection."
 ```
+
+Keep it short — one sentence is enough.
 
 ---
 
@@ -504,7 +426,7 @@ A second sub-section for **click-tracking transparency**: a short note explainin
 sort.label: "Sort"
 sort.menu.title: "Sort · this collection"
 sort.menu.reset: "Reset"
-sort.menu.useAsDefault: "Use as default for new collections"
+sort.menu.sharedClicksNote: "\"Last clicked\" and \"Click count\" reflect everyone in this collection."
 sort.field.title: "Title"
 sort.field.titleSub: "A → Z by title"
 sort.field.dateAdded: "Date added"
@@ -521,10 +443,6 @@ sort.dir.mostRecent: "Most recent first"
 sort.dir.leastVisited: "Least visited first"
 sort.dir.mostVisited: "Most visited first"
 sort.neverOpened: "Never opened · {n}"
-settings.bookmarks.defaultSort: "Default sort for new collections"
-settings.bookmarks.defaultSortHelp: "Applied the first time you open a collection. Each collection then remembers its own preference until you reset it."
-settings.bookmarks.resetDefault: "Reset to system default (newest first)"
-settings.bookmarks.clickTrackingNote: "“Last clicked” and “Click count” use shared click data across all members of a collection. Your activity contributes to the same counts everyone else sees."
 ```
 
 ---
@@ -535,9 +453,9 @@ settings.bookmarks.clickTrackingNote: "“Last clicked” and “Click count” 
 - `selecting "Title A→Z" reorders bookmarks alphabetically`
 - `preference persists across page reload (per collection)`
 - `switching collections shows a different effective sort if one collection has a preference and the other doesn't`
-- `click "Use as default" pins the current sort; a freshly opened second collection then uses it`
 - `clicking a bookmark increments click count and bubbles it up under "Click count desc"` (relies on existing `trackClick` infra)
 - `never-opened bookmarks appear under the "Never opened" divider when sorting by Last clicked`
+- `reset clears the per-collection override and falls back to newest-first`
 
 Use `data-testid="bookmark-sort-trigger"` on the toolbar trigger and `data-testid="bookmark-sort-option-{FIELD}"` on each option for stable selectors.
 
@@ -545,19 +463,16 @@ Use `data-testid="bookmark-sort-trigger"` on the toolbar trigger and `data-testi
 
 ## Acceptance checklist
 
-- [ ] `npm run generate-api` produces `SortField`, `SortDirection`, `UserSettingsResourceApi`, extended `CollectionSettingsJson`, extended `UserInfoJson`.
-- [ ] `useSortStore` exists with `effective`, `hydrateUserDefault`, `hydrateCollection`, `setForCurrentCollection`, `resetForCurrentCollection`, `setUserDefault`, `pinAsUserDefault`.
-- [ ] On `/auth/me` success, user default hydrates.
+- [ ] `npm run generate-api` produces `SortField`, `SortDirection`, and the extended `CollectionSettingsJson`.
+- [ ] `useSortStore` exists with `effective`, `hydrateCollection`, `setForCurrentCollection`, `resetForCurrentCollection`.
 - [ ] On collection load, that collection's sort settings hydrate.
 - [ ] `BookmarkSortMenu` renders in the sticky toolbar with current field + direction visible on the trigger button.
 - [ ] Picking a field updates the list immediately (optimistic) and persists to backend.
 - [ ] Direction toggle inside the active row flips ASC/DESC without closing the menu.
-- [ ] "Reset" only appears when a per-collection override exists; clicking it calls DELETE.
-- [ ] "Use as default" pins the current effective sort as user default.
+- [ ] "Reset" only appears when a per-collection override exists; clicking it calls DELETE and falls back to newest-first.
 - [ ] Last-clicked / click-count sorts group never-opened bookmarks under a clear divider.
 - [ ] Stable tie-breaker on `createdAt desc`.
-- [ ] Settings dialog "Bookmarks" section reads / writes user default; reset clears it.
-- [ ] Shared click data is explicitly mentioned in the Settings copy.
+- [ ] Shared click data is mentioned in the sort menu when LAST_CLICKED / CLICK_COUNT is selected.
 - [ ] All E2E specs pass; `npm run type-check` clean.
 - [ ] No regression in existing search / filter behaviour — sort runs after the existing filter chain.
 
@@ -565,7 +480,8 @@ Use `data-testid="bookmark-sort-trigger"` on the toolbar trigger and `data-testi
 
 ## Out of scope
 
+- Per-user default sort. Cut from PR4; reconsider if user feedback shows the per-collection-only model is painful.
 - Search relevance sort. We have no relevance score yet; revisit when FR-071 (search operators) lands.
-- Per-user click tracking. Aggregate behaviour is documented for users in Settings.
+- Per-user click tracking. Aggregate behaviour is documented for users inside the sort menu.
 - Sorting inside the `grouped` layout's groups — that layout already imposes its own ordering by tag/folder. Sort field still applies *within* each group; verify it works (it should, since `BookmarkGroupedLayout.vue` consumes the same `filteredBookmarks`).
 - Server-side sorting / pagination. Frontend remains the source of truth for ordering.
