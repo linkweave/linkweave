@@ -20,6 +20,15 @@ const ui = useUiStore()
 const collectionStore = useCollectionStore()
 const effectiveLayout = computed(() => collectionStore.settingsLayout ?? ui.bookmarkLayout)
 
+// List and grid layouts render the same `<BookmarkCard>` children — only the
+// container class and the `show-stats` flag differ.
+const classForCards = computed(() =>
+  effectiveLayout.value === 'grid'
+    ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'
+    : 'space-y-3',
+)
+const showStats = computed(() => effectiveLayout.value === 'list')
+
 // Index at which the "Never opened" divider should be rendered.
 // `neverOpenedCount` is 0 for non-click-based sorts, so the divider never
 // renders in those cases.
@@ -88,7 +97,7 @@ async function confirmDelete() {
     <p class="text-muted-foreground">{{ t('bookmarkList.empty') }}</p>
   </div>
 
-  <div v-else-if="effectiveLayout === 'list'" class="space-y-3">
+  <div v-else-if="effectiveLayout !== 'grouped'" :class="classForCards">
     <template v-for="(bookmark, idx) in bookmarkStore.filteredBookmarks" :key="bookmark.id">
       <NeverOpenedDivider
         v-if="idx === neverOpenedDividerAt"
@@ -96,22 +105,7 @@ async function confirmDelete() {
       />
       <BookmarkCard
         :bookmark="bookmark"
-        :show-stats="true"
-        @edit="handleEdit"
-        @delete="handleDelete"
-        @move="handleMove"
-      />
-    </template>
-  </div>
-
-  <div v-else-if="effectiveLayout === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-    <template v-for="(bookmark, idx) in bookmarkStore.filteredBookmarks" :key="bookmark.id">
-      <NeverOpenedDivider
-        v-if="idx === neverOpenedDividerAt"
-        :count="bookmarkStore.neverOpenedCount"
-      />
-      <BookmarkCard
-        :bookmark="bookmark"
+        :show-stats="showStats"
         @edit="handleEdit"
         @delete="handleDelete"
         @move="handleMove"

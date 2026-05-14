@@ -3,18 +3,14 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFolderStore } from '@/stores/folder'
 import type { BookmarkJson, FolderJson } from '@/api/generated'
-import { useBookmarkStore } from '@/stores/bookmark'
-import { Folder, FolderOpen, MoreHorizontal } from 'lucide-vue-next'
-import { DRAG_TYPE_BOOKMARK, isDraggingBookmark, setDraggingBookmark } from '@/composables/useDragState'
+import { Folder, FolderOpen } from 'lucide-vue-next'
+import { DRAG_TYPE_BOOKMARK, isDraggingBookmark } from '@/composables/useDragState'
 import { useDndMove } from '@/composables/useDndMove'
 import { useMediaQuery } from '@/composables/useMediaQuery'
-import BookmarkFavicon from '@/components/bookmark/BookmarkFavicon.vue'
-import { DropdownMenuRoot, DropdownMenuTrigger } from 'radix-vue'
-import { DropdownMenuContentCl, DropdownMenuItemCl } from '@/components/ui'
+import GroupedBookmarkRow from './GroupedBookmarkRow.vue'
 
 const { t } = useI18n()
 const folderStore = useFolderStore()
-const bookmarkStore = useBookmarkStore()
 const { moveBookmarkWithUndo } = useDndMove()
 const isTouch = useMediaQuery('(hover: none) and (pointer: coarse)')
 
@@ -122,17 +118,6 @@ const groups = computed<GroupCard[]>(() => {
   return cards
 })
 
-function onBookmarkDragStart(event: DragEvent, bookmark: BookmarkJson) {
-  if (!event.dataTransfer) return
-  event.dataTransfer.effectAllowed = 'move'
-  event.dataTransfer.setData(DRAG_TYPE_BOOKMARK, bookmark.id)
-  setDraggingBookmark(true)
-}
-
-function onBookmarkDragEnd() {
-  setDraggingBookmark(false)
-}
-
 // ── Card header drop targets ─────────────────────────────────────────────────
 
 const dragOverCardId = ref<string | null>(null) // rootFolder.id or 'unfiled'
@@ -164,7 +149,6 @@ async function onHeaderDrop(event: DragEvent, group: GroupCard) {
   const bookmarkId = event.dataTransfer?.getData(DRAG_TYPE_BOOKMARK)
   if (bookmarkId) await moveBookmarkWithUndo(bookmarkId, group.rootFolder?.id)
 }
-
 </script>
 
 <template>
@@ -177,9 +161,13 @@ async function onHeaderDrop(event: DragEvent, group: GroupCard) {
       <!-- Card header (drop target) -->
       <div
         class="px-4 py-3 border-b border-border bg-muted/30 flex items-center gap-2 shrink-0 transition-colors"
-        :class="dragOverCardId === cardKey(group)
-          ? 'bg-primary/15 border-primary/40 ring-2 ring-primary/40 ring-inset'
-          : isDraggingBookmark ? 'bg-primary/5 border-primary/20' : ''"
+        :class="
+          dragOverCardId === cardKey(group)
+            ? 'bg-primary/15 border-primary/40 ring-2 ring-primary/40 ring-inset'
+            : isDraggingBookmark
+              ? 'bg-primary/5 border-primary/20'
+              : ''
+        "
         @dragover="onHeaderDragOver($event, group)"
         @dragleave="onHeaderDragLeave($event, group)"
         @drop="onHeaderDrop($event, group)"
@@ -199,7 +187,7 @@ async function onHeaderDrop(event: DragEvent, group: GroupCard) {
       <div class="p-2 overflow-y-auto max-h-96">
         <template
           v-for="(section, sectionIndex) in group.sections"
-          :key="section.folder?.id ?? ('unfiled-' + sectionIndex)"
+          :key="section.folder?.id ?? 'unfiled-' + sectionIndex"
         >
           <!-- Subfolder heading, with divider only when preceded by another section -->
           <div
@@ -212,55 +200,21 @@ async function onHeaderDrop(event: DragEvent, group: GroupCard) {
               :class="section.folder?.data.color ? '' : 'text-muted-foreground'"
               :style="section.folder?.data.color ? { color: section.folder.data.color } : undefined"
             />
-            <span class="text-xs text-muted-foreground font-medium truncate">{{ section.folder?.data.name }}</span>
+            <span class="text-xs text-muted-foreground font-medium truncate">{{
+              section.folder?.data.name
+            }}</span>
           </div>
 
           <!-- Compact bookmark rows -->
-          <div
+          <GroupedBookmarkRow
             v-for="bookmark in section.bookmarks"
             :key="bookmark.id"
-            :draggable="!isTouch"
-            class="group/row flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-accent/50 min-w-0 cursor-grab active:cursor-grabbing"
-            @dragstart="onBookmarkDragStart($event, bookmark)"
-            @dragend="onBookmarkDragEnd"
-          >
-            <BookmarkFavicon
-              :bookmark-id="bookmark.id"
-              :url="bookmark.data.url"
-              :size="16"
-            />
-            <a
-              :href="bookmark.data.url"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex-1 text-sm truncate text-foreground hover:text-primary transition-colors min-w-0"
-              @click="bookmarkStore.trackClick(bookmark.id)"
-            >
-              {{ bookmark.data.title }}
-            </a>
-
-            <DropdownMenuRoot>
-              <DropdownMenuTrigger as-child>
-                <button
-                  class="shrink-0 h-8 w-8 inline-flex items-center justify-center rounded transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100 hover:bg-primary hover:text-primary-foreground"
-                  @click.stop
-                >
-                  <MoreHorizontal class="h-3.5 w-3.5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContentCl class="min-w-[160px] z-50">
-                <DropdownMenuItemCl @select="emit('edit', bookmark)">
-                  {{ $t('common.edit') }}
-                </DropdownMenuItemCl>
-                <DropdownMenuItemCl @select="emit('move', bookmark)">
-                  {{ $t('bookmark.moveToFolder') }}
-                </DropdownMenuItemCl>
-                <DropdownMenuItemCl variant="destructive" @select="emit('delete', bookmark)">
-                  {{ $t('common.delete') }}
-                </DropdownMenuItemCl>
-              </DropdownMenuContentCl>
-            </DropdownMenuRoot>
-          </div>
+            :bookmark="bookmark"
+            :is-touch="isTouch"
+            @edit="(b: BookmarkJson) => emit('edit', b)"
+            @move="(b: BookmarkJson) => emit('move', b)"
+            @delete="(b: BookmarkJson) => emit('delete', b)"
+          />
         </template>
       </div>
     </div>
