@@ -1,0 +1,95 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  review:
+    name: Z.ai Review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Generate diff
+        id: diff
+        run: |
+          git fetch origin main
+          git diff origin/main...HEAD -- ':!*.lock' ':!package-lock.json' ':!yarn.lock' ':!pnpm-lock.yaml' ':!*.min.js' ':!*.min.css' ':!*.map' > /tmp/diff.txt || true
+          DIFF_SIZE=$(wc -c < /tmp/diff.txt)
+          echo "Diff size: ${DIFF_SIZE} bytes"
+          # Truncate to ~80k chars
+          head -c 80000 /tmp/diff.txt > /tmp/diff-truncated.txt
+          mv /tmp/diff-truncated.txt /tmp/diff.txt
+
+      - name: Run Z.ai Code Review
+        id: review
+        if: "$(wc -c < /tmp/diff.txt) -gt 0"
+        env:
+          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
+        run: |
+          if [ ! -s /tmp/diff.txt ]; then
+            echo "Empty diff, skipping review."
+            echo "review=No changes to review." >> "$GITEA_OUTPUT"
+            exit 0
+          fi
+
+          node .gitea/workflows/review.js
+
+          if [ ! -f /tmp/review.md ]; then
+            echo "review=Review generation failed." >> "$GITEA_OUTPUT"
+            exit 1
+          fi
+
+          echo "review<<EOF_MARKER" >> "$GITEA_OUTPUT"
+          cat /tmp/review.md >> "$GITEA_OUTPUT"
+          echo "EOF_MARKER" >> "$GITEA_OUTPUT"
+
+      - name: Post review comment
+        if: steps.review.outputs.review != ''
+        env:
+          REPO_TOKEN: ${{ secrets.CL_REPO_TOKEN }}
+        run: |
+          PR_NUMBER="${{ gitea.event.pull_request.number }}"
+          API_URL="${{ gitea.server_url }}/api/v1/repos/${{ gitea.repository }}/issues/${PR_NUMBER}/comments"
+
+          EXISTING_ID=$(curl -sf \
+            -H "Authorization: token ${REPO_TOKEN}" \
+            "$API_URL" | python3 -c "
+          import sys, json
+          comments = json.load(sys.stdin)
+          for c in comments:
+              if '<!-- zai-code-review -->' in c.get('body', ''):
+                  print(c['id'])
+                  break
+          " 2>/dev/null || echo "")
+
+          python3 -c "
+          import json
+          body = '## Z.ai Code Review\n\n' + open('/tmp/review.md').read() + '\n\n<!-- zai-code-review -->'
+          with open('/tmp/comment_payload.json', 'w') as f:
+              json.dump({'body': body}, f)
+          "
+
+          if [ -n "$EXISTING_ID" ]; then
+            echo "Updating existing comment $EXISTING_ID"
+            curl -sf -X PATCH \
+              -H "Authorization: token ${REPO_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d @/tmp/comment_payload.json \
+              "${{ gitea.server_url }}/api/v1/repos/${{ gitea.repository }}/issues/comments/${EXISTING_ID}"
+            echo "Comment updated."
+          else
+            echo "Creating new review comment"
+            curl -sf -X POST \
+              -H "Authorization: token ${REPO_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d @/tmp/comment_payload.json \
+              "$API_URL"
+            echo "Comment posted."
+          fi
