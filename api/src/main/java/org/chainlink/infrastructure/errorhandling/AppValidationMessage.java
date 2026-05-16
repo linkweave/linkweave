@@ -231,6 +231,22 @@ public class AppValidationMessage {
         );
     }
 
+    public static @NonNull AppValidationMessage propertyDefinitionCollectionMismatch(
+        @NonNull ID<?> propertyDefinitionId,
+        @NonNull ID<?> bookmarkCollectionId,
+        @NonNull ID<?> definitionCollectionId
+    ) {
+        return of(
+            "PropertyDefinitionCollectionMismatch",
+            I18nMessage.of(
+                "AppValidation.PROPERTY_DEFINITION_COLLECTION_MISMATCH",
+                "propertyDefinitionId", propertyDefinitionId,
+                "bookmarkCollectionId", bookmarkCollectionId,
+                "definitionCollectionId", definitionCollectionId
+            )
+        );
+    }
+
     public static @NonNull AppValidationMessage faviconAllowlistInvalidPattern(@NonNull String pattern) {
         return of(
             "FaviconAllowlistInvalidPattern",

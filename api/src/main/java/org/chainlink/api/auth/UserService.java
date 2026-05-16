@@ -11,6 +11,7 @@ import org.chainlink.api.benutzer.UserRepo;
 import org.chainlink.api.bookmark.BookmarkService;
 import org.chainlink.api.bookmark.TagService;
 import org.chainlink.api.bookmark.folder.FolderService;
+import org.chainlink.api.bookmark.property.PropertyDefinitionService;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.collection.CollectionAccess;
 import org.chainlink.api.collection.CollectionAccessRepo;
@@ -33,6 +34,7 @@ public class UserService {
     private final BookmarkService bookmarkService;
     private final FolderService folderService;
     private final TagService tagService;
+    private final PropertyDefinitionService propertyDefinitionService;
     private final CollectionService collectionService;
     private final CurrentUserService currentUserService;
 
@@ -80,6 +82,7 @@ public class UserService {
             bookmarkService.deleteByCollection(collectionId);
             folderService.deleteByCollection(collectionId);
             tagService.deleteByCollection(collectionId);
+            propertyDefinitionService.deleteByCollection(collectionId);
 
             for (CollectionAccess access : collectionAccessRepo.findByCollection(collectionId)) {
                 collectionAccessRepo.remove(access.getId());

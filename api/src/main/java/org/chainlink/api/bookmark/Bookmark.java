@@ -5,6 +5,8 @@ import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import ch.dvbern.dvbstarter.types.id.ID;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ForeignKey;
@@ -13,16 +15,16 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ch.dvbern.dvbstarter.types.id.ID;
 import org.chainlink.api.bookmark.folder.Folder;
+import org.chainlink.api.bookmark.property.BookmarkPropertyValue;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.abstractentity.AbstractEntity;
 import org.chainlink.api.shared.auth.BelongsToCollection;
@@ -80,6 +82,9 @@ public class Bookmark extends AbstractEntity<Bookmark> implements BelongsToColle
         }
     )
     private Set<Tag> tags = new HashSet<>();
+
+    @OneToMany(mappedBy = "bookmark", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<BookmarkPropertyValue> propertyValues = new HashSet<>();
 
     @Column(name = "click_count", nullable = false)
     private int clickCount = 0;
