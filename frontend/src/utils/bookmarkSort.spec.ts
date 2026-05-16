@@ -22,6 +22,7 @@ function bm(opts: {
     } as BookmarkJson['data'],
     clickCount: opts.clickCount ?? 0,
     lastClickedAt: opts.lastClickedAt ? new Date(opts.lastClickedAt) : undefined,
+    propertyValues: [],
   }
 }
 

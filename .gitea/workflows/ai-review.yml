@@ -1,0 +1,25 @@
+name: AI Code Review
+on:
+  pull_request:
+    types: [opened, synchronize]
+permissions:
+  pull-requests: write
+jobs:
+  review:
+    name: Z.ai Review
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code Review
+        uses: tarmojussila/zai-code-review@v0.4.0
+        with:
+          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
+          ZAI_MODEL: glm-4.7
+          ZAI_SYSTEM_PROMPT: >
+            You are a senior code reviewer for a Quarkus Java + Vue.js TypeScript project.
+            Review for: bugs, security issues, adherence to the 3-tier architecture
+            (Entity → Repository → Service → Resource), proper use of AuthorizationService
+            in the Resource layer, correct DTO usage (Json suffix), and Flyway migration safety.
+            Skip style-only comments. Be concise and actionable.
+          EXCLUDE_PATTERNS: >
+            *.lock,package-lock.json,yarn.lock,pnpm-lock.yaml,
+            *.min.js,*.min.css,*.map,frontend/dist/**

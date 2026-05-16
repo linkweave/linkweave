@@ -84,7 +84,12 @@ const variantClass = computed(() => {
     :style="tagColor ? { '--tag-color': tagColor } : undefined"
   >
     <Minus v-if="token.neg" class="h-3 w-3 shrink-0" />
-    <component :is="pillVariant.icon" v-if="pillVariant.icon" class="h-3 w-3 shrink-0" />
+    <component
+      :is="pillVariant.icon"
+      v-if="pillVariant.icon"
+      class="h-3 w-3 shrink-0"
+      :style="token.kind === 'tag' && !token.neg && tagColor ? { color: 'var(--tag-color)' } : undefined"
+    />
     <span v-if="pillVariant.label" class="text-muted-foreground">{{ pillVariant.label }}</span>
     <span>{{ token.kind === 'text' ? `"${pillVariant.display}"` : pillVariant.display }}</span>
     <button
