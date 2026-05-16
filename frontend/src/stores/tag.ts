@@ -46,13 +46,8 @@ export const useTagStore = defineStore('tag', () => {
   }
 
   function clearTagFilter() {
-    // Strip every tag token (active and excluded); leave other operators alone.
     const bookmarkStore = useBookmarkStore()
-    for (const t of [...bookmarkStore.queryTokens]) {
-      if (t.kind === 'tag') {
-        bookmarkStore.toggleQueryToken(t)
-      }
-    }
+    bookmarkStore.removeTokensWhere(t => t.kind === 'tag')
   }
 
   function patchTags(updater: (list: TagJson[]) => TagJson[]) {

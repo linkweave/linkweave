@@ -4,6 +4,7 @@ import {
   stringifyTokens,
   toggleToken,
   matchesTokens,
+  buildAncestorSets,
   type QueryToken,
   type MatchContext,
   type MatchableBookmark,
@@ -191,5 +192,50 @@ describe('matchesTokens', () => {
   it('matches free text against title / url / description', () => {
     expect(matchesTokens(bookmark, [{ kind: 'text', value: 'guide', neg: false }], ctx)).toBe(true)
     expect(matchesTokens(bookmark, [{ kind: 'text', value: 'absent', neg: false }], ctx)).toBe(false)
+  })
+})
+
+describe('buildAncestorSets', () => {
+  const namesById = new Map([
+    ['f1', 'root'],
+    ['f2', 'child'],
+    ['f3', 'grandchild'],
+  ])
+  const parentById = new Map<string, string | null>([
+    ['f2', 'f1'],
+    ['f3', 'f2'],
+  ])
+
+  it('collects ancestor names and ids from leaf to root', () => {
+    const result = buildAncestorSets('f3', namesById, parentById)
+    expect(result.ids).toEqual(new Set(['f3', 'f2', 'f1']))
+    expect(result.names).toEqual(new Set(['grandchild', 'child', 'root']))
+  })
+
+  it('returns only self for a root folder', () => {
+    const result = buildAncestorSets('f1', namesById, parentById)
+    expect(result.ids).toEqual(new Set(['f1']))
+    expect(result.names).toEqual(new Set(['root']))
+  })
+
+  it('handles a folder with no parent entry', () => {
+    const result = buildAncestorSets('f1', namesById, new Map())
+    expect(result.ids).toEqual(new Set(['f1']))
+    expect(result.names).toEqual(new Set(['root']))
+  })
+
+  it('breaks cycles in the parent chain', () => {
+    const cyclicParent = new Map<string, string | null>([
+      ['a', 'b'],
+      ['b', 'a'],
+    ])
+    const result = buildAncestorSets('a', new Map(), cyclicParent)
+    expect(result.ids).toEqual(new Set(['a', 'b']))
+  })
+
+  it('skips folders with no name entry', () => {
+    const result = buildAncestorSets('f3', new Map(), parentById)
+    expect(result.ids).toEqual(new Set(['f3', 'f2', 'f1']))
+    expect(result.names).toEqual(new Set())
   })
 })

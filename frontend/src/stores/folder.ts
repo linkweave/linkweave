@@ -72,14 +72,10 @@ export const useFolderStore = defineStore('folder', () => {
 
   function selectFolder(folderId: string | null) {
     const bookmarkStore = useBookmarkStore()
-    // remove any existing `under:` tokens from searchquery. folder selection is exclusive in the
+    // Strip any existing `under:` tokens — folder selection is exclusive in the
     // sidebar, so we never want two active at once. Leaves `folder:` tokens
     // (the flat substring variant emitted by card labels) alone.
-    for (const t of [...bookmarkStore.queryTokens]) {
-      if (t.kind === 'operator' && t.key === 'under') {
-        bookmarkStore.toggleQueryToken(t)
-      }
-    }
+    bookmarkStore.removeTokensWhere(t => t.kind === 'operator' && t.key === 'under')
     if (folderId === null) return
     // Use the folder *id* as the token value: unambiguous across duplicate
     // folder names. The pill renders the resolved name (see FilterPill.vue).

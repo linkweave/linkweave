@@ -12,6 +12,9 @@ import {
   stringifyTokens,
   toggleToken,
   matchesTokens,
+  buildAncestorSets,
+  EMPTY_ANCESTORS,
+  type AncestorSets,
   type QueryToken,
   type MatchContext,
 } from '@/lib/searchQuery'
@@ -57,6 +60,11 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     searchQuery.value = stringifyTokens(next)
   }
 
+  function removeTokensWhere(predicate: (t: QueryToken) => boolean) {
+    const remaining = queryTokens.value.filter(t => !predicate(t))
+    searchQuery.value = stringifyTokens(remaining)
+  }
+
   function isTagActive(name: string): boolean {
     const lower = name.toLowerCase()
     return queryTokens.value.some(t => t.kind === 'tag' && !t.neg && t.value.toLowerCase() === lower)
@@ -89,36 +97,21 @@ export const useBookmarkStore = defineStore('bookmark', () => {
       const folderNamesById = new Map(folderStore.folders.map(f => [f.id, f.data.name.toLowerCase()]))
       const folderParentById = new Map(folderStore.folders.map(f => [f.id, f.data.parentId ?? null]))
 
-      // Per-pass memoized walk from each folder up to root, collecting both
-      // names and ids. The map lives inside this computed, so it is rebuilt
-      // automatically on the next re-evaluation — which happens whenever Vue's
-      // reactivity detects a change to bookmarks / folders / tags / query.
-      // That covers folder moves, bookmark moves, and renames without any
-      // explicit invalidation: the array-element write in patchFolders /
-      // patchBookmarks fires reactivity, the computed re-runs, the cache is
-      // freshly populated. Do not promote this map to module scope.
-      type Ancestors = { names: Set<string>; ids: Set<string> }
-      const ancestorsByFolderId = new Map<string, Ancestors>()
-      function ancestorsOf(folderId: string): Ancestors {
-        const cached = ancestorsByFolderId.get(folderId)
-        if (cached) return cached
-        const acc: Ancestors = { names: new Set(), ids: new Set() }
-        const visited = new Set<string>()
-        let cur: string | null = folderId
-        while (cur && !visited.has(cur)) {
-          visited.add(cur)
-          acc.ids.add(cur)
-          const name = folderNamesById.get(cur)
-          if (name) acc.names.add(name)
-          cur = folderParentById.get(cur) ?? null
+      // Memoize ancestor walks per filter pass so bookmarks sharing a folderId
+      // don't re-walk the tree. The cache lives inside this computed, so it is
+      // rebuilt automatically on every re-evaluation.
+      const ancestorsCache = new Map<string, AncestorSets>()
+      function getAncestors(id: string): AncestorSets {
+        let cached = ancestorsCache.get(id)
+        if (!cached) {
+          cached = buildAncestorSets(id, folderNamesById, folderParentById)
+          ancestorsCache.set(id, cached)
         }
-        ancestorsByFolderId.set(folderId, acc)
-        return acc
+        return cached
       }
 
-      const empty: { names: Set<string>; ids: Set<string> } = { names: new Set(), ids: new Set() }
       result = result.filter(b => {
-        const anc = b.data.folderId ? ancestorsOf(b.data.folderId) : empty
+        const anc = b.data.folderId ? getAncestors(b.data.folderId) : EMPTY_ANCESTORS
         const ctx: MatchContext = {
           tagNamesById,
           folderName: b.data.folderId ? folderNamesById.get(b.data.folderId) ?? null : null,
@@ -211,6 +204,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     queryTokens,
     toggleQueryToken,
     removeQueryTokenAt,
+    removeTokensWhere,
     isTagActive,
     isTagExcluded,
     // filtered list

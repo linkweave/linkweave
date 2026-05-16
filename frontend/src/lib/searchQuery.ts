@@ -38,6 +38,38 @@ export interface MatchableBookmark {
   }
 }
 
+export interface AncestorSets {
+  names: Set<string>
+  ids: Set<string>
+}
+
+export const EMPTY_ANCESTORS: AncestorSets = { names: new Set(), ids: new Set() }
+
+/**
+ * walk the tree of folders up to the root, collecting the names and IDs of the folders
+ * along the way. Then  an object with the names and IDs of the folders along the path
+ * @param folderId
+ * @param namesById
+ * @param parentById
+ */
+export function buildAncestorSets(
+  folderId: string,
+  namesById: Map<string, string>,
+  parentById: Map<string, string | null>,
+): AncestorSets {
+  const acc: AncestorSets = { names: new Set(), ids: new Set() }
+  const visited = new Set<string>()
+  let cur: string | null = folderId
+  while (cur && !visited.has(cur)) {
+    visited.add(cur)
+    acc.ids.add(cur)
+    const name = namesById.get(cur)
+    if (name) acc.names.add(name)
+    cur = parentById.get(cur) ?? null
+  }
+  return acc
+}
+
 // Match: -? ( #"q" | #'q' | #word | key:"q" | key:'q' | key:word | "q" | 'q' | word )
 // Both ASCII quote flavors are accepted; preserving single-quote support keeps
 // older saved queries (and the `utils/search.ts` ergonomics that predated this
