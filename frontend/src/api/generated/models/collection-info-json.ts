@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { PropertyDefinitionJson } from './property-definition-json';
+import {
+    PropertyDefinitionJsonFromJSON,
+    PropertyDefinitionJsonFromJSONTyped,
+    PropertyDefinitionJsonToJSON,
+    PropertyDefinitionJsonToJSONTyped,
+} from './property-definition-json';
 import type { TagJson } from './tag-json';
 import {
     TagJsonFromJSON,
@@ -90,6 +97,12 @@ export interface CollectionInfoJson {
      * @memberof CollectionInfoJson
      */
     autoTagRules: Array<AutoTagRuleJson>;
+    /**
+     * 
+     * @type {Array<PropertyDefinitionJson>}
+     * @memberof CollectionInfoJson
+     */
+    propertyDefinitions: Array<PropertyDefinitionJson>;
 }
 
 /**
@@ -102,6 +115,7 @@ export function instanceOfCollectionInfoJson(value: object): value is Collection
     if (!('tags' in value) || value['tags'] === undefined) return false;
     if (!('folders' in value) || value['folders'] === undefined) return false;
     if (!('autoTagRules' in value) || value['autoTagRules'] === undefined) return false;
+    if (!('propertyDefinitions' in value) || value['propertyDefinitions'] === undefined) return false;
     return true;
 }
 
@@ -122,6 +136,7 @@ export function CollectionInfoJsonFromJSONTyped(json: any, ignoreDiscriminator: 
         'tags': ((json['tags'] as Array<any>).map(TagJsonFromJSON)),
         'folders': ((json['folders'] as Array<any>).map(FolderJsonFromJSON)),
         'autoTagRules': ((json['autoTagRules'] as Array<any>).map(AutoTagRuleJsonFromJSON)),
+        'propertyDefinitions': ((json['propertyDefinitions'] as Array<any>).map(PropertyDefinitionJsonFromJSON)),
     };
 }
 
@@ -143,6 +158,7 @@ export function CollectionInfoJsonToJSONTyped(value?: CollectionInfoJson | null,
         'tags': ((value['tags'] as Array<any>).map(TagJsonToJSON)),
         'folders': ((value['folders'] as Array<any>).map(FolderJsonToJSON)),
         'autoTagRules': ((value['autoTagRules'] as Array<any>).map(AutoTagRuleJsonToJSON)),
+        'propertyDefinitions': ((value['propertyDefinitions'] as Array<any>).map(PropertyDefinitionJsonToJSON)),
     };
 }
 
