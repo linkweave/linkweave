@@ -8,8 +8,8 @@ import jakarta.persistence.PreUpdate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.api.shared.config.ConfigService;
+import org.chainlink.api.shared.user.CurrentUserService;
 import org.jspecify.annotations.NonNull;
 
 @ApplicationScoped
@@ -31,12 +31,16 @@ public class AbstractEntityListener {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     protected void prePersist(@NonNull AbstractEntity<?> entity) {
         var now = clock.offsetDateTime().now();
+        var currentUserId = currentUserService.currentUserRef().getId().getId();
 
-        entity.setTimestampErstellt(now);
+        // `timestampErstellt` is fill-if-empty so callers like the bookmark
+        // import can preserve the date carried in the source file.
+        if (entity.getTimestampErstellt() == null) {
+            entity.setTimestampErstellt(now);
+        }
         entity.setTimestampMutiert(now);
-        entity.setUserErstellt(currentUserService.currentUserRef().getId().getId());
-        entity.setUserMutiert(currentUserService.currentUserRef().getId().getId());
-
+        entity.setUserErstellt(currentUserId);
+        entity.setUserMutiert(currentUserId);
     }
 
     @PreUpdate

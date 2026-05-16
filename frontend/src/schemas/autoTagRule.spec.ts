@@ -35,8 +35,8 @@ describe('autoTagRuleSaveSchema', () => {
     expect(() => autoTagRuleSaveSchema(t).parse({ ...valid, pattern: '' })).toThrow()
   })
 
-  it('should reject pattern exceeding 1024 chars', () => {
-    expect(() => autoTagRuleSaveSchema(t).parse({ ...valid, pattern: 'a'.repeat(1025) })).toThrow()
+  it('should reject pattern exceeding 2000 chars', () => {
+    expect(() => autoTagRuleSaveSchema(t).parse({ ...valid, pattern: 'a'.repeat(2001) })).toThrow()
   })
 
   it('should reject invalid regex pattern', () => {
@@ -63,9 +63,9 @@ describe('autoTagRuleSaveSchema', () => {
     ).toBe('a,b,c,d,e,f,g,h')
   })
 
-  it('should reject tagNames exceeding 512 chars', () => {
+  it('should reject tagNames exceeding 2000 chars', () => {
     expect(() =>
-      autoTagRuleSaveSchema(t).parse({ ...valid, tagNames: 'a'.repeat(513) }),
+      autoTagRuleSaveSchema(t).parse({ ...valid, tagNames: 'a,'.repeat(1001) }),
     ).toThrow()
   })
 

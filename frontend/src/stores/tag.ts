@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { TagResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import type { TagJson, TagSaveJson } from '@/api/generated'
@@ -17,20 +17,37 @@ export const useTagStore = defineStore('tag', () => {
 
   const loading = computed(() => collectionStore.loading)
 
-  const selectedTagIds = ref<Set<string>>(new Set())
-
-  function toggleTag(tagId: string) {
-    const updated = new Set(selectedTagIds.value)
-    if (updated.has(tagId)) {
-      updated.delete(tagId)
-    } else {
-      updated.add(tagId)
+  // Sidebar tag selection is a derived view over the bookmark search query:
+  // a tag is "selected" iff its name appears as an active (non-negated) `#tag`
+  // token, and "excluded" iff it appears as a negated one. Toggling a row
+  // writes back into the query string so pills and sidebar stay in sync.
+  function tagIdsByTokenNeg(neg: boolean): Set<string> {
+    const bookmarkStore = useBookmarkStore()
+    const names = new Set<string>()
+    for (const t of bookmarkStore.queryTokens) {
+      if (t.kind === 'tag' && t.neg === neg) names.add(t.value.toLowerCase())
     }
-    selectedTagIds.value = updated
+    const ids = new Set<string>()
+    if (names.size === 0) return ids
+    for (const tag of tags.value) {
+      if (names.has(tag.data.name.toLowerCase())) ids.add(tag.id)
+    }
+    return ids
+  }
+
+  const selectedTagIds = computed<Set<string>>(() => tagIdsByTokenNeg(false))
+  const excludedTagIds = computed<Set<string>>(() => tagIdsByTokenNeg(true))
+
+  function toggleTag(tagId: string, modifier?: 'exclude') {
+    const tag = tags.value.find(t => t.id === tagId)
+    if (!tag) return
+    const bookmarkStore = useBookmarkStore()
+    bookmarkStore.toggleQueryToken({ kind: 'tag', value: tag.data.name, neg: false }, modifier)
   }
 
   function clearTagFilter() {
-    selectedTagIds.value = new Set()
+    const bookmarkStore = useBookmarkStore()
+    bookmarkStore.removeTokensWhere(t => t.kind === 'tag')
   }
 
   function patchTags(updater: (list: TagJson[]) => TagJson[]) {
@@ -61,7 +78,8 @@ export const useTagStore = defineStore('tag', () => {
     const bookmarkStore = useBookmarkStore()
     patchTags((list) => list.filter((t) => t.id !== tagId))
 
-    selectedTagIds.value = new Set([...selectedTagIds.value].filter((id) => id !== tagId))
+    // No need to clean selectedTagIds: it is derived from the query tokens, and
+    // a token referencing the now-deleted tag name simply matches nothing.
 
     // Remove the tag from all bookmarks in the store
     for (const bookmark of bookmarkStore.bookmarks) {
@@ -75,6 +93,7 @@ export const useTagStore = defineStore('tag', () => {
     tags,
     loading,
     selectedTagIds,
+    excludedTagIds,
     createTag,
     updateTag,
     deleteTag,

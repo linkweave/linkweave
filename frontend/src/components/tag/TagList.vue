@@ -88,10 +88,18 @@ async function confirmDelete() {
         :key="tag.id"
         :data-testid="`tag-row-${tag.data.name}`"
         class="group w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors text-left"
-        :class="tagStore.selectedTagIds.has(tag.id)
-          ? 'bg-accent text-accent-foreground'
-          : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'"
-        @click="tagStore.toggleTag(tag.id)"
+        :class="{
+          'bg-accent text-accent-foreground': tagStore.selectedTagIds.has(tag.id),
+          'bg-destructive/10 text-destructive line-through decoration-destructive/60': tagStore.excludedTagIds.has(tag.id),
+          'hover:bg-accent hover:text-accent-foreground text-muted-foreground':
+            !tagStore.selectedTagIds.has(tag.id) && !tagStore.excludedTagIds.has(tag.id),
+        }"
+        :title="tagStore.excludedTagIds.has(tag.id)
+          ? `Remove exclude filter: -#${tag.data.name}`
+          : tagStore.selectedTagIds.has(tag.id)
+            ? `Remove filter: #${tag.data.name}`
+            : `Filter by tag: #${tag.data.name} (⌥/⇧+click to exclude)`"
+        @click="tagStore.toggleTag(tag.id, ($event.altKey || $event.shiftKey) ? 'exclude' : undefined)"
       >
         <span
           class="h-3 w-3 shrink-0 rounded-full"
@@ -120,7 +128,7 @@ async function confirmDelete() {
       </button>
 
       <button
-        v-if="tagStore.selectedTagIds.size > 0"
+        v-if="tagStore.selectedTagIds.size > 0 || tagStore.excludedTagIds.size > 0"
         class="w-full flex items-center gap-2 rounded-md px-2 py-1 text-xs cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
         @click="tagStore.clearTagFilter()"
       >

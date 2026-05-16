@@ -5,8 +5,6 @@ import { config } from '@/api'
 import type { UserInfoJson } from '@/api/generated'
 import { useCollectionStore } from '@/stores/collection'
 import { useBookmarkStore } from '@/stores/bookmark'
-import { useFolderStore } from '@/stores/folder'
-import { useTagStore } from '@/stores/tag'
 import * as offlineCache from '@/lib/offline-cache'
 import router from '@/router'
 
@@ -15,16 +13,13 @@ const authApi = new AuthResourceApi(config)
 function resetAllStores() {
   const collection = useCollectionStore()
   const bookmark = useBookmarkStore()
-  const folder = useFolderStore()
-  const tag = useTagStore()
 
   collection.currentCollectionId = null
   collection.collectionInfo = null
   collection.collections = []
   collection.collectionsFetched = false
   bookmark.searchQuery = ''
-  folder.selectedFolderId = null
-  tag.selectedTagIds = new Set()
+  // folder + tag selections are derived from bookmark.searchQuery — clearing the query above clears them.
 }
 
 export const useAuthStore = defineStore('auth', () => {

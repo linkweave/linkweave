@@ -1,5 +1,7 @@
 package org.chainlink.api.bookmark.importbookmarks;
 
+import java.time.Instant;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,4 +18,11 @@ public class ParsedBookmark {
     private String url;
     @Nullable
     private String description;
+    /**
+     * Original creation date carried by the Netscape `ADD_DATE` attribute on
+     * the imported `<A>` element. Null if the source file omitted it. Caller
+     * decides whether to honor it or fall back to the import time.
+     */
+    @Nullable
+    private Instant addedAt;
 }

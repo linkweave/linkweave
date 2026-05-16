@@ -7,18 +7,36 @@ import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { useTagStore } from '@/stores/tag'
 import { sortBookmarks } from '@/utils/bookmarkSort'
-import { parseSearchQuery, bookmarkMatchesTerms } from '@/utils/search'
+import {
+  tokenize,
+  stringifyTokens,
+  toggleToken,
+  matchesTokens,
+  buildAncestorSets,
+  EMPTY_ANCESTORS,
+  type AncestorSets,
+  type QueryToken,
+  type MatchContext,
+} from '@/lib/searchQuery'
 
 const bookmarkApi = new BookmarkResourceApi(config)
 
 export const useBookmarkStore = defineStore('bookmark', () => {
   const collectionStore = useCollectionStore()
 
+  // ---------------------------------------------------------------------------
+  // State + base getters
+  // ---------------------------------------------------------------------------
+
   const bookmarks = computed<BookmarkJson[]>(() =>
     collectionStore.collectionInfo?.bookmarks ?? []
   )
 
   const loading = computed(() => collectionStore.loading)
+
+  // ---------------------------------------------------------------------------
+  // Search query (string + parsed tokens, UC-070 lite)
+  // ---------------------------------------------------------------------------
 
   const searchQuery = ref('')
 
@@ -30,6 +48,37 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     searchQuery.value = ''
   }
 
+  const queryTokens = computed<QueryToken[]>(() => tokenize(searchQuery.value))
+
+  function toggleQueryToken(token: QueryToken, modifier?: 'exclude') {
+    const next = toggleToken(queryTokens.value, token, modifier)
+    searchQuery.value = stringifyTokens(next)
+  }
+
+  function removeQueryTokenAt(idx: number) {
+    const next = queryTokens.value.filter((_, i) => i !== idx)
+    searchQuery.value = stringifyTokens(next)
+  }
+
+  function removeTokensWhere(predicate: (t: QueryToken) => boolean) {
+    const remaining = queryTokens.value.filter(t => !predicate(t))
+    searchQuery.value = stringifyTokens(remaining)
+  }
+
+  function isTagActive(name: string): boolean {
+    const lower = name.toLowerCase()
+    return queryTokens.value.some(t => t.kind === 'tag' && !t.neg && t.value.toLowerCase() === lower)
+  }
+
+  function isTagExcluded(name: string): boolean {
+    const lower = name.toLowerCase()
+    return queryTokens.value.some(t => t.kind === 'tag' && t.neg && t.value.toLowerCase() === lower)
+  }
+
+  // ---------------------------------------------------------------------------
+  // Filtered + sorted list
+  // ---------------------------------------------------------------------------
+
   // Combined filter + sort pass. Splitting into separate `filteredBookmarks`
   // and `neverOpenedCount` computeds (each consuming the sort util) would mean
   // running the partition twice; instead we let `sortBookmarks` report both
@@ -39,27 +88,38 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     const tagStore = useTagStore()
     let result = bookmarks.value
 
-    if (folderStore.selectedFolderId !== null) {
-      result = result.filter(b => b.data.folderId != null && folderStore.selectedFolderIds.has(b.data.folderId))
-    }
+    // Sidebar folder + tag selections both flow through query tokens now (see
+    // `folderStore.selectFolder` and `tagStore.toggleTag`); the token filter
+    // below handles them via `under:` and `#tag`.
+    const tokens = queryTokens.value
+    if (tokens.length > 0) {
+      const tagNamesById = new Map(tagStore.tags.map(t => [t.id, t.data.name.toLowerCase()]))
+      const folderNamesById = new Map(folderStore.folders.map(f => [f.id, f.data.name.toLowerCase()]))
+      const folderParentById = new Map(folderStore.folders.map(f => [f.id, f.data.parentId ?? null]))
 
-    if (tagStore.selectedTagIds.size > 0) {
-      result = result.filter(b => {
-        const tagIds = b.data.tagIds
-        if (!tagIds) return false
-        for (const selectedId of tagStore.selectedTagIds) {
-          if (tagIds.has(selectedId)) return true
+      // Memoize ancestor walks per filter pass so bookmarks sharing a folderId
+      // don't re-walk the tree. The cache lives inside this computed, so it is
+      // rebuilt automatically on every re-evaluation.
+      const ancestorsCache = new Map<string, AncestorSets>()
+      function getAncestors(id: string): AncestorSets {
+        let cached = ancestorsCache.get(id)
+        if (!cached) {
+          cached = buildAncestorSets(id, folderNamesById, folderParentById)
+          ancestorsCache.set(id, cached)
         }
-        return false
-      })
-    }
-
-    if (searchQuery.value.length >= 2) {
-      const terms = parseSearchQuery(searchQuery.value)
-      if (terms.length > 0) {
-        const tagsById = new Map(tagStore.tags.map(t => [t.id, t.data.name.toLowerCase()]))
-        result = result.filter(b => bookmarkMatchesTerms(b, terms, tagsById))
+        return cached
       }
+
+      result = result.filter(b => {
+        const anc = b.data.folderId ? getAncestors(b.data.folderId) : EMPTY_ANCESTORS
+        const ctx: MatchContext = {
+          tagNamesById,
+          folderName: b.data.folderId ? folderNamesById.get(b.data.folderId) ?? null : null,
+          ancestorFolderNames: anc.names,
+          ancestorFolderIds: anc.ids,
+        }
+        return matchesTokens(b, tokens, ctx)
+      })
     }
 
     return sortBookmarks(result, {
@@ -70,6 +130,10 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 
   const filteredBookmarks = computed(() => sortedAndFiltered.value.items)
   const neverOpenedCount = computed(() => sortedAndFiltered.value.neverOpenedCount)
+
+  // ---------------------------------------------------------------------------
+  // CRUD
+  // ---------------------------------------------------------------------------
 
   function patchBookmarks(updater: (list: BookmarkJson[]) => BookmarkJson[]) {
     const info = collectionStore.collectionInfo
@@ -117,6 +181,10 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     return updated
   }
 
+  // ---------------------------------------------------------------------------
+  // Telemetry
+  // ---------------------------------------------------------------------------
+
   function trackClick(bookmarkId: string): void {
     fetch(`/api/bookmarks/${bookmarkId}/track-click`, {
       method: 'POST',
@@ -126,17 +194,28 @@ export const useBookmarkStore = defineStore('bookmark', () => {
   }
 
   return {
+    // state + base
     bookmarks,
     loading,
+    // search
     searchQuery,
-    filteredBookmarks,
-    neverOpenedCount,
     setSearchQuery,
     clearSearchQuery,
+    queryTokens,
+    toggleQueryToken,
+    removeQueryTokenAt,
+    removeTokensWhere,
+    isTagActive,
+    isTagExcluded,
+    // filtered list
+    filteredBookmarks,
+    neverOpenedCount,
+    // CRUD
     createBookmark,
     updateBookmark,
     deleteBookmark,
     moveBookmarkToFolder,
+    // telemetry
     trackClick,
   }
 })

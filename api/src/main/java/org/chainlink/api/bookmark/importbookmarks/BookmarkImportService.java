@@ -3,6 +3,9 @@ package org.chainlink.api.bookmark.importbookmarks;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashSet;
@@ -132,8 +135,27 @@ public class BookmarkImportService {
             null,
             null
         );
+        OffsetDateTime importedAddedAt = resolveImportedAddedAt(parsed.getAddedAt());
+        if (importedAddedAt != null) {
+            // Preserve the original creation date from the imported file.
+            // AbstractEntityListener fills timestampErstellt only when null,
+            bookmark.setTimestampErstellt(importedAddedAt);
+        }
         bookmarkRepo.persist(bookmark);
         return true;
+    }
+
+    /**
+     * Honor the Netscape `ADD_DATE` only if it is in a sane range — strictly in
+     * the past and after the Unix epoch. Future-dated values from a malformed
+     * or malicious file are dropped so the import time is used instead.
+     */
+    @Nullable
+    private OffsetDateTime resolveImportedAddedAt(@Nullable Instant addedAt) {
+        if (addedAt == null) return null;
+        Instant now = appClock.instant().now();
+        if (addedAt.isAfter(now) || addedAt.getEpochSecond() <= 0) return null;
+        return OffsetDateTime.ofInstant(addedAt, ZoneOffset.UTC);
     }
 
     private Optional<URL> parseUrl(@NonNull String urlString) {

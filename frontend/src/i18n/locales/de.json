@@ -222,7 +222,9 @@
     "placeholder": "Lesezeichen suchen (Leerzeichen für mehrere Begriffe, z.B. prod foobar)...",
     "placeholderShort": "Suchen…",
     "resultCount": "{n} Ergebnis | {n} Ergebnisse",
-    "clear": "Suche löschen"
+    "clear": "Suche löschen",
+    "filters": "Filter",
+    "clearAll": "Alle löschen"
   },
   "collectionSearch": {
     "placeholder": "Sammlungen durchsuchen...",
