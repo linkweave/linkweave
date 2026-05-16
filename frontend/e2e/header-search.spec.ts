@@ -144,7 +144,7 @@ test.describe('Header Search', () => {
     await expect(page.locator('h3').filter({ hasText: title })).toBeVisible()
   })
 
-  test('desktop: active-state chip appears when search is non-empty and clears on ×', async ({ page }) => {
+  test('desktop: pill strip shows one pill per token and clears via "Clear all"', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 })
 
     const ts = Date.now()
@@ -157,31 +157,18 @@ test.describe('Header Search', () => {
     const searchInput = page.locator('header [data-search-input]')
     await searchInput.fill(`Chip Test ${ts}`)
 
-    // Chip is visible with the query term
-    const chip = page.getByRole('status')
-    await expect(chip).toBeVisible()
-    await expect(chip).toContainText(`"Chip Test ${ts}"`)
+    // Strip is visible with one pill per whitespace-delimited token.
+    const strip = page.getByTestId('filter-strip')
+    await expect(strip).toBeVisible()
+    await expect(strip.getByTestId('filter-pill')).toHaveCount(3)
+    await expect(strip.locator('[data-token-kind="text"][data-token-value="Chip"]')).toBeVisible()
+    await expect(strip.locator('[data-token-kind="text"][data-token-value="Test"]')).toBeVisible()
+    await expect(strip.locator(`[data-token-kind="text"][data-token-value="${ts}"]`)).toBeVisible()
 
-    // Clear via chip × button removes the chip and shows all bookmarks again
-    await chip.getByRole('button', { name: /clear search/i }).click()
-    await expect(chip).not.toBeVisible()
+    // "Clear all" empties the strip and the input.
+    await page.getByTestId('filter-clear-all').click()
+    await expect(strip).not.toBeVisible()
     await expect(searchInput).toHaveValue('')
-  })
-
-  test('desktop: clicking chip body re-focuses the search input', async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 720 })
-    await page.goto(`/collections/${collectionId}`)
-
-    const searchInput = page.locator('header [data-search-input]')
-    await searchInput.fill('test')
-
-    const chip = page.getByRole('status')
-    await expect(chip).toBeVisible()
-
-    // Blur the input first, then click the chip body (query text area, not the clear ×)
-    await page.locator('main').click({ position: { x: 100, y: 400 } })
-    await page.getByTestId('search-chip-reopen').click()
-    await expect(searchInput).toBeFocused()
   })
 
   test('mobile: icon button shows active state when search is non-empty', async ({ page }) => {
@@ -205,7 +192,7 @@ test.describe('Header Search', () => {
     await expect(badge).toBeVisible()
   })
 
-  test('mobile: chip appears and re-opens overlay when tapped', async ({ page }) => {
+  test('mobile: pill strip appears below the header after entering a query', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 })
     await page.goto(`/collections/${collectionId}`)
 
@@ -215,13 +202,10 @@ test.describe('Header Search', () => {
     await overlayInput.fill('active')
     await page.keyboard.press('Escape')
 
-    // Chip is visible below the header
-    const chip = page.getByRole('status')
-    await expect(chip).toBeVisible()
-
-    // Tapping chip body re-opens the overlay
-    await page.getByTestId('search-chip-reopen').click()
-    await expect(page.locator('[data-search-input]').last()).toBeVisible()
+    // Strip is visible below the header with the typed token rendered as a pill.
+    const strip = page.getByTestId('filter-strip')
+    await expect(strip).toBeVisible()
+    await expect(strip.locator('[data-token-kind="text"][data-token-value="active"]')).toBeVisible()
   })
 
   test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => user))

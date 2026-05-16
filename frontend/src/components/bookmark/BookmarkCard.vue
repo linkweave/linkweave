@@ -95,9 +95,18 @@ function onTagClick(event: MouseEvent, tagId: string) {
 function onToggleFolderFilter(event: MouseEvent) {
   event.preventDefault()
   event.stopPropagation()
-  const name = getFolderName()
-  if (!name) return
-  bookmarkStore.toggleQueryToken({ kind: 'op', key: 'folder', value: name, neg: false })
+  const folderId = props.bookmark.data.folderId
+  if (!folderId) return
+  // Card "in folder X" navigates the sidebar — uses the hierarchical `under:`
+  // operator (matches this folder + descendants) so the click and the sidebar
+  // selection mean the same thing. `selectFolder` enforces exclusivity (only
+  // one `under:` token at a time) and replaces any existing folder selection.
+  const folderStore = useFolderStore()
+  if (folderStore.selectedFolderId === folderId) {
+    folderStore.selectFolder(null)
+  } else {
+    folderStore.selectFolder(folderId)
+  }
 }
 
 // Lazy mount of the radix DropdownMenu. With N cards on screen, mounting an
@@ -112,6 +121,8 @@ const menuActivated = ref(false)
 <template>
   <div
     :draggable="!isTouch"
+    :data-testid="`bookmark-card-${props.bookmark.id}`"
+    :data-bookmark-title="props.bookmark.data.title"
     class="group relative rounded-lg border border-border bg-card p-4 hover:ring-2 hover:ring-primary/50 hover:border-primary/30 focus-within:ring-2 focus-within:ring-primary transition-[box-shadow,border-color,color] duration-150 text-muted-foreground hover:text-accent-foreground cursor-grab active:cursor-grabbing"
     @dragstart="onBookmarkDragStart"
     @dragend="onBookmarkDragEnd"
@@ -188,8 +199,10 @@ const menuActivated = ref(false)
           <button
             v-if="getFolderName()"
             type="button"
+            data-testid="card-folder-pill"
+            :data-folder-id="props.bookmark.data.folderId"
             class="pointer-events-auto relative z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-muted-foreground border border-dashed border-border hover:text-foreground hover:border-foreground hover:bg-secondary transition-colors"
-            :class="{ 'text-foreground border-solid border-foreground bg-secondary': bookmarkStore.isFolderActive(getFolderName()!) }"
+            :class="{ 'text-foreground border-solid border-foreground bg-secondary': folderStore.selectedFolderId === props.bookmark.data.folderId }"
             :title="`Filter by folder: ${getFolderName()}`"
             @click="onToggleFolderFilter"
           >
@@ -201,6 +214,8 @@ const menuActivated = ref(false)
             v-for="tagId in props.bookmark.data.tagIds"
             :key="tagId"
             type="button"
+            data-testid="card-tag-pill"
+            :data-tag-name="getTagById(tagId)?.data.name ?? ''"
             class="pointer-events-auto relative z-10 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs bg-secondary text-foreground border border-transparent hover:bg-[color-mix(in_oklab,var(--tag-color)_14%,var(--color-secondary))] hover:border-[var(--tag-color)] transition-colors"
             :class="tagClass(tagId)"
             :style="{ '--tag-color': getTagById(tagId)?.data.color ?? '#64748b' }"

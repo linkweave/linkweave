@@ -2,16 +2,31 @@
 // Implements: #tag, folder:value, note:value, free text, and negation (-).
 // Out of scope (parsed but no-op match-all): property:, created:, match:OR.
 
+/**
+ * The discriminant of a `QueryToken`. Named centrally so future kinds (groups
+ * for OR, etc.) only need to be added in one place — and so search-related
+ * code can refer to `TokenKind` instead of repeating string literals.
+ */
+export type TokenKind = 'tag' | 'operator' | 'text'
+
 export type TagToken = { kind: 'tag'; value: string; neg: boolean }
-export type OpToken = { kind: 'op'; key: string; value: string; neg: boolean }
+export type OperatorToken = { kind: 'operator'; key: string; value: string; neg: boolean }
 export type TextToken = { kind: 'text'; value: string; neg: boolean }
-export type QueryToken = TagToken | OpToken | TextToken
+export type QueryToken = TagToken | OperatorToken | TextToken
 
 export interface MatchContext {
   // Lowercased tag names looked up by id on the bookmark
   tagNamesById: Map<string, string>
   // Lowercased folder name resolved from the bookmark's folderId (or null)
   folderName: string | null
+  // Lowercased names of every ancestor folder of the bookmark (incl. its own
+  // folder), used to evaluate the hierarchical `under:` operator. Empty for
+  // unfiled bookmarks.
+  ancestorFolderNames: Set<string>
+  // Folder IDs of every ancestor (incl. own folder). Used by `under:` when the
+  // token value is a folder ID (the unambiguous click-path encoding); names
+  // remain the fallback for typed queries.
+  ancestorFolderIds: Set<string>
 }
 
 export interface MatchableBookmark {
@@ -23,8 +38,12 @@ export interface MatchableBookmark {
   }
 }
 
-// Match: -? (#"quoted" | #word | key:"quoted" | key:word | "quoted" | word)
-const TOKEN_RE = /(-)?(?:#"([^"]*)"|#([\w-]+)|([a-z]+):"([^"]*)"|([a-z]+):(\S+)|"([^"]*)"|(\S+))/gi
+// Match: -? ( #"q" | #'q' | #word | key:"q" | key:'q' | key:word | "q" | 'q' | word )
+// Both ASCII quote flavors are accepted; preserving single-quote support keeps
+// older saved queries (and the `utils/search.ts` ergonomics that predated this
+// tokenizer) working. The output token never re-quotes — `stringifyTokens`
+// always emits double-quoted form.
+const TOKEN_RE = /(-)?(?:#"([^"]*)"|#'([^']*)'|#([\w-]+)|([a-z]+):"([^"]*)"|([a-z]+):'([^']*)'|([a-z]+):(\S+)|"([^"]*)"|'([^']*)'|(\S+))/gi
 
 export function tokenize(query: string): QueryToken[] {
   const tokens: QueryToken[] = []
@@ -33,25 +52,39 @@ export function tokenize(query: string): QueryToken[] {
   let m: RegExpExecArray | null
   while ((m = TOKEN_RE.exec(query)) !== null) {
     const neg = !!m[1]
-    const tagQuoted = m[2]
-    const tagWord = m[3]
-    const opKeyQ = m[4]
-    const opValQ = m[5]
-    const opKey = m[6]
-    const opVal = m[7]
-    const textQ = m[8]
-    const textW = m[9]
+    const tagDq = m[2]
+    const tagSq = m[3]
+    const tagWord = m[4]
+    const opKeyDq = m[5]
+    const opValDq = m[6]
+    const opKeySq = m[7]
+    const opValSq = m[8]
+    const opKey = m[9]
+    const opVal = m[10]
+    const textDq = m[11]
+    const textSq = m[12]
+    const textW = m[13]
 
-    if (tagQuoted !== undefined || tagWord !== undefined) {
-      tokens.push({ kind: 'tag', value: tagQuoted ?? tagWord!, neg })
-    } else if (opKeyQ !== undefined && opValQ !== undefined) {
-      tokens.push({ kind: 'op', key: opKeyQ.toLowerCase(), value: opValQ, neg })
-    } else if (opKey !== undefined && opVal !== undefined) {
-      tokens.push({ kind: 'op', key: opKey.toLowerCase(), value: opVal, neg })
-    } else if (textQ !== undefined) {
-      tokens.push({ kind: 'text', value: textQ, neg })
-    } else if (textW !== undefined) {
-      tokens.push({ kind: 'text', value: textW, neg })
+    const tagValue = tagDq ?? tagSq ?? tagWord
+    if (tagValue !== undefined) {
+      tokens.push({ kind: 'tag', value: tagValue, neg })
+      continue
+    }
+    if (opKeyDq !== undefined && opValDq !== undefined) {
+      tokens.push({ kind: 'operator', key: opKeyDq.toLowerCase(), value: opValDq, neg })
+      continue
+    }
+    if (opKeySq !== undefined && opValSq !== undefined) {
+      tokens.push({ kind: 'operator', key: opKeySq.toLowerCase(), value: opValSq, neg })
+      continue
+    }
+    if (opKey !== undefined && opVal !== undefined) {
+      tokens.push({ kind: 'operator', key: opKey.toLowerCase(), value: opVal, neg })
+      continue
+    }
+    const textValue = textDq ?? textSq ?? textW
+    if (textValue !== undefined) {
+      tokens.push({ kind: 'text', value: textValue, neg })
     }
   }
   return tokens
@@ -63,21 +96,21 @@ export function tokenize(query: string): QueryToken[] {
 // like `foo=bar` would re-tokenize as tag `foo` + text `=bar`.
 const TAG_UNQUOTED_RE = /^[\w-]+$/
 
-function needsQuoting(value: string, kind: QueryToken['kind']): boolean {
+function needsQuoting(value: string, kind: TokenKind): boolean {
   if (value.length === 0) return true
   if (/[\s"]/.test(value)) return true
   if (kind === 'tag' && !TAG_UNQUOTED_RE.test(value)) return true
   return false
 }
 
-function quoteIfNeeded(value: string, kind: QueryToken['kind']): string {
+function quoteIfNeeded(value: string, kind: TokenKind): string {
   return needsQuoting(value, kind) ? `"${value}"` : value
 }
 
 function tokenToString(t: QueryToken): string {
   const prefix = t.neg ? '-' : ''
   if (t.kind === 'tag') return `${prefix}#${quoteIfNeeded(t.value, 'tag')}`
-  if (t.kind === 'op') return `${prefix}${t.key}:${quoteIfNeeded(t.value, 'op')}`
+  if (t.kind === 'operator') return `${prefix}${t.key}:${quoteIfNeeded(t.value, 'operator')}`
   return `${prefix}${quoteIfNeeded(t.value, 'text')}`
 }
 
@@ -86,7 +119,7 @@ export function stringifyTokens(tokens: QueryToken[]): string {
 }
 
 function tokenKey(t: QueryToken): string {
-  const key = t.kind === 'op' ? t.key : ''
+  const key = t.kind === 'operator' ? t.key : ''
   return `${t.kind}|${key}|${t.value.toLowerCase()}`
 }
 
@@ -118,10 +151,19 @@ function bookmarkMatchesToken(b: MatchableBookmark, t: QueryToken, ctx: MatchCon
     }
     return false
   }
-  if (t.kind === 'op') {
+  if (t.kind === 'operator') {
     const v = t.value.toLowerCase()
     if (t.key === 'folder') {
       return (ctx.folderName ?? '').includes(v)
+    }
+    if (t.key === 'under') {
+      // Hierarchical: matches when the bookmark's own folder, or any ancestor,
+      // is the one referenced by `value`. We try an exact folder-ID match
+      // first (case-sensitive, the click-path encoding from selectFolder), and
+      // fall back to a case-insensitive name match for typed queries. The name
+      // fallback retains the duplicate-name ambiguity by design.
+      if (ctx.ancestorFolderIds.has(t.value)) return true
+      return ctx.ancestorFolderNames.has(v)
     }
     if (t.key === 'note') {
       return (b.data.description ?? '').toLowerCase().includes(v)

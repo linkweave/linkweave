@@ -142,6 +142,9 @@ async function onDrop(event: DragEvent, targetFolder: FolderJson) {
       <DropdownMenuRoot>
         <div
           :draggable="!isTouch"
+          :data-testid="`folder-row-${node.folder.id}`"
+          :data-folder-name="node.folder.data.name"
+          :data-selected="folderStore.selectedFolderId === node.folder.id ? 'true' : 'false'"
           class="group flex items-center gap-1 rounded-md py-1.5 pr-2 text-sm cursor-pointer transition-colors"
           :class="[
             folderStore.selectedFolderId === node.folder.id

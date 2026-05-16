@@ -32,22 +32,30 @@ describe('tokenize', () => {
 
   it('parses an op token with quoted value', () => {
     expect(tokenize('folder:"multi word"')).toEqual([
-      { kind: 'op', key: 'folder', value: 'multi word', neg: false },
+      { kind: 'operator', key: 'folder', value: 'multi word', neg: false },
     ])
   })
 
   it('parses a mix of tokens', () => {
     expect(tokenize('#a folder:b -c')).toEqual([
       { kind: 'tag', value: 'a', neg: false },
-      { kind: 'op', key: 'folder', value: 'b', neg: false },
+      { kind: 'operator', key: 'folder', value: 'b', neg: false },
       { kind: 'text', value: 'c', neg: true },
+    ])
+  })
+
+  it('accepts single-quoted phrases for backwards compat', () => {
+    expect(tokenize("'two words'")).toEqual([{ kind: 'text', value: 'two words', neg: false }])
+    expect(tokenize("#'two words'")).toEqual([{ kind: 'tag', value: 'two words', neg: false }])
+    expect(tokenize("folder:'two words'")).toEqual([
+      { kind: 'operator', key: 'folder', value: 'two words', neg: false },
     ])
   })
 
   it('does not crash on unknown operators', () => {
     expect(tokenize('property:foo created:>today')).toEqual([
-      { kind: 'op', key: 'property', value: 'foo', neg: false },
-      { kind: 'op', key: 'created', value: '>today', neg: false },
+      { kind: 'operator', key: 'property', value: 'foo', neg: false },
+      { kind: 'operator', key: 'created', value: '>today', neg: false },
     ])
   })
 })
@@ -56,14 +64,14 @@ describe('stringifyTokens', () => {
   it('round-trips simple tokens', () => {
     const t: QueryToken[] = [
       { kind: 'tag', value: 'a', neg: false },
-      { kind: 'op', key: 'folder', value: 'b', neg: false },
+      { kind: 'operator', key: 'folder', value: 'b', neg: false },
       { kind: 'text', value: 'c', neg: true },
     ]
     expect(stringifyTokens(t)).toBe('#a folder:b -c')
   })
 
   it('quotes values containing spaces', () => {
-    const t: QueryToken[] = [{ kind: 'op', key: 'folder', value: 'multi word', neg: false }]
+    const t: QueryToken[] = [{ kind: 'operator', key: 'folder', value: 'multi word', neg: false }]
     expect(stringifyTokens(t)).toBe('folder:"multi word"')
   })
 
@@ -118,6 +126,8 @@ describe('matchesTokens', () => {
   const ctx: MatchContext = {
     tagNamesById: new Map([['t1', 'quarkus'], ['t2', 'vue']]),
     folderName: 'work',
+    ancestorFolderNames: new Set(['work', 'projects', 'home']),
+    ancestorFolderIds: new Set(['f-work', 'f-projects', 'f-home']),
   }
   const bookmark: MatchableBookmark = {
     data: {
@@ -142,17 +152,40 @@ describe('matchesTokens', () => {
     expect(matchesTokens(bookmark, [{ kind: 'tag', value: 'quarkus', neg: true }], ctx)).toBe(false)
   })
 
-  it('matches folder operator', () => {
-    expect(matchesTokens(bookmark, [{ kind: 'op', key: 'folder', value: 'work', neg: false }], ctx)).toBe(true)
-    expect(matchesTokens(bookmark, [{ kind: 'op', key: 'folder', value: 'home', neg: false }], ctx)).toBe(false)
+  it('matches folder operator (flat substring on direct folder name)', () => {
+    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'folder', value: 'work', neg: false }], ctx)).toBe(true)
+    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'folder', value: 'home', neg: false }], ctx)).toBe(false)
+  })
+
+  it('matches under operator on any ancestor folder name', () => {
+    // The bookmark sits in folder `work`, whose chain is work → projects → home.
+    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'under', value: 'work', neg: false }], ctx)).toBe(true)
+    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'under', value: 'projects', neg: false }], ctx)).toBe(true)
+    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'under', value: 'home', neg: false }], ctx)).toBe(true)
+    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'under', value: 'archive', neg: false }], ctx)).toBe(false)
+  })
+
+  it('under operator does not match an unfiled bookmark', () => {
+    const unfiledCtx: MatchContext = {
+      ...ctx,
+      folderName: null,
+      ancestorFolderNames: new Set(),
+      ancestorFolderIds: new Set(),
+    }
+    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'under', value: 'work', neg: false }], unfiledCtx)).toBe(false)
+  })
+
+  it('under operator matches an ancestor by folder id (click-path encoding)', () => {
+    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'under', value: 'f-projects', neg: false }], ctx)).toBe(true)
+    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'under', value: 'f-archive', neg: false }], ctx)).toBe(false)
   })
 
   it('matches note operator on description', () => {
-    expect(matchesTokens(bookmark, [{ kind: 'op', key: 'note', value: 'reactive', neg: false }], ctx)).toBe(true)
+    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'note', value: 'reactive', neg: false }], ctx)).toBe(true)
   })
 
   it('treats unknown operators as no-op match-all', () => {
-    expect(matchesTokens(bookmark, [{ kind: 'op', key: 'property', value: 'foo', neg: false }], ctx)).toBe(true)
+    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'property', value: 'foo', neg: false }], ctx)).toBe(true)
   })
 
   it('matches free text against title / url / description', () => {

@@ -67,13 +67,6 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     return queryTokens.value.some(t => t.kind === 'tag' && t.neg && t.value.toLowerCase() === lower)
   }
 
-  function isFolderActive(name: string): boolean {
-    const lower = name.toLowerCase()
-    return queryTokens.value.some(
-      t => t.kind === 'op' && t.key === 'folder' && !t.neg && t.value.toLowerCase() === lower,
-    )
-  }
-
   // ---------------------------------------------------------------------------
   // Filtered + sorted list
   // ---------------------------------------------------------------------------
@@ -87,20 +80,50 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     const tagStore = useTagStore()
     let result = bookmarks.value
 
-    if (folderStore.selectedFolderId !== null) {
-      result = result.filter(b => b.data.folderId != null && folderStore.selectedFolderIds.has(b.data.folderId))
-    }
-
-    // Sidebar tag selection is now merged into the search query (see tag store's
-    // `selectedTagIds`/`toggleTag`); the token filter below handles it.
+    // Sidebar folder + tag selections both flow through query tokens now (see
+    // `folderStore.selectFolder` and `tagStore.toggleTag`); the token filter
+    // below handles them via `under:` and `#tag`.
     const tokens = queryTokens.value
     if (tokens.length > 0) {
       const tagNamesById = new Map(tagStore.tags.map(t => [t.id, t.data.name.toLowerCase()]))
       const folderNamesById = new Map(folderStore.folders.map(f => [f.id, f.data.name.toLowerCase()]))
+      const folderParentById = new Map(folderStore.folders.map(f => [f.id, f.data.parentId ?? null]))
+
+      // Per-pass memoized walk from each folder up to root, collecting both
+      // names and ids. The map lives inside this computed, so it is rebuilt
+      // automatically on the next re-evaluation — which happens whenever Vue's
+      // reactivity detects a change to bookmarks / folders / tags / query.
+      // That covers folder moves, bookmark moves, and renames without any
+      // explicit invalidation: the array-element write in patchFolders /
+      // patchBookmarks fires reactivity, the computed re-runs, the cache is
+      // freshly populated. Do not promote this map to module scope.
+      type Ancestors = { names: Set<string>; ids: Set<string> }
+      const ancestorsByFolderId = new Map<string, Ancestors>()
+      function ancestorsOf(folderId: string): Ancestors {
+        const cached = ancestorsByFolderId.get(folderId)
+        if (cached) return cached
+        const acc: Ancestors = { names: new Set(), ids: new Set() }
+        const visited = new Set<string>()
+        let cur: string | null = folderId
+        while (cur && !visited.has(cur)) {
+          visited.add(cur)
+          acc.ids.add(cur)
+          const name = folderNamesById.get(cur)
+          if (name) acc.names.add(name)
+          cur = folderParentById.get(cur) ?? null
+        }
+        ancestorsByFolderId.set(folderId, acc)
+        return acc
+      }
+
+      const empty: { names: Set<string>; ids: Set<string> } = { names: new Set(), ids: new Set() }
       result = result.filter(b => {
+        const anc = b.data.folderId ? ancestorsOf(b.data.folderId) : empty
         const ctx: MatchContext = {
           tagNamesById,
           folderName: b.data.folderId ? folderNamesById.get(b.data.folderId) ?? null : null,
+          ancestorFolderNames: anc.names,
+          ancestorFolderIds: anc.ids,
         }
         return matchesTokens(b, tokens, ctx)
       })
@@ -190,7 +213,6 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     removeQueryTokenAt,
     isTagActive,
     isTagExcluded,
-    isFolderActive,
     // filtered list
     filteredBookmarks,
     neverOpenedCount,

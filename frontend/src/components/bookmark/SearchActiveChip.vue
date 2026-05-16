@@ -19,6 +19,7 @@ function clear() {
 <template>
   <output
     v-if="tokens.length > 0"
+    data-testid="filter-strip"
     :class="[
       'flex flex-wrap items-center gap-2 py-2 text-sm border border-primary/30',
       // mobile/tablet: sticky just below the toolbar (h-11), full-bleed, blur over scrolling cards
@@ -45,6 +46,7 @@ function clear() {
     </span>
     <button
       type="button"
+      data-testid="filter-clear-all"
       class="text-xs text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded transition-colors"
       :aria-label="t('search.clear')"
       @click="clear"
