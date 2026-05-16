@@ -17,41 +17,27 @@ jobs:
           fetch-depth: 0
 
       - name: Generate diff
-        id: diff
         run: |
           git fetch origin main
           git diff origin/main...HEAD -- ':!*.lock' ':!package-lock.json' ':!yarn.lock' ':!pnpm-lock.yaml' ':!*.min.js' ':!*.min.css' ':!*.map' > /tmp/diff.txt || true
-          DIFF_SIZE=$(wc -c < /tmp/diff.txt)
-          echo "Diff size: ${DIFF_SIZE} bytes"
-          # Truncate to ~80k chars
           head -c 80000 /tmp/diff.txt > /tmp/diff-truncated.txt
           mv /tmp/diff-truncated.txt /tmp/diff.txt
+          echo "Diff size: $(wc -c < /tmp/diff.txt) bytes"
 
       - name: Run Z.ai Code Review
         id: review
-        if: steps.diff.outcome == 'success'
         env:
           ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
         run: |
           if [ ! -s /tmp/diff.txt ]; then
             echo "Empty diff, skipping review."
-            echo "review=No changes to review." >> "$GITEA_OUTPUT"
             exit 0
           fi
 
           node .gitea/workflows/review.js
 
-          if [ ! -f /tmp/review.md ]; then
-            echo "review=Review generation failed." >> "$GITEA_OUTPUT"
-            exit 1
-          fi
-
-          echo "review<<EOF_MARKER" >> "$GITEA_OUTPUT"
-          cat /tmp/review.md >> "$GITEA_OUTPUT"
-          echo "EOF_MARKER" >> "$GITEA_OUTPUT"
-
       - name: Post review comment
-        if: steps.review.outputs.review != ''
+        if: always() && steps.review.outcome == 'success'
         env:
           REPO_TOKEN: ${{ secrets.CL_REPO_TOKEN }}
         run: |
