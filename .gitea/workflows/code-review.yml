@@ -19,7 +19,7 @@ jobs:
       - name: Generate diff
         run: |
           git fetch origin main
-          git diff origin/main...HEAD -- ':!*.lock' ':!package-lock.json' ':!yarn.lock' ':!pnpm-lock.yaml' ':!*.min.js' ':!*.min.css' ':!*.map' > /tmp/diff.txt || true
+          git diff origin/main...HEAD -- ':!*.lock' ':!package-lock.json' ':!yarn.lock' ':!pnpm-lock.yaml' ':!*.min.js' ':!*.min.css' ':!*.map' ':!frontend/src/api/generated/' > /tmp/diff.txt || true
           head -c 80000 /tmp/diff.txt > /tmp/diff-truncated.txt
           mv /tmp/diff-truncated.txt /tmp/diff.txt
           echo "Diff size: $(wc -c < /tmp/diff.txt) bytes"
@@ -34,7 +34,7 @@ jobs:
             exit 0
           fi
 
-          node .gitea/workflows/review.js
+          node scripts/ci/review.js
 
       - name: Post review comment
         if: always() && steps.review.outcome == 'success'
