@@ -9,7 +9,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import {VitePWA} from 'vite-plugin-pwa'
 
 export default defineConfig(({ command }) => {
-  const isDev = command === 'serve'
+  const isDev = command === 'serve' && !process.env.VITEST
 
   const certsDir = path.resolve(__dirname, '../developer-local-settings/config/certs')
   // Hostname Vite serves under. Override via VITE_DEV_HOST (e.g. CI uses
