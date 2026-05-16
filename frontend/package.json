@@ -55,6 +55,7 @@
     "eslint-plugin-oxlint": "~1.51.0",
     "eslint-plugin-vue": "~10.8.0",
     "fake-indexeddb": "^6.2.5",
+    "happy-dom": "^20.9.0",
     "jiti": "^2.6.1",
     "npm-run-all2": "^8.0.4",
     "oxlint": "~1.51.0",
