@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import AutoTagRulesDialog from '@/components/autotagrule/AutoTagRulesDialog.vue'
-import { ButtonCl, DialogCl, DialogFooterCl, FolderSelectCl, FormFieldCl, InputCl } from '@/components/ui'
+import {
+  ButtonCl,
+  DialogCl,
+  DialogFooterCl,
+  FolderSelectCl,
+  FormFieldCl,
+  InputCl,
+  TextareaCl,
+} from '@/components/ui'
 import { useDuplicateCheck } from '@/composables/useDuplicateCheck'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { useTagSuggestions } from '@/composables/useTagSuggestions'
@@ -138,7 +146,7 @@ const onSubmit = handleSubmit(async (values) => {
   <DialogCl :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('bookmark.createTitle') }}</template>
 
-    <form @submit.prevent="onSubmit" class="space-y-4">
+    <form id="create-bookmark-form" @submit.prevent="onSubmit" class="space-y-4">
       <!--      title-->
       <FormFieldCl
         :label="t('bookmark.title')"
@@ -197,13 +205,12 @@ const onSubmit = handleSubmit(async (values) => {
         for-id="create-bookmark-description"
         :error="errors.description"
       >
-        <textarea
+        <TextareaCl
           id="create-bookmark-description"
           v-model="description"
           v-bind="descriptionAttrs"
           rows="3"
           :placeholder="t('bookmark.descriptionPlaceholder')"
-          class="flex w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
         />
       </FormFieldCl>
       <!--folder -->
@@ -243,7 +250,9 @@ const onSubmit = handleSubmit(async (values) => {
       <!--Tag autosuggestions -->
       <div data-testid="suggested-tags-section" class="space-y-2 min-h-[5.5rem]">
         <div class="flex items-center justify-between">
-          <label class="block text-sm font-medium leading-none">{{ t('bookmark.suggestedTags') }}</label>
+          <label class="block text-sm font-medium leading-none">{{
+            t('bookmark.suggestedTags')
+          }}</label>
           <!--          manage rules, prevent default to prevent validation -->
           <button
             type="button"
@@ -286,13 +295,16 @@ const onSubmit = handleSubmit(async (values) => {
           </div>
         </template>
       </div>
+    </form>
 
+    <template #footer>
       <DialogFooterCl
+        submit-form="create-bookmark-form"
         :submit-label="t('common.create')"
         :submitting="isSubmitting"
         @cancel="emit('update:open', false)"
       />
-    </form>
+    </template>
   </DialogCl>
 
   <AutoTagRulesDialog v-model:open="rulesManagerOpen" :collection-id="collectionId" />

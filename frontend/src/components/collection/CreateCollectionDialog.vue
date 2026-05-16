@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { toTypedSchema } from '@vee-validate/zod'
-import { useForm } from 'vee-validate'
 import { DialogCl, DialogFooterCl, FormFieldCl, InputCl } from '@/components/ui'
+import { useFormDialog } from '@/composables/useFormDialog'
+import { collectionCreateSchema } from '@/schemas/collection'
 import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
-import { collectionCreateSchema } from '@/schemas/collection'
-import { useFormDialog } from '@/composables/useFormDialog'
+import { toTypedSchema } from '@vee-validate/zod'
+import { useForm } from 'vee-validate'
 import { toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -43,8 +43,13 @@ const onSubmit = handleSubmit(async (values) => {
 <template>
   <DialogCl :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('collectionManage.createTitle') }}</template>
-    <form @submit.prevent="onSubmit" class="space-y-4">
-      <FormFieldCl :label="t('collectionManage.name')" for-id="create-collection-name" :error="errors.name" required>
+    <form id="create-collection-form" @submit.prevent="onSubmit" class="space-y-4">
+      <FormFieldCl
+        :label="t('collectionManage.name')"
+        for-id="create-collection-name"
+        :error="errors.name"
+        required
+      >
         <InputCl
           id="create-collection-name"
           v-model="name"
@@ -55,12 +60,16 @@ const onSubmit = handleSubmit(async (values) => {
           :placeholder="t('collectionManage.namePlaceholder')"
         />
       </FormFieldCl>
+    </form>
+
+    <template #footer>
       <DialogFooterCl
+        submit-form="create-collection-form"
         :submit-label="t('common.create')"
         :submitting="isSubmitting"
         submit-testid="collection-create-submit-btn"
         @cancel="emit('update:open', false)"
       />
-    </form>
+    </template>
   </DialogCl>
 </template>

@@ -1,25 +1,32 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import { BookmarkResourceApi } from '@/api/generated'
 import { config } from '@/api'
-import type { BookmarkJson, BookmarkSaveJson, BookmarkMoveJson } from '@/api/generated'
-import { useCollectionStore } from '@/stores/collection'
-import { useFolderStore } from '@/stores/folder'
-import { useTagStore } from '@/stores/tag'
-import { sortBookmarks } from '@/utils/bookmarkSort'
+import type {
+  BookmarkJson,
+  BookmarkMoveJson,
+  BookmarkPropertyValueJson,
+  BookmarkSaveJson,
+} from '@/api/generated'
+import { BookmarkPropertyValueResourceApi, BookmarkResourceApi } from '@/api/generated'
 import {
-  tokenize,
-  stringifyTokens,
-  toggleToken,
-  matchesTokens,
+  type AncestorSets,
   buildAncestorSets,
   EMPTY_ANCESTORS,
-  type AncestorSets,
-  type QueryToken,
   type MatchContext,
+  matchesTokens,
+  type QueryToken,
+  stringifyTokens,
+  toggleToken,
+  tokenize,
 } from '@/lib/searchQuery'
+import { useCollectionStore } from '@/stores/collection'
+import { useFolderStore } from '@/stores/folder'
+import { usePropertyStore } from '@/stores/property'
+import { useTagStore } from '@/stores/tag'
+import { sortBookmarks } from '@/utils/bookmarkSort'
+import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
 
 const bookmarkApi = new BookmarkResourceApi(config)
+const bookmarkPropertyValueApi = new BookmarkPropertyValueResourceApi(config)
 
 export const useBookmarkStore = defineStore('bookmark', () => {
   const collectionStore = useCollectionStore()
@@ -28,9 +35,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
   // State + base getters
   // ---------------------------------------------------------------------------
 
-  const bookmarks = computed<BookmarkJson[]>(() =>
-    collectionStore.collectionInfo?.bookmarks ?? []
-  )
+  const bookmarks = computed<BookmarkJson[]>(() => collectionStore.collectionInfo?.bookmarks ?? [])
 
   const loading = computed(() => collectionStore.loading)
 
@@ -61,18 +66,22 @@ export const useBookmarkStore = defineStore('bookmark', () => {
   }
 
   function removeTokensWhere(predicate: (t: QueryToken) => boolean) {
-    const remaining = queryTokens.value.filter(t => !predicate(t))
+    const remaining = queryTokens.value.filter((t) => !predicate(t))
     searchQuery.value = stringifyTokens(remaining)
   }
 
   function isTagActive(name: string): boolean {
     const lower = name.toLowerCase()
-    return queryTokens.value.some(t => t.kind === 'tag' && !t.neg && t.value.toLowerCase() === lower)
+    return queryTokens.value.some(
+      (t) => t.kind === 'tag' && !t.neg && t.value.toLowerCase() === lower,
+    )
   }
 
   function isTagExcluded(name: string): boolean {
     const lower = name.toLowerCase()
-    return queryTokens.value.some(t => t.kind === 'tag' && t.neg && t.value.toLowerCase() === lower)
+    return queryTokens.value.some(
+      (t) => t.kind === 'tag' && t.neg && t.value.toLowerCase() === lower,
+    )
   }
 
   // ---------------------------------------------------------------------------
@@ -86,6 +95,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
   const sortedAndFiltered = computed(() => {
     const folderStore = useFolderStore()
     const tagStore = useTagStore()
+    const propertyStore = usePropertyStore()
     let result = bookmarks.value
 
     // Sidebar folder + tag selections both flow through query tokens now (see
@@ -93,9 +103,19 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     // below handles them via `under:` and `#tag`.
     const tokens = queryTokens.value
     if (tokens.length > 0) {
-      const tagNamesById = new Map(tagStore.tags.map(t => [t.id, t.data.name.toLowerCase()]))
-      const folderNamesById = new Map(folderStore.folders.map(f => [f.id, f.data.name.toLowerCase()]))
-      const folderParentById = new Map(folderStore.folders.map(f => [f.id, f.data.parentId ?? null]))
+      const tagNamesById = new Map(tagStore.tags.map((t) => [t.id, t.data.name.toLowerCase()]))
+      const folderNamesById = new Map(
+        folderStore.folders.map((f) => [f.id, f.data.name.toLowerCase()]),
+      )
+      const folderParentById = new Map(
+        folderStore.folders.map((f) => [f.id, f.data.parentId ?? null]),
+      )
+      const propertyDefsByName = new Map(
+        propertyStore.definitions.map((d) => [
+          d.data.name.toLowerCase(),
+          { id: d.id, type: d.data.type },
+        ]),
+      )
 
       // Memoize ancestor walks per filter pass so bookmarks sharing a folderId
       // don't re-walk the tree. The cache lives inside this computed, so it is
@@ -110,13 +130,14 @@ export const useBookmarkStore = defineStore('bookmark', () => {
         return cached
       }
 
-      result = result.filter(b => {
+      result = result.filter((b) => {
         const anc = b.data.folderId ? getAncestors(b.data.folderId) : EMPTY_ANCESTORS
         const ctx: MatchContext = {
           tagNamesById,
-          folderName: b.data.folderId ? folderNamesById.get(b.data.folderId) ?? null : null,
+          folderName: b.data.folderId ? (folderNamesById.get(b.data.folderId) ?? null) : null,
           ancestorFolderNames: anc.names,
           ancestorFolderIds: anc.ids,
+          propertyDefsByName,
         }
         return matchesTokens(b, tokens, ctx)
       })
@@ -144,7 +165,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 
   async function createBookmark(data: BookmarkSaveJson): Promise<BookmarkJson> {
     const bookmark = await bookmarkApi.apiBookmarksPost({ bookmarkSaveJson: data })
-    patchBookmarks(list => [bookmark, ...list])
+    patchBookmarks((list) => [bookmark, ...list])
     return bookmark
   }
 
@@ -153,8 +174,8 @@ export const useBookmarkStore = defineStore('bookmark', () => {
       bookmarkId,
       bookmarkSaveJson: data,
     })
-    patchBookmarks(list => {
-      const idx = list.findIndex(b => b.id === bookmarkId)
+    patchBookmarks((list) => {
+      const idx = list.findIndex((b) => b.id === bookmarkId)
       if (idx !== -1) list[idx] = updated
       return list
     })
@@ -163,18 +184,44 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 
   async function deleteBookmark(bookmarkId: string): Promise<void> {
     await bookmarkApi.apiBookmarksBookmarkIdDelete({ bookmarkId })
-    patchBookmarks(list => list.filter(b => b.id !== bookmarkId))
+    patchBookmarks((list) => list.filter((b) => b.id !== bookmarkId))
     const { useTrashbinStore } = await import('@/stores/trashbin')
-    useTrashbinStore().refreshCount().catch(() => {})
+    useTrashbinStore()
+      .refreshCount()
+      .catch(() => {})
   }
 
-  async function moveBookmarkToFolder(bookmarkId: string, data: BookmarkMoveJson): Promise<BookmarkJson> {
+  async function moveBookmarkToFolder(
+    bookmarkId: string,
+    data: BookmarkMoveJson,
+  ): Promise<BookmarkJson> {
     const updated = await bookmarkApi.apiBookmarksBookmarkIdMovePatch({
       bookmarkId,
       bookmarkMoveJson: data,
     })
-    patchBookmarks(list => {
-      const idx = list.findIndex(b => b.id === bookmarkId)
+    patchBookmarks((list) => {
+      const idx = list.findIndex((b) => b.id === bookmarkId)
+      if (idx !== -1) list[idx] = updated
+      return list
+    })
+    return updated
+  }
+
+  /**
+   * Replace all property values on a bookmark. The endpoint is treated as a
+   * full replace — pass exactly the values you want persisted; anything not
+   * in the list is cleared.
+   */
+  async function updateProperties(
+    bookmarkId: string,
+    propertyValues: BookmarkPropertyValueJson[],
+  ): Promise<BookmarkJson> {
+    const updated = await bookmarkPropertyValueApi.apiBookmarksBookmarkIdPropertiesPut({
+      bookmarkId,
+      bookmarkPropertyValueListJson: { propertyValues },
+    })
+    patchBookmarks((list) => {
+      const idx = list.findIndex((b) => b.id === bookmarkId)
       if (idx !== -1) list[idx] = updated
       return list
     })
@@ -215,6 +262,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     updateBookmark,
     deleteBookmark,
     moveBookmarkToFolder,
+    updateProperties,
     // telemetry
     trackClick,
   }

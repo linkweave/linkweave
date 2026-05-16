@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { computed, ref, toRef, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { toTypedSchema } from '@vee-validate/zod'
-import { useForm } from 'vee-validate'
+import type { AutoTagRuleJson } from '@/api/generated'
 import { DialogCl, DialogFooterCl, FormFieldCl, HelpPopoverCl, InputCl } from '@/components/ui'
-import { useAutoTagRuleStore } from '@/stores/autoTagRule'
-import { useNotificationStore } from '@/stores/notification'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { autoTagRuleSaveSchema } from '@/schemas/autoTagRule'
-import type { AutoTagRuleJson } from '@/api/generated'
+import { useAutoTagRuleStore } from '@/stores/autoTagRule'
+import { useNotificationStore } from '@/stores/notification'
+import { toTypedSchema } from '@vee-validate/zod'
 import { Copy } from 'lucide-vue-next'
+import { useForm } from 'vee-validate'
+import { computed, ref, toRef, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const ruleStore = useAutoTagRuleStore()
@@ -98,11 +98,27 @@ const tagPreview = computed(() =>
 )
 
 const examples = [
-  { label: 'GitHub PRs', pattern: String.raw`^https://github\.com/.+/pull/\d+`, tags: 'pr, github' },
-  { label: 'Confluence wiki', pattern: String.raw`^https://[^/]+\.atlassian\.net/wiki/`, tags: 'wiki' },
+  {
+    label: 'GitHub PRs',
+    pattern: String.raw`^https://github\.com/.+/pull/\d+`,
+    tags: 'pr, github',
+  },
+  {
+    label: 'Confluence wiki',
+    pattern: String.raw`^https://[^/]+\.atlassian\.net/wiki/`,
+    tags: 'wiki',
+  },
   { label: 'k8s subdomains', pattern: String.raw`^https://[^/]+\.k8s\.acme\.io/`, tags: 'k8s' },
-  { label: 'localhost custom port', pattern: String.raw`^https?://localhost:(?!80|443)\d+`, tags: 'local, port' },
-  { label: 'YouTube watch', pattern: String.raw`^https://(www\.)?youtube\.com/watch\?`, tags: 'video, youtube' },
+  {
+    label: 'localhost custom port',
+    pattern: String.raw`^https?://localhost:(?!80|443)\d+`,
+    tags: 'local, port',
+  },
+  {
+    label: 'YouTube watch',
+    pattern: String.raw`^https://(www\.)?youtube\.com/watch\?`,
+    tags: 'video, youtube',
+  },
 ]
 
 function copyExample(p: string) {
@@ -145,7 +161,9 @@ watch(testUrl, () => {})
             <div v-for="ex in examples" :key="ex.label" class="border-t border-border pt-1.5">
               <p class="font-medium mb-0.5">{{ ex.label }}</p>
               <div class="flex items-start gap-1">
-                <code class="font-mono bg-muted px-1 rounded text-[11px] break-all flex-1">{{ ex.pattern }}</code>
+                <code class="font-mono bg-muted px-1 rounded text-[11px] break-all flex-1">{{
+                  ex.pattern
+                }}</code>
                 <button
                   type="button"
                   class="shrink-0 text-primary hover:underline"
@@ -168,8 +186,8 @@ watch(testUrl, () => {})
       </span>
     </template>
 
-    <form class="space-y-4" @submit.prevent="onSubmit">
-<!--      Regex pattern-->
+    <form id="auto-tag-rule-form" class="space-y-4" @submit.prevent="onSubmit">
+      <!--      Regex pattern-->
       <FormFieldCl
         :label="t('autoTagRule.pattern')"
         for-id="auto-tag-rule-pattern"
@@ -188,7 +206,7 @@ watch(testUrl, () => {})
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 font-mono text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </FormFieldCl>
-<!--Regex tester-->
+      <!--Regex tester-->
       <div class="space-y-1">
         <label class="text-xs font-medium text-muted-foreground" for="auto-tag-rule-test">
           {{ t('autoTagRule.testUrl') }}
@@ -209,13 +227,19 @@ watch(testUrl, () => {})
           :class="matchInfo.matched ? 'text-emerald-600' : 'text-destructive'"
         >
           <template v-if="matchInfo.matched">
-            ✓ {{ t('autoTagRule.testMatched') }}: <code class="font-mono">{{ matchInfo.segment }}</code>
+            ✓ {{ t('autoTagRule.testMatched') }}:
+            <code class="font-mono">{{ matchInfo.segment }}</code>
           </template>
           <template v-else>✗ {{ t('autoTagRule.testNotMatched') }}</template>
         </p>
       </div>
-<!-- Tag names-->
-      <FormFieldCl :label="t('autoTagRule.tagNames')" for-id="auto-tag-rule-tags" :error="errors.tagNames" required>
+      <!-- Tag names-->
+      <FormFieldCl
+        :label="t('autoTagRule.tagNames')"
+        for-id="auto-tag-rule-tags"
+        :error="errors.tagNames"
+        required
+      >
         <InputCl
           id="auto-tag-rule-tags"
           v-model="tagNames"
@@ -235,8 +259,12 @@ watch(testUrl, () => {})
         </div>
         <p class="text-[11px] text-muted-foreground mt-1">{{ t('autoTagRule.tagNamesHelp') }}</p>
       </FormFieldCl>
-<!--Description-->
-      <FormFieldCl :label="t('autoTagRule.description')" for-id="auto-tag-rule-desc" :error="errors.description">
+      <!--Description-->
+      <FormFieldCl
+        :label="t('autoTagRule.description')"
+        for-id="auto-tag-rule-desc"
+        :error="errors.description"
+      >
         <input
           id="auto-tag-rule-desc"
           v-model="description"
@@ -250,13 +278,16 @@ watch(testUrl, () => {})
         <input v-model="enabled" type="checkbox" class="h-4 w-4" />
         {{ t('autoTagRule.enabled') }}
       </label>
+    </form>
 
+    <template #footer>
       <DialogFooterCl
+        submit-form="auto-tag-rule-form"
         :submit-label="isEditing ? t('common.save') : t('common.create')"
         :submitting="isSubmitting"
         submit-testid="auto-tag-rule-submit"
         @cancel="emit('update:open', false)"
       />
-    </form>
+    </template>
   </DialogCl>
 </template>
