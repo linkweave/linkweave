@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, type Component } from 'vue'
-import { Hash, Folder, FolderTree, X, Minus } from 'lucide-vue-next'
-import { useTagStore } from '@/stores/tag'
-import { useFolderStore } from '@/stores/folder'
 import type { QueryToken } from '@/lib/searchQuery'
+import { useFolderStore } from '@/stores/folder'
+import { useTagStore } from '@/stores/tag'
+import { Calendar, Folder, FolderTree, Hash, Minus, X } from 'lucide-vue-next'
+import { type Component, computed } from 'vue'
 
 const props = defineProps<{
   token: QueryToken
@@ -25,6 +25,7 @@ interface PillVariant {
 const OPERATOR_VARIANTS: Record<string, { icon: Component; label: string }> = {
   folder: { icon: Folder, label: 'folder:' },
   under: { icon: FolderTree, label: 'under:' },
+  created: { icon: Calendar, label: 'created:' },
 }
 
 // `under:` tokens carry a folder id (from click paths) or a name (from typed

@@ -2,6 +2,7 @@ package org.chainlink.api.bookmark.importbookmarks;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,7 +60,8 @@ public class NetscapeBookmarkParser {
                 String href = firstChild.attr("href");
                 String title = firstChild.text();
                 String description = extractDescription(dt);
-                bookmarks.add(new ParsedBookmark(title, href, description));
+                Instant addedAt = parseAddDate(firstChild.attr("add_date"));
+                bookmarks.add(new ParsedBookmark(title, href, description, addedAt));
             }
         }
     }
@@ -72,5 +74,23 @@ public class NetscapeBookmarkParser {
             return text.isBlank() ? null : text;
         }
         return null;
+    }
+
+    /**
+     * Netscape format stores `ADD_DATE` as seconds since Unix epoch on the
+     * `<A>` element. Browsers (Firefox/Chrome/Safari) emit it consistently.
+     * Returns null for missing, empty, or unparseable values — the caller
+     * then falls back to import time.
+     */
+    @Nullable
+    private Instant parseAddDate(@Nullable String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        try {
+            long seconds = Long.parseLong(raw.trim());
+            if (seconds <= 0) return null;
+            return Instant.ofEpochSecond(seconds);
+        } catch (NumberFormatException _) {
+            return null;
+        }
     }
 }

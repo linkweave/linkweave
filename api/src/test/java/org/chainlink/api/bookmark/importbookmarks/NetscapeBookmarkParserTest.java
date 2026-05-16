@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 
 import org.assertj.core.api.Assertions;
 import org.chainlink.infrastructure.errorhandling.AppValidationException;
@@ -33,6 +34,8 @@ class NetscapeBookmarkParserTest {
             Assertions.assertThat(bookmarksBar.getBookmarks().get(0).getTitle()).isEqualTo("Example Title");
             Assertions.assertThat(bookmarksBar.getBookmarks().get(0).getUrl()).isEqualTo("https://example.com/");
             Assertions.assertThat(bookmarksBar.getBookmarks().get(0).getDescription()).isEqualTo("A sample description for the example bookmark");
+            // Netscape ADD_DATE is Unix epoch seconds; the fixture uses 1234567890 → 2009-02-13T23:31:30Z.
+            Assertions.assertThat(bookmarksBar.getBookmarks().get(0).getAddedAt()).isEqualTo(Instant.ofEpochSecond(1234567890L));
 
             Assertions.assertThat(bookmarksBar.getFolders()).hasSize(1);
             ParsedFolder subfolder = bookmarksBar.getFolders().get(0);
@@ -78,6 +81,23 @@ class NetscapeBookmarkParserTest {
 
         Assertions.assertThatThrownBy(() -> parser.parse(is))
             .isInstanceOf(AppValidationException.class);
+    }
+
+    @Test
+    void shouldReturnNullAddedAt_whenAddDateMissingOrInvalid() throws Exception {
+        String html = """
+            <!DOCTYPE NETSCAPE-Bookmark-file-1>
+            <DL><p>
+                <DT><A HREF="https://no-date.example.com">No date here</A>
+                <DT><A HREF="https://blank.example.com" ADD_DATE="">Blank date</A>
+                <DT><A HREF="https://garbage.example.com" ADD_DATE="not-a-number">Garbage date</A>
+                <DT><A HREF="https://zero.example.com" ADD_DATE="0">Zero date</A>
+            </DL>
+            """;
+        ParsedImportResult result = parser.parse(new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8)));
+        Assertions.assertThat(result.rootBookmarks())
+            .extracting(ParsedBookmark::getAddedAt)
+            .containsExactly(null, null, null, null);
     }
 
     @Test

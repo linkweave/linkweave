@@ -1,6 +1,13 @@
-// UC-070 search-query tokenizer + matcher (lite subset).
-// Implements: #tag, folder:value, note:value, free text, and negation (-).
-// Out of scope (parsed but no-op match-all): property:, created:, match:OR.
+// UC-070 search-query tokenizer + matcher.
+// Implements: #tag, folder:value, under:value, note:value, created:value,
+// free text, and negation (-).
+// Out of scope (parsed but no-op match-all): property:, match:OR.
+
+import { matchesCreated, parseCreatedValue } from './searchQueryCreated'
+// Re-export so existing callers (`@/lib/searchQuery`) keep working — the date
+// grammar lives in its own file but is conceptually part of the search lib.
+export { parseCreatedValue, matchesCreated } from './searchQueryCreated'
+export type { DateOp, ParsedCreated } from './searchQueryCreated'
 
 /**
  * The discriminant of a `QueryToken`. Named centrally so future kinds (groups
@@ -36,6 +43,9 @@ export interface MatchableBookmark {
     description?: string | null
     tagIds?: Set<string> | null
   }
+  // Created-at timestamp, used by the `created:` operator (UC-070 BR-084/085).
+  // Optional so callers that don't enable date matching can skip wiring it.
+  entityInfo?: { timestampErstellt?: Date | null } | null
 }
 
 export interface AncestorSets {
@@ -200,7 +210,14 @@ function bookmarkMatchesToken(b: MatchableBookmark, t: QueryToken, ctx: MatchCon
     if (t.key === 'note') {
       return (b.data.description ?? '').toLowerCase().includes(v)
     }
-    // TODO UC-070: property:, created:, created:>, created:< — parse but match-all for now.
+    if (t.key === 'created') {
+      const parsed = parseCreatedValue(t.value)
+      if (!parsed) return true // unparseable → no-op match-all
+      const createdAt = b.entityInfo?.timestampErstellt
+      if (!createdAt) return false // bookmark with no timestamp can't satisfy a date filter
+      return matchesCreated(createdAt instanceof Date ? createdAt : new Date(createdAt), parsed)
+    }
+    // TODO UC-070: property: — parse but match-all for now.
     return true
   }
   // Free text: match against title + url + description + tag names

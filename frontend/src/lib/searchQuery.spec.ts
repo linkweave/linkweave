@@ -1,13 +1,13 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
-  tokenize,
+  buildAncestorSets,
+  type MatchableBookmark,
+  type MatchContext,
+  matchesTokens,
+  type QueryToken,
   stringifyTokens,
   toggleToken,
-  matchesTokens,
-  buildAncestorSets,
-  type QueryToken,
-  type MatchContext,
-  type MatchableBookmark,
+  tokenize,
 } from './searchQuery'
 
 describe('tokenize', () => {
@@ -98,18 +98,20 @@ describe('toggleToken', () => {
   })
 
   it('removes an active token on plain toggle', () => {
-    const result = toggleToken(
-      [{ kind: 'tag', value: 'a', neg: false }],
-      { kind: 'tag', value: 'a', neg: false },
-    )
+    const result = toggleToken([{ kind: 'tag', value: 'a', neg: false }], {
+      kind: 'tag',
+      value: 'a',
+      neg: false,
+    })
     expect(result).toEqual([])
   })
 
   it('removes an excluded token on plain toggle (same value, ignoring neg)', () => {
-    const result = toggleToken(
-      [{ kind: 'tag', value: 'a', neg: true }],
-      { kind: 'tag', value: 'a', neg: false },
-    )
+    const result = toggleToken([{ kind: 'tag', value: 'a', neg: true }], {
+      kind: 'tag',
+      value: 'a',
+      neg: false,
+    })
     expect(result).toEqual([])
   })
 
@@ -125,7 +127,10 @@ describe('toggleToken', () => {
 
 describe('matchesTokens', () => {
   const ctx: MatchContext = {
-    tagNamesById: new Map([['t1', 'quarkus'], ['t2', 'vue']]),
+    tagNamesById: new Map([
+      ['t1', 'quarkus'],
+      ['t2', 'vue'],
+    ]),
     folderName: 'work',
     ancestorFolderNames: new Set(['work', 'projects', 'home']),
     ancestorFolderIds: new Set(['f-work', 'f-projects', 'f-home']),
@@ -154,16 +159,44 @@ describe('matchesTokens', () => {
   })
 
   it('matches folder operator (flat substring on direct folder name)', () => {
-    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'folder', value: 'work', neg: false }], ctx)).toBe(true)
-    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'folder', value: 'home', neg: false }], ctx)).toBe(false)
+    expect(
+      matchesTokens(
+        bookmark,
+        [{ kind: 'operator', key: 'folder', value: 'work', neg: false }],
+        ctx,
+      ),
+    ).toBe(true)
+    expect(
+      matchesTokens(
+        bookmark,
+        [{ kind: 'operator', key: 'folder', value: 'home', neg: false }],
+        ctx,
+      ),
+    ).toBe(false)
   })
 
   it('matches under operator on any ancestor folder name', () => {
     // The bookmark sits in folder `work`, whose chain is work → projects → home.
-    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'under', value: 'work', neg: false }], ctx)).toBe(true)
-    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'under', value: 'projects', neg: false }], ctx)).toBe(true)
-    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'under', value: 'home', neg: false }], ctx)).toBe(true)
-    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'under', value: 'archive', neg: false }], ctx)).toBe(false)
+    expect(
+      matchesTokens(bookmark, [{ kind: 'operator', key: 'under', value: 'work', neg: false }], ctx),
+    ).toBe(true)
+    expect(
+      matchesTokens(
+        bookmark,
+        [{ kind: 'operator', key: 'under', value: 'projects', neg: false }],
+        ctx,
+      ),
+    ).toBe(true)
+    expect(
+      matchesTokens(bookmark, [{ kind: 'operator', key: 'under', value: 'home', neg: false }], ctx),
+    ).toBe(true)
+    expect(
+      matchesTokens(
+        bookmark,
+        [{ kind: 'operator', key: 'under', value: 'archive', neg: false }],
+        ctx,
+      ),
+    ).toBe(false)
   })
 
   it('under operator does not match an unfiled bookmark', () => {
@@ -173,25 +206,57 @@ describe('matchesTokens', () => {
       ancestorFolderNames: new Set(),
       ancestorFolderIds: new Set(),
     }
-    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'under', value: 'work', neg: false }], unfiledCtx)).toBe(false)
+    expect(
+      matchesTokens(
+        bookmark,
+        [{ kind: 'operator', key: 'under', value: 'work', neg: false }],
+        unfiledCtx,
+      ),
+    ).toBe(false)
   })
 
   it('under operator matches an ancestor by folder id (click-path encoding)', () => {
-    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'under', value: 'f-projects', neg: false }], ctx)).toBe(true)
-    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'under', value: 'f-archive', neg: false }], ctx)).toBe(false)
+    expect(
+      matchesTokens(
+        bookmark,
+        [{ kind: 'operator', key: 'under', value: 'f-projects', neg: false }],
+        ctx,
+      ),
+    ).toBe(true)
+    expect(
+      matchesTokens(
+        bookmark,
+        [{ kind: 'operator', key: 'under', value: 'f-archive', neg: false }],
+        ctx,
+      ),
+    ).toBe(false)
   })
 
   it('matches note operator on description', () => {
-    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'note', value: 'reactive', neg: false }], ctx)).toBe(true)
+    expect(
+      matchesTokens(
+        bookmark,
+        [{ kind: 'operator', key: 'note', value: 'reactive', neg: false }],
+        ctx,
+      ),
+    ).toBe(true)
   })
 
   it('treats unknown operators as no-op match-all', () => {
-    expect(matchesTokens(bookmark, [{ kind: 'operator', key: 'property', value: 'foo', neg: false }], ctx)).toBe(true)
+    expect(
+      matchesTokens(
+        bookmark,
+        [{ kind: 'operator', key: 'property', value: 'foo', neg: false }],
+        ctx,
+      ),
+    ).toBe(true)
   })
 
   it('matches free text against title / url / description', () => {
     expect(matchesTokens(bookmark, [{ kind: 'text', value: 'guide', neg: false }], ctx)).toBe(true)
-    expect(matchesTokens(bookmark, [{ kind: 'text', value: 'absent', neg: false }], ctx)).toBe(false)
+    expect(matchesTokens(bookmark, [{ kind: 'text', value: 'absent', neg: false }], ctx)).toBe(
+      false,
+    )
   })
 })
 
@@ -237,5 +302,103 @@ describe('buildAncestorSets', () => {
     const result = buildAncestorSets('f3', new Map(), parentById)
     expect(result.ids).toEqual(new Set(['f3', 'f2', 'f1']))
     expect(result.names).toEqual(new Set())
+  })
+})
+
+// parseCreatedValue unit-level tests live in searchQueryCreated.spec.ts.
+// The cases below exercise the integrated matcher (token → bookmark filter).
+
+describe('matchesTokens with created:', () => {
+  const ctx: MatchContext = {
+    tagNamesById: new Map(),
+    folderName: null,
+    ancestorFolderNames: new Set(),
+    ancestorFolderIds: new Set(),
+  }
+  function bm(d: Date): MatchableBookmark {
+    return {
+      data: { title: 't', url: 'u', description: 'd' },
+      entityInfo: { timestampErstellt: d },
+    }
+  }
+
+  it('eq: matches the same day, rejects neighboring days', () => {
+    const b = bm(new Date(2026, 4, 16, 14, 0)) // 2026-05-16 14:00
+    expect(
+      matchesTokens(
+        b,
+        [{ kind: 'operator', key: 'created', value: '2026-05-16', neg: false }],
+        ctx,
+      ),
+    ).toBe(true)
+    expect(
+      matchesTokens(
+        b,
+        [{ kind: 'operator', key: 'created', value: '2026-05-15', neg: false }],
+        ctx,
+      ),
+    ).toBe(false)
+    expect(
+      matchesTokens(
+        b,
+        [{ kind: 'operator', key: 'created', value: '2026-05-17', neg: false }],
+        ctx,
+      ),
+    ).toBe(false)
+  })
+
+  it('gt: strictly after the day (the day itself is excluded)', () => {
+    const b = bm(new Date(2026, 4, 16, 14, 0))
+    expect(
+      matchesTokens(
+        b,
+        [{ kind: 'operator', key: 'created', value: '>2026-05-15', neg: false }],
+        ctx,
+      ),
+    ).toBe(true)
+    expect(
+      matchesTokens(
+        b,
+        [{ kind: 'operator', key: 'created', value: '>2026-05-16', neg: false }],
+        ctx,
+      ),
+    ).toBe(false)
+  })
+
+  it('lt: strictly before the day', () => {
+    const b = bm(new Date(2026, 4, 15, 23, 59))
+    expect(
+      matchesTokens(
+        b,
+        [{ kind: 'operator', key: 'created', value: '<2026-05-16', neg: false }],
+        ctx,
+      ),
+    ).toBe(true)
+    const b2 = bm(new Date(2026, 4, 16, 0, 0))
+    expect(
+      matchesTokens(
+        b2,
+        [{ kind: 'operator', key: 'created', value: '<2026-05-16', neg: false }],
+        ctx,
+      ),
+    ).toBe(false)
+  })
+
+  it('unparseable date → no-op match-all (avoid silently hiding everything)', () => {
+    const b = bm(new Date(2026, 4, 16))
+    expect(
+      matchesTokens(b, [{ kind: 'operator', key: 'created', value: 'garbage', neg: false }], ctx),
+    ).toBe(true)
+  })
+
+  it('bookmark without entityInfo timestamp never matches a created: filter', () => {
+    const b: MatchableBookmark = { data: { title: 't', url: 'u' } }
+    expect(
+      matchesTokens(
+        b,
+        [{ kind: 'operator', key: 'created', value: '2026-05-16', neg: false }],
+        ctx,
+      ),
+    ).toBe(false)
   })
 })

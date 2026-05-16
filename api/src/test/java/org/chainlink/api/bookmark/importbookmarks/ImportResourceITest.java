@@ -2,19 +2,23 @@ package org.chainlink.api.bookmark.importbookmarks;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.Assertions;
+import org.chainlink.api.bookmark.BookmarkRepo;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.testutil.fixture.FixtureService;
 import org.chainlink.infrastructure.db.DatabaseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import org.assertj.core.api.Assertions;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
@@ -29,9 +33,33 @@ class ImportResourceITest {
     @Inject
     DatabaseService databaseService;
 
+    @Inject
+    BookmarkRepo bookmarkRepo;
+
     @BeforeEach
     void resetDatabase() {
         databaseService.resetDatabase();
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    @Transactional
+    void shouldPreserveAddDateFromImportedFile() {
+        Collection collection = fixtureService.createTestCollection();
+        String collectionId = collection.getId().getUUID().toString();
+        File file = getResourceFile("bookmarks-sample.html");
+
+        RestAssured.given()
+            .multiPart("file", file, "text/html")
+            .post("/collections/{collectionId}/import", collectionId)
+            .then()
+            .statusCode(200);
+
+        // Sample fixture has ADD_DATE="1234567890" on every <A> → 2009-02-13T23:31:30Z.
+        OffsetDateTime expected = OffsetDateTime.ofInstant(Instant.ofEpochSecond(1234567890L), ZoneOffset.UTC);
+        Assertions.assertThat(bookmarkRepo.findByCollection(collection.getId()))
+            .isNotEmpty()
+            .allSatisfy(b -> Assertions.assertThat(b.getTimestampErstellt()).isEqualTo(expected));
     }
 
     @Test
