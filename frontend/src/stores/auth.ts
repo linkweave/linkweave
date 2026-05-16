@@ -24,7 +24,7 @@ function resetAllStores() {
   collection.collectionsFetched = false
   bookmark.searchQuery = ''
   folder.selectedFolderId = null
-  tag.selectedTagIds = new Set()
+  // tag selection is derived from bookmark.searchQuery — clearing the query above clears it.
 }
 
 export const useAuthStore = defineStore('auth', () => {

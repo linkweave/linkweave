@@ -7,18 +7,33 @@ import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { useTagStore } from '@/stores/tag'
 import { sortBookmarks } from '@/utils/bookmarkSort'
-import { parseSearchQuery, bookmarkMatchesTerms } from '@/utils/search'
+import {
+  tokenize,
+  stringifyTokens,
+  toggleToken,
+  matchesTokens,
+  type QueryToken,
+  type MatchContext,
+} from '@/lib/searchQuery'
 
 const bookmarkApi = new BookmarkResourceApi(config)
 
 export const useBookmarkStore = defineStore('bookmark', () => {
   const collectionStore = useCollectionStore()
 
+  // ---------------------------------------------------------------------------
+  // State + base getters
+  // ---------------------------------------------------------------------------
+
   const bookmarks = computed<BookmarkJson[]>(() =>
     collectionStore.collectionInfo?.bookmarks ?? []
   )
 
   const loading = computed(() => collectionStore.loading)
+
+  // ---------------------------------------------------------------------------
+  // Search query (string + parsed tokens, UC-070 lite)
+  // ---------------------------------------------------------------------------
 
   const searchQuery = ref('')
 
@@ -29,6 +44,39 @@ export const useBookmarkStore = defineStore('bookmark', () => {
   function clearSearchQuery() {
     searchQuery.value = ''
   }
+
+  const queryTokens = computed<QueryToken[]>(() => tokenize(searchQuery.value))
+
+  function toggleQueryToken(token: QueryToken, modifier?: 'exclude') {
+    const next = toggleToken(queryTokens.value, token, modifier)
+    searchQuery.value = stringifyTokens(next)
+  }
+
+  function removeQueryTokenAt(idx: number) {
+    const next = queryTokens.value.filter((_, i) => i !== idx)
+    searchQuery.value = stringifyTokens(next)
+  }
+
+  function isTagActive(name: string): boolean {
+    const lower = name.toLowerCase()
+    return queryTokens.value.some(t => t.kind === 'tag' && !t.neg && t.value.toLowerCase() === lower)
+  }
+
+  function isTagExcluded(name: string): boolean {
+    const lower = name.toLowerCase()
+    return queryTokens.value.some(t => t.kind === 'tag' && t.neg && t.value.toLowerCase() === lower)
+  }
+
+  function isFolderActive(name: string): boolean {
+    const lower = name.toLowerCase()
+    return queryTokens.value.some(
+      t => t.kind === 'op' && t.key === 'folder' && !t.neg && t.value.toLowerCase() === lower,
+    )
+  }
+
+  // ---------------------------------------------------------------------------
+  // Filtered + sorted list
+  // ---------------------------------------------------------------------------
 
   // Combined filter + sort pass. Splitting into separate `filteredBookmarks`
   // and `neverOpenedCount` computeds (each consuming the sort util) would mean
@@ -43,23 +91,19 @@ export const useBookmarkStore = defineStore('bookmark', () => {
       result = result.filter(b => b.data.folderId != null && folderStore.selectedFolderIds.has(b.data.folderId))
     }
 
-    if (tagStore.selectedTagIds.size > 0) {
+    // Sidebar tag selection is now merged into the search query (see tag store's
+    // `selectedTagIds`/`toggleTag`); the token filter below handles it.
+    const tokens = queryTokens.value
+    if (tokens.length > 0) {
+      const tagNamesById = new Map(tagStore.tags.map(t => [t.id, t.data.name.toLowerCase()]))
+      const folderNamesById = new Map(folderStore.folders.map(f => [f.id, f.data.name.toLowerCase()]))
       result = result.filter(b => {
-        const tagIds = b.data.tagIds
-        if (!tagIds) return false
-        for (const selectedId of tagStore.selectedTagIds) {
-          if (tagIds.has(selectedId)) return true
+        const ctx: MatchContext = {
+          tagNamesById,
+          folderName: b.data.folderId ? folderNamesById.get(b.data.folderId) ?? null : null,
         }
-        return false
+        return matchesTokens(b, tokens, ctx)
       })
-    }
-
-    if (searchQuery.value.length >= 2) {
-      const terms = parseSearchQuery(searchQuery.value)
-      if (terms.length > 0) {
-        const tagsById = new Map(tagStore.tags.map(t => [t.id, t.data.name.toLowerCase()]))
-        result = result.filter(b => bookmarkMatchesTerms(b, terms, tagsById))
-      }
     }
 
     return sortBookmarks(result, {
@@ -70,6 +114,10 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 
   const filteredBookmarks = computed(() => sortedAndFiltered.value.items)
   const neverOpenedCount = computed(() => sortedAndFiltered.value.neverOpenedCount)
+
+  // ---------------------------------------------------------------------------
+  // CRUD
+  // ---------------------------------------------------------------------------
 
   function patchBookmarks(updater: (list: BookmarkJson[]) => BookmarkJson[]) {
     const info = collectionStore.collectionInfo
@@ -117,6 +165,10 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     return updated
   }
 
+  // ---------------------------------------------------------------------------
+  // Telemetry
+  // ---------------------------------------------------------------------------
+
   function trackClick(bookmarkId: string): void {
     fetch(`/api/bookmarks/${bookmarkId}/track-click`, {
       method: 'POST',
@@ -126,17 +178,28 @@ export const useBookmarkStore = defineStore('bookmark', () => {
   }
 
   return {
+    // state + base
     bookmarks,
     loading,
+    // search
     searchQuery,
-    filteredBookmarks,
-    neverOpenedCount,
     setSearchQuery,
     clearSearchQuery,
+    queryTokens,
+    toggleQueryToken,
+    removeQueryTokenAt,
+    isTagActive,
+    isTagExcluded,
+    isFolderActive,
+    // filtered list
+    filteredBookmarks,
+    neverOpenedCount,
+    // CRUD
     createBookmark,
     updateBookmark,
     deleteBookmark,
     moveBookmarkToFolder,
+    // telemetry
     trackClick,
   }
 })

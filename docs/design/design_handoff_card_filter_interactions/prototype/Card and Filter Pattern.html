@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Chainlink — Card + Filter pattern</title>
+<style>
+/* === Real theme tokens (with the agreed lifted-popover fix) === */
+.dark{
+  --color-background:#14161a;
+  --color-foreground:#ededed;
+  --color-card:#1e2028;
+  --color-card-foreground:#ededed;
+  --color-primary:#3b82f6;
+  --color-primary-foreground:#ffffff;
+  --color-secondary:#252a32;
+  --color-secondary-foreground:#ededed;
+  --color-muted:#252a32;
+  --color-muted-foreground:#a3a3a3;
+  --color-accent:#252a32;
+  --color-accent-foreground:#ededed;
+  --color-destructive:#dc2626;
+  --color-popover:#2a2e3a;        /* lifted */
+  --color-popover-foreground:#ededed;
+  --color-popover-hover:#363d4b;
+  --color-popover-selected:#3d4554;
+  --color-border:#363d49;
+  --color-input:#252a32;
+  --color-ring:#3b82f6;
+}
+:root{
+  --color-background:#f9fafb;
+  --color-foreground:#111827;
+  --color-card:#ffffff;
+  --color-card-foreground:#111827;
+  --color-primary:#2563eb;
+  --color-primary-foreground:#ffffff;
+  --color-secondary:#f3f4f6;
+  --color-secondary-foreground:#111827;
+  --color-muted:#f3f4f6;
+  --color-muted-foreground:#6b7280;
+  --color-accent:#f3f4f6;
+  --color-accent-foreground:#111827;
+  --color-destructive:#ef4444;
+  --color-popover:#ffffff;
+  --color-popover-foreground:#111827;
+  --color-popover-hover:#f3f4f6;
+  --color-popover-selected:#eef2ff;
+  --color-border:#e5e7eb;
+  --color-input:#e5e7eb;
+  --color-ring:#2563eb;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--color-background);color:var(--color-foreground);font:14px/1.5 ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+.app{display:grid;grid-template-columns:240px 1fr;grid-template-rows:52px 1fr;height:100vh;grid-template-areas:"head head" "side main"}
+
+/* Header (matches the patched py-2 size) */
+.header{grid-area:head;border-bottom:1px solid var(--color-border);background:var(--color-card);display:flex;align-items:center;padding:0 16px;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;width:240px;margin-left:-16px;padding-left:16px}
+.brand-mark{width:24px;height:24px;border-radius:6px;background:var(--color-primary);display:grid;place-items:center;color:#fff;font-weight:700;font-size:11px}
+.coll{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;color:var(--color-foreground);font-weight:600;background:transparent;border:1px solid transparent;font-size:13.5px}
+.coll:hover{background:var(--color-secondary)}
+
+.search-wrap{flex:1;display:flex;justify-content:center;min-width:0}
+.search-shell{position:relative;width:min(560px,100%)}
+.search{display:flex;align-items:center;gap:8px;width:100%;height:32px;padding:0 8px 0 10px;background:var(--color-input);border:1px solid var(--color-border);border-radius:6px;color:var(--color-muted-foreground)}
+.search:focus-within{border-color:var(--color-ring);box-shadow:0 0 0 3px color-mix(in oklab,var(--color-ring) 22%,transparent)}
+.search input{flex:1;background:transparent;border:0;outline:0;color:var(--color-foreground);font:inherit;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+.search input::placeholder{color:var(--color-muted-foreground);font-family:ui-sans-serif,system-ui,sans-serif}
+.kbd{padding:1px 5px;font-size:10.5px;color:var(--color-muted-foreground);background:var(--color-card);border:1px solid var(--color-border);border-radius:4px}
+.h-actions{display:flex;align-items:center;gap:6px}
+.btn-pri{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;background:var(--color-primary);color:var(--color-primary-foreground);border:0;border-radius:6px;font-weight:500;font-size:13px}
+.btn-pri:hover{filter:brightness(1.08)}
+.user{display:flex;align-items:center;gap:6px;height:32px;padding:0 8px;background:transparent;border:1px solid transparent;border-radius:6px;color:var(--color-foreground);font-weight:500;font-size:13px}
+.user:hover{background:var(--color-secondary)}
+.avatar{width:22px;height:22px;border-radius:50%;background:#a78bfa;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff}
+
+/* Sidebar */
+.sidebar{grid-area:side;border-right:1px solid var(--color-border);background:var(--color-background);overflow-y:auto;padding:10px 8px}
+.s-row{display:flex;align-items:center;gap:8px;height:28px;padding:0 8px;border-radius:6px;color:var(--color-foreground);font-size:13px;cursor:pointer}
+.s-row:hover{background:var(--color-secondary)}
+.s-row.active{background:var(--color-secondary)}
+.s-ico{color:var(--color-primary);display:inline-flex}
+.s-lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s-cnt{color:var(--color-muted-foreground);font-size:11.5px;font-variant-numeric:tabular-nums}
+.s-head{padding:14px 8px 4px;color:var(--color-muted-foreground);font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.s-children{padding-left:14px}
+.tag-dot{width:8px;height:8px;border-radius:2px}
+
+/* Main */
+.main{grid-area:main;overflow-y:auto;background:var(--color-background);position:relative}
+.toolbar{position:sticky;top:0;z-index:20;height:44px;display:flex;align-items:center;padding:0 24px;gap:12px;background:color-mix(in oklab,var(--color-background) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--color-border)}
+.bc{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--color-muted-foreground);flex:1;min-width:0;overflow:hidden}
+.bc .crumb{padding:2px 4px;border-radius:4px;cursor:pointer;white-space:nowrap}
+.bc .crumb:hover{color:var(--color-foreground);background:var(--color-secondary)}
+.bc .current{color:var(--color-foreground);font-weight:500;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bc .sep{color:var(--color-muted-foreground)}
+.tb-r{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.tb-btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px;background:transparent;border:1px solid var(--color-border);border-radius:6px;color:var(--color-foreground);font-size:12.5px;font-weight:500}
+.tb-btn:hover{background:var(--color-secondary)}
+.seg{display:inline-flex;border:1px solid var(--color-border);border-radius:6px;overflow:hidden}
+.seg button{height:28px;width:28px;display:grid;place-items:center;background:transparent;color:var(--color-muted-foreground);border:0;border-right:1px solid var(--color-border)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--color-secondary);color:var(--color-foreground)}
+
+/* Search active chip (the new multi-pill version) */
+.content{padding:16px 24px 80px;max-width:1280px;margin:0 auto}
+.chip-strip{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid color-mix(in oklab,var(--color-primary) 30%,transparent);background:color-mix(in oklab,var(--color-primary) 6%,transparent);border-radius:8px;margin-bottom:16px;flex-wrap:wrap}
+.chip-strip .lead{color:var(--color-primary);display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 4px 2px 8px;border-radius:9999px;font-size:12px;background:var(--color-card);border:1px solid var(--color-border);color:var(--color-foreground);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.4}
+.pill .ico{color:var(--color-muted-foreground);display:inline-flex;margin-right:2px}
+.pill.neg{border-color:color-mix(in oklab,var(--color-destructive) 40%,var(--color-border));background:color-mix(in oklab,var(--color-destructive) 6%,var(--color-card))}
+.pill.neg .ico{color:var(--color-destructive)}
+.pill.tag .ico{color:var(--tag-color,var(--color-primary))}
+.pill .x{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:9999px;background:transparent;border:0;color:var(--color-muted-foreground);cursor:pointer;margin-left:2px}
+.pill .x:hover{background:var(--color-secondary);color:var(--color-foreground)}
+.pill .key{color:var(--color-muted-foreground)}
+.chip-strip .count{margin-left:auto;color:var(--color-muted-foreground);font-size:12.5px;flex-shrink:0}
+.chip-strip .clear{color:var(--color-muted-foreground);background:transparent;border:0;font-size:12px;padding:4px 6px;border-radius:4px}
+.chip-strip .clear:hover{color:var(--color-foreground);background:var(--color-secondary)}
+
+/* Card grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+
+/* === The stretched-link card === */
+.card{
+  position:relative;
+  border:1px solid var(--color-border);
+  background:var(--color-card);
+  border-radius:8px;
+  padding:14px;
+  transition:border-color .14s,box-shadow .14s;
+}
+.card:hover{
+  border-color:color-mix(in oklab,var(--color-primary) 35%,var(--color-border));
+  box-shadow:0 0 0 2px color-mix(in oklab,var(--color-primary) 35%,transparent);
+}
+/* Card focus when keyboard-focused via stretched link */
+.card:has(.stretched:focus-visible){
+  border-color:var(--color-primary);
+  box-shadow:0 0 0 2px color-mix(in oklab,var(--color-primary) 50%,transparent);
+}
+/* The invisible <a> that covers the entire card */
+.stretched{
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  z-index:0;
+  /* No outline — we let the parent card handle the focus ring above */
+  outline:0;
+}
+/* Inner content: pointer-events-none so clicks fall through to .stretched */
+.card-inner{position:relative;display:flex;gap:12px;align-items:flex-start;pointer-events:none}
+/* Interactive children re-enable pointer events and sit above .stretched */
+.card-inner .clickable{pointer-events:auto;position:relative;z-index:1}
+
+.fav{width:18px;height:18px;flex-shrink:0;border-radius:3px;background:var(--color-secondary);display:grid;place-items:center;color:var(--color-muted-foreground);margin-top:1px}
+.body{flex:1;min-width:0}
+.row1{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.title{font-weight:500;font-size:14px;color:var(--color-foreground);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.kebab{margin-left:auto;height:26px;width:26px;flex-shrink:0;display:inline-grid;place-items:center;border-radius:6px;color:var(--color-muted-foreground);background:transparent;border:0;opacity:0;transition:opacity .12s,background .12s,color .12s}
+.card:hover .kebab{opacity:1}
+.kebab:hover{background:var(--color-accent);color:var(--color-accent-foreground)}
+.url{display:flex;align-items:center;gap:4px;color:var(--color-muted-foreground);font-size:13px}
+.url span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.url-ext{color:var(--color-muted-foreground);opacity:.6;flex-shrink:0}
+
+.meta-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
+.in-folder{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-muted-foreground);padding:2px 8px 2px 6px;border-radius:9999px;background:transparent;border:1px dashed var(--color-border);transition:border-color .12s,color .12s,background .12s}
+.in-folder:hover{color:var(--color-foreground);border-color:var(--color-foreground);background:var(--color-secondary)}
+.in-folder.active{color:var(--color-foreground);border-style:solid;border-color:var(--color-foreground);background:var(--color-secondary)}
+.tag-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:9999px;font-size:11.5px;background:var(--color-secondary);color:var(--color-foreground);border:1px solid transparent;transition:transform .08s,border-color .12s,background .12s}
+.tag-chip .dot{width:8px;height:8px;border-radius:2px;background:var(--tag-color,var(--color-muted-foreground));flex-shrink:0}
+.tag-chip:hover{border-color:var(--tag-color,var(--color-border));background:color-mix(in oklab,var(--tag-color,var(--color-secondary)) 14%,var(--color-secondary))}
+.tag-chip.active{background:color-mix(in oklab,var(--tag-color,var(--color-secondary)) 22%,var(--color-secondary));border-color:var(--tag-color,var(--color-border));color:var(--color-foreground)}
+.tag-chip.excluded{opacity:.7;text-decoration:line-through;border-style:dashed}
+.tag-chip:active{transform:scale(.96)}
+
+/* Hint for modifier-click */
+.hint{font-size:11.5px;color:var(--color-muted-foreground);margin-top:8px;display:inline-flex;align-items:center;gap:6px;background:var(--color-secondary);padding:6px 10px;border-radius:6px}
+.hint kbd{padding:1px 5px;font-size:10.5px;color:var(--color-foreground);background:var(--color-card);border:1px solid var(--color-border);border-radius:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--color-popover);color:var(--color-popover-foreground);border:1px solid var(--color-border);padding:8px 14px;border-radius:8px;font-size:12.5px;box-shadow:0 16px 40px rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;gap:8px;animation:toastIn .16s ease-out}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* Empty state */
+.empty{padding:48px 24px;text-align:center;color:var(--color-muted-foreground);font-size:13.5px}
+
+/* Tweaks */
+.tweaks{position:fixed;left:16px;bottom:16px;background:var(--color-popover);color:var(--color-popover-foreground);border:1px solid var(--color-border);border-radius:10px;padding:10px;width:240px;z-index:9999;box-shadow:0 12px 32px rgba(0,0,0,.5)}
+.tweaks b{display:block;margin-bottom:6px;font-size:12px}
+.tweaks .sec{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--color-muted-foreground);margin:8px 0 4px}
+.tweaks .seg2{display:flex;border:1px solid var(--color-border);border-radius:5px;overflow:hidden}
+.tweaks .seg2 button{flex:1;padding:4px 6px;background:transparent;color:var(--color-muted-foreground);border:0;font-size:11px;border-right:1px solid var(--color-border)}
+.tweaks .seg2 button:last-child{border-right:0}
+.tweaks .seg2 button.on{background:var(--color-secondary);color:var(--color-foreground)}
+.tweaks .note{font-size:11px;color:var(--color-muted-foreground);margin-top:6px;line-height:1.4}
+</style>
+</head>
+<body class="dark">
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" data-presets="react">
+const {useState, useMemo, useEffect, useRef} = React;
+
+/* ---------- Mock data ---------- */
+const TAGS = {
+  quarkus:   {name:"quarkus",   color:"#dc2626"},
+  docs:      {name:"docs",      color:"#22c55e"},
+  prod:      {name:"prod",      color:"#f59e0b"},
+  uat:       {name:"uat",       color:"#a855f7"},
+  monitoring:{name:"monitoring",color:"#0ea5e9"},
+  "vacme":   {name:"vacme",     color:"#3b82f6"},
+};
+
+const BOOKMARKS = [
+  {id:"b1", title:"VacMe – Portal", url:"be.vacme.ch/start", folder:"vacme-prod", tags:["vacme","prod"], desc:""},
+  {id:"b2", title:"prod kc other", url:"be.vacme.ch/auth/admin", folder:"vacme-prod", tags:["vacme","prod"], desc:""},
+  {id:"b3", title:"impfen VacMe – Portal", url:"impfen-be.vacme.ch/start", folder:"vacme-prod", tags:["vacme","prod"], desc:""},
+  {id:"b4", title:"Quarkus – Scheduling Periodic Tasks", url:"quarkus.io/guides/scheduler", folder:"insel", tags:["quarkus","docs"], desc:"How to schedule a method periodically using @Scheduled in Quarkus"},
+  {id:"b5", title:"Topology · Apollo Cluster", url:"apollo.dvbern.ch/topology", folder:"dev", tags:["monitoring"], desc:""},
+  {id:"b6", title:"Grafana UAT", url:"grafana-uat.vacme.ch/d/main", folder:"uat", tags:["vacme","uat","monitoring"], desc:""},
+  {id:"b7", title:"eSchool", url:"eschool.dvbern.ch", folder:"dev", tags:["docs"], desc:""},
+  {id:"b8", title:"Mocking CDI beans in Quarkus", url:"quarkus.io/blog/mocking", folder:"insel", tags:["quarkus","docs"], desc:""},
+  {id:"b9", title:"keycloak iat", url:"vacme-be-iat.dvbern.ch/auth/admin", folder:"iat", tags:["vacme"], desc:""},
+  {id:"b10", title:"VacMe Demo Portal", url:"be-demo.vacme.ch/start", folder:"demo", tags:["vacme"], desc:""},
+  {id:"b11", title:"jTDS JDBC Driver", url:"jtds.sourceforge.net/faq.html", folder:"insel", tags:["docs"], desc:""},
+  {id:"b12", title:"VacMe Dev Hemed", url:"dev-vacme-hemed.dvbern.ch/start", folder:"dev", tags:["vacme"], desc:""},
+];
+
+/* ---------- Operator parsing (UC-070 lite) ---------- */
+// Tokenize respecting quotes. Each token has a kind for rendering.
+function tokenize(query){
+  const tokens = [];
+  // Match: -? (#"..." | #word | key:"..." | key:word | "..." | word)
+  const re = /(-)?(#"([^"]*)"|#([\w-]+)|([a-z]+):"([^"]*)"|([a-z]+):([^\s]+)|"([^"]*)"|(\S+))/gi;
+  let m;
+  while((m = re.exec(query)) !== null){
+    const neg = !!m[1];
+    if(m[3] !== undefined || m[4] !== undefined){
+      tokens.push({kind:"tag", value:m[3] ?? m[4], neg, raw:m[0]});
+    } else if(m[5] && m[6] !== undefined){
+      tokens.push({kind:"op", key:m[5].toLowerCase(), value:m[6], neg, raw:m[0]});
+    } else if(m[7] && m[8] !== undefined){
+      tokens.push({kind:"op", key:m[7].toLowerCase(), value:m[8], neg, raw:m[0]});
+    } else if(m[9] !== undefined){
+      tokens.push({kind:"text", value:m[9], neg, raw:m[0]});
+    } else {
+      tokens.push({kind:"text", value:m[10], neg, raw:m[0]});
+    }
+  }
+  return tokens;
+}
+
+function quoteIfNeeded(s){ return /\s/.test(s) ? `"${s}"` : s; }
+function tokenToString(t){
+  const prefix = t.neg ? "-" : "";
+  if(t.kind==="tag") return `${prefix}#${quoteIfNeeded(t.value)}`;
+  if(t.kind==="op") return `${prefix}${t.key}:${quoteIfNeeded(t.value)}`;
+  return `${prefix}${quoteIfNeeded(t.value)}`;
+}
+function stringify(tokens){ return tokens.map(tokenToString).join(" "); }
+
+/* ---------- Filter logic (lite — UC-070 spec is the truth) ---------- */
+function matches(b, tokens){
+  for(const t of tokens){
+    let ok;
+    if(t.kind==="tag"){
+      ok = b.tags.some(id => id.toLowerCase() === t.value.toLowerCase());
+    } else if(t.kind==="op" && t.key==="folder"){
+      ok = b.folder.toLowerCase().includes(t.value.toLowerCase());
+    } else if(t.kind==="op" && t.key==="note"){
+      ok = (b.desc||"").toLowerCase().includes(t.value.toLowerCase());
+    } else if(t.kind==="text"){
+      ok = (b.title+" "+b.url+" "+b.desc).toLowerCase().includes(t.value.toLowerCase());
+    } else {
+      ok = true; // unknown op = ignore in prototype
+    }
+    if(t.neg) ok = !ok;
+    if(!ok) return false;
+  }
+  return true;
+}
+
+/* ---------- Helpers to add / remove tokens by clicking ---------- */
+function hasToken(tokens, t){
+  return tokens.some(x => x.kind===t.kind && x.value.toLowerCase()===t.value.toLowerCase() && (x.key||"")===(t.key||"") && x.neg===t.neg);
+}
+function withoutEqualValue(tokens, t){
+  // Remove any token (any neg) with the same kind+value+key
+  return tokens.filter(x => !(x.kind===t.kind && x.value.toLowerCase()===t.value.toLowerCase() && (x.key||"")===(t.key||"")));
+}
+function toggleToken(tokens, t, modifier){
+  // modifier: "exclude" → ensures the token is set with neg=true
+  // Default: toggle between absent / included
+  const sameValue = tokens.some(x => x.kind===t.kind && x.value.toLowerCase()===t.value.toLowerCase() && (x.key||"")===(t.key||""));
+  if(modifier==="exclude"){
+    const filtered = withoutEqualValue(tokens, t);
+    return [...filtered, {...t, neg:true}];
+  }
+  if(sameValue){
+    // Already present (with any neg) → remove it
+    return withoutEqualValue(tokens, t);
+  }
+  return [...tokens, {...t, neg:false}];
+}
+
+/* ---------- Icons ---------- */
+const I = {
+  search: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>,
+  plus: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>,
+  bookmark: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>,
+  chevDown: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>,
+  folder: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor" fillOpacity=".15"/><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor"/></svg>,
+  globe: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a14 14 0 0 1 0 20M12 2a14 14 0 0 0 0 20"/></svg>,
+  ext: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>,
+  ellipsis: <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>,
+  x: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>,
+  hash: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></svg>,
+  grid: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
+  list: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>,
+};
+
+/* ---------- The multi-pill chip ---------- */
+function FilterChips({tokens, count, onRemove, onClear}){
+  if(tokens.length === 0) return null;
+  return <div className="chip-strip">
+    <span className="lead">{I.search}<span>Filters</span></span>
+    {tokens.map((t, i) => <TokenPill key={i} t={t} onRemove={() => onRemove(i)}/>)}
+    <span className="count">{count} result{count===1?"":"s"}</span>
+    <button className="clear" onClick={onClear}>Clear all</button>
+  </div>;
+}
+
+function TokenPill({t, onRemove}){
+  let inner, style;
+  if(t.kind === "tag"){
+    const tagDef = TAGS[t.value.toLowerCase()];
+    style = {"--tag-color": tagDef?.color || "var(--color-primary)"};
+    inner = <><span className="ico">{I.hash}</span>{t.value}</>;
+  } else if(t.kind === "op" && t.key === "folder"){
+    inner = <><span className="ico">{I.folder}</span><span className="key">folder:</span>{t.value}</>;
+  } else if(t.kind === "op"){
+    inner = <><span className="key">{t.key}:</span>{t.value}</>;
+  } else {
+    inner = <>"{t.value}"</>;
+  }
+  return <span className={"pill "+t.kind+(t.neg ? " neg" : "")} style={style}>
+    {t.neg && <span className="ico">−</span>}
+    {inner}
+    <button className="x" onClick={onRemove} aria-label="Remove filter">{I.x}</button>
+  </span>;
+}
+
+/* ---------- Card ---------- */
+function Card({b, tokens, onToggleToken, onCardOpen, openMenuFor, setOpenMenuFor}){
+  const isTagActive = (tag) => hasToken(tokens, {kind:"tag", value:tag, neg:false});
+  const isTagExcluded = (tag) => hasToken(tokens, {kind:"tag", value:tag, neg:true});
+  const isFolderActive = (folder) => hasToken(tokens, {kind:"op", key:"folder", value:folder, neg:false});
+
+  function handleTagClick(e, tag){
+    e.preventDefault();
+    e.stopPropagation();
+    const modifier = (e.altKey || e.shiftKey) ? "exclude" : undefined;
+    onToggleToken({kind:"tag", value:tag, neg:false}, modifier);
+  }
+  function handleFolderClick(e){
+    e.preventDefault();
+    e.stopPropagation();
+    onToggleToken({kind:"op", key:"folder", value:b.folder, neg:false});
+  }
+  function handleKebabClick(e){
+    e.preventDefault();
+    e.stopPropagation();
+    setOpenMenuFor(openMenuFor === b.id ? null : b.id);
+  }
+
+  return <div className="card">
+    <a className="stretched"
+       href={"https://"+b.url}
+       target="_blank"
+       rel="noopener noreferrer"
+       aria-label={b.title}
+       onClick={(e) => { e.preventDefault(); onCardOpen(b); }}
+    />
+    <div className="card-inner">
+      <span className="fav">{I.globe}</span>
+      <div className="body">
+        <div className="row1">
+          <span className="title">{b.title}</span>
+          <button className="kebab clickable" onClick={handleKebabClick} aria-label="More actions">{I.ellipsis}</button>
+        </div>
+        <div className="url">
+          <span>https://{b.url}</span>
+          <span className="url-ext">{I.ext}</span>
+        </div>
+        <div className="meta-row">
+          <button
+            className={"in-folder clickable" + (isFolderActive(b.folder) ? " active" : "")}
+            onClick={handleFolderClick}
+            title={`Filter by folder: ${b.folder}`}
+          >
+            {I.folder}
+            <span>in {b.folder}</span>
+          </button>
+          {b.tags.map(tag => {
+            const tagDef = TAGS[tag];
+            const active = isTagActive(tag);
+            const excluded = isTagExcluded(tag);
+            return <button
+              key={tag}
+              className={"tag-chip clickable" + (active?" active":"") + (excluded?" excluded":"")}
+              style={{"--tag-color": tagDef?.color || "var(--color-muted-foreground)"}}
+              onClick={(e) => handleTagClick(e, tag)}
+              title={excluded
+                ? `Excluding #${tag} — click to remove`
+                : active
+                  ? `Filtering by #${tag} — click to remove. ⌥/⇧+click to exclude.`
+                  : `Click to filter by #${tag}. ⌥/⇧+click to exclude.`}
+            >
+              <span className="dot"/>
+              {tag}
+            </button>;
+          })}
+        </div>
+      </div>
+    </div>
+  </div>;
+}
+
+/* ---------- App ---------- */
+function App(){
+  const [query, setQuery] = useState("");
+  const [openMenuFor, setOpenMenuFor] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [theme, setTheme] = useState("dark");
+
+  // Parse query → tokens. Source of truth is the string.
+  const tokens = useMemo(() => tokenize(query), [query]);
+
+  // Filtered bookmarks
+  const filtered = useMemo(() => BOOKMARKS.filter(b => matches(b, tokens)), [tokens]);
+
+  // Sync theme class on <body>
+  useEffect(() => {
+    document.body.classList.toggle("dark", theme === "dark");
+  }, [theme]);
+
+  function setTokens(newTokens){
+    setQuery(stringify(newTokens));
+  }
+  function onToggleToken(t, modifier){
+    setTokens(toggleToken(tokens, t, modifier));
+  }
+  function onRemoveTokenAt(idx){
+    setTokens(tokens.filter((_, i) => i !== idx));
+  }
+  function onClear(){
+    setQuery("");
+  }
+  function onCardOpen(b){
+    setToast(`→ would open: ${b.title}`);
+    setTimeout(() => setToast(null), 1400);
+  }
+
+  return <div>
+    <div className="app">
+      <div className="header">
+        <div className="brand">
+          <div className="brand-mark">{I.bookmark}</div>
+          <button className="coll">My Bookmarks {I.chevDown}</button>
+        </div>
+        <div className="search-wrap">
+          <div className="search-shell">
+            <label className="search">
+              {I.search}
+              <input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Search… try #quarkus folder:insel"
+                spellCheck={false}
+                autoCapitalize="off"
+                autoCorrect="off"
+              />
+              {!query && <span className="kbd">⌘K</span>}
+            </label>
+          </div>
+        </div>
+        <div className="h-actions">
+          <button className="btn-pri">{I.plus} Add Bookmark</button>
+          <button className="user"><span className="avatar">A</span>Alice User {I.chevDown}</button>
+        </div>
+      </div>
+      <aside className="sidebar">
+        <div className="s-row active"><span className="s-ico">{I.folder}</span><span className="s-lbl">My Bookmarks</span></div>
+        <div className="s-children">
+          {["dvbern","vacme-be","well","esc","insel","BFH"].map(n => (
+            <div key={n} className="s-row"><span className="s-ico">{I.folder}</span><span className="s-lbl">{n}</span></div>
+          ))}
+        </div>
+        <div className="s-head">Tags</div>
+        {Object.values(TAGS).map(t => (
+          <div key={t.name}
+               className="s-row"
+               onClick={() => onToggleToken({kind:"tag", value:t.name, neg:false})}
+               title={`Filter by #${t.name}`}>
+            <span className="s-ico"><span className="tag-dot" style={{background:t.color}}/></span>
+            <span className="s-lbl">{t.name}</span>
+            <span className="s-cnt">{BOOKMARKS.filter(b => b.tags.includes(t.name)).length}</span>
+          </div>
+        ))}
+      </aside>
+      <main className="main">
+        <div className="toolbar">
+          <div className="bc">
+            <span className="crumb">All Bookmarks</span><span className="sep">/</span>
+            <span className="current">vacme-be / vacme-prod</span>
+          </div>
+          <div className="tb-r">
+            <div className="seg">
+              <button className="on" title="Grid">{I.grid}</button>
+              <button title="List">{I.list}</button>
+            </div>
+            <button className="tb-btn">
+              <span style={{color:"var(--color-muted-foreground)"}}>Sort:</span> Date added
+              {I.chevDown}
+            </button>
+          </div>
+        </div>
+        <div className="content">
+          <FilterChips
+            tokens={tokens}
+            count={filtered.length}
+            onRemove={onRemoveTokenAt}
+            onClear={onClear}
+          />
+          <div className="hint">
+            <span>💡</span>
+            <span>Click a tag to filter · <kbd>⌥</kbd>/<kbd>⇧</kbd>+click to exclude · click "in folder" to filter by folder · type operators directly: <kbd>#quarkus</kbd> <kbd>folder:insel</kbd> <kbd>-#prod</kbd></span>
+          </div>
+          {filtered.length === 0 ? (
+            <div className="empty">No bookmarks match your search.</div>
+          ) : (
+            <div className="grid" style={{marginTop:14}}>
+              {filtered.map(b => (
+                <Card key={b.id}
+                      b={b}
+                      tokens={tokens}
+                      onToggleToken={onToggleToken}
+                      onCardOpen={onCardOpen}
+                      openMenuFor={openMenuFor}
+                      setOpenMenuFor={setOpenMenuFor}/>
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+
+    {toast && <div className="toast">{toast}</div>}
+
+    <div className="tweaks">
+      <b>Card + Filter prototype</b>
+      <div className="sec">Theme</div>
+      <div className="seg2">
+        <button className={theme==="light"?"on":""} onClick={()=>setTheme("light")}>light</button>
+        <button className={theme==="dark"?"on":""} onClick={()=>setTheme("dark")}>dark</button>
+      </div>
+      <div className="sec">Try</div>
+      <div className="seg2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:0}}>
+        <button onClick={()=>setQuery("#quarkus")}>#quarkus</button>
+        <button onClick={()=>setQuery("folder:vacme-prod")}>folder:…</button>
+        <button onClick={()=>setQuery("#vacme -#prod")}>vacme −prod</button>
+        <button onClick={()=>setQuery("#quarkus folder:insel")}>combine</button>
+      </div>
+      <div className="note">
+        Each card has an invisible stretched <code>&lt;a&gt;</code>. Tags, the kebab, and "in folder" sit above it with <code>pointer-events:auto</code>.
+      </div>
+    </div>
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

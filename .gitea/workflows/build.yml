@@ -59,7 +59,28 @@ jobs:
             org.opencontainers.image.title=Chainlink API
             org.opencontainers.image.description=Quarkus-based Java backend for Chainlink
 
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run unit tests
+        working-directory: frontend
+        run: npm test
+
   build-frontend:
+    needs: [test-frontend]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

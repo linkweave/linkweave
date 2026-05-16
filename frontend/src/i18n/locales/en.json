@@ -225,7 +225,9 @@
     "placeholder": "Search bookmarks (use spaces for multiple terms, e.g. prod foobar)...",
     "placeholderShort": "Search…",
     "resultCount": "{n} result | {n} results",
-    "clear": "Clear search"
+    "clear": "Clear search",
+    "filters": "Filters",
+    "clearAll": "Clear all"
   },
   "collectionSearch": {
     "placeholder": "Search collections...",
