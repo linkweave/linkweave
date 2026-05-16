@@ -126,6 +126,7 @@ public class BookmarkImportService {
             url.get(),
             parsed.getDescription(),
             new HashSet<>(Set.of(importTag)),
+            new HashSet<>(),
             0,
             null,
             null,

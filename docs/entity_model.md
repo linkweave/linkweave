@@ -9,17 +9,20 @@
 ## Entity Relationship Diagram
 
 ```mermaid
-erDiagram
+    erDiagram
     USER ||--o{ COLLECTION : "owns"
     USER ||--o{ COLLECTION_ACCESS : "has"
     COLLECTION ||--o{ COLLECTION_ACCESS : "granted via"
     COLLECTION ||--o{ BOOKMARK : "contains"
     COLLECTION ||--o{ FOLDER : "contains"
     COLLECTION ||--o{ TAG : "defines"
+    COLLECTION ||--o{ PROPERTY_DEFINITION : "defines"
+    PROPERTY_DEFINITION ||--o{ BOOKMARK_PROPERTY_VALUE : "typed by"
     FOLDER ||--o{ BOOKMARK : "organizes"
     FOLDER ||--o{ FOLDER : "nests"
     BOOKMARK }o--o{ TAG : "labeled with"
     BOOKMARK ||--o{ BOOKMARK_TAG : "has"
+    BOOKMARK ||--o{ BOOKMARK_PROPERTY_VALUE : "has"
     TAG ||--o{ BOOKMARK_TAG : "applied via"
 ```
 
@@ -134,5 +137,43 @@ Junction table linking bookmarks to their applied tags (many-to-many).
 
 ---
 
-> **Auditing:** Change history for BOOKMARK, FOLDER, and TAG is managed automatically by Hibernate Envers.
+### PROPERTY_DEFINITION
+
+Defines a typed, named property schema at the collection level that bookmarks can carry values for.
+
+| Attribute      | Description                                       | Data Type | Length/Precision | Validation Rules                                           |
+|----------------|---------------------------------------------------|-----------|------------------|------------------------------------------------------------|
+| id             | Unique identifier                                 | UUID      | 36               | Primary Key, Server-assigned                               |
+| collection_id  | Reference to the owning collection                | UUID      | 36               | Not Null, Foreign Key (COLLECTION.id)                      |
+| name           | Display name of the property                      | String    | 255              | Not Null                                                   |
+| type           | Value type (TEXT, DATE, SELECT, MULTI_SELECT, BOOLEAN, NUMBER) | String | 30 | Not Null, Values: TEXT, DATE, SELECT, MULTI_SELECT, BOOLEAN, NUMBER |
+| allowed_values | Comma-separated list of allowed values for SELECT/MULTI_SELECT types | String | 2000 | Optional |
+| sort_order     | Display order among properties in the collection   | Integer   | 10               | Not Null                                                   |
+| created_at     | Timestamp when the property definition was created | DateTime  | -                | Not Null                                                   |
+
+**Constraints:** `name` must be unique within a `collection_id`.
+
+---
+
+### BOOKMARK_PROPERTY_VALUE
+
+Stores a single typed value linking a bookmark to a property definition. Multiple rows per bookmark are allowed (one per definition; multiple for MULTI_SELECT).
+
+| Attribute          | Description                                      | Data Type | Length/Precision | Validation Rules                                |
+|--------------------|--------------------------------------------------|-----------|------------------|-------------------------------------------------|
+| id                 | Unique identifier                                | UUID      | 36               | Primary Key, Server-assigned                    |
+| bookmark_id        | Reference to the bookmark                        | UUID      | 36               | Not Null, Foreign Key (BOOKMARK.id)             |
+| property_definition_id | Reference to the property definition         | UUID      | 36               | Not Null, Foreign Key (PROPERTY_DEFINITION.id)  |
+| value_text         | Text, date (ISO-8601), or select option value    | String    | 255              | Optional                                        |
+| value_number       | Numeric value for NUMBER type                    | Decimal   | 19,2             | Optional                                        |
+| value_boolean      | Boolean value for BOOLEAN type                   | Boolean   | 1                | Optional                                        |
+
+**Constraints:**
+- For non-MULTI_SELECT types, the combination of (`bookmark_id`, `property_definition_id`) must be unique.
+- `bookmark_id` and `property_definition_id` must belong to the same `collection_id`.
+- Only one of `value_text`, `value_number`, `value_boolean` should be non-null, determined by the definition's `type`.
+
+---
+
+> **Auditing:** Change history for BOOKMARK, FOLDER, TAG, PROPERTY_DEFINITION, and BOOKMARK_PROPERTY_VALUE is managed automatically by Hibernate Envers.
 > No custom AUDIT_LOG entity is modeled; Envers generates revision tables at the schema level.

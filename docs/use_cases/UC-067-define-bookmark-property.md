@@ -17,7 +17,7 @@
 ## Preconditions
 
 - The user is authenticated.
-- The user is the owner of the target collection.
+- The user has access to the target collection (owner or member).
 
 ## Main Success Scenario
 
@@ -57,9 +57,9 @@
 1. System shows error "At least one allowed value is required for select types."
 2. Use case continues at step 5.
 
-### A4: Not Collection Owner
+### A4: No Collection Access
 
-**Trigger:** User is a member (not owner) of the collection (step 2).
+**Trigger:** User does not have access to the collection (step 2).
 **Flow:**
 
 1. System returns HTTP 403 Forbidden.
@@ -90,9 +90,9 @@ Supported types: text, date, select, multi-select, boolean, number.
 
 Select and multi-select types require at least one allowed value. Text, date, boolean, and number types do not support allowed values.
 
-### BR-070: Owner-Only
+### BR-070: Collection Access Required
 
-Property definitions can only be created, edited, or deleted by the collection owner.
+Property definitions can be created, edited, or deleted by any user with access to the collection.
 
 ### BR-071: Property Count Limit
 

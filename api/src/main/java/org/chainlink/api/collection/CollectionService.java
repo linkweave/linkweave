@@ -8,14 +8,11 @@ import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.chainlink.api.benutzer.UserRepo;
-import org.chainlink.api.bookmark.Bookmark;
-import org.chainlink.api.bookmark.BookmarkService;
-import org.chainlink.api.bookmark.AutoTagRule;
 import org.chainlink.api.bookmark.AutoTagRuleService;
-import org.chainlink.api.bookmark.Tag;
+import org.chainlink.api.bookmark.BookmarkService;
 import org.chainlink.api.bookmark.TagService;
-import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.bookmark.folder.FolderService;
+import org.chainlink.api.bookmark.property.PropertyDefinitionService;
 import org.chainlink.api.collection.favicon.FaviconAllowlist;
 import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.api.shared.user.User;
@@ -38,6 +35,7 @@ public class CollectionService {
     private final TagService tagService;
     private final AutoTagRuleService autoTagRuleService;
     private final BookmarkService bookmarkService;
+    private final PropertyDefinitionService propertyDefinitionService;
     private final UserRepo userRepo;
     private final CurrentUserService currentUserService;
 
@@ -150,6 +148,7 @@ public class CollectionService {
         folderService.deleteByCollection(collectionId);
         tagService.deleteByCollection(collectionId);
         autoTagRuleService.deleteByCollection(collectionId);
+        propertyDefinitionService.deleteByCollection(collectionId);
 
         var allAccessesForCollection = collectionAccessRepo.findByCollection(collectionId);
         for (var access : allAccessesForCollection) {

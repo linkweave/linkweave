@@ -1,11 +1,14 @@
 package org.chainlink.api.bookmark;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.json.BookmarkJson;
 import org.chainlink.api.bookmark.json.BookmarkSaveJson;
+import org.chainlink.api.bookmark.property.BookmarkPropertyValueMapper;
+import org.chainlink.api.bookmark.property.json.BookmarkPropertyValueJson;
 import org.chainlink.infrastructure.json.EntityInfoJson;
 import org.chainlink.infrastructure.stereotypes.JaxMapper;
 import org.jspecify.annotations.NonNull;
@@ -16,6 +19,20 @@ public class BookmarkMapper {
 
     @NonNull
     public static BookmarkJson toJson(@NonNull Bookmark bookmark) {
+        return toJson(bookmark, List.of());
+    }
+
+    @NonNull
+    public static BookmarkJson toJsonWithProperties(@NonNull Bookmark bookmark) {
+        List<BookmarkPropertyValueJson> propertyValues = bookmark.getPropertyValues()
+            .stream()
+            .map(BookmarkPropertyValueMapper::toJson)
+            .toList();
+        return toJson(bookmark, propertyValues);
+    }
+
+    @NonNull
+    public static BookmarkJson toJson(@NonNull Bookmark bookmark, @NonNull List<BookmarkPropertyValueJson> propertyValues) {
         return new BookmarkJson(
             bookmark.getId(),
             EntityInfoJson.fromEntity(bookmark),
@@ -31,7 +48,8 @@ public class BookmarkMapper {
             ),
             bookmark.getClickCount(),
             bookmark.getLastClickedAt(),
-            bookmark.getDeletedAt()
+            bookmark.getDeletedAt(),
+            propertyValues
         );
     }
 }

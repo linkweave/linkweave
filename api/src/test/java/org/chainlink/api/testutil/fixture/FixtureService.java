@@ -15,6 +15,8 @@ import org.chainlink.api.bookmark.Tag;
 import org.chainlink.api.bookmark.TagRepo;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.bookmark.folder.FolderRepo;
+import org.chainlink.api.bookmark.property.PropertyDefinition;
+import org.chainlink.api.bookmark.property.PropertyDefinitionRepo;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.collection.CollectionAccess;
 import org.chainlink.api.collection.CollectionAccessRepo;
@@ -47,6 +49,9 @@ public class FixtureService {
 
     @Inject
     BookmarkRepo bookmarkRepo;
+
+    @Inject
+    PropertyDefinitionRepo propertyDefinitionRepo;
 
     @NonNull
     public User persistUser(Consumer<org.chainlink.api.testutil.builder.UserBuilder> block) {
@@ -88,6 +93,13 @@ public class FixtureService {
         Bookmark bookmark = org.chainlink.api.testutil.builder.BookmarkBuilder.build(block);
         bookmarkRepo.persist(bookmark);
         return bookmark;
+    }
+
+    @NonNull
+    public PropertyDefinition persistPropertyDefinition(Consumer<org.chainlink.api.testutil.builder.PropertyDefinitionBuilder> block) {
+        PropertyDefinition def = org.chainlink.api.testutil.builder.PropertyDefinitionBuilder.build(block);
+        propertyDefinitionRepo.persist(def);
+        return def;
     }
 
     /**
