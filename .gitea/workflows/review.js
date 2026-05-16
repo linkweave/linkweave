@@ -27,8 +27,8 @@ const body = JSON.stringify({
 });
 
 const options = {
-  hostname: "open.bigmodel.cn",
-  path: "/api/paas/v4/chat/completions",
+  hostname: "api.z.ai",
+  path: "/api/coding/paas/v4/chat/completions",
   method: "POST",
   headers: {
     "Content-Type": "application/json",
