@@ -29,7 +29,7 @@ jobs:
 
       - name: Run Z.ai Code Review
         id: review
-        if: "$(wc -c < /tmp/diff.txt) -gt 0"
+        if: steps.diff.outcome == 'success'
         env:
           ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
         run: |
