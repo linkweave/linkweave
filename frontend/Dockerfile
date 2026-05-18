@@ -1,15 +1,17 @@
-FROM docker.io/library/node:22-alpine AS builder
+FROM docker.io/library/node:24-alpine AS builder
+
+RUN corepack enable && corepack prepare pnpm@11 --activate
 
 WORKDIR /app
 
 ARG COMMIT_HASH
 ARG VERSION
 
-COPY package.json package-lock.json* ./
-RUN npm ci
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 RUN find dist -type f \( -name '*.js' -o -name '*.css' -o -name '*.html' -o -name '*.svg' -o -name '*.json' -o -name '*.xml' -o -name '*.txt' -o -name '*.webmanifest' \) \
      -exec gzip -k -9 {} \; \

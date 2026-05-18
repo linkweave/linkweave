@@ -8,7 +8,7 @@ import {useCollectionStore} from '@/stores/collection'
 import {useNotificationStore} from '@/stores/notification'
 import {collectionShareSchema} from '@/schemas/collection'
 import {useFormDialog} from '@/composables/useFormDialog'
-import {Crown, Loader2, User, UserPlus, X} from 'lucide-vue-next'
+import {Crown, Loader2, User, UserPlus, X} from '@lucide/vue'
 import {ref, toRef} from 'vue'
 import {useI18n} from 'vue-i18n'
 

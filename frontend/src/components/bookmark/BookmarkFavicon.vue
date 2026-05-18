@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useCollectionStore } from '@/stores/collection'
 import { hostnameOf, matchesAllowlist, parseAllowlist } from '@/lib/favicon-allowlist'
-import { Globe } from 'lucide-vue-next'
+import { Globe } from '@lucide/vue'
 
 const props = defineProps<{
   bookmarkId: string

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { MoreHorizontal } from 'lucide-vue-next'
+import { MoreHorizontal } from '@lucide/vue'
 import { DropdownMenuRoot, DropdownMenuTrigger } from 'radix-vue'
 import { DropdownMenuContentCl, DropdownMenuItemCl } from '@/components/ui'
 import BookmarkFavicon from './BookmarkFavicon.vue'

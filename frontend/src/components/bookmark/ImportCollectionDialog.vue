@@ -3,7 +3,7 @@ import { config } from '@/api'
 import { ImportResourceApi } from '@/api/generated'
 import { ButtonCl, DialogCl, DialogFooterCl } from '@/components/ui'
 import { useNotificationStore } from '@/stores/notification'
-import { Loader2, Upload } from 'lucide-vue-next'
+import { Loader2, Upload } from '@lucide/vue'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 

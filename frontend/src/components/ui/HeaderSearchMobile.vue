@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { Search, X } from 'lucide-vue-next'
+import { Search, X } from '@lucide/vue'
 import ButtonCl from './ButtonCl.vue'
 import SearchBar from './SearchBar.vue'
 import { useBookmarkStore } from '@/stores/bookmark'

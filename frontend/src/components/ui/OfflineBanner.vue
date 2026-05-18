@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { WifiOff } from 'lucide-vue-next'
+import { WifiOff } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useOfflineStore } from '@/stores/offline'
 

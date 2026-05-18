@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { PopoverRoot, PopoverTrigger, PopoverPortal, PopoverContent, PopoverArrow } from 'radix-vue'
-import { HelpCircle } from 'lucide-vue-next'
+import { HelpCircle } from '@lucide/vue'
 
 defineProps<{
   ariaLabel?: string

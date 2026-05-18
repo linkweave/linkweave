@@ -7,7 +7,7 @@ import {MainLayout} from '@/components/layout'
 import {ButtonCl, ResponsiveButton, SearchBar} from '@/components/ui'
 import router from '@/router'
 import {useCollectionStore} from '@/stores/collection'
-import {ArrowLeft, Pencil, Plus, Star, Trash2, Users} from 'lucide-vue-next'
+import {ArrowLeft, Pencil, Plus, Star, Trash2, Users} from '@lucide/vue'
 import {computed, onMounted, ref} from 'vue'
 import {useI18n} from 'vue-i18n'
 

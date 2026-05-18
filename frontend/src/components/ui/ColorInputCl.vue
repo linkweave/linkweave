@@ -48,7 +48,7 @@ const pickerOpen = ref(false)
         type="text"
         maxlength="7"
         :placeholder="placeholder ?? 'e.g. #ef1111'"
-        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        class="flex h-9 w-full rounded-md border border-input bg-input px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         v-bind="attrs"
         @input="onInput($event)"
       />
@@ -81,7 +81,7 @@ const pickerOpen = ref(false)
 <style scoped>
 :deep(.vc-twitter-picker) {
   --vc-body-bg: var(--color-card);
-  --vc-twitter-input-bg: var(--color-background);
+  --vc-twitter-input-bg: var(--color-input);
   --vc-twitter-input-border: var(--color-input);
   --vc-twitter-input-color: var(--color-foreground);
   --vc-twitter-hash-bg: var(--color-muted);

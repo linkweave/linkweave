@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Search } from 'lucide-vue-next'
+import { Search } from '@lucide/vue'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useI18n } from 'vue-i18n'
 import FilterPill from './FilterPill.vue'

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { BookmarkJson, TagJson } from '@/api/generated'
-import { ExternalLink } from 'lucide-vue-next'
+import { ExternalLink } from '@lucide/vue'
 
 defineProps<{
   bookmark: BookmarkJson

@@ -7,7 +7,7 @@ import {
   DropdownMenuContent,
 } from 'radix-vue'
 import { useCollectionStore } from '@/stores/collection'
-import { ChevronDown, LayoutGrid, Star, Settings } from 'lucide-vue-next'
+import { ChevronDown, LayoutGrid, Star, Settings } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import router from '@/router'
 

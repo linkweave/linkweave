@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { InputCl, SwitchCl } from '@/components/ui'
+import { InputCl, SelectCl, SwitchCl } from '@/components/ui'
 import { PropertyType } from '@/api/generated'
 import type { PropertyDefinitionJson } from '@/api/generated'
 import type { PropertyFormValue } from '@/lib/propertyValueMapper'
@@ -31,7 +31,7 @@ const { t } = useI18n()
 const options = computed<string[]>(() =>
   (props.propDef.data.allowedValues ?? '')
     .split(',')
-    .map(s => s.trim())
+    .map((s) => s.trim())
     .filter(Boolean),
 )
 
@@ -77,9 +77,7 @@ function onSelect(value: string) {
 }
 function toggleMulti(option: string) {
   const current = asArray()
-  const next = current.includes(option)
-    ? current.filter(o => o !== option)
-    : [...current, option]
+  const next = current.includes(option) ? current.filter((o) => o !== option) : [...current, option]
   emit('update:modelValue', next.length > 0 ? next : undefined)
 }
 </script>
@@ -110,7 +108,7 @@ function toggleMulti(option: string) {
       :id="`property-input-${propDef.id}`"
       type="text"
       :model-value="asString()"
-      @update:model-value="v => onText(v as string)"
+      @update:model-value="(v: string) => onText(v)"
     />
 
     <!-- NUMBER -->
@@ -119,14 +117,11 @@ function toggleMulti(option: string) {
       :id="`property-input-${propDef.id}`"
       type="number"
       :model-value="asNumber() ?? ''"
-      @update:model-value="v => onNumber(v as string)"
+      @update:model-value="(v: string) => onNumber(v)"
     />
 
     <!-- BOOLEAN -->
-    <div
-      v-else-if="propDef.data.type === PropertyType.Boolean"
-      class="flex items-center gap-2"
-    >
+    <div v-else-if="propDef.data.type === PropertyType.Boolean" class="flex items-center gap-2">
       <SwitchCl
         :model-value="asBoolean()"
         :aria-label="propDef.data.name"
@@ -138,30 +133,28 @@ function toggleMulti(option: string) {
     </div>
 
     <!-- SELECT -->
-    <select
+    <SelectCl
       v-else-if="propDef.data.type === PropertyType.Select"
       :id="`property-input-${propDef.id}`"
-      class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      :value="asString()"
-      @change="(e) => onSelect((e.target as HTMLSelectElement).value)"
+      :model-value="asString()"
+      @update:model-value="(v: any) => onSelect(String(v))"
     >
       <option value="">{{ t('property.notSet') }}</option>
       <option v-for="opt in options" :key="opt" :value="opt">{{ opt }}</option>
-    </select>
+    </SelectCl>
 
     <!-- MULTI_SELECT -->
-    <div
-      v-else-if="propDef.data.type === PropertyType.MultiSelect"
-      class="flex flex-wrap gap-1.5"
-    >
+    <div v-else-if="propDef.data.type === PropertyType.MultiSelect" class="flex flex-wrap gap-1.5">
       <button
         v-for="opt in options"
         :key="opt"
         type="button"
         class="px-2.5 py-1 text-[11.5px] rounded border transition-colors"
-        :class="asArray().includes(opt)
-          ? 'bg-primary/10 border-primary text-primary'
-          : 'bg-secondary border-border text-muted-foreground hover:border-primary/40 hover:text-foreground'"
+        :class="
+          asArray().includes(opt)
+            ? 'bg-primary/10 border-primary text-primary'
+            : 'bg-secondary border-border text-muted-foreground hover:border-primary/40 hover:text-foreground'
+        "
         @click="toggleMulti(opt)"
       >
         {{ opt }}
@@ -174,7 +167,7 @@ function toggleMulti(option: string) {
       :id="`property-input-${propDef.id}`"
       type="date"
       :model-value="asString()"
-      @update:model-value="v => onText(v as string)"
+      @update:model-value="(v: string) => onText(v as string)"
     />
   </div>
 </template>

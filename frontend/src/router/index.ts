@@ -11,8 +11,6 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      // Not a real page — beforeEach redirects to the appropriate destination
-      // after initialization (collection view, or manage-collections as fallback)
       component: CollectionView
     },
     {

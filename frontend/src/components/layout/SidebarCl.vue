@@ -18,7 +18,7 @@ import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { useOfflineStore } from '@/stores/offline'
 import { usePropertyStore } from '@/stores/property'
-import { Box, Folder, Plus, Tag } from 'lucide-vue-next'
+import { Box, Folder, Plus, Tag } from '@lucide/vue'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 

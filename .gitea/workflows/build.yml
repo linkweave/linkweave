@@ -64,20 +64,24 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Run unit tests
         working-directory: frontend
-        run: npm test
+        run: pnpm test
 
   build-frontend:
     needs: [test-frontend]
@@ -159,16 +163,20 @@ jobs:
           echo "ARTIFACT_NAME=$ARTIFACT_NAME" >> $GITEA_OUTPUT
           echo "Extension version: $VERSION"
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Stamp version in manifest
         working-directory: frontend/extension-public
@@ -179,15 +187,15 @@ jobs:
 
       - name: Build extension
         working-directory: frontend
-        run: npm run build:extension
+        run: pnpm run build:extension
 
       - name: Lint extension
         working-directory: frontend
-        run: npx web-ext lint --source-dir dist-extension
+        run: pnpm exec web-ext lint --source-dir dist-extension
 
       - name: Package extension
         working-directory: frontend
-        run: npx web-ext build --source-dir dist-extension --artifacts-dir . --overwrite-dest --filename chainlink-extension.zip
+        run: pnpm exec web-ext build --source-dir dist-extension --artifacts-dir . --overwrite-dest --filename chainlink-extension.zip
 
       - name: Upload extension artifact
         uses: actions/upload-artifact@v3
