@@ -533,3 +533,9 @@ collectionSettings.sectionProperties: "Properties"
 - Per-user vs per-collection property visibility (both toggles are global localStorage only for now).
 - Server-side filtering by property (all filtering is client-side, consistent with the rest of the app).
 - Property value history / audit log.
+- System-managed / read-only properties (all properties are user-editable; see BR-075 removal in UC-068).
+- Hard limit on the number of property definitions per collection (see BR-071 update in UC-067).
+
+## Known defects
+
+- **Properties not available in the Create Bookmark dialog.** `CreateBookmarkDialog.vue` does not show property inputs. Users must create the bookmark first, then edit it to set property values. Fix: add the same properties section from `EditBookmarkDialog.vue` into `CreateBookmarkDialog.vue` (possibly by extracting a shared `BookmarkPropertyFields.vue` component), and call `bookmarkStore.updateProperties()` after creation.

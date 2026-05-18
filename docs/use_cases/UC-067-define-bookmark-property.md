@@ -6,7 +6,7 @@
 **Use Case Name:** Define Bookmark Property   
 **Primary Actor:** Collection Owner   
 **Goal:** Create a named, typed property definition at the collection level so that bookmarks in that collection can carry structured metadata.   
-**Status:** Open   
+**Status:** Done   
 
 ## Traceability
 
@@ -37,7 +37,7 @@
 **Trigger:** Property name already exists in collection (step 6).
 **Flow:**
 
-1. System shows error "A property with this name already exists."
+1. Backend rejects the request with a validation error. System shows error "A property with this name already exists."
 2. User must choose a different name.
 3. Use case continues at step 4.
 
@@ -80,7 +80,7 @@
 
 ### BR-067: Property Name Uniqueness
 
-Property names must be unique within a collection (case-insensitive).
+Property names must be unique within a collection (case-sensitive). Names are restricted to `\w` characters (letters, digits, underscore) and hyphens by the frontend schema; the backend enforces uniqueness via a composite unique index on `(name, collection_id)`.
 
 ### BR-068: Property Types
 
@@ -94,6 +94,6 @@ Select and multi-select types require at least one allowed value. Text, date, bo
 
 Property definitions can be created, edited, or deleted by any user with access to the collection.
 
-### BR-071: Property Count Limit
+### BR-071: Property Count
 
-A collection may have up to 50 property definitions.
+There is no hard limit on the number of property definitions per collection. The user decides how many properties to define.

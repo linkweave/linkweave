@@ -8,17 +8,16 @@ import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.json.TagSaveJson;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.collection.CollectionRepo;
-import org.chainlink.infrastructure.errorhandling.AppValidationException;
-import org.chainlink.infrastructure.errorhandling.AppValidationMessage;
+import org.chainlink.infrastructure.db.UniqueConstraintUtil;
 import org.chainlink.infrastructure.stereotypes.Service;
-import org.hibernate.exception.ConstraintViolationException;
 import org.jspecify.annotations.NonNull;
 
 @Service
 @RequiredArgsConstructor
 public class TagService {
 
-    private static final String CONSTRAINT_UQ_TAG_NAME_COLLECTION = "uq_tag_name_collection";
+    private static final String CONSTRAINT_NAME = "uc_tag_name_collection";
+    private static final String CONSTRAINT_COLUMNS = "Tag.name, Tag.collection_id";
 
     private final TagRepo tagRepo;
     private final CollectionRepo collectionRepo;
@@ -57,15 +56,12 @@ public class TagService {
     }
 
     private void upsertTagAndFlush(Tag tag) {
-        try {
-            tagRepo.persistAndFlush(tag);
-        } catch (ConstraintViolationException e) {
-            if (CONSTRAINT_UQ_TAG_NAME_COLLECTION.equals(e.getConstraintName())) {
-                throw new AppValidationException(AppValidationMessage.genericMessage(
-                    "AppValidation.uq_tag_name_collection"));
-            }
-            throw e;
-        }
+        UniqueConstraintUtil.persistAndHandleUnique(
+            () -> tagRepo.persistAndFlush(tag),
+            CONSTRAINT_NAME,
+            CONSTRAINT_COLUMNS,
+            "AppValidation.uq_tag_name_collection"
+        );
     }
 
     public void removeTag(@NonNull ID<Tag> id) {

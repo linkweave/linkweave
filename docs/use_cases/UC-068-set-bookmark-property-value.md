@@ -6,7 +6,9 @@
 **Use Case Name:** Set Bookmark Property Value   
 **Primary Actor:** User   
 **Goal:** Assign or change a property value on a bookmark so that the bookmark carries structured metadata.   
-**Status:** Open   
+**Status:** Done
+
+> **Known gap:** Property inputs are currently available in the edit dialog only. The create dialog (`CreateBookmarkDialog.vue`) does not yet expose property fields. Step 1 therefore applies fully to the edit flow; the create flow will be addressed in a follow-up.   
 
 ## Traceability
 
@@ -37,16 +39,15 @@
 **Trigger:** User enters a non-numeric value for a number property or invalid date for a date property (step 4).
 **Flow:**
 
-1. System shows inline validation error.
-2. User must correct the value.
-3. Use case continues at step 4.
+1. The input widget prevents or rejects the invalid value (e.g., number fields reject non-numeric input; date fields enforce ISO format).
+2. Use case continues at step 4.
 
 ### A2: Value Not in Allowed List
 
-**Trigger:** User enters a value not in the allowed values for a select property (step 4).
+**Trigger:** User attempts to enter a value not in the allowed values for a select property (step 4).
 **Flow:**
 
-1. System rejects the value and shows the dropdown of valid options.
+1. The dropdown/select widget only presents valid options from the definition's allowed values.
 2. Use case continues at step 4.
 
 ### A3: No Property Definitions
@@ -57,14 +58,6 @@
 1. System does not display the Properties section.
 2. The bookmark form works as before without properties.
 3. Use case continues at step 5.
-
-### A4: System-Managed Property
-
-**Trigger:** User attempts to edit a system-managed property (e.g., `imported` set by the import process, per C-016) (step 3).
-**Flow:**
-
-1. System displays the property as read-only with a tooltip explaining it is managed by the system.
-2. Use case continues at step 5.
 
 ## Postconditions
 
@@ -90,7 +83,3 @@ Property values must match their definition type. Number properties accept numer
 ### BR-074: Single Value
 
 Text, date, select, boolean, and number properties hold a single value. Multi-select properties hold a set of values from the allowed list.
-
-### BR-075: System-Managed Properties
-
-Properties created by system processes (e.g., `imported` during bookmark import) are read-only for users. They can only be modified by the system process that created them.

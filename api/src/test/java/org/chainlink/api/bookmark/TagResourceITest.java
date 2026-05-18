@@ -103,7 +103,8 @@ class TagResourceITest {
             .body(body)
             .post("/tags")
             .then()
-            .statusCode(not(200));
+            .statusCode(400)
+            .body("violations[0].message", equalTo("A tag with this name already exists in the collection."));
     }
 
     @Test
