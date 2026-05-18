@@ -291,3 +291,37 @@ jobs:
             -H "Authorization: token ${GITEA_TOKEN}" \
             -F "name=chainlink-extension-${TAG}.zip" \
             -F "attachment=@chainlink-extension.zip"
+
+  publish-extension:
+    needs: [build-extension, release]
+    if: startsWith(gitea.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download extension artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ needs.build-extension.outputs.artifact-name }}
+
+      - name: Publish to Chrome Web Store
+        run: npx chrome-webstore-upload-cli@3 upload --source chainlink-extension.zip --auto-publish
+        env:
+          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CLIENT_ID: ${{ secrets.CHROME_EXTENSION_GWS_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_EXTENSION_GWS_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CHROME_EXTENSION_GWS_REFRESH_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Unzip extension for Firefox
+        run: |
+          mkdir -p extension-src
+          unzip chainlink-extension.zip -d extension-src
+
+      - name: Publish to Firefox Add-ons
+        run: npx web-ext sign --channel=listed --source-dir extension-src
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.FIREFOX_AMO_API_KEY }}
+          WEB_EXT_API_SECRET: ${{ secrets.FIREFOX_AMO_API_SECRET }}
