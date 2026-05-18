@@ -83,6 +83,17 @@ export default defineConfig(({ command }) => {
         },
       },
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vue: ['vue', 'vue-router', 'pinia', 'vue-i18n'],
+            validation: ['vee-validate', '@vee-validate/zod', 'zod'],
+            ui: ['radix-vue', '@lucide/vue'],
+          },
+        },
+      },
+    },
     test: {
       globals: true,
       environment: 'node',
