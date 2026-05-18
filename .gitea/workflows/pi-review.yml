@@ -23,3 +23,4 @@ jobs:
           provider: zai
           model: glm-5.1
           token: ${{ secrets.CL_REPO_TOKEN }}
+          debug: "true"
