@@ -34,17 +34,20 @@ public class FolderService {
     public Folder createFolder(@NonNull FolderSaveJson json) {
         ID<Collection> collectionId = json.getCollectionId();
 
-        Folder folder = new Folder();
-        folder.setCollection(collectionRepo.referenceById(collectionId));
-        folder.setName(json.getName());
-        folder.setColor(json.getColor());
-
         ID<Folder> parentId = json.getParentId();
+        Folder parent = null;
         if (parentId != null) {
-            Folder parent = folderRepo.getById(parentId);
+            parent = folderRepo.getById(parentId);
             requireFolderBelongsToCollection(parent, collectionId);
-            folder.setParent(parent);
         }
+
+        Folder folder = new Folder(
+            collectionRepo.referenceById(collectionId),
+            parent,
+            json.getName(),
+            json.getColor(),
+            null
+        );
 
         folderRepo.persist(folder);
         return folder;
