@@ -1,0 +1,10 @@
+minimumReleaseAge: 1440
+
+registries:
+  default: https://registry.npmjs.org/
+
+onlyBuiltDependencies:
+  - '@openapitools/openapi-generator-cli'
+  - esbuild
+  - spawn-sync
+  - vue-demi

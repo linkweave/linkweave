@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Trash2, Undo2, ArrowLeft, Folder as FolderIcon, Bookmark as BookmarkIcon } from 'lucide-vue-next'
+import { Trash2, Undo2, ArrowLeft, Folder as FolderIcon, Bookmark as BookmarkIcon } from '@lucide/vue'
 import { MainLayout } from '@/components/layout'
 import { ButtonCl, ConfirmDialog, ResponsiveButton } from '@/components/ui'
 import { useTrashbinStore } from '@/stores/trashbin'

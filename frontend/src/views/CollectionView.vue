@@ -15,7 +15,7 @@ import { useBookmarkStore } from '@/stores/bookmark'
 import { useCollectionStore } from '@/stores/collection'
 import { useOfflineStore } from '@/stores/offline'
 import { useUiStore } from '@/stores/ui'
-import { BookmarkPlus, Settings } from 'lucide-vue-next'
+import { BookmarkPlus, Settings } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 

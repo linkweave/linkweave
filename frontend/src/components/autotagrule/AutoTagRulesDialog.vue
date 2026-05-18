@@ -6,7 +6,7 @@ import { useAutoTagRuleStore } from '@/stores/autoTagRule'
 import { useNotificationStore } from '@/stores/notification'
 import AutoTagRuleEditDialog from './AutoTagRuleEditDialog.vue'
 import type { AutoTagRuleJson } from '@/api/generated'
-import { Pencil, Plus, Trash2 } from 'lucide-vue-next'
+import { Pencil, Plus, Trash2 } from '@lucide/vue'
 
 const { t } = useI18n()
 const ruleStore = useAutoTagRuleStore()

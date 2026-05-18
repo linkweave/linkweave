@@ -7,7 +7,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from 'radix-vue'
-import { ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Info, RotateCcw } from 'lucide-vue-next'
+import { ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Info, RotateCcw } from '@lucide/vue'
 import { SortDirection, SortField } from '@/api/generated'
 import { DropdownMenuContentCl, DropdownMenuItemCl } from '@/components/ui'
 import { useCollectionStore } from '@/stores/collection'

@@ -21,14 +21,14 @@
     "test:watch": "vitest",
     "dev:extension": "vite build --watch --config vite.config.extension.ts --mode extension.development",
     "build:extension": "vite build --config vite.config.extension.ts --mode extension.production",
-    "package:extension": "npm run build:extension && web-ext build --source-dir dist-extension --artifacts-dir . --overwrite-dest --filename=\"chainlink-ext-$(date +%Y%m%d-%H%M%S).zip\""
+    "package:extension": "pnpm run build:extension && web-ext build --source-dir dist-extension --artifacts-dir . --overwrite-dest --filename=\"chainlink-ext-$(date +%Y%m%d-%H%M%S).zip\""
   },
   "dependencies": {
+    "@lucide/vue": "^1.16.0",
     "@tailwindcss/vite": "^4.2.2",
     "@vee-validate/zod": "^4.15.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-vue-next": "^1.0.0",
     "pinia": "^3.0.4",
     "radix-vue": "^1.9.17",
     "tailwind-merge": "^3.5.0",
@@ -69,7 +69,18 @@
     "vue-tsc": "^3.2.5",
     "web-ext": "^10.1.0"
   },
+  "packageManager": "pnpm@11.1.2",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@openapitools/openapi-generator-cli",
+      "esbuild",
+      "spawn-sync",
+      "vue-demi"
+    ]
+  },
   "engines": {
-    "node": "^20.19.0 || >=22.12.0"
+    "node": ">=24.0.0",
+    "pnpm": ">=11.0.0"
   }
 }

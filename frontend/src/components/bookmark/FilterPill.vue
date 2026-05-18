@@ -2,7 +2,7 @@
 import { parsePropertyValue, type QueryToken } from '@/lib/searchQuery'
 import { useFolderStore } from '@/stores/folder'
 import { useTagStore } from '@/stores/tag'
-import { Box, Calendar, Folder, FolderTree, Hash, Minus, X } from 'lucide-vue-next'
+import { Box, Calendar, Folder, FolderTree, Hash, Minus, X } from '@lucide/vue'
 import { type Component, computed } from 'vue'
 
 const props = defineProps<{

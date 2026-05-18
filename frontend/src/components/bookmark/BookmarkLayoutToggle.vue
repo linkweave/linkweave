@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { LayoutGrid, LayoutList, Layers } from 'lucide-vue-next'
+import { LayoutGrid, LayoutList, Layers } from '@lucide/vue'
 import { ButtonCl } from '@/components/ui'
 import { useCollectionStore } from '@/stores/collection'
 import { useUiStore, type BookmarkLayout } from '@/stores/ui'

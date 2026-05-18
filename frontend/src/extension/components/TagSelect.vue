@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { TagJson } from '@/api/generated'
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { X, ChevronDown } from 'lucide-vue-next'
+import { X, ChevronDown } from '@lucide/vue'
 
 const props = defineProps<{
   tags: TagJson[]

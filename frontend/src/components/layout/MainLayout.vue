@@ -2,7 +2,7 @@
 import {ButtonCl} from '@/components/ui'
 import OfflineBanner from '@/components/ui/OfflineBanner.vue'
 import {cn} from '@/lib/utils'
-import {Menu, X} from 'lucide-vue-next'
+import {Menu, X} from '@lucide/vue'
 import {onMounted} from 'vue'
 import {ref} from 'vue'
 import SidebarCl from './SidebarCl.vue'

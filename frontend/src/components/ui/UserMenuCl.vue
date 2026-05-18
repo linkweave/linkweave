@@ -6,7 +6,7 @@ import {
 } from 'radix-vue'
 import DropdownMenuContentCl from '@/components/ui/DropdownMenuContentCl.vue'
 import DropdownMenuItemCl from '@/components/ui/DropdownMenuItemCl.vue'
-import { ChevronDown, LogOut, Settings, Trash2, Sparkles } from 'lucide-vue-next'
+import { ChevronDown, LogOut, Settings, Trash2, Sparkles } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
 import { useCollectionStore } from '@/stores/collection'

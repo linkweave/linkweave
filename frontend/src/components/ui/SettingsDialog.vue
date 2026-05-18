@@ -5,7 +5,7 @@ import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
 import { useUiStore, type Theme, type BookmarkLayout } from '@/stores/ui'
 import { downloadBlobDirectly, extractFilenameFromContentDispositionHeader } from '@/utils/download'
-import { Download, LayoutGrid, LayoutList, Monitor, Moon, Sun, Upload, Layers } from 'lucide-vue-next'
+import { Download, LayoutGrid, LayoutList, Monitor, Moon, Sun, Upload, Layers } from '@lucide/vue'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 

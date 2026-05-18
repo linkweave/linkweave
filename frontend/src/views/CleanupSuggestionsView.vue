@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ArrowLeft, Trash2, Sparkles, EyeOff, Folder as FolderIcon } from 'lucide-vue-next'
+import { ArrowLeft, Trash2, Sparkles, EyeOff, Folder as FolderIcon } from '@lucide/vue'
 import { MainLayout } from '@/components/layout'
-import { ButtonCl, ConfirmDialog } from '@/components/ui'
+import { ButtonCl, ConfirmDialog, SelectCl } from '@/components/ui'
 import { useCleanupSuggestionsStore } from '@/stores/cleanupSuggestions'
 import { useNotificationStore } from '@/stores/notification'
 import { useRoute } from 'vue-router'
@@ -88,10 +88,11 @@ function goBack() {
         </div>
 
         <div class="flex items-center gap-3">
-          <select
-            v-model="store.thresholdMonths"
-            class="rounded-md border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          <SelectCl
+            :model-value="store.thresholdMonths"
+            class="w-auto"
             :aria-label="$t('cleanupSuggestions.thresholdLabel')"
+            @update:model-value="(v) => (store.thresholdMonths = Number(v))"
           >
             <option
               v-for="m in store.thresholds"
@@ -100,7 +101,7 @@ function goBack() {
             >
               {{ formatRelativeMonths(m) }}
             </option>
-          </select>
+          </SelectCl>
 
           <ButtonCl
             variant="destructive"
