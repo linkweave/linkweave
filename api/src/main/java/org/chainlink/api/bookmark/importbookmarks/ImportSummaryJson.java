@@ -1,21 +1,14 @@
 package org.chainlink.api.bookmark.importbookmarks;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
-import org.jspecify.annotations.NonNull;
 
 @Getter
 @Setter
-@RequiredArgsConstructor
 @JaxDTO
 public class ImportSummaryJson {
-
-    @NotNull @NonNull
-    String importTag;
 
     @Schema(required = true)
     int foldersCreated;

@@ -157,6 +157,73 @@ class PropertyDefinitionResourceITest {
     }
 
     @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldDeleteDefinition_andCascadeRemoveValuesFromBookmarks() {
+        Collection collection = fixtureService.createTestCollection();
+        String collectionId = collection.getId().getUUID().toString();
+        PropertyDefinition def = fixtureService.persistPropertyDefinition(b -> b
+            .withCollection(collection)
+            .withName("Priority")
+            .withType(PropertyType.TEXT)
+            .withSortOrder(0)
+        );
+        String definitionId = def.getId().getUUID().toString();
+
+        // Two bookmarks both carry a value for this property.
+        for (int i = 0; i < 2; i++) {
+            String bookmarkId = RestAssured.given().contentType(ContentType.JSON)
+                .body("{\"collectionId\":\"%s\",\"title\":\"BM%d\",\"url\":\"https://example.com/%d\"}".formatted(collectionId, i, i))
+                .post("/bookmarks")
+                .then().statusCode(200)
+                .extract().path("id");
+            String body = """
+                {"propertyValues":[{"definitionId":"%s","valueText":"High"}]}
+                """.formatted(definitionId);
+            RestAssured.given().contentType(ContentType.JSON).body(body)
+                .put("/bookmarks/" + bookmarkId + "/properties")
+                .then().statusCode(200);
+        }
+
+        // Usage endpoint reflects the 2 affected bookmarks.
+        RestAssured.given()
+            .get("/property-definitions/" + definitionId + "/usage")
+            .then()
+            .statusCode(200)
+            .body("affectedBookmarks", equalTo(2));
+
+        // Delete succeeds despite values existing — previously this failed with an FK violation.
+        RestAssured.given()
+            .delete("/property-definitions/" + definitionId)
+            .then()
+            .statusCode(204);
+
+        RestAssured.given()
+            .queryParam("collectionId", collectionId)
+            .get("/property-definitions")
+            .then()
+            .statusCode(200)
+            .body("propertyDefinitions", hasSize(0));
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldReturnZeroUsage_whenNoBookmarksUseProperty() {
+        Collection collection = fixtureService.createTestCollection();
+        PropertyDefinition def = fixtureService.persistPropertyDefinition(b -> b
+            .withCollection(collection)
+            .withName("Unused")
+            .withType(PropertyType.TEXT)
+            .withSortOrder(0)
+        );
+
+        RestAssured.given()
+            .get("/property-definitions/" + def.getId().getUUID() + "/usage")
+            .then()
+            .statusCode(200)
+            .body("affectedBookmarks", equalTo(0));
+    }
+
+    @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn403_whenListingCollectionWithoutAccess() {
         RestAssured.given()

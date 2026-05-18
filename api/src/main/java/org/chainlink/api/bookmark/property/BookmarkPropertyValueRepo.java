@@ -38,6 +38,22 @@ public class BookmarkPropertyValueRepo extends BaseRepo<BookmarkPropertyValue> {
         }
     }
 
+    public long countByPropertyDefinition(@NonNull ID<PropertyDefinition> definitionId) {
+        QBookmarkPropertyValue pv = QBookmarkPropertyValue.bookmarkPropertyValue;
+        Long count = db.select(pv.count())
+            .from(pv)
+            .where(pv.propertyDefinition.id.eq(definitionId.getUUID()))
+            .fetchFirst();
+        return count == null ? 0L : count;
+    }
+
+    public void deleteByPropertyDefinition(@NonNull ID<PropertyDefinition> definitionId) {
+        QBookmarkPropertyValue pv = QBookmarkPropertyValue.bookmarkPropertyValue;
+        db.delete(pv)
+            .where(pv.propertyDefinition.id.eq(definitionId.getUUID()))
+            .execute();
+    }
+
     public void flush() {
         db.flush();
     }

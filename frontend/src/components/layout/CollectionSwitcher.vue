@@ -67,7 +67,7 @@ function goToManage() {
             :class="
               col.id === currentCollectionId
                 ? 'bg-primary/15 text-foreground'
-                : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                : 'text-muted-foreground hover:bg-popover-hover hover:text-popover-foreground'
             "
             @click="selectCollection(col.id!)"
           >
@@ -97,7 +97,7 @@ function goToManage() {
             :class="
               isCurrentDefault
                 ? 'text-muted-foreground/30 cursor-default'
-                : 'text-muted-foreground hover:bg-accent hover:text-foreground cursor-pointer'
+                : 'text-muted-foreground hover:bg-popover-hover hover:text-popover-foreground cursor-pointer'
             "
             :disabled="isCurrentDefault"
             @click="setAsDefault"
@@ -108,7 +108,7 @@ function goToManage() {
 
           <button
             data-testid="collection-manage-btn"
-            class="flex items-center gap-2 w-full px-2 py-1.5 rounded text-xs text-muted-foreground hover:bg-accent hover:text-foreground cursor-pointer transition-colors"
+            class="flex items-center gap-2 w-full px-2 py-1.5 rounded text-xs text-muted-foreground hover:bg-popover-hover hover:text-popover-foreground cursor-pointer transition-colors"
             @click="goToManage"
           >
             <Settings class="h-3.5 w-3.5 shrink-0" />

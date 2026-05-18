@@ -3,7 +3,20 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useFolderStore } from '@/stores/folder'
+import { useCollectionStore } from '@/stores/collection'
 import { useTagStore } from '@/stores/tag'
+
+function seedFolders(folders: Array<{ id: string; name: string; parentId?: string | null }>) {
+  const collectionStore = useCollectionStore()
+  // Minimal stand-in for CollectionInfoJson — selectFolder only reads `folders`.
+  collectionStore.collectionInfo = {
+    folders: folders.map(f => ({
+      id: f.id,
+      data: { name: f.name, parentId: f.parentId ?? null },
+    })),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any
+}
 
 describe('bookmark store – removeTokensWhere', () => {
   beforeEach(() => {
@@ -81,6 +94,36 @@ describe('folder store – selectFolder', () => {
     bookmarkStore.searchQuery = 'folder:work under:f-1'
     folderStore.selectFolder('f-2')
     expect(bookmarkStore.searchQuery).toBe('folder:work under:f-2')
+  })
+
+  it('uses the folder name when it is unique', () => {
+    seedFolders([
+      { id: 'f-1', name: 'Inbox' },
+      { id: 'f-2', name: 'Archive' },
+    ])
+    const bookmarkStore = useBookmarkStore()
+    const folderStore = useFolderStore()
+    folderStore.selectFolder('f-1')
+    expect(bookmarkStore.searchQuery).toBe('under:Inbox')
+  })
+
+  it('quotes the folder name when it contains whitespace', () => {
+    seedFolders([{ id: 'f-1', name: 'My Stuff' }])
+    const bookmarkStore = useBookmarkStore()
+    const folderStore = useFolderStore()
+    folderStore.selectFolder('f-1')
+    expect(bookmarkStore.searchQuery).toBe('under:"My Stuff"')
+  })
+
+  it('falls back to the folder id when the name is duplicated', () => {
+    seedFolders([
+      { id: 'f-prod', name: 'prod', parentId: 'svc-a' },
+      { id: 'f-prod-2', name: 'prod', parentId: 'svc-b' },
+    ])
+    const bookmarkStore = useBookmarkStore()
+    const folderStore = useFolderStore()
+    folderStore.selectFolder('f-prod')
+    expect(bookmarkStore.searchQuery).toBe('under:f-prod')
   })
 })
 

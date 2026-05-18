@@ -170,17 +170,37 @@ const onSubmit = handleSubmit(async (values) => {
 // --- Delete confirmation --------------------------------------------------
 const deletingDef = ref<PropertyDefinitionJson | null>(null)
 const showDeleteConfirm = ref(false)
+const deletingUsage = ref<number | null>(null)
 
-function startDelete(def: PropertyDefinitionJson) {
+const deleteConfirmMessage = computed(() => {
+  const name = deletingDef.value?.data.name ?? ''
+  const count = deletingUsage.value
+  if (count !== null && count > 0) {
+    return t('property.deleteConfirmWithUsage', { name, count }, count)
+  }
+  return t('property.deleteConfirm', { name })
+})
+
+async function startDelete(def: PropertyDefinitionJson) {
   deletingDef.value = def
+  deletingUsage.value = null
   showDeleteConfirm.value = true
+  try {
+    deletingUsage.value = await propertyStore.fetchUsage(def.id)
+  } catch {
+    // Non-blocking — the dialog falls back to the generic message.
+  }
 }
 
 async function confirmDelete() {
-  if (!deletingDef.value) return
+  // Capture the id up-front: ConfirmDialog's handleConfirm synchronously emits
+  // both `confirmed` and `update:open(false)`, and the latter resets
+  // `deletingDef` before our awaited delete resolves.
+  const id = deletingDef.value?.id
+  if (!id) return
   try {
-    await propertyStore.deleteDefinition(deletingDef.value.id)
-    if (editingId.value === deletingDef.value.id) cancelForm()
+    await propertyStore.deleteDefinition(id)
+    if (editingId.value === id) cancelForm()
   } catch (err) {
     void notification.handleApiError(err, t('property.deleteError'))
   } finally {
@@ -524,7 +544,7 @@ function optionsPreview(allowedValues: string | undefined): string {
     <ConfirmDialog
       v-model:open="showDeleteConfirm"
       :title="t('property.deleteTitle')"
-      :message="t('property.deleteConfirm', { name: deletingDef?.data.name ?? '' })"
+      :message="deleteConfirmMessage"
       @confirmed="confirmDelete"
       @update:open="
         (value: unknown) => {

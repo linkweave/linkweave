@@ -55,11 +55,17 @@ export const usePropertyStore = defineStore('property', () => {
     patchDefinitions(list => list.filter(d => d.id !== definitionId))
   }
 
+  async function fetchUsage(definitionId: string): Promise<number> {
+    const usage = await propertyDefinitionApi.apiPropertyDefinitionsDefinitionIdUsageGet({ definitionId })
+    return usage.affectedBookmarks ?? 0
+  }
+
   return {
     definitions,
     loading,
     createDefinition,
     updateDefinition,
     deleteDefinition,
+    fetchUsage,
   }
 })

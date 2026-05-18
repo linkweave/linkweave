@@ -14,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
 
 @QuarkusTest
 class BookmarkRoundTripITest {
@@ -42,8 +41,7 @@ class BookmarkRoundTripITest {
             .then()
             .statusCode(200)
             .body("foldersCreated", equalTo(2))
-            .body("bookmarksCreated", equalTo(2))
-            .body("importTag", notNullValue());
+            .body("bookmarksCreated", equalTo(2));
 
         String exportedHtml = RestAssured.given()
             .accept("text/html")
@@ -75,8 +73,7 @@ class BookmarkRoundTripITest {
             .then()
             .statusCode(200)
             .body("foldersCreated", equalTo(1))
-            .body("bookmarksCreated", equalTo(3))
-            .body("importTag", notNullValue());
+            .body("bookmarksCreated", equalTo(3));
 
         String exportedHtml = RestAssured.given()
             .accept("text/html")

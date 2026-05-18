@@ -21,12 +21,6 @@ import { mapValues } from '../runtime';
 export interface ImportSummaryJson {
     /**
      * 
-     * @type {string}
-     * @memberof ImportSummaryJson
-     */
-    importTag: string;
-    /**
-     * 
      * @type {number}
      * @memberof ImportSummaryJson
      */
@@ -49,7 +43,6 @@ export interface ImportSummaryJson {
  * Check if a given object implements the ImportSummaryJson interface.
  */
 export function instanceOfImportSummaryJson(value: object): value is ImportSummaryJson {
-    if (!('importTag' in value) || value['importTag'] === undefined) return false;
     if (!('foldersCreated' in value) || value['foldersCreated'] === undefined) return false;
     if (!('bookmarksCreated' in value) || value['bookmarksCreated'] === undefined) return false;
     if (!('bookmarksSkipped' in value) || value['bookmarksSkipped'] === undefined) return false;
@@ -66,7 +59,6 @@ export function ImportSummaryJsonFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'importTag': json['importTag'],
         'foldersCreated': json['foldersCreated'],
         'bookmarksCreated': json['bookmarksCreated'],
         'bookmarksSkipped': json['bookmarksSkipped'],
@@ -84,7 +76,6 @@ export function ImportSummaryJsonToJSONTyped(value?: ImportSummaryJson | null, i
 
     return {
         
-        'importTag': value['importTag'],
         'foldersCreated': value['foldersCreated'],
         'bookmarksCreated': value['bookmarksCreated'],
         'bookmarksSkipped': value['bookmarksSkipped'],

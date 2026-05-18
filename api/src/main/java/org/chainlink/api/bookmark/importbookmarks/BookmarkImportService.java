@@ -6,24 +6,24 @@ import java.net.URL;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 import ch.dvbern.dvbstarter.clock.AppClock;
 import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.Bookmark;
 import org.chainlink.api.bookmark.BookmarkRepo;
-import org.chainlink.api.bookmark.Tag;
-import org.chainlink.api.bookmark.TagColorPalette;
-import org.chainlink.api.bookmark.TagRepo;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.bookmark.folder.FolderRepo;
+import org.chainlink.api.bookmark.property.BookmarkPropertyValue;
+import org.chainlink.api.bookmark.property.BookmarkPropertyValueRepo;
+import org.chainlink.api.bookmark.property.PropertyDefinition;
+import org.chainlink.api.bookmark.property.PropertyDefinitionRepo;
+import org.chainlink.api.bookmark.property.PropertyType;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.collection.CollectionRepo;
+import org.chainlink.api.shared.config.ConfigService;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -32,25 +32,35 @@ import org.jspecify.annotations.Nullable;
 @RequiredArgsConstructor
 public class BookmarkImportService {
 
+    static final String IMPORT_SOURCE_PROPERTY_NAME = "import-source";
+
     private final BookmarkRepo bookmarkRepo;
     private final CollectionRepo collectionRepo;
     private final FolderRepo folderRepo;
-    private final TagRepo tagRepo;
+    private final PropertyDefinitionRepo propertyDefinitionRepo;
+    private final BookmarkPropertyValueRepo bookmarkPropertyValueRepo;
+    private final ConfigService configService;
     private final AppClock appClock;
 
     @NonNull
-    public ImportSummaryJson importBookmarks(@NonNull ID<Collection> collectionId, @NonNull InputStream inputStream) {
+    public ImportSummaryJson importBookmarks(
+        @NonNull ID<Collection> collectionId,
+        @NonNull InputStream inputStream,
+        @Nullable String fileName
+    ) {
         Collection collection = collectionRepo.referenceById(collectionId);
 
         NetscapeBookmarkParser parser = new NetscapeBookmarkParser();
         ParsedImportResult importDTO = parser.parse(inputStream);
 
-        Tag importTag = createImportTag(collection);
+        ImportSummaryJson summary = new ImportSummaryJson();
 
-        ImportSummaryJson summary = new ImportSummaryJson(importTag.getName());
+        PropertyDefinition importSourceDef = configService.isBookmarkPropertiesEnabled()
+            ? findOrCreateImportSourceDefinition(collection)
+            : null;
 
         for (ParsedBookmark rootBookmark : importDTO.rootBookmarks()) {
-            if (createBookmark(rootBookmark, collection, null, importTag)) {
+            if (createBookmark(rootBookmark, collection, null, importSourceDef, fileName)) {
                 summary.incrementBookmarksCreated();
             } else {
                 summary.incrementBookmarksSkipped();
@@ -58,46 +68,49 @@ public class BookmarkImportService {
         }
 
         for (ParsedFolder parsedFolder : importDTO.rootFolders()) {
-            importFolderRecursive(parsedFolder, collection, null, importTag, summary);
+            importFolderRecursive(parsedFolder, collection, null, summary, importSourceDef, fileName);
         }
 
         return summary;
     }
 
-    private Tag createImportTag(@NonNull Collection collection) {
-        String datePart = appClock.getToday().format(DateTimeFormatter.ISO_LOCAL_DATE);
-        String prefix = "imported=" + datePart + "_";
-
-        int existingCount = tagRepo.findByCollection(collection.getId()).size();
-        long runNumber = tagRepo.findByCollection(collection.getId()).stream()
-            .filter(t -> t.getName().startsWith(prefix))
-            .count() + 1;
-
-        String tagName = prefix + runNumber;
-
-        Tag tag = new Tag(
+    /**
+     * Finds an existing "import-source" TEXT property definition for the collection,
+     * or creates one if none exists yet.
+     */
+    private PropertyDefinition findOrCreateImportSourceDefinition(@NonNull Collection collection) {
+        var existing = propertyDefinitionRepo.findByCollection(collection.getId()).stream()
+            .filter(d -> IMPORT_SOURCE_PROPERTY_NAME.equals(d.getName()))
+            .findFirst();
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        int sortOrder = propertyDefinitionRepo.findByCollection(collection.getId()).size();
+        PropertyDefinition def = new PropertyDefinition(
             collection,
-            tagName,
-            TagColorPalette.autoAssignColor(existingCount),
-            Collections.emptySet()
+            IMPORT_SOURCE_PROPERTY_NAME,
+            PropertyType.TEXT,
+            null,
+            sortOrder
         );
-        tagRepo.persistAndFlush(tag);
-        return tag;
+        propertyDefinitionRepo.persistAndFlush(def);
+        return def;
     }
 
     private void importFolderRecursive(
         @NonNull ParsedFolder parsedFolder,
         @NonNull Collection collection,
         @Nullable Folder parent,
-        @NonNull Tag importTag,
-        @NonNull ImportSummaryJson summary
+        @NonNull ImportSummaryJson summary,
+        @Nullable PropertyDefinition importSourceDef,
+        @Nullable String fileName
     ) {
         Folder folder = new Folder(collection, parent, parsedFolder.getName(), null, null);
         folderRepo.persist(folder);
         summary.incrementFoldersCreated();
 
         for (ParsedBookmark parsedBookmark : parsedFolder.getBookmarks()) {
-            if (createBookmark(parsedBookmark, collection, folder, importTag)) {
+            if (createBookmark(parsedBookmark, collection, folder, importSourceDef, fileName)) {
                 summary.incrementBookmarksCreated();
             } else {
                 summary.incrementBookmarksSkipped();
@@ -105,7 +118,7 @@ public class BookmarkImportService {
         }
 
         for (ParsedFolder child : parsedFolder.getFolders()) {
-            importFolderRecursive(child, collection, folder, importTag, summary);
+            importFolderRecursive(child, collection, folder, summary, importSourceDef, fileName);
         }
     }
 
@@ -116,7 +129,8 @@ public class BookmarkImportService {
         @NonNull ParsedBookmark parsed,
         @NonNull Collection collection,
         @Nullable Folder folder,
-        @NonNull Tag importTag
+        @Nullable PropertyDefinition importSourceDef,
+        @Nullable String fileName
     ) {
         Optional<URL> url = parseUrl(parsed.getUrl());
         if (url.isEmpty()) {
@@ -128,7 +142,7 @@ public class BookmarkImportService {
             parsed.getTitle(),
             url.get(),
             parsed.getDescription(),
-            new HashSet<>(Set.of(importTag)),
+            new HashSet<>(),
             new HashSet<>(),
             0,
             null,
@@ -142,6 +156,18 @@ public class BookmarkImportService {
             bookmark.setTimestampErstellt(importedAddedAt);
         }
         bookmarkRepo.persist(bookmark);
+
+        if (importSourceDef != null && fileName != null) {
+            BookmarkPropertyValue value = new BookmarkPropertyValue(
+                bookmark,
+                importSourceDef,
+                fileName,
+                null,
+                null
+            );
+            bookmarkPropertyValueRepo.persist(value);
+        }
+
         return true;
     }
 

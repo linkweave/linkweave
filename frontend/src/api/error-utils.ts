@@ -61,5 +61,8 @@ export async function extractErrorSummary(error: unknown, fallback: string): Pro
   if (isResponseError(error)) {
     return extractResponseErrorSummary(error.response, fallback)
   }
+  // Unknown error shape — log it so it shows up in devtools instead of being
+  // silently swallowed behind a generic toast.
+  console.error(error)
   return fallback
 }

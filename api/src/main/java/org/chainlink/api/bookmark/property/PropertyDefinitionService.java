@@ -21,6 +21,7 @@ public class PropertyDefinitionService {
     private static final String CONSTRAINT_COLUMNS = "PropertyDefinition.name, PropertyDefinition.collection_id";
 
     private final PropertyDefinitionRepo propertyDefinitionRepo;
+    private final BookmarkPropertyValueRepo bookmarkPropertyValueRepo;
     private final CollectionRepo collectionRepo;
 
     @NonNull
@@ -59,7 +60,12 @@ public class PropertyDefinitionService {
     }
 
     public void remove(@NonNull ID<PropertyDefinition> id) {
+        bookmarkPropertyValueRepo.deleteByPropertyDefinition(id);
         propertyDefinitionRepo.remove(id);
+    }
+
+    public long countUsage(@NonNull ID<PropertyDefinition> id) {
+        return bookmarkPropertyValueRepo.countByPropertyDefinition(id);
     }
 
     @NonNull
