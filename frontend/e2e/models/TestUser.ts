@@ -34,16 +34,18 @@ export async function registerTestUser(
 
   let lastStatus = 0
   let lastBody = ''
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 5; attempt++) {
     const resp = await request.post(REGISTER_URL, {
       data: { email, password, vorname: 'E2E', nachname: safeSlug },
     })
     lastStatus = resp.status()
     if (resp.ok()) return { email, password }
     lastBody = await resp.text().catch(() => '')
-    // Don't retry 4xx (validation / conflict) — only transient server errors.
-    if (lastStatus < 500) break
-    await new Promise((r) => setTimeout(r, 500))
+    // 401 on a public registration endpoint is always transient (SQLite write
+    // contention under parallel load). 4xx other than 401 are real errors
+    // (conflict, validation) and must not be retried.
+    if (lastStatus !== 401 && lastStatus < 500) break
+    await new Promise((r) => setTimeout(r, 800 * (attempt + 1)))
   }
   throw new Error(`registerTestUser failed: ${lastStatus} ${lastBody}`)
 }
@@ -59,7 +61,7 @@ export async function registerTestUser(
 export async function loginViaApi(request: APIRequestContext, user: TestUser): Promise<void> {
   let lastStatus = 0
   let lastBody = ''
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 5; attempt++) {
     const resp = await request.post(LOGIN_URL, {
       form: { j_username: user.email, j_password: user.password },
       maxRedirects: 0,
@@ -69,8 +71,10 @@ export async function loginViaApi(request: APIRequestContext, user: TestUser): P
     // 200 also counts (some configs).
     if (lastStatus === 302 || lastStatus === 200) return
     lastBody = await resp.text().catch(() => '')
-    if (lastStatus < 500) break
-    await new Promise((r) => setTimeout(r, 500))
+    // 401 can be a transient SQLite-contention response under heavy parallel
+    // load — retry with back-off. Other 4xx are real errors and must not retry.
+    if (lastStatus !== 401 && lastStatus < 500) break
+    await new Promise((r) => setTimeout(r, 800 * (attempt + 1)))
   }
   throw new Error(`loginViaApi failed: ${lastStatus} ${lastBody}`)
 }
@@ -149,6 +153,8 @@ export async function deleteTestUserCleanup(
   try {
     await loginViaApi(ctx.request, user)
     await deleteTestUser(ctx.request)
+  } catch {
+    // Best-effort: swallow errors so afterAll never masks the real test failure.
   } finally {
     await ctx.close()
   }

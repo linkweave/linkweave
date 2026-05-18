@@ -233,8 +233,8 @@ test.describe('Card + filter interactions', () => {
     const card = cardByTitle(page, bm.workRoot)
     await card.locator('[data-testid="card-folder-pill"]').click()
 
-    // Pill rendered with the folder name (resolved from the id stored in the token).
-    const underPill = filterPill(page, { kind: 'operator', key: 'under', value: workId })
+    // Pill stores the folder name directly (since "Work" is unique in this collection).
+    const underPill = filterPill(page, { kind: 'operator', key: 'under', value: 'Work' })
     await expect(underPill).toBeVisible()
     await expect(underPill).toContainText('Work')
 

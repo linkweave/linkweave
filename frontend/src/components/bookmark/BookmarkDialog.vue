@@ -419,7 +419,7 @@ const onSubmit = handleSubmit(async (values) => {
             :key="def.id"
             :prop-def="def"
             :model-value="propertyValuesByDefinitionId.get(def.id)"
-            @update:model-value="(value) => setPropertyValue(def.id, value)"
+            @update:model-value="(value: PropertyFormValue) => setPropertyValue(def.id, value)"
             @clear="setPropertyValue(def.id, undefined)"
           />
         </div>
