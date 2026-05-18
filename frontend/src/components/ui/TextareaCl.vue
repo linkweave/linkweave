@@ -1,31 +1,33 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const props = defineProps<{ modelValue?: string | number | null }>()
+// Mirror of InputCl for multi-line text. Same elevation (`bg-input`), same
+// focus ring, same border treatment; `resize-none` by default because forms
+// inside dialogs shouldn't grow user-resizable. Caller can override `rows`
+// (default 3) and any attribute via $attrs.
+
+const props = defineProps<{ modelValue?: string | null }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
 defineOptions({ inheritAttrs: false })
 
-// Use `bg-input` (the dedicated input shade) rather than `bg-transparent` so
-// the field reads consistently regardless of the surrounding surface — in
-// particular, on top of `bg-card` dialogs the input now sits a step brighter,
-// matching the elevation pattern in the design system.
 const BASE =
-  'flex h-9 w-full rounded-md border border-input bg-input px-3 py-1 text-sm shadow-sm ' +
+  'flex w-full rounded-md border border-input bg-input px-3 py-1 text-sm shadow-sm ' +
   'transition-colors placeholder:text-muted-foreground ' +
   'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ' +
-  'disabled:cursor-not-allowed disabled:opacity-50'
+  'disabled:cursor-not-allowed disabled:opacity-50 resize-none'
 
 const value = computed(() => props.modelValue ?? '')
 
 function onInput(event: Event) {
-  emit('update:modelValue', (event.target as HTMLInputElement).value)
+  emit('update:modelValue', (event.target as HTMLTextAreaElement).value)
 }
 </script>
 
 <template>
-  <input
+  <textarea
     :value="value"
+    :rows="3"
     :class="[BASE, $attrs.class as string | undefined]"
     v-bind="{ ...$attrs, class: undefined }"
     @input="onInput"

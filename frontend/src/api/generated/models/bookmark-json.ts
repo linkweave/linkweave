@@ -20,6 +20,13 @@ import {
     EntityInfoJsonToJSON,
     EntityInfoJsonToJSONTyped,
 } from './entity-info-json';
+import type { BookmarkPropertyValueJson } from './bookmark-property-value-json';
+import {
+    BookmarkPropertyValueJsonFromJSON,
+    BookmarkPropertyValueJsonFromJSONTyped,
+    BookmarkPropertyValueJsonToJSON,
+    BookmarkPropertyValueJsonToJSONTyped,
+} from './bookmark-property-value-json';
 import type { BookmarkSaveJson } from './bookmark-save-json';
 import {
     BookmarkSaveJsonFromJSON,
@@ -70,6 +77,12 @@ export interface BookmarkJson {
      * @memberof BookmarkJson
      */
     deletedAt?: Date;
+    /**
+     * 
+     * @type {Array<BookmarkPropertyValueJson>}
+     * @memberof BookmarkJson
+     */
+    propertyValues: Array<BookmarkPropertyValueJson>;
 }
 
 /**
@@ -80,6 +93,7 @@ export function instanceOfBookmarkJson(value: object): value is BookmarkJson {
     if (!('entityInfo' in value) || value['entityInfo'] === undefined) return false;
     if (!('data' in value) || value['data'] === undefined) return false;
     if (!('clickCount' in value) || value['clickCount'] === undefined) return false;
+    if (!('propertyValues' in value) || value['propertyValues'] === undefined) return false;
     return true;
 }
 
@@ -99,6 +113,7 @@ export function BookmarkJsonFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'clickCount': json['clickCount'],
         'lastClickedAt': json['lastClickedAt'] == null ? undefined : (new Date(json['lastClickedAt'])),
         'deletedAt': json['deletedAt'] == null ? undefined : (new Date(json['deletedAt'])),
+        'propertyValues': ((json['propertyValues'] as Array<any>).map(BookmarkPropertyValueJsonFromJSON)),
     };
 }
 
@@ -119,6 +134,7 @@ export function BookmarkJsonToJSONTyped(value?: BookmarkJson | null, ignoreDiscr
         'clickCount': value['clickCount'],
         'lastClickedAt': value['lastClickedAt'] == null ? value['lastClickedAt'] : value['lastClickedAt'].toISOString(),
         'deletedAt': value['deletedAt'] == null ? value['deletedAt'] : value['deletedAt'].toISOString(),
+        'propertyValues': ((value['propertyValues'] as Array<any>).map(BookmarkPropertyValueJsonToJSON)),
     };
 }
 

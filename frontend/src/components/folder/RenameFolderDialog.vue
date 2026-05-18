@@ -92,7 +92,7 @@ const onSubmit = handleSubmit(async (values) => {
   <DialogCl :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('folder.renameTitle') }}</template>
 
-    <form @submit.prevent="onSubmit" class="space-y-4">
+    <form id="rename-folder-form" @submit.prevent="onSubmit" class="space-y-4">
       <FormFieldCl
         :label="t('folder.name')"
         for-id="rename-folder-name"
@@ -127,12 +127,15 @@ const onSubmit = handleSubmit(async (values) => {
           @update:model-value="color = $event"
         />
       </FormFieldCl>
+    </form>
 
+    <template #footer>
       <DialogFooterCl
+        submit-form="rename-folder-form"
         :submit-label="t('common.save')"
         :submitting="isSubmitting"
         @cancel="emit('update:open', false)"
       />
-    </form>
+    </template>
   </DialogCl>
 </template>

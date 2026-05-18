@@ -7,6 +7,52 @@
     "title": "Chainlink",
     "version": "Version"
   },
+  "collectionSettings": {
+    "title": "Sammlungseinstellungen",
+    "tabDisplay": "Anzeige",
+    "tabProperties": "Eigenschaften",
+    "sectionLayout": "Layout",
+    "sectionLayoutHint": "Wie Lesezeichen in dieser Sammlung angeordnet sind. Jede Sammlung merkt sich die eigene Wahl.",
+    "sectionProperties": "Eigenschaften",
+    "sectionPropertiesHint": "Wo definierte Eigenschaften in der UI erscheinen. Auf diesem Gerät gespeichert.",
+    "localPersistedHint": "Diese Einstellungen werden lokal auf diesem Gerät gespeichert.",
+    "openSettings": "Sammlungseinstellungen"
+  },
+  "property": {
+    "badgesToggle": "Badges auf Karten anzeigen",
+    "badgesToggleDesc": "Eigenschaftswerte unterhalb der Tags jedes Lesezeichens anzeigen",
+    "sidebarToggle": "In Seitenleiste anzeigen",
+    "sidebarToggleDesc": "Definierte Eigenschaften in der linken Seitenleiste zum schnellen Filtern auflisten",
+    "manageSectionHint": "Verwende property:name=wert in der Suche zum Filtern oder klicke auf ein Badge auf einer Karte.",
+    "manageSectionHintWithSyntax": "Benutzerdefinierte Felder, die auf jedem Lesezeichen in dieser Sammlung verfügbar sind. Verwende {syntax} in der Suche zum Filtern oder klicke auf ein Badge auf einer Karte.",
+    "noDefinitions": "Noch keine Eigenschaften — füge unten eine hinzu.",
+    "addProperty": "Eigenschaft hinzufügen",
+    "newProperty": "Neue Eigenschaft",
+    "sectionHeading": "Eigenschaften",
+    "clearValue": "Zurücksetzen",
+    "notSet": "— nicht gesetzt —",
+    "noDefinitionsInline": "Noch keine Eigenschaften definiert — öffne die Sammlungseinstellungen, um welche hinzuzufügen.",
+    "editProperty": "Eigenschaft bearbeiten",
+    "saveChanges": "Änderungen speichern",
+    "fieldName": "Name",
+    "fieldType": "Typ",
+    "fieldOptions": "Optionen",
+    "fieldOptionsHint": "(kommagetrennt)",
+    "optionsPlaceholder": "Entwurf, Prüfung, Veröffentlicht",
+    "namePlaceholder": "z.B. status, prioritaet, faellig…",
+    "errorNameRequired": "Name ist erforderlich.",
+    "errorNameFormat": "Nur Buchstaben, Ziffern, Unterstrich oder Bindestrich erlaubt — keine Leerzeichen.",
+    "saveError": "Eigenschaft konnte nicht gespeichert werden.",
+    "deleteTitle": "Eigenschaft löschen?",
+    "deleteConfirm": "Eigenschaft \"{name}\" wirklich löschen? Bestehende Werte auf Lesezeichen werden entfernt.",
+    "deleteError": "Eigenschaft konnte nicht gelöscht werden.",
+    "typeText": "Text",
+    "typeNumber": "Zahl",
+    "typeBoolean": "Ja/Nein",
+    "typeSelect": "Auswahl",
+    "typeMultiSelect": "Mehrfachauswahl",
+    "typeDate": "Datum"
+  },
   "common": {
     "save": "Speichern",
     "cancel": "Abbrechen",
@@ -19,7 +65,10 @@
     "undo": "Rückgängig",
     "reset": "Zurücksetzen",
     "back": "Zurück",
-    "close": "Schließen"
+    "close": "Schließen",
+    "done": "Fertig",
+    "yes": "Ja",
+    "no": "Nein"
   },
   "dnd": {
     "bookmarkMoved": "Lesezeichen verschoben.",
@@ -86,6 +135,7 @@
     "bookmarks": "Lesezeichen",
     "allBookmarks": "{name}",
     "tags": "Tags",
+    "properties": "Eigenschaften",
     "newFolder": "Neuer Ordner"
   },
   "collectionManage": {

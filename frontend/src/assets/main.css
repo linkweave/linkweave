@@ -26,6 +26,10 @@
   --color-border: #e5e7eb;
   --color-input: #e5e7eb;
   --color-ring: #2563eb;
+  /* Accent color for UC-067 properties (sidebar icon, filter-pill icon,
+     active prop-chip border/bg). Darker shade in light mode to keep contrast
+     against the secondary background; the dark theme uses violet-400. */
+  --color-property: #7c3aed;
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.5rem;
@@ -57,49 +61,59 @@
   --color-border: #363d49;
   --color-input: #252a32;
   --color-ring: #3b82f6;
+  --color-property: #a78bfa;
 }
 
-* {
-  border-color: var(--color-border);
-}
+/* Everything below lives in `@layer base` so Tailwind utilities (which live in
+   `@layer utilities`) can override these defaults. Un-layered rules form an
+   implicit top layer that outranks every layered utility regardless of
+   specificity — see the cascade-layers spec — so a stray un-layered `*` or
+   `body` rule silently breaks utility overrides. Keep new global rules inside
+   this block. CSS custom properties (the `@theme` / `.dark` blocks above) are
+   intentionally un-layered: they don't participate in the same cascade
+   resolution and are conventionally declared at the top level. */
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
 
-::placeholder {
-  opacity: 0.55;
-}
+  ::placeholder {
+    opacity: 0.55;
+  }
 
-body {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-sans), serif;
-  color-scheme: light;
-}
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans), serif;
+    color-scheme: light;
+  }
 
-.dark body {
-  color-scheme: dark;
-}
+  .dark body {
+    color-scheme: dark;
+  }
 
-/* Custom Scrollbar Styles */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border) transparent;
-}
+  /* Custom scrollbar styles */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
 
-/* For Chrome, Safari and Edge */
-*::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
 
-*::-webkit-scrollbar-track {
-  background: transparent;
-}
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-*::-webkit-scrollbar-thumb {
-  background-color: var(--color-border);
-  border-radius: 20px;
-  border: transparent;
-}
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--color-border);
+    border-radius: 20px;
+    border: transparent;
+  }
 
-*::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-muted-foreground);
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-muted-foreground);
+  }
 }

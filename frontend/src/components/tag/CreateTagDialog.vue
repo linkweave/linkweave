@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n'
+import { DialogCl, DialogFooterCl, FormFieldCl, InputCl } from '@/components/ui'
+import { useFormDialog } from '@/composables/useFormDialog'
+import { tagSaveSchema } from '@/schemas/tag'
+import { useNotificationStore } from '@/stores/notification'
+import { useTagStore } from '@/stores/tag'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
-import { DialogCl, DialogFooterCl, FormFieldCl, InputCl } from '@/components/ui'
-import { useTagStore } from '@/stores/tag'
-import { useNotificationStore } from '@/stores/notification'
-import { tagSaveSchema } from '@/schemas/tag'
-import { useFormDialog } from '@/composables/useFormDialog'
 import { toRef } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const tagStore = useTagStore()
@@ -51,7 +51,7 @@ const onSubmit = handleSubmit(async (values) => {
   <DialogCl :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('tag.createTitle') }}</template>
 
-    <form @submit.prevent="onSubmit" class="space-y-4">
+    <form id="create-tag-form" @submit.prevent="onSubmit" class="space-y-4">
       <FormFieldCl :label="t('tag.name')" for-id="create-tag-name" :error="errors.name" required>
         <InputCl
           id="create-tag-name"
@@ -63,13 +63,16 @@ const onSubmit = handleSubmit(async (values) => {
           :placeholder="t('tag.namePlaceholder')"
         />
       </FormFieldCl>
+    </form>
 
+    <template #footer>
       <DialogFooterCl
+        submit-form="create-tag-form"
         :submit-label="t('common.create')"
         :submitting="isSubmitting"
         submit-testid="create-tag-submit"
         @cancel="emit('update:open', false)"
       />
-    </form>
+    </template>
   </DialogCl>
 </template>

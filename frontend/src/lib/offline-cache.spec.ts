@@ -32,6 +32,7 @@ const fakeCollectionInfo: CollectionInfoJson = {
   tags: [],
   folders: [],
   autoTagRules: [],
+  propertyDefinitions: [],
 }
 
 beforeEach(async () => {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DialogCl, ButtonCl } from '@/components/ui'
+import { ButtonCl, DialogCl, DialogFooterCl } from '@/components/ui'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -35,18 +35,20 @@ function handleConfirm() {
 
     <p class="text-sm text-muted-foreground">{{ message }}</p>
 
-    <div class="flex justify-end gap-2 mt-4">
-      <ButtonCl type="button" variant="outline" @click="emit('update:open', false)">
-        {{ t('common.cancel') }}
-      </ButtonCl>
-      <ButtonCl
-        type="button"
-        data-testid="confirm-dialog-submit"
-        :variant="destructive ? 'destructive' : 'default'"
-        @click="handleConfirm"
-      >
-        {{ confirmLabel || t('common.delete') }}
-      </ButtonCl>
-    </div>
+    <template #footer>
+      <DialogFooterCl>
+        <ButtonCl type="button" variant="outline" @click="emit('update:open', false)">
+          {{ t('common.cancel') }}
+        </ButtonCl>
+        <ButtonCl
+          type="button"
+          data-testid="confirm-dialog-submit"
+          :variant="destructive ? 'destructive' : 'default'"
+          @click="handleConfirm"
+        >
+          {{ confirmLabel || t('common.delete') }}
+        </ButtonCl>
+      </DialogFooterCl>
+    </template>
   </DialogCl>
 </template>

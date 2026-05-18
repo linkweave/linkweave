@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { toTypedSchema } from '@vee-validate/zod'
-import { useForm } from 'vee-validate'
+import { config } from '@/api'
+import { CollectionResourceApi } from '@/api/generated'
 import { DialogCl, DialogFooterCl, FormFieldCl, InputCl } from '@/components/ui'
+import { useFormDialog } from '@/composables/useFormDialog'
+import { collectionUpdateSchema } from '@/schemas/collection'
 import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
-import { collectionUpdateSchema } from '@/schemas/collection'
-import { useFormDialog } from '@/composables/useFormDialog'
+import { toTypedSchema } from '@vee-validate/zod'
+import { useForm } from 'vee-validate'
 import { toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { CollectionResourceApi } from '@/api/generated'
-import { config } from '@/api'
 
 const props = defineProps<{
   open: boolean
@@ -66,8 +66,13 @@ const onSubmit = handleSubmit(async (values) => {
 <template>
   <DialogCl :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('collectionManage.editTitle') }}</template>
-    <form @submit.prevent="onSubmit" class="space-y-4">
-      <FormFieldCl :label="t('collectionManage.name')" for-id="edit-collection-name" :error="errors.name" required>
+    <form id="edit-collection-form" @submit.prevent="onSubmit" class="space-y-4">
+      <FormFieldCl
+        :label="t('collectionManage.name')"
+        for-id="edit-collection-name"
+        :error="errors.name"
+        required
+      >
         <InputCl
           id="edit-collection-name"
           v-model="name"
@@ -94,14 +99,20 @@ const onSubmit = handleSubmit(async (values) => {
           :placeholder="t('collectionManage.faviconAllowlistPlaceholder')"
           class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
-        <p class="text-xs text-muted-foreground mt-1">{{ t('collectionManage.faviconAllowlistHelp') }}</p>
+        <p class="text-xs text-muted-foreground mt-1">
+          {{ t('collectionManage.faviconAllowlistHelp') }}
+        </p>
       </FormFieldCl>
+    </form>
+
+    <template #footer>
       <DialogFooterCl
+        submit-form="edit-collection-form"
         :submit-label="t('common.save')"
         :submitting="isSubmitting"
         submit-testid="collection-edit-submit-btn"
         @cancel="emit('update:open', false)"
       />
-    </form>
+    </template>
   </DialogCl>
 </template>

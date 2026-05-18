@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { toTypedSchema } from '@vee-validate/zod'
-import { useForm } from 'vee-validate'
 import { DialogCl, DialogFooterCl, FormFieldCl, InputCl } from '@/components/ui'
+import { useFormDialog } from '@/composables/useFormDialog'
+import { collectionDeleteSchema } from '@/schemas/collection'
 import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
-import { collectionDeleteSchema } from '@/schemas/collection'
-import { useFormDialog } from '@/composables/useFormDialog'
-import { toRef, computed } from 'vue'
+import { toTypedSchema } from '@vee-validate/zod'
+import { useForm } from 'vee-validate'
+import { computed, toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
@@ -49,7 +49,7 @@ const onSubmit = handleSubmit(async () => {
 <template>
   <DialogCl :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('collectionManage.deleteTitle') }}</template>
-    <form class="space-y-4" @submit.prevent="onSubmit">
+    <form id="delete-collection-form" class="space-y-4" @submit.prevent="onSubmit">
       <p class="text-sm text-muted-foreground">{{ t('collectionManage.deleteConfirm') }}</p>
       <FormFieldCl
         :label="t('collectionManage.typeToConfirm', { name: collectionName })"
@@ -65,7 +65,11 @@ const onSubmit = handleSubmit(async () => {
           :placeholder="collectionName"
         />
       </FormFieldCl>
+    </form>
+
+    <template #footer>
       <DialogFooterCl
+        submit-form="delete-collection-form"
         :submit-label="t('common.delete')"
         :submitting="isSubmitting"
         :submit-disabled="!canDelete"
@@ -73,6 +77,6 @@ const onSubmit = handleSubmit(async () => {
         submit-testid="collection-delete-submit-btn"
         @cancel="emit('update:open', false)"
       />
-    </form>
+    </template>
   </DialogCl>
 </template>

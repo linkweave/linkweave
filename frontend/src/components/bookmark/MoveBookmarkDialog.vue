@@ -65,7 +65,7 @@ const onSubmit = handleSubmit(async (values) => {
   <DialogCl :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('bookmark.moveToFolder') }}</template>
 
-    <form @submit.prevent="onSubmit" class="space-y-4">
+    <form id="move-bookmark-form" @submit.prevent="onSubmit" class="space-y-4">
       <FormFieldCl :label="t('bookmark.folder')" for-id="move-bookmark-folder">
         <FolderSelectCl
           id="move-bookmark-folder"
@@ -75,12 +75,15 @@ const onSubmit = handleSubmit(async (values) => {
           direction="down"
         />
       </FormFieldCl>
+    </form>
 
+    <template #footer>
       <DialogFooterCl
+        submit-form="move-bookmark-form"
         :submit-label="t('common.save')"
         :submitting="isSubmitting"
         @cancel="emit('update:open', false)"
       />
-    </form>
+    </template>
   </DialogCl>
 </template>

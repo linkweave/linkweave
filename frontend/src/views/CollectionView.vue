@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { BookmarkList, BookmarkListToolbar, BookmarkSortMenu, SearchActiveChip } from '@/components/bookmark'
+import {
+  BookmarkList,
+  BookmarkListToolbar,
+  BookmarkSortMenu,
+  CollectionSettingsModal,
+  SearchActiveChip,
+} from '@/components/bookmark'
 import CreateBookmarkDialog from '@/components/bookmark/CreateBookmarkDialog.vue'
 import { MainLayout } from '@/components/layout'
 import { ResponsiveButton, SearchBar } from '@/components/ui'
@@ -9,7 +15,7 @@ import { useBookmarkStore } from '@/stores/bookmark'
 import { useCollectionStore } from '@/stores/collection'
 import { useOfflineStore } from '@/stores/offline'
 import { useUiStore } from '@/stores/ui'
-import { BookmarkPlus } from 'lucide-vue-next'
+import { BookmarkPlus, Settings } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -19,6 +25,7 @@ const bookmarkStore = useBookmarkStore()
 const ui = useUiStore()
 const offline = useOfflineStore()
 const isAddingBookmark = ref(false)
+const isSettingsOpen = ref(false)
 const isDesktop = useMediaQuery('(min-width: 1024px)')
 const searchPlaceholder = computed(() =>
   isDesktop.value ? t('search.placeholder') : t('search.placeholderShort'),
@@ -57,6 +64,20 @@ const containerClass = computed(() =>
         <template #sort>
           <BookmarkSortMenu />
         </template>
+        <template #extras>
+          <!-- 1 px divider between Sort and the gear, per the design spec. -->
+          <div class="w-px h-4 bg-border mx-0.5" aria-hidden="true" />
+          <button
+            type="button"
+            class="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            :aria-label="t('collectionSettings.openSettings')"
+            :title="t('collectionSettings.openSettings')"
+            data-testid="collection-settings-open"
+            @click="isSettingsOpen = true"
+          >
+            <Settings class="h-3.5 w-3.5" />
+          </button>
+        </template>
       </BookmarkListToolbar>
     </template>
     <div :class="[containerClass, 'mx-auto space-y-4']">
@@ -70,5 +91,7 @@ const containerClass = computed(() =>
       v-model:open="isAddingBookmark"
       @created="isAddingBookmark = false"
     />
+
+    <CollectionSettingsModal v-model:open="isSettingsOpen" />
   </MainLayout>
 </template>

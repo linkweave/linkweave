@@ -4,10 +4,14 @@
 // Out of scope (parsed but no-op match-all): property:, match:OR.
 
 import { matchesCreated, parseCreatedValue } from './searchQueryCreated'
-// Re-export so existing callers (`@/lib/searchQuery`) keep working — the date
-// grammar lives in its own file but is conceptually part of the search lib.
+import { matchesPropertyToken, parsePropertyValue, type PropertyDef } from './searchQueryProperty'
+// Re-export the operator-specific helpers so existing callers
+// (`@/lib/searchQuery`) keep working — each grammar lives in its own file
+// but is conceptually part of the search lib.
 export { parseCreatedValue, matchesCreated } from './searchQueryCreated'
 export type { DateOp, ParsedCreated } from './searchQueryCreated'
+export { parsePropertyValue, matchesPropertyToken } from './searchQueryProperty'
+export type { PropertyOp, ParsedProperty, PropertyDef } from './searchQueryProperty'
 
 /**
  * The discriminant of a `QueryToken`. Named centrally so future kinds (groups
@@ -34,6 +38,9 @@ export interface MatchContext {
   // token value is a folder ID (the unambiguous click-path encoding); names
   // remain the fallback for typed queries.
   ancestorFolderIds: Set<string>
+  // Property definitions in the active collection, keyed by lowercase name.
+  // Optional so existing callers that don't enable property matching can omit.
+  propertyDefsByName?: Map<string, PropertyDef>
 }
 
 export interface MatchableBookmark {
@@ -46,6 +53,14 @@ export interface MatchableBookmark {
   // Created-at timestamp, used by the `created:` operator (UC-070 BR-084/085).
   // Optional so callers that don't enable date matching can skip wiring it.
   entityInfo?: { timestampErstellt?: Date | null } | null
+  // Per-bookmark property values, used by the `property:` operator
+  // Optional for the same reason as above.
+  propertyValues?: Array<{
+    definitionId: string
+    valueText?: string
+    valueNumber?: number
+    valueBoolean?: boolean
+  }>
 }
 
 export interface AncestorSets {
@@ -217,7 +232,12 @@ function bookmarkMatchesToken(b: MatchableBookmark, t: QueryToken, ctx: MatchCon
       if (!createdAt) return false // bookmark with no timestamp can't satisfy a date filter
       return matchesCreated(createdAt instanceof Date ? createdAt : new Date(createdAt), parsed)
     }
-    // TODO UC-070: property: — parse but match-all for now.
+    if (t.key === 'property') {
+      const parsed = parsePropertyValue(t.value)
+      if (!parsed) return true // unparseable → no-op match-all
+      if (!ctx.propertyDefsByName) return false // collection has no definitions wired in
+      return matchesPropertyToken(b.propertyValues, ctx.propertyDefsByName, parsed)
+    }
     return true
   }
   // Free text: match against title + url + description + tag names

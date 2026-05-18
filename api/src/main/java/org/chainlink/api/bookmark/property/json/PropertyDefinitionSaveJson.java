@@ -3,6 +3,7 @@ package org.chainlink.api.bookmark.property.json;
 import ch.dvbern.dvbstarter.types.id.ID;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -24,10 +25,18 @@ public class PropertyDefinitionSaveJson {
     @Schema(required = true)
     ID<Collection> collectionId;
 
+    /**
+     * Property names act as identifiers in the search syntax
+     * (`property:<name>=…`), so we restrict them to letters, digits,
+     * underscore and hyphen — the same character set the frontend
+     * tokenizer accepts unquoted. Keep this pattern in sync with the
+     * zod schema and the parser in {@code searchQueryProperty.ts}.
+     */
     @NotNull
     @NonNull
     @NotBlank
     @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH)
+    @Pattern(regexp = "^[A-Za-z0-9_-]+$")
     @Schema(required = true)
     String name;
 

@@ -1,22 +1,29 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { ExternalLink, MoreHorizontal, MousePointerClick, Clock, Folder } from 'lucide-vue-next'
-import { DropdownMenuRoot, DropdownMenuTrigger } from 'radix-vue'
+import type { BookmarkJson, PropertyDefinitionJson } from '@/api/generated'
+import BookmarkFavicon from '@/components/bookmark/BookmarkFavicon.vue'
 import { DropdownMenuContentCl, DropdownMenuItemCl } from '@/components/ui'
-import type { BookmarkJson } from '@/api/generated'
-import { useTagStore } from '@/stores/tag'
-import { useFolderStore } from '@/stores/folder'
-import { useBookmarkStore } from '@/stores/bookmark'
 import { DRAG_TYPE_BOOKMARK, setDraggingBookmark } from '@/composables/useDragState'
 import { useMediaQuery } from '@/composables/useMediaQuery'
+import { useShowPropertyBadges } from '@/composables/usePropertyDisplayPrefs'
 import { useRelativeTime } from '@/composables/useRelativeTime'
-import BookmarkFavicon from '@/components/bookmark/BookmarkFavicon.vue'
+import { decodePropertyValue } from '@/lib/propertyValueMapper'
+import { matchesPropertyToken, parsePropertyValue } from '@/lib/searchQueryProperty'
+import { useBookmarkStore } from '@/stores/bookmark'
+import { useFolderStore } from '@/stores/folder'
+import { usePropertyStore } from '@/stores/property'
+import { useTagStore } from '@/stores/tag'
+import { Clock, ExternalLink, Folder, MoreHorizontal, MousePointerClick } from 'lucide-vue-next'
+import { DropdownMenuRoot, DropdownMenuTrigger } from 'radix-vue'
+import { computed, ref } from 'vue'
+import BookmarkPropertyBadge from './BookmarkPropertyBadge.vue'
 
 const tagStore = useTagStore()
 const folderStore = useFolderStore()
 const bookmarkStore = useBookmarkStore()
+const propertyStore = usePropertyStore()
 const isTouch = useMediaQuery('(hover: none) and (pointer: coarse)')
 const { formatRelativeTime } = useRelativeTime()
+const showPropertyBadges = useShowPropertyBadges()
 
 const props = defineProps<{
   bookmark: BookmarkJson
@@ -30,7 +37,7 @@ const emit = defineEmits<{
 }>()
 
 function getTagById(tagId: string) {
-  return tagStore.tags.find(t => t.id === tagId)
+  return tagStore.tags.find((t) => t.id === tagId)
 }
 
 let didDrag = false
@@ -46,7 +53,9 @@ function onBookmarkDragStart(event: DragEvent) {
 function onBookmarkDragEnd() {
   setDraggingBookmark(false)
   // Reset after the synthetic click that fires when a drag ends without a drop
-  setTimeout(() => { didDrag = false }, 0)
+  setTimeout(() => {
+    didDrag = false
+  }, 0)
 }
 
 function onCardLinkClick(event: MouseEvent) {
@@ -60,7 +69,7 @@ function onCardLinkClick(event: MouseEvent) {
 function getFolderName(): string | null {
   const folderId = props.bookmark.data.folderId
   if (!folderId) return null
-  const folder = folderStore.folders.find(f => f.id === folderId)
+  const folder = folderStore.folders.find((f) => f.id === folderId)
   return folder?.data.name ?? null
 }
 
@@ -88,8 +97,83 @@ function onTagClick(event: MouseEvent, tagId: string) {
   event.stopPropagation()
   const tag = getTagById(tagId)
   if (!tag) return
-  const modifier = (event.altKey || event.shiftKey) ? 'exclude' : undefined
+  const modifier = event.altKey || event.shiftKey ? 'exclude' : undefined
   bookmarkStore.toggleQueryToken({ kind: 'tag', value: tag.data.name, neg: false }, modifier)
+}
+
+// --- Property badges ------------------------------------------------------
+// Definitions that have a value on this bookmark, in store order. We look up
+// the wire entry by definitionId once (not per render) so the badge component
+// can stay a pure presentational thing.
+type VisibleProp = {
+  def: PropertyDefinitionJson
+  value: { definitionId: string; valueText?: string; valueNumber?: number; valueBoolean?: boolean }
+}
+
+function isEmptyDecoded(v: ReturnType<typeof decodePropertyValue>): boolean {
+  if (v === undefined || v === '') return true
+  if (Array.isArray(v) && v.length === 0) return true
+  return false
+}
+
+const visibleProps = computed<VisibleProp[]>(() => {
+  const wireById = new Map((props.bookmark.propertyValues ?? []).map((v) => [v.definitionId, v]))
+  const out: VisibleProp[] = []
+  for (const def of propertyStore.definitions) {
+    const wire = wireById.get(def.id)
+    if (!wire) continue
+    if (isEmptyDecoded(decodePropertyValue(def.data.type, wire))) continue
+    out.push({ def, value: wire })
+  }
+  return out
+})
+
+// A badge lights up purple whenever any positive `property:` token in the
+// query actually matches this bookmark's value for that definition — covers
+// `=`, `>`, `<`, `>=`, `<=`. Delegates to the same matcher the bookmark filter
+// uses, so the visual state can never drift from the filter logic.
+const propertyDefsByName = computed(
+  () =>
+    new Map(
+      propertyStore.definitions.map((d) => [
+        d.data.name.toLowerCase(),
+        { id: d.id, type: d.data.type },
+      ]),
+    ),
+)
+
+function isPropertyTokenActive(name: string): boolean {
+  const lower = name.toLowerCase()
+  return bookmarkStore.queryTokens.some((t) => {
+    if (t.kind !== 'operator' || t.key !== 'property' || t.neg) return false
+    const parsed = parsePropertyValue(t.value)
+    if (!parsed || parsed.key !== lower) return false
+    return matchesPropertyToken(
+      props.bookmark.propertyValues,
+      propertyDefsByName.value,
+      parsed,
+    )
+  })
+}
+
+function badgeValueAsTokenString(
+  propDef: PropertyDefinitionJson,
+  value: VisibleProp['value'],
+): string {
+  const decoded = decodePropertyValue(propDef.data.type, value)
+  if (decoded === undefined) return ''
+  if (Array.isArray(decoded)) return decoded.join(',')
+  return String(decoded)
+}
+
+function onPropertyBadgeClick(propDef: PropertyDefinitionJson, value: VisibleProp['value']) {
+  const tokenValue = `${propDef.data.name}=${badgeValueAsTokenString(propDef, value)}`
+  bookmarkStore.toggleQueryToken({
+    kind: 'operator',
+    key: 'property',
+    value: tokenValue,
+    neg: false,
+  })
 }
 
 function onToggleFolderFilter(event: MouseEvent) {
@@ -194,22 +278,30 @@ const menuActivated = ref(false)
           {{ props.bookmark.data.description }}
         </p>
 
-        <div v-if="props.bookmark.data.tagIds && props.bookmark.data.tagIds.size > 0 || getFolderName()" class="flex flex-wrap items-center gap-1 mt-2">
-<!--          Folder pill-->
+        <div
+          v-if="
+            (props.bookmark.data.tagIds && props.bookmark.data.tagIds.size > 0) || getFolderName()
+          "
+          class="flex flex-wrap items-center gap-1 mt-2"
+        >
+          <!--          Folder pill-->
           <button
             v-if="getFolderName()"
             type="button"
             data-testid="card-folder-pill"
             :data-folder-id="props.bookmark.data.folderId"
             class="pointer-events-auto relative z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-muted-foreground border border-dashed border-border hover:text-foreground hover:border-foreground hover:bg-secondary transition-colors"
-            :class="{ 'text-foreground border-solid border-foreground bg-secondary': folderStore.selectedFolderId === props.bookmark.data.folderId }"
+            :class="{
+              'text-foreground border-solid border-foreground bg-secondary':
+                folderStore.selectedFolderId === props.bookmark.data.folderId,
+            }"
             :title="`Filter by folder: ${getFolderName()}`"
             @click="onToggleFolderFilter"
           >
             <Folder class="h-3 w-3" />
             <span>in {{ getFolderName() }}</span>
           </button>
-<!--           Tag Pills-->
+          <!--           Tag Pills-->
           <button
             v-for="tagId in props.bookmark.data.tagIds"
             :key="tagId"
@@ -222,9 +314,27 @@ const menuActivated = ref(false)
             :title="tagTitle(tagId)"
             @click="onTagClick($event, tagId)"
           >
-            <span class="h-2 w-2 rounded-sm" :style="{ background: getTagById(tagId)?.data.color ?? '#64748b' }" />
+            <span
+              class="h-2 w-2 rounded-sm"
+              :style="{ background: getTagById(tagId)?.data.color ?? '#64748b' }"
+            />
             {{ getTagById(tagId)?.data.name ?? tagId.substring(0, 8) }}
           </button>
+        </div>
+        <!--           Property badges row — hidden behind a global pref since they can be noisy. -->
+        <div
+          v-if="showPropertyBadges && visibleProps.length > 0"
+          class="flex flex-wrap gap-1.5 mt-1.5 pt-1.5 border-t border-border/45 pointer-events-none"
+        >
+          <BookmarkPropertyBadge
+            v-for="vp in visibleProps"
+            :key="vp.def.id"
+            :prop-def="vp.def"
+            :value="vp.value"
+            :active="isPropertyTokenActive(vp.def.data.name)"
+            class="pointer-events-auto relative z-10"
+            @click="onPropertyBadgeClick(vp.def, vp.value)"
+          />
         </div>
       </div>
     </div>
@@ -234,12 +344,21 @@ const menuActivated = ref(false)
       class="absolute bottom-3 right-4 hidden xl:flex flex-col items-end gap-0.5 text-xs text-muted-foreground/40"
     >
       <span class="group/clicks inline-flex items-center gap-1">
-        <span class="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover/clicks:max-w-20 group-hover/clicks:opacity-100 opacity-0">{{ $t('bookmark.statClicks') }}</span>
+        <span
+          class="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover/clicks:max-w-20 group-hover/clicks:opacity-100 opacity-0"
+          >{{ $t('bookmark.statClicks') }}</span
+        >
         <MousePointerClick class="h-3 w-3 shrink-0" />
         {{ props.bookmark.clickCount }}
       </span>
-      <span v-if="props.bookmark.lastClickedAt" class="group/lastClicked inline-flex items-center gap-1">
-        <span class="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover/lastClicked:max-w-28 group-hover/lastClicked:opacity-100 opacity-0">{{ $t('bookmark.statLastClicked') }}</span>
+      <span
+        v-if="props.bookmark.lastClickedAt"
+        class="group/lastClicked inline-flex items-center gap-1"
+      >
+        <span
+          class="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover/lastClicked:max-w-28 group-hover/lastClicked:opacity-100 opacity-0"
+          >{{ $t('bookmark.statLastClicked') }}</span
+        >
         <Clock class="h-3 w-3 shrink-0" />
         {{ formatRelativeTime(props.bookmark.lastClickedAt) }}
       </span>

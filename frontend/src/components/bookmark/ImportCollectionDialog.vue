@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import { config } from '@/api'
+import { ImportResourceApi } from '@/api/generated'
+import { ButtonCl, DialogCl, DialogFooterCl } from '@/components/ui'
+import { useNotificationStore } from '@/stores/notification'
+import { Loader2, Upload } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { DialogCl, ButtonCl } from '@/components/ui'
-import { Upload, Loader2 } from 'lucide-vue-next'
-import { ImportResourceApi } from '@/api/generated'
-import { config } from '@/api'
-import { useNotificationStore } from '@/stores/notification'
 
 const props = defineProps<{
   open: boolean
@@ -14,7 +14,7 @@ const props = defineProps<{
 
 const emits = defineEmits<{
   'update:open': [value: boolean]
-  'imported': []
+  imported: []
 }>()
 
 const { t } = useI18n()
@@ -42,7 +42,7 @@ async function handleImport() {
     const api = new ImportResourceApi(config)
     await api.apiCollectionsCollectionIdImportPost({
       collectionId: props.collectionId,
-      file: selectedFile.value
+      file: selectedFile.value,
     })
     emits('imported')
     emits('update:open', false)
@@ -62,7 +62,10 @@ async function handleImport() {
 
     <div class="grid gap-4 py-4">
       <div class="grid w-full items-center gap-1.5">
-        <label for="bookmark-file" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+        <label
+          for="bookmark-file"
+          class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
           {{ t('import.file') }}
         </label>
         <div
@@ -85,14 +88,16 @@ async function handleImport() {
       </div>
     </div>
 
-    <div class="flex justify-end gap-3">
-      <ButtonCl variant="outline" @click="emits('update:open', false)">
-        {{ t('common.cancel') }}
-      </ButtonCl>
-      <ButtonCl :disabled="!selectedFile || isImporting" @click="handleImport">
-        <Loader2 v-if="isImporting" class="mr-2 h-4 w-4 animate-spin" />
-        {{ t('import.submit') }}
-      </ButtonCl>
-    </div>
+    <template #footer>
+      <DialogFooterCl>
+        <ButtonCl variant="outline" @click="emits('update:open', false)">
+          {{ t('common.cancel') }}
+        </ButtonCl>
+        <ButtonCl :disabled="!selectedFile || isImporting" @click="handleImport">
+          <Loader2 v-if="isImporting" class="mr-2 h-4 w-4 animate-spin" />
+          {{ t('import.submit') }}
+        </ButtonCl>
+      </DialogFooterCl>
+    </template>
   </DialogCl>
 </template>

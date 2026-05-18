@@ -7,6 +7,52 @@
     "title": "Chainlink",
     "version": "version"
   },
+  "collectionSettings": {
+    "title": "Collection settings",
+    "tabDisplay": "Display",
+    "tabProperties": "Properties",
+    "sectionLayout": "Layout",
+    "sectionLayoutHint": "How bookmarks are arranged in this collection. Each collection remembers its own choice.",
+    "sectionProperties": "Properties",
+    "sectionPropertiesHint": "Where defined properties appear in the UI. Persisted on this device.",
+    "localPersistedHint": "These preferences are saved locally on this device.",
+    "openSettings": "Collection settings"
+  },
+  "property": {
+    "badgesToggle": "Show badges on cards",
+    "badgesToggleDesc": "Render property values inline below each bookmark's tags",
+    "sidebarToggle": "Show in sidebar",
+    "sidebarToggleDesc": "List defined properties in the left sidebar for quick filtering",
+    "manageSectionHint": "Use property:name=value in search to filter, or click a badge on any card.",
+    "manageSectionHintWithSyntax": "Custom fields available on every bookmark in this collection. Use {syntax} in search to filter, or click a badge on any card.",
+    "noDefinitions": "No properties yet — add one below.",
+    "addProperty": "Add property",
+    "newProperty": "New property",
+    "editProperty": "Edit property",
+    "sectionHeading": "Properties",
+    "clearValue": "Clear",
+    "notSet": "— not set —",
+    "noDefinitionsInline": "No properties defined yet — open Collection settings to add some.",
+    "saveChanges": "Save changes",
+    "fieldName": "Name",
+    "fieldType": "Type",
+    "fieldOptions": "Options",
+    "fieldOptionsHint": "(comma-separated)",
+    "optionsPlaceholder": "draft, review, published",
+    "namePlaceholder": "e.g. status, priority, due…",
+    "errorNameRequired": "Name is required.",
+    "errorNameFormat": "Use only letters, digits, underscore or hyphen — no spaces.",
+    "saveError": "Could not save the property.",
+    "deleteTitle": "Delete property?",
+    "deleteConfirm": "Delete the property \"{name}\"? Existing values on bookmarks will be removed.",
+    "deleteError": "Could not delete the property.",
+    "typeText": "Text",
+    "typeNumber": "Number",
+    "typeBoolean": "Boolean",
+    "typeSelect": "Select",
+    "typeMultiSelect": "Multi-select",
+    "typeDate": "Date"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",
@@ -19,7 +65,10 @@
     "undo": "Undo",
     "reset": "Reset",
     "back": "Back",
-    "close": "Close"
+    "close": "Close",
+    "done": "Done",
+    "yes": "Yes",
+    "no": "No"
   },
   "dnd": {
     "bookmarkMoved": "Bookmark moved.",
@@ -86,6 +135,7 @@
     "bookmarks": "Bookmarks",
     "allBookmarks": "{name}",
     "tags": "Tags",
+    "properties": "Properties",
     "newFolder": "New Folder"
   },
   "collectionManage": {
