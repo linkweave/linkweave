@@ -5,7 +5,7 @@
 **Type**: Quarkus-based Java web application with vue frontend
 **Language**: Java 25 / typescript
 **Framework**: Quarkus 3.30.8  and VueJS
-**Build System**: Maven 3.9.12 and npm
+**Build System**: Maven 3.9.12 and pnpm 11
 **Database**: SQLite with Hibernate ORM  
 **Frontend**: VueJS 
 
@@ -21,9 +21,9 @@ cd api && ./mvnw package            # Build
 cd api && ./mvnw verify             # All tests (unit + integration)
 cd api && ./mvnw test -Dtest=ClassNameTest           # Specific class
 cd api && ./mvnw quarkus:dev        # Dev mode with hot reload, assume running
-cd frontend && npm run dev # frontend dev mode, assume running
-cd frontend && npm run type-check # frontend type checkin
-npx playwright test --project=chromium  
+cd frontend && pnpm run dev # frontend dev mode, assume running
+cd frontend && pnpm run type-check # frontend type checking
+pnpm exec playwright test --project=chromium  
 
 ```
 
@@ -55,7 +55,7 @@ All access checks are performed in the **Resource layer** using `AuthorizationSe
 - Use `@TestSecurity` when testing persistence/services that depend on current user
 - Most entities extend `AbstractEntity` which auto-sets `userErstellt` and `userMutiert` via `CurrentUserService`
 - Use `@AllArgsConstructor` for entity classes to ensure all fields are initialized
-- Always check your code by running npm run type-check and by compiling using maven
+- Always check your code by running pnpm run type-check and by compiling using maven
 - Use zod schemas to validate form input
 
 ## Custom Types
@@ -79,4 +79,4 @@ The project uses custom types like `ID<T>` and `EmailAddress`. Use their `fromSt
 
 ### Api
 - The project lets quarkus generate the openapi.json file on its default endpoint.
-- to generate the frontend code, use the `npm run generate-api` command.
+- to generate the frontend code, use the `pnpm run generate-api` command.

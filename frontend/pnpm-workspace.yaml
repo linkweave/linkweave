@@ -4,7 +4,15 @@ registries:
   default: https://registry.npmjs.org/
 
 onlyBuiltDependencies:
+  - '@nestjs/core'
   - '@openapitools/openapi-generator-cli'
   - esbuild
   - spawn-sync
   - vue-demi
+
+allowBuilds:
+  '@nestjs/core': true
+  '@openapitools/openapi-generator-cli': true
+  esbuild: true
+  spawn-sync: true
+  vue-demi: true
