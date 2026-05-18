@@ -52,6 +52,11 @@ const pillVariant = computed<PillVariant>(() => {
       // Unparseable → fall through to the generic rendering.
       const parsed = parsePropertyValue(props.token.value)
       if (parsed) {
+        // Existence shape: render just the bare property name — no
+        // operator symbol, no value — so the pill reads `■ property`.
+        if (parsed.op === 'exists') {
+          return { icon: known?.icon, display: parsed.key }
+        }
         return {
           icon: known?.icon,
           label: `${parsed.key}`,

@@ -16,11 +16,16 @@ export const propertyDefinitionSaveSchema = (t: TFunction) =>
   z
     .object({
       collectionId: z.string().min(1, t('validation.collectionIdRequired')),
+      // Names act as identifiers in the search syntax (`property:<name>=…`),
+      // so we restrict them to characters the tokenizer can parse unquoted:
+      // letters, digits, underscore, hyphen. The regex matches what
+      // `parsePropertyValue` accepts on the read side — keep these in sync.
       name: z
         .string()
+        .trim()
         .min(1, t('validation.required', { field: t('property.fieldName') }))
         .max(50, t('validation.maxLength', { field: t('property.fieldName'), max: 50 }))
-        .trim(),
+        .regex(/^[\w-]+$/, t('property.errorNameFormat')),
       type: z.nativeEnum(PropertyType),
       sortOrder: z.number().int(),
       allowedValues: z

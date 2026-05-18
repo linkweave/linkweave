@@ -11,17 +11,30 @@ import {
   isDraggingBookmark,
   isDraggingFolder,
 } from '@/composables/useDragState'
+import { useShowPropertiesSidebar } from '@/composables/usePropertyDisplayPrefs'
+import { parsePropertyValue } from '@/lib/searchQueryProperty'
+import { useBookmarkStore } from '@/stores/bookmark'
 import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { useOfflineStore } from '@/stores/offline'
-import { Folder, Plus, Tag } from 'lucide-vue-next'
-import { computed, ref, watch } from 'vue'
+import { usePropertyStore } from '@/stores/property'
+import { Box, Folder, Plus, Tag } from 'lucide-vue-next'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+interface Props {
+  class?: string
+}
+
+const props = defineProps<Props>()
 
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
 const folderStore = useFolderStore()
 const offline = useOfflineStore()
+const propertyStore = usePropertyStore()
+const bookmarkStore = useBookmarkStore()
+const showPropertiesSidebar = useShowPropertiesSidebar()
 const { moveBookmarkWithUndo, moveFolderWithUndo } = useDndMove()
 
 const collectionId = computed(() => collectionStore.currentCollectionId ?? '')
@@ -40,11 +53,46 @@ function handleCreateSubfolder(parentId: string) {
   showCreateFolder.value = true
 }
 
-interface Props {
-  class?: string
+// ── Property rows ───────────────────────────────────────────────────────────
+// Clicking a property row toggles its presence in the query:
+//   - If no `property:<name>…` token exists yet → append `property:<name>` (a
+//     bare-key existence filter) and focus the search input with the cursor at
+//     the end so the user can immediately refine to a value by typing `=…`.
+//   - If one (or more) already exist → remove all of them. We match by key,
+//     not by full payload, so a row click also clears `property:status>3`
+//     etc. — the row represents "this property dimension," not a specific
+//     value, so a second click on the same dimension means "let go."
+
+function isPropertyKeyInQuery(name: string): boolean {
+  const lower = name.toLowerCase()
+  return bookmarkStore.queryTokens.some((t) => {
+    if (t.kind !== 'operator' || t.key !== 'property' || t.neg) return false
+    const parsed = parsePropertyValue(t.value)
+    return parsed?.key === lower
+  })
 }
 
-const props = defineProps<Props>()
+function onPropertyClick(name: string) {
+  const lower = name.toLowerCase()
+  if (isPropertyKeyInQuery(name)) {
+    bookmarkStore.removeTokensWhere((t) => {
+      if (t.kind !== 'operator' || t.key !== 'property' || t.neg) return false
+      return parsePropertyValue(t.value)?.key === lower
+    })
+    return
+  }
+  const current = bookmarkStore.searchQuery.trim()
+  const token = `property:${name}`
+  bookmarkStore.setSearchQuery(current ? `${current} ${token}` : token)
+  nextTick(() => {
+    const input = document.querySelector<HTMLInputElement>('[data-search-input]')
+    if (input) {
+      input.focus()
+      const end = input.value.length
+      input.setSelectionRange(end, end)
+    }
+  })
+}
 
 // ── "All Bookmarks" drop target ─────────────────────────────────────────────
 // Accepts bookmark drops (→ unfiled) and folder drops (→ root level).
@@ -152,8 +200,51 @@ async function onAllBookmarksDrop(event: DragEvent) {
       </div>
     </div>
 
+    <!-- Properties Section — gated by user pref + non-empty definitions.
+         Sits between Folders and Tags; the `mt-auto` on Tags below pushes
+         this whole block to the bottom of the sidebar, just like Tags. -->
+    <div
+      v-if="showPropertiesSidebar && propertyStore.definitions.length > 0"
+      class="mt-auto min-h-0 flex flex-col border-t border-border max-h-[35%]"
+    >
+      <div class="p-3 flex items-center justify-between shrink-0">
+        <span class="text-sm font-medium text-muted-foreground flex items-center gap-2">
+          <Box class="h-4 w-4" style="color: var(--color-property)" />
+          {{ t('sidebar.properties') }}
+        </span>
+      </div>
+      <ul
+        class="px-2 pb-2 overflow-y-auto flex-1 min-h-0"
+        data-testid="sidebar-properties"
+      >
+        <li v-for="def in propertyStore.definitions" :key="def.id">
+          <button
+            type="button"
+            class="w-full flex items-center gap-2 rounded-md px-2 py-1 text-sm cursor-pointer transition-colors"
+            :class="
+              isPropertyKeyInQuery(def.data.name)
+                ? 'bg-[color-mix(in_oklab,var(--color-property)_12%,var(--color-secondary))] text-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+            "
+            :data-testid="`sidebar-property-row-${def.data.name}`"
+            :data-active="isPropertyKeyInQuery(def.data.name) ? 'true' : 'false'"
+            @click="onPropertyClick(def.data.name)"
+          >
+            <Box class="h-3.5 w-3.5 shrink-0" style="color: var(--color-property)" />
+            <span class="font-mono truncate flex-1 text-left">{{ def.data.name }}</span>
+            <span class="text-[10px] uppercase text-muted-foreground/60">{{ def.data.type }}</span>
+          </button>
+        </li>
+      </ul>
+    </div>
+
     <!-- Tags Section -->
-    <div class="mt-auto min-h-0 flex flex-col border-t border-border max-h-[50%]">
+    <div
+      :class="[
+        showPropertiesSidebar && propertyStore.definitions.length > 0 ? '' : 'mt-auto',
+        'min-h-0 flex flex-col border-t border-border max-h-[50%]',
+      ]"
+    >
       <div class="p-3 flex items-center justify-between shrink-0">
         <span class="text-sm font-medium text-muted-foreground flex items-center gap-2">
           <Tag class="h-4 w-4" />

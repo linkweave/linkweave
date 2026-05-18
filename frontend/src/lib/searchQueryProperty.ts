@@ -8,13 +8,14 @@ import type { BookmarkPropertyValueJson } from '@/api/generated'
 import { PropertyType } from '@/api/generated'
 import { decodePropertyValue } from './propertyValueMapper'
 
-export type PropertyOp = '=' | '>' | '<' | '>=' | '<='
+export type PropertyOp = '=' | '>' | '<' | '>=' | '<=' | 'exists'
 
 export interface ParsedProperty {
   /** Lowercased property name as written in the token. */
   key: string
   op: PropertyOp
-  /** Raw value as typed — caller compares to the bookmark's decoded value. */
+  /** Raw value as typed — caller compares to the bookmark's decoded value.
+      Always empty when op === 'exists'. */
   value: string
 }
 
@@ -23,25 +24,34 @@ export interface PropertyDef {
   type: PropertyType
 }
 
+// Two token shapes:
+//   `property:status`            → existence check (op === 'exists')
+//   `property:status=draft`,     → comparison forms (op === '=' / '>' / ...)
+//   `property:priority>3`, ...
 // `>=` and `<=` MUST appear before the single-char variants so the regex
-// engine prefers them when both could match.
-const PROPERTY_VALUE_RE = /^([\w-]+)(>=|<=|=|>|<)(.*)$/
+// engine prefers them when both could match. The trailing `?` on the
+// operator+value group makes the bare-key shape legal.
+const PROPERTY_VALUE_RE = /^([\w-]+)(?:(>=|<=|=|>|<)(.*))?$/
 
 export function parsePropertyValue(raw: string): ParsedProperty | null {
   const m = PROPERTY_VALUE_RE.exec(raw)
   if (!m) return null
-  const valueRaw = m[3]
-  if (valueRaw === undefined) return null
+  const key = m[1]!.toLowerCase()
+  const op = m[2]
+  if (op === undefined) {
+    return { key, op: 'exists', value: '' }
+  }
   return {
-    key: m[1]!.toLowerCase(),
-    op: m[2] as PropertyOp,
-    value: valueRaw,
+    key,
+    op: op as Exclude<PropertyOp, 'exists'>,
+    value: m[3] ?? '',
   }
 }
 
 /**
  * Match a parsed `property:` operator against a bookmark's property values.
  *
+ *   - `exists`          → bookmark has any non-empty value for this property
  *   - `=`              → case-insensitive string equality on the decoded value
  *                        (multi-select compares the canonical CSV form)
  *   - `>` `<` `>=` `<=` → numeric comparison; non-numeric operands → no match
@@ -63,6 +73,14 @@ export function matchesPropertyToken(
 
   const decoded = decodePropertyValue(def.type, entry)
   if (decoded === undefined) return false
+
+  if (parsed.op === 'exists') {
+    // "any value set". Treat empty strings and empty arrays as not-set so
+    // existence semantics line up with the badge-visibility rules on cards.
+    if (typeof decoded === 'string') return decoded !== ''
+    if (Array.isArray(decoded)) return decoded.length > 0
+    return true
+  }
 
   // Equality: stringify both sides (the wire only has primitives + CSV) and
   // case-insensitive compare. Numbers compare numerically when both sides

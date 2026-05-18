@@ -41,6 +41,7 @@
     "optionsPlaceholder": "draft, review, published",
     "namePlaceholder": "e.g. status, priority, due…",
     "errorNameRequired": "Name is required.",
+    "errorNameFormat": "Use only letters, digits, underscore or hyphen — no spaces.",
     "saveError": "Could not save the property.",
     "deleteTitle": "Delete property?",
     "deleteConfirm": "Delete the property \"{name}\"? Existing values on bookmarks will be removed.",
@@ -134,6 +135,7 @@
     "bookmarks": "Bookmarks",
     "allBookmarks": "{name}",
     "tags": "Tags",
+    "properties": "Properties",
     "newFolder": "New Folder"
   },
   "collectionManage": {

@@ -41,6 +41,7 @@
     "optionsPlaceholder": "Entwurf, Prüfung, Veröffentlicht",
     "namePlaceholder": "z.B. status, prioritaet, faellig…",
     "errorNameRequired": "Name ist erforderlich.",
+    "errorNameFormat": "Nur Buchstaben, Ziffern, Unterstrich oder Bindestrich erlaubt — keine Leerzeichen.",
     "saveError": "Eigenschaft konnte nicht gespeichert werden.",
     "deleteTitle": "Eigenschaft löschen?",
     "deleteConfirm": "Eigenschaft \"{name}\" wirklich löschen? Bestehende Werte auf Lesezeichen werden entfernt.",
@@ -134,6 +135,7 @@
     "bookmarks": "Lesezeichen",
     "allBookmarks": "{name}",
     "tags": "Tags",
+    "properties": "Eigenschaften",
     "newFolder": "Neuer Ordner"
   },
   "collectionManage": {

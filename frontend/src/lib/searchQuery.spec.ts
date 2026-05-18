@@ -246,7 +246,7 @@ describe('matchesTokens', () => {
     expect(
       matchesTokens(
         bookmark,
-        [{ kind: 'operator', key: 'property', value: 'foo', neg: false }],
+        [{ kind: 'operator', key: 'unknown', value: 'foo', neg: false }],
         ctx,
       ),
     ).toBe(true)

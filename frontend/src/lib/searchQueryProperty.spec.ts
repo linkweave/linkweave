@@ -28,9 +28,18 @@ describe('parsePropertyValue', () => {
     expect(parsePropertyValue('my_field=x')?.key).toBe('my_field')
   })
 
-  it('returns null when the value side is missing entirely', () => {
-    expect(parsePropertyValue('status')).toBeNull()
+  it('parses a bare key as an existence check', () => {
+    expect(parsePropertyValue('status')).toEqual({ key: 'status', op: 'exists', value: '' })
+    expect(parsePropertyValue('My-Prop_X')).toEqual({
+      key: 'my-prop_x',
+      op: 'exists',
+      value: '',
+    })
+  })
+
+  it('returns null when the key side is missing entirely', () => {
     expect(parsePropertyValue('=value')).toBeNull()
+    expect(parsePropertyValue('')).toBeNull()
   })
 
   it('treats empty value as a valid empty-string match (parses; matcher decides)', () => {
@@ -109,5 +118,54 @@ describe('matchesPropertyToken', () => {
     expect(matchesPropertyToken(values, defsByName, { key: 'status', op: '>', value: '3' })).toBe(
       false,
     )
+  })
+
+  describe('exists', () => {
+    it('matches when the bookmark has a non-empty value of any type', () => {
+      expect(
+        matchesPropertyToken(
+          [{ definitionId: 'd-status', valueText: 'draft' }],
+          defsByName,
+          { key: 'status', op: 'exists', value: '' },
+        ),
+      ).toBe(true)
+      expect(
+        matchesPropertyToken(
+          [{ definitionId: 'd-priority', valueNumber: 0 }],
+          defsByName,
+          { key: 'priority', op: 'exists', value: '' },
+        ),
+      ).toBe(true)
+      expect(
+        matchesPropertyToken(
+          [{ definitionId: 'd-done', valueBoolean: false }],
+          defsByName,
+          { key: 'done', op: 'exists', value: '' },
+        ),
+      ).toBe(true)
+    })
+
+    it('does not match when the property entry is absent', () => {
+      expect(
+        matchesPropertyToken([], defsByName, { key: 'status', op: 'exists', value: '' }),
+      ).toBe(false)
+    })
+
+    it('does not match when the stored value is empty (string or multi-select)', () => {
+      expect(
+        matchesPropertyToken(
+          [{ definitionId: 'd-status', valueText: '' }],
+          defsByName,
+          { key: 'status', op: 'exists', value: '' },
+        ),
+      ).toBe(false)
+      expect(
+        matchesPropertyToken(
+          [{ definitionId: 'd-tags', valueText: '' }],
+          defsByName,
+          { key: 'tags', op: 'exists', value: '' },
+        ),
+      ).toBe(false)
+    })
   })
 })
