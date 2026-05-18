@@ -292,7 +292,7 @@ jobs:
             -F "name=chainlink-extension-${TAG}.zip" \
             -F "attachment=@chainlink-extension.zip"
 
-  publish-extension:
+  publish-chrome:
     needs: [build-extension, release]
     if: startsWith(gitea.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
@@ -309,6 +309,16 @@ jobs:
           CLIENT_ID: ${{ secrets.CHROME_EXTENSION_GWS_CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CHROME_EXTENSION_GWS_CLIENT_SECRET }}
           REFRESH_TOKEN: ${{ secrets.CHROME_EXTENSION_GWS_REFRESH_TOKEN }}
+
+  publish-firefox:
+    needs: [build-extension, release]
+    if: startsWith(gitea.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download extension artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ needs.build-extension.outputs.artifact-name }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
