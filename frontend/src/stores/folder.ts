@@ -77,9 +77,16 @@ export const useFolderStore = defineStore('folder', () => {
     // (the flat substring variant emitted by card labels) alone.
     bookmarkStore.removeTokensWhere(t => t.kind === 'operator' && t.key === 'under')
     if (folderId === null) return
-    // Use the folder *id* as the token value: unambiguous across duplicate
-    // folder names. The pill renders the resolved name (see FilterPill.vue).
-    bookmarkStore.toggleQueryToken({ kind: 'operator', key: 'under', value: folderId, neg: false })
+    // Prefer the folder *name* for a readable query string, but fall back to
+    // the id when the name isn't unique (e.g. duplicate "prod"/"uat"/"dev"
+    // folders under different parents) so click selection stays unambiguous.
+    const target = folders.value.find(f => f.id === folderId)
+    const name = target?.data.name
+    const isNameUnique =
+      name !== undefined &&
+      folders.value.filter(f => f.data.name.toLowerCase() === name.toLowerCase()).length === 1
+    const value = isNameUnique ? name : folderId
+    bookmarkStore.toggleQueryToken({ kind: 'operator', key: 'under', value, neg: false })
   }
 
   function patchFolders(updater: (list: FolderJson[]) => FolderJson[]) {

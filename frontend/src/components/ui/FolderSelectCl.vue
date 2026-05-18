@@ -97,7 +97,7 @@ const side = computed(() => (props.direction === 'up' ? 'top' : 'bottom'))
         <div
           role="option"
           :aria-selected="!modelValue"
-          class="flex items-center px-3 h-7 pointer-coarse:h-10 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground"
+          class="flex items-center px-3 h-7 pointer-coarse:h-10 text-sm cursor-pointer hover:bg-popover-hover hover:text-popover-foreground"
           :class="!modelValue ? 'text-primary font-medium' : 'text-muted-foreground'"
           @mousedown.prevent="select(undefined)"
         >
@@ -110,7 +110,7 @@ const side = computed(() => (props.direction === 'up' ? 'top' : 'bottom'))
           :key="opt.id"
           role="option"
           :aria-selected="modelValue === opt.id"
-          class="flex items-stretch h-7 pointer-coarse:h-10 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground pr-3"
+          class="flex items-center h-7 pointer-coarse:h-10 text-sm cursor-pointer hover:bg-popover-hover hover:text-popover-foreground pr-3"
           :class="modelValue === opt.id ? 'text-primary font-medium' : ''"
           @mousedown.prevent="select(opt.id)"
         >
@@ -119,12 +119,12 @@ const side = computed(() => (props.direction === 'up' ? 'top' : 'bottom'))
             <span
               v-for="(hasLine, gi) in opt.guides"
               :key="gi"
-              class="relative w-4 shrink-0"
+              class="relative w-4 shrink-0 self-stretch"
             >
               <span v-if="hasLine" class="absolute left-1/2 top-0 bottom-0 border-l border-solid border-border"></span>
             </span>
             <!-- Branch connector: ├ or └ -->
-            <span class="relative w-4 shrink-0 mr-1">
+            <span class="relative w-4 shrink-0 mr-1 self-stretch">
               <span class="absolute left-1/2 top-0 border-l border-solid border-border" :class="opt.isLast ? 'h-1/2' : 'h-full'"></span>
               <span class="absolute left-1/2 top-1/2 w-1/2 border-t border-solid border-border"></span>
             </span>

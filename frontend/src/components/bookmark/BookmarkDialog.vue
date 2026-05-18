@@ -27,7 +27,7 @@ import { useNotificationStore } from '@/stores/notification'
 import { usePropertyStore } from '@/stores/property'
 import { useTagStore } from '@/stores/tag'
 import { toTypedSchema } from '@vee-validate/zod'
-import { Box, Pencil } from '@lucide/vue'
+import { Box, Pencil, Plus } from '@lucide/vue'
 import { useForm } from 'vee-validate'
 import { computed, reactive, ref, toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -42,7 +42,12 @@ const propertyStore = usePropertyStore()
 const notification = useNotificationStore()
 
 interface Props {
-  bookmark: BookmarkJson | null
+  /** When provided → edit mode. When null/undefined → create mode. */
+  bookmark?: BookmarkJson | null
+  /** Required in create mode; ignored in edit mode. */
+  collectionId?: string
+  /** Optional pre-selected folder in create mode. */
+  preselectedFolderId?: string
   open?: boolean
 }
 
@@ -53,14 +58,19 @@ const emit = defineEmits<{
   saved: []
 }>()
 
+const isEdit = computed(() => props.bookmark != null)
+// Stable per-mode prefix used for form/input IDs so e2e selectors keep working.
+const idPrefix = computed(() => (isEdit.value ? 'edit-bookmark' : 'create-bookmark'))
+const formId = computed(() => `${idPrefix.value}-form`)
+
 const { defineField, handleSubmit, errors, resetForm, isSubmitting } = useForm({
   validationSchema: toTypedSchema(bookmarkSaveSchema(t)),
   initialValues: {
-    collectionId: '',
+    collectionId: props.collectionId ?? '',
     title: '',
     url: '',
     description: '',
-    folderId: undefined as string | undefined,
+    folderId: props.preselectedFolderId as string | undefined,
     tagIds: new Set<string>(),
   },
 })
@@ -73,16 +83,17 @@ const [tagIds] = defineField('tagIds')
 
 const folders = computed(() => folderStore.folders)
 
-// Property values are tracked outside the vee-validate form because the
-// property API is a separate endpoint. We hold a `definitionId → primitive`
-// map (reactive), seed it from the bookmark on open, and submit it through
-// `bookmarkStore.updateProperties` alongside the regular save.
+// Property values are tracked outside vee-validate because the property API
+// is a separate endpoint. We hold a `definitionId → primitive` map (reactive)
+// and submit it via `bookmarkStore.updateProperties` after create or edit.
 const propertyValuesByDefinitionId = reactive(new Map<string, PropertyFormValue>())
 const initialPropertyValuesSnapshot = ref('')
 
-function hydratePropertyValuesFromBookmark(bookmark: BookmarkJson) {
+function hydratePropertyValuesFromBookmark(bookmark: BookmarkJson | null) {
   propertyValuesByDefinitionId.clear()
-  const wireById = new Map((bookmark.propertyValues ?? []).map((v) => [v.definitionId, v]))
+  const wireById = new Map(
+    (bookmark?.propertyValues ?? []).map((v) => [v.definitionId, v]),
+  )
   for (const def of propertyStore.definitions) {
     const decoded = decodePropertyValue(def.data.type, wireById.get(def.id))
     if (decoded !== undefined) {
@@ -93,8 +104,6 @@ function hydratePropertyValuesFromBookmark(bookmark: BookmarkJson) {
 }
 
 function snapshotPropertyValues(): string {
-  // Stable JSON of the current map, used to skip the property PUT when the
-  // user didn't touch any property — avoids an unnecessary round-trip.
   const entries = [...propertyValuesByDefinitionId.entries()].sort((a, b) =>
     a[0].localeCompare(b[0]),
   )
@@ -124,11 +133,25 @@ useFormDialog(toRef(props, 'open'), () => {
       },
     })
     hydratePropertyValuesFromBookmark(props.bookmark)
+  } else {
+    resetForm({
+      values: {
+        collectionId: props.collectionId ?? '',
+        folderId: props.preselectedFolderId,
+        title: '',
+        url: '',
+        description: '',
+        tagIds: new Set<string>(),
+      },
+    })
+    hydratePropertyValuesFromBookmark(null)
   }
 })
 
 const tagsRef = computed(() => tagStore.tags)
-const collectionIdRef = computed(() => props.bookmark?.data.collectionId ?? '')
+const effectiveCollectionId = computed(
+  () => props.bookmark?.data.collectionId ?? props.collectionId ?? '',
+)
 const customRulesRef = computed(() =>
   autoTagRuleStore.rules.map((r) => ({
     pattern: r.data.pattern,
@@ -144,7 +167,7 @@ const {
 } = useTagSuggestions({
   url,
   tags: tagsRef,
-  collectionId: collectionIdRef,
+  collectionId: effectiveCollectionId,
   createTag: tagStore.createTag,
   customRules: customRulesRef,
 })
@@ -184,24 +207,36 @@ function toggleTagId(tagId: string) {
   tagIds.value = next
 }
 
-const onSubmit = handleSubmit(async (values) => {
-  if (!props.bookmark) return
+function buildWirePropertyValues() {
+  const typesByDefinitionId = new Map(
+    propertyStore.definitions.map((d) => [d.id, d.data.type]),
+  )
+  return encodePropertyValueMap(
+    propertyValuesByDefinitionId as Map<string, PropertyFormValue>,
+    typesByDefinitionId,
+  )
+}
 
+const onSubmit = handleSubmit(async (values) => {
   try {
-    await bookmarkStore.updateBookmark(props.bookmark.id, values)
-    // Only PUT property values when the user actually changed them.
-    if (snapshotPropertyValues() !== initialPropertyValuesSnapshot.value) {
-      const typesByDefinitionId = new Map(propertyStore.definitions.map((d) => [d.id, d.data.type]))
-      const wirePayload = encodePropertyValueMap(
-        propertyValuesByDefinitionId as Map<string, PropertyFormValue>,
-        typesByDefinitionId,
-      )
-      await bookmarkStore.updateProperties(props.bookmark.id, wirePayload)
+    if (props.bookmark) {
+      await bookmarkStore.updateBookmark(props.bookmark.id, values)
+      if (snapshotPropertyValues() !== initialPropertyValuesSnapshot.value) {
+        await bookmarkStore.updateProperties(props.bookmark.id, buildWirePropertyValues())
+      }
+    } else {
+      const created = await bookmarkStore.createBookmark(values)
+      if (propertyValuesByDefinitionId.size > 0) {
+        await bookmarkStore.updateProperties(created.id, buildWirePropertyValues())
+      }
     }
     emit('update:open', false)
     emit('saved')
   } catch (err) {
-    notification.handleApiError(err, t('bookmark.updateError'))
+    notification.handleApiError(
+      err,
+      t(props.bookmark ? 'bookmark.updateError' : 'bookmark.createError'),
+    )
   }
 })
 </script>
@@ -210,20 +245,24 @@ const onSubmit = handleSubmit(async (values) => {
   <DialogCl :open="open" @update:open="emit('update:open', $event)">
     <template #title>
       <span class="inline-flex items-center gap-1.5">
-        <Pencil class="h-3.5 w-3.5" aria-hidden="true" />
-        {{ t('bookmark.editTitle') }}
+        <component
+          :is="isEdit ? Pencil : Plus"
+          class="h-3.5 w-3.5"
+          aria-hidden="true"
+        />
+        {{ isEdit ? t('bookmark.editTitle') : t('bookmark.createTitle') }}
       </span>
     </template>
 
-    <form id="edit-bookmark-form" @submit.prevent="onSubmit" class="space-y-4">
+    <form :id="formId" @submit.prevent="onSubmit" class="space-y-4">
       <FormFieldCl
         :label="t('bookmark.url')"
-        for-id="edit-bookmark-url"
+        :for-id="`${idPrefix}-url`"
         :error="errors.url"
         required
       >
         <InputCl
-          id="edit-bookmark-url"
+          :id="`${idPrefix}-url`"
           v-model="url"
           v-bind="urlAttrs"
           type="url"
@@ -256,12 +295,12 @@ const onSubmit = handleSubmit(async (values) => {
 
       <FormFieldCl
         :label="t('bookmark.title')"
-        for-id="edit-bookmark-title"
+        :for-id="`${idPrefix}-title`"
         :error="errors.title"
         required
       >
         <InputCl
-          id="edit-bookmark-title"
+          :id="`${idPrefix}-title`"
           v-model="title"
           v-bind="titleAttrs"
           type="text"
@@ -271,11 +310,11 @@ const onSubmit = handleSubmit(async (values) => {
 
       <FormFieldCl
         :label="t('bookmark.description')"
-        for-id="edit-bookmark-description"
+        :for-id="`${idPrefix}-description`"
         :error="errors.description"
       >
         <TextareaCl
-          id="edit-bookmark-description"
+          :id="`${idPrefix}-description`"
           v-model="description"
           v-bind="descriptionAttrs"
           rows="3"
@@ -285,11 +324,11 @@ const onSubmit = handleSubmit(async (values) => {
 
       <FormFieldCl
         :label="t('bookmark.folder')"
-        for-id="edit-bookmark-folder"
+        :for-id="`${idPrefix}-folder`"
         :error="errors.folderId"
       >
         <FolderSelectCl
-          id="edit-bookmark-folder"
+          :id="`${idPrefix}-folder`"
           v-model="folderId"
           :folders="folders"
           :placeholder="t('bookmark.noFolder')"
@@ -316,13 +355,12 @@ const onSubmit = handleSubmit(async (values) => {
           {{ t('tag.none') }}
         </p>
       </div>
-      <!-- suggested tags-->
+
       <div data-testid="suggested-tags-section" class="space-y-2 min-h-[5.5rem]">
         <div class="flex items-center justify-between">
           <label class="block text-sm font-medium leading-none">{{
             t('bookmark.suggestedTags')
           }}</label>
-          <!--          prevent default to prevent validation on click-->
           <button
             type="button"
             class="text-xs text-primary hover:underline"
@@ -365,8 +403,6 @@ const onSubmit = handleSubmit(async (values) => {
         </template>
       </div>
 
-      <!-- Properties section. Hidden entirely when the collection has no
-           definitions, so we don't leave a dangling heading in the dialog. -->
       <template v-if="propertyStore.definitions.length > 0">
         <div class="flex items-center gap-2.5 pt-1">
           <span
@@ -383,7 +419,7 @@ const onSubmit = handleSubmit(async (values) => {
             :key="def.id"
             :prop-def="def"
             :model-value="propertyValuesByDefinitionId.get(def.id)"
-            @update:model-value="(value) => setPropertyValue(def.id, value)"
+            @update:model-value="(value: PropertyFormValue) => setPropertyValue(def.id, value)"
             @clear="setPropertyValue(def.id, undefined)"
           />
         </div>
@@ -392,8 +428,8 @@ const onSubmit = handleSubmit(async (values) => {
 
     <template #footer>
       <DialogFooterCl
-        submit-form="edit-bookmark-form"
-        :submit-label="t('common.save')"
+        :submit-form="formId"
+        :submit-label="isEdit ? t('common.save') : t('common.create')"
         :submitting="isSubmitting"
         @cancel="emit('update:open', false)"
       />
@@ -401,8 +437,8 @@ const onSubmit = handleSubmit(async (values) => {
   </DialogCl>
 
   <AutoTagRulesDialog
-    v-if="bookmark"
+    v-if="effectiveCollectionId"
     v-model:open="rulesManagerOpen"
-    :collection-id="bookmark.data.collectionId"
+    :collection-id="effectiveCollectionId"
   />
 </template>

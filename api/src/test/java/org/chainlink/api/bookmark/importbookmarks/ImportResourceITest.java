@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
 
 @Slf4j
 @QuarkusTest
@@ -87,8 +86,7 @@ class ImportResourceITest {
             .then()
             .statusCode(200)
             .body("foldersCreated", equalTo(2))
-            .body("bookmarksCreated", equalTo(2))
-            .body("importTag", notNullValue());
+            .body("bookmarksCreated", equalTo(2));
     }
 
     @Test
@@ -104,8 +102,7 @@ class ImportResourceITest {
             .then()
             .statusCode(200)
             .body("foldersCreated", equalTo(1))
-            .body("bookmarksCreated", equalTo(3))
-            .body("importTag", notNullValue());
+            .body("bookmarksCreated", equalTo(3));
     }
 
     @Test
@@ -121,8 +118,7 @@ class ImportResourceITest {
             .then()
             .statusCode(200)
             .body("foldersCreated", equalTo(0))
-            .body("bookmarksCreated", equalTo(0))
-            .body("importTag", notNullValue());
+            .body("bookmarksCreated", equalTo(0));
     }
 
     @Test
@@ -150,34 +146,6 @@ class ImportResourceITest {
             .post("/collections/{collectionId}/import", nonExistentId)
             .then()
             .statusCode(403);
-    }
-
-    @Test
-    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
-    void shouldGenerateIncrementingImportTags() {
-        Collection collection = fixtureService.createTestCollection();
-        String collectionId = collection.getId().getUUID().toString();
-        File file = getResourceFile("bookmarks-sample.html");
-
-        String firstTag = RestAssured.given()
-            .multiPart("file", file, "text/html")
-            .post("/collections/{collectionId}/import", collectionId)
-            .then()
-            .statusCode(200)
-            .extract().path("importTag");
-
-        String secondTag = RestAssured.given()
-            .multiPart("file", file)
-            .post("/collections/{collectionId}/import", collectionId)
-            .then()
-            .statusCode(200)
-            .extract().path("importTag");
-
-        Assertions.assertThat(firstTag).isNotNull();
-        Assertions.assertThat(secondTag).isNotNull();
-        Assertions.assertThat(firstTag).isNotEqualTo(secondTag);
-        Assertions.assertThat(firstTag).matches("imported=\\d{4}-\\d{2}-\\d{2}_1");
-        Assertions.assertThat(secondTag).matches("imported=\\d{4}-\\d{2}-\\d{2}_2");
     }
 
     private File getResourceFile(String name) {

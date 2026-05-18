@@ -111,7 +111,7 @@ onBeforeUnmount(() => {
         v-for="option in options"
         :key="option.value"
         type="button"
-        class="flex w-full items-center gap-2 px-3 py-2 text-sm text-left hover:bg-accent hover:text-accent-foreground"
+        class="flex w-full items-center gap-2 px-3 py-2 text-sm text-left hover:bg-popover-hover hover:text-popover-foreground"
         :class="current === option.value ? 'text-foreground' : 'text-muted-foreground'"
         role="menuitemradio"
         :aria-checked="current === option.value"

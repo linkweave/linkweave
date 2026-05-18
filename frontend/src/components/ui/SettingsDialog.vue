@@ -1,18 +1,11 @@
 <script setup lang="ts">
-import ImportCollectionDialog from '@/components/bookmark/ImportCollectionDialog.vue'
-import { ButtonCl, DialogCl } from '@/components/ui'
-import { useCollectionStore } from '@/stores/collection'
-import { useNotificationStore } from '@/stores/notification'
+import { DialogCl } from '@/components/ui'
 import { useUiStore, type Theme, type BookmarkLayout } from '@/stores/ui'
-import { downloadBlobDirectly, extractFilenameFromContentDispositionHeader } from '@/utils/download'
-import { Download, LayoutGrid, LayoutList, Monitor, Moon, Sun, Upload, Layers } from '@lucide/vue'
-import { ref } from 'vue'
+import { LayoutGrid, LayoutList, Monitor, Moon, Sun, Layers } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const ui = useUiStore()
-const collectionStore = useCollectionStore()
-const notification = useNotificationStore()
 
 interface Props {
   open?: boolean
@@ -26,9 +19,6 @@ const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
-const isImporting = ref(false)
-const isExporting = ref(false)
-
 const themes: { value: Theme; icon: typeof Sun; labelKey: string }[] = [
   { value: 'light', icon: Sun, labelKey: 'settings.themeLight' },
   { value: 'dark', icon: Moon, labelKey: 'settings.themeDark' },
@@ -41,33 +31,7 @@ const layouts: { value: BookmarkLayout; icon: typeof LayoutList; labelKey: strin
   { value: 'grouped', icon: Layers, labelKey: 'settings.layoutGrouped' },
 ]
 
-async function handleImported() {
-  if (collectionStore.currentCollectionId) {
-    await collectionStore.fetchCollectionInfo(collectionStore.currentCollectionId)
-  }
-}
 
-async function handleExport() {
-  if (!collectionStore.currentCollectionId) return
-
-  isExporting.value = true
-  try {
-    const response = await fetch(`/api/collections/${collectionStore.currentCollectionId}/export`, {
-      credentials: 'include',
-    })
-    if (!response.ok) throw new Error('Export failed')
-
-    const contentDisposition = response.headers.get('Content-Disposition')
-    const filename =
-      extractFilenameFromContentDispositionHeader(contentDisposition) ?? 'bookmarks.html'
-    const blob = await response.blob()
-    downloadBlobDirectly(blob, filename)
-  } catch (err) {
-    void notification.handleApiError(err, t('settings.exportError'))
-  } finally {
-    isExporting.value = false
-  }
-}
 </script>
 
 <template>
@@ -125,28 +89,8 @@ async function handleExport() {
         </div>
       </div>
 
-      <div v-if="collectionStore.currentCollectionId">
-        <h3 class="text-sm font-medium text-foreground mb-3">
-          {{ t('settings.dataManagement') }}
-        </h3>
-        <div class="flex flex-col gap-2">
-          <ButtonCl variant="outline" :disabled="isExporting" @click="handleExport">
-            <Download class="mr-2 h-4 w-4" />
-            {{ t('settings.exportCollection') }}
-          </ButtonCl>
-          <ButtonCl variant="outline" @click="isImporting = true">
-            <Upload class="mr-2 h-4 w-4" />
-            {{ t('settings.importCollection') }}
-          </ButtonCl>
-        </div>
-      </div>
     </div>
   </DialogCl>
 
-  <ImportCollectionDialog
-    v-if="collectionStore.currentCollectionId"
-    v-model:open="isImporting"
-    :collection-id="collectionStore.currentCollectionId"
-    @imported="handleImported"
-  />
+
 </template>

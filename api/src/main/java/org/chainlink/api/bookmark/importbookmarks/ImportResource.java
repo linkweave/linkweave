@@ -55,7 +55,7 @@ public class ImportResource {
         validateFile(file);
 
         try (InputStream inputStream = Files.newInputStream(file.uploadedFile())) {
-            return bookmarkImportService.importBookmarks(collectionId, inputStream);
+            return bookmarkImportService.importBookmarks(collectionId, inputStream, file.fileName());
         } catch (IOException e) {
             throw new AppFailureException(
                 AppFailureMessage.internalError("Failed to read uploaded file: " + e.getMessage()));

@@ -132,7 +132,7 @@ public class ConfigService {
     @ConfigProperty(name = "chainlink.favicon.cache-cleanup.enabled", defaultValue = "true")
     boolean faviconCacheCleanupEnabled;
 
-    @ConfigProperty(name = "chainlink.feature.bookmark-properties.enabled", defaultValue = "false")
+    @ConfigProperty(name = "chainlink.feature.bookmark-properties.enabled", defaultValue = "true")
     boolean bookmarkPropertiesEnabled;
 
 

@@ -18,6 +18,7 @@ import type {
   PropertyDefinitionJson,
   PropertyDefinitionListJson,
   PropertyDefinitionSaveJson,
+  PropertyDefinitionUsageJson,
 } from '../models/index';
 import {
     PropertyDefinitionJsonFromJSON,
@@ -26,6 +27,8 @@ import {
     PropertyDefinitionListJsonToJSON,
     PropertyDefinitionSaveJsonFromJSON,
     PropertyDefinitionSaveJsonToJSON,
+    PropertyDefinitionUsageJsonFromJSON,
+    PropertyDefinitionUsageJsonToJSON,
 } from '../models/index';
 
 export interface PropertyDefinitionResourceApiApiPropertyDefinitionsDefinitionIdDeleteRequest {
@@ -35,6 +38,10 @@ export interface PropertyDefinitionResourceApiApiPropertyDefinitionsDefinitionId
 export interface PropertyDefinitionResourceApiApiPropertyDefinitionsDefinitionIdPutRequest {
     definitionId: string;
     propertyDefinitionSaveJson: PropertyDefinitionSaveJson;
+}
+
+export interface PropertyDefinitionResourceApiApiPropertyDefinitionsDefinitionIdUsageGetRequest {
+    definitionId: string;
 }
 
 export interface PropertyDefinitionResourceApiApiPropertyDefinitionsGetRequest {
@@ -146,6 +153,51 @@ export class PropertyDefinitionResourceApi extends runtime.BaseAPI {
      */
     async apiPropertyDefinitionsDefinitionIdPut(requestParameters: PropertyDefinitionResourceApiApiPropertyDefinitionsDefinitionIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PropertyDefinitionJson> {
         const response = await this.apiPropertyDefinitionsDefinitionIdPutRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for apiPropertyDefinitionsDefinitionIdUsageGet without sending the request
+     */
+    async apiPropertyDefinitionsDefinitionIdUsageGetRequestOpts(requestParameters: PropertyDefinitionResourceApiApiPropertyDefinitionsDefinitionIdUsageGetRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['definitionId'] == null) {
+            throw new runtime.RequiredError(
+                'definitionId',
+                'Required parameter "definitionId" was null or undefined when calling apiPropertyDefinitionsDefinitionIdUsageGet().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/api/property-definitions/{definitionId}/usage`;
+        urlPath = urlPath.replace(`{${"definitionId"}}`, encodeURIComponent(String(requestParameters['definitionId'])));
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * Usage
+     */
+    async apiPropertyDefinitionsDefinitionIdUsageGetRaw(requestParameters: PropertyDefinitionResourceApiApiPropertyDefinitionsDefinitionIdUsageGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PropertyDefinitionUsageJson>> {
+        const requestOptions = await this.apiPropertyDefinitionsDefinitionIdUsageGetRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PropertyDefinitionUsageJsonFromJSON(jsonValue));
+    }
+
+    /**
+     * Usage
+     */
+    async apiPropertyDefinitionsDefinitionIdUsageGet(requestParameters: PropertyDefinitionResourceApiApiPropertyDefinitionsDefinitionIdUsageGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PropertyDefinitionUsageJson> {
+        const response = await this.apiPropertyDefinitionsDefinitionIdUsageGetRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

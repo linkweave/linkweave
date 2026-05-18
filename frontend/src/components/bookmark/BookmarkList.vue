@@ -7,7 +7,7 @@ import { useNotificationStore } from '@/stores/notification'
 import { useUiStore } from '@/stores/ui'
 import BookmarkCard from './BookmarkCard.vue'
 import BookmarkGroupedLayout from './BookmarkGroupedLayout.vue'
-import EditBookmarkDialog from './EditBookmarkDialog.vue'
+import BookmarkDialog from './BookmarkDialog.vue'
 import MoveBookmarkDialog from './MoveBookmarkDialog.vue'
 import NeverOpenedDivider from './NeverOpenedDivider.vue'
 import { ConfirmDialog } from '@/components/ui'
@@ -121,7 +121,7 @@ async function confirmDelete() {
     @move="handleMove"
   />
 
-  <EditBookmarkDialog
+  <BookmarkDialog
     :bookmark="editingBookmark"
     v-model:open="showEditDialog"
     @update:open="handleEditDialogUpdate"

@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.property.json.PropertyDefinitionJson;
 import org.chainlink.api.bookmark.property.json.PropertyDefinitionListJson;
 import org.chainlink.api.bookmark.property.json.PropertyDefinitionSaveJson;
+import org.chainlink.api.bookmark.property.json.PropertyDefinitionUsageJson;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.auth.AuthorizationService;
 import org.chainlink.api.shared.config.ConfigService;
@@ -98,5 +99,19 @@ public class PropertyDefinitionResource {
         PropertyDefinition def = propertyDefinitionService.getById(definitionId);
         authorizationService.requireAccessTo(def);
         propertyDefinitionService.remove(definitionId);
+    }
+
+    @GET
+    @Path("/{definitionId}/usage")
+    @Produces(MediaType.APPLICATION_JSON)
+    @NonNull
+    @Authenticated
+    public PropertyDefinitionUsageJson usage(
+        @PathParam("definitionId") @NotNull @NonNull ID<PropertyDefinition> definitionId
+    ) {
+        requireFeatureEnabled();
+        PropertyDefinition def = propertyDefinitionService.getById(definitionId);
+        authorizationService.requireAccessTo(def);
+        return new PropertyDefinitionUsageJson(propertyDefinitionService.countUsage(definitionId));
     }
 }

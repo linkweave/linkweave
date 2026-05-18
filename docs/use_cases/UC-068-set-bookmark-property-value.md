@@ -8,8 +8,6 @@
 **Goal:** Assign or change a property value on a bookmark so that the bookmark carries structured metadata.   
 **Status:** Done
 
-> **Known gap:** Property inputs are currently available in the edit dialog only. The create dialog (`CreateBookmarkDialog.vue`) does not yet expose property fields. Step 1 therefore applies fully to the edit flow; the create flow will be addressed in a follow-up.   
-
 ## Traceability
 
 **Maps to:** FR-069

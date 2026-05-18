@@ -36,6 +36,7 @@ export * from './move-to-trash-json';
 export * from './property-definition-json';
 export * from './property-definition-list-json';
 export * from './property-definition-save-json';
+export * from './property-definition-usage-json';
 export * from './property-type';
 export * from './registration-request-json';
 export * from './sort-direction';

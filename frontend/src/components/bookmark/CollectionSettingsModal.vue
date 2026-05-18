@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { config } from '@/api'
 import type { PropertyDefinitionJson } from '@/api/generated'
-import { PropertyType } from '@/api/generated'
+import { ImportResourceApi, PropertyType } from '@/api/generated'
+import { downloadBlobDirectly, extractFilenameFromContentDispositionHeader } from '@/utils/download'
 import {
   ButtonCl,
   ConfirmDialog,
@@ -21,7 +23,7 @@ import { useNotificationStore } from '@/stores/notification'
 import { usePropertyStore } from '@/stores/property'
 import { type BookmarkLayout, useUiStore } from '@/stores/ui'
 import { toTypedSchema } from '@vee-validate/zod'
-import { Layers, LayoutGrid, LayoutList, Pencil, Plus, Trash2 } from '@lucide/vue'
+import { Download, Layers, LayoutGrid, LayoutList, Loader2, Pencil, Plus, Trash2, Upload } from '@lucide/vue'
 import { useForm } from 'vee-validate'
 import { computed, ref, toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -67,8 +69,61 @@ const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
-type Tab = 'display' | 'properties'
+type Tab = 'display' | 'properties' | 'data'
 const activeTab = ref<Tab>('display')
+
+// --- Data tab (import + export) -------------------------------------------
+const importFileInput = ref<HTMLInputElement | null>(null)
+const importSelectedFile = ref<File | null>(null)
+const isImporting = ref(false)
+const isExporting = ref(false)
+
+function handleImportFileChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    importSelectedFile.value = target.files[0] ?? null
+  }
+}
+
+async function handleImport() {
+  const collectionId = collectionStore.currentCollectionId
+  if (!importSelectedFile.value || !collectionId) return
+  isImporting.value = true
+  try {
+    const api = new ImportResourceApi(config)
+    await api.apiCollectionsCollectionIdImportPost({
+      collectionId,
+      file: importSelectedFile.value,
+    })
+    importSelectedFile.value = null
+    await collectionStore.fetchCollectionInfo(collectionId)
+  } catch (err) {
+    void notification.handleApiError(err, t('import.error'))
+  } finally {
+    isImporting.value = false
+  }
+}
+
+async function handleExport() {
+  const collectionId = collectionStore.currentCollectionId
+  if (!collectionId) return
+  isExporting.value = true
+  try {
+    const response = await fetch(`/api/collections/${collectionId}/export`, {
+      credentials: 'include',
+    })
+    if (!response.ok) throw new Error('Export failed')
+    const contentDisposition = response.headers.get('Content-Disposition')
+    const filename =
+      extractFilenameFromContentDispositionHeader(contentDisposition) ?? 'bookmarks.html'
+    const blob = await response.blob()
+    downloadBlobDirectly(blob, filename)
+  } catch (err) {
+    void notification.handleApiError(err, t('settings.exportError'))
+  } finally {
+    isExporting.value = false
+  }
+}
 
 // All known PropertyType enum values, with i18n keys for the type-selector.
 const propertyTypes: ReadonlyArray<{ value: PropertyType; labelKey: string }> = [
@@ -170,17 +225,37 @@ const onSubmit = handleSubmit(async (values) => {
 // --- Delete confirmation --------------------------------------------------
 const deletingDef = ref<PropertyDefinitionJson | null>(null)
 const showDeleteConfirm = ref(false)
+const deletingUsage = ref<number | null>(null)
 
-function startDelete(def: PropertyDefinitionJson) {
+const deleteConfirmMessage = computed(() => {
+  const name = deletingDef.value?.data.name ?? ''
+  const count = deletingUsage.value
+  if (count !== null && count > 0) {
+    return t('property.deleteConfirmWithUsage', { name, count }, count)
+  }
+  return t('property.deleteConfirm', { name })
+})
+
+async function startDelete(def: PropertyDefinitionJson) {
   deletingDef.value = def
+  deletingUsage.value = null
   showDeleteConfirm.value = true
+  try {
+    deletingUsage.value = await propertyStore.fetchUsage(def.id)
+  } catch {
+    // Non-blocking — the dialog falls back to the generic message.
+  }
 }
 
 async function confirmDelete() {
-  if (!deletingDef.value) return
+  // Capture the id up-front: ConfirmDialog's handleConfirm synchronously emits
+  // both `confirmed` and `update:open(false)`, and the latter resets
+  // `deletingDef` before our awaited delete resolves.
+  const id = deletingDef.value?.id
+  if (!id) return
   try {
-    await propertyStore.deleteDefinition(deletingDef.value.id)
-    if (editingId.value === deletingDef.value.id) cancelForm()
+    await propertyStore.deleteDefinition(id)
+    if (editingId.value === id) cancelForm()
   } catch (err) {
     void notification.handleApiError(err, t('property.deleteError'))
   } finally {
@@ -192,6 +267,8 @@ async function confirmDelete() {
 function onOpenChange(value: boolean) {
   if (!value) {
     activeTab.value = 'display'
+    importSelectedFile.value = null
+    if (importFileInput.value) importFileInput.value.value = ''
   }
   emit('update:open', value)
 }
@@ -262,6 +339,24 @@ function optionsPreview(allowedValues: string | undefined): string {
           </span>
           <span
             v-if="activeTab === 'properties'"
+            class="absolute -bottom-px left-0 right-0 h-[2px] bg-primary"
+            aria-hidden="true"
+          />
+        </button>
+        <button
+          type="button"
+          class="relative px-3.5 py-2 text-sm font-medium transition-colors"
+          :class="
+            activeTab === 'data'
+              ? 'text-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+          "
+          data-testid="collection-settings-tab-data"
+          @click="activeTab = 'data'"
+        >
+          {{ t('collectionSettings.tabData') }}
+          <span
+            v-if="activeTab === 'data'"
             class="absolute -bottom-px left-0 right-0 h-[2px] bg-primary"
             aria-hidden="true"
           />
@@ -345,7 +440,7 @@ function optionsPreview(allowedValues: string | undefined): string {
     </div>
 
     <!-- Properties tab -->
-    <div v-else class="min-h-[380px] space-y-3">
+    <div v-else-if="activeTab === 'properties'" class="min-h-[380px] space-y-3">
       <i18n-t
         keypath="property.manageSectionHintWithSyntax"
         tag="p"
@@ -503,6 +598,64 @@ function optionsPreview(allowedValues: string | undefined): string {
       </button>
     </div>
 
+    <!-- Data tab (import + export) -->
+    <div v-else-if="activeTab === 'data'" class="min-h-[380px] space-y-6">
+      <section>
+        <div class="text-[11px] font-semibold uppercase tracking-[.06em] text-muted-foreground mb-2">
+          {{ t('collectionSettings.sectionImport') }}
+        </div>
+        <p class="text-xs text-muted-foreground leading-relaxed mb-3">
+          {{ t('import.description') }}
+        </p>
+        <div class="space-y-1.5">
+          <div
+            class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm cursor-pointer"
+            @click="importFileInput?.click()"
+          >
+            <span :class="importSelectedFile ? 'text-foreground' : 'text-muted-foreground'">
+              {{ importSelectedFile ? importSelectedFile.name : t('import.filePlaceholder') }}
+            </span>
+            <Upload class="h-4 w-4 text-muted-foreground" />
+          </div>
+          <input
+            id="collection-settings-import-file"
+            ref="importFileInput"
+            type="file"
+            accept=".html"
+            class="hidden"
+            @change="handleImportFileChange"
+          />
+        </div>
+        <ButtonCl
+          class="mt-3"
+          :disabled="!importSelectedFile || isImporting"
+          data-testid="collection-settings-import-submit"
+          @click="handleImport"
+        >
+          <Loader2 v-if="isImporting" class="mr-2 h-4 w-4 animate-spin" />
+          {{ t('import.submit') }}
+        </ButtonCl>
+      </section>
+
+      <section>
+        <div class="text-[11px] font-semibold uppercase tracking-[.06em] text-muted-foreground mb-2">
+          {{ t('collectionSettings.sectionExport') }}
+        </div>
+        <p class="text-xs text-muted-foreground leading-relaxed mb-3">
+          {{ t('collectionSettings.exportDescription') }}
+        </p>
+        <ButtonCl
+          variant="outline"
+          :disabled="isExporting"
+          data-testid="collection-settings-export"
+          @click="handleExport"
+        >
+          <Download class="mr-2 h-4 w-4" />
+          {{ t('settings.exportCollection') }}
+        </ButtonCl>
+      </section>
+    </div>
+
     <!-- Single-button footer: this modal performs CRUD immediately on every
          action, so there's nothing to "submit". Reuses DialogFooterCl's
          chrome (bg-card / border-t) via its default slot, keeping the
@@ -524,7 +677,7 @@ function optionsPreview(allowedValues: string | undefined): string {
     <ConfirmDialog
       v-model:open="showDeleteConfirm"
       :title="t('property.deleteTitle')"
-      :message="t('property.deleteConfirm', { name: deletingDef?.data.name ?? '' })"
+      :message="deleteConfirmMessage"
       @confirmed="confirmDelete"
       @update:open="
         (value: unknown) => {

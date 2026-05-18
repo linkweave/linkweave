@@ -6,13 +6,14 @@ import {
   CollectionSettingsModal,
   SearchActiveChip,
 } from '@/components/bookmark'
-import CreateBookmarkDialog from '@/components/bookmark/CreateBookmarkDialog.vue'
+import BookmarkDialog from '@/components/bookmark/BookmarkDialog.vue'
 import { MainLayout } from '@/components/layout'
 import { ResponsiveButton, SearchBar } from '@/components/ui'
 import HeaderSearchMobile from '@/components/ui/HeaderSearchMobile.vue'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useCollectionStore } from '@/stores/collection'
+import { useFolderStore } from '@/stores/folder'
 import { useOfflineStore } from '@/stores/offline'
 import { useUiStore } from '@/stores/ui'
 import { BookmarkPlus, Settings } from '@lucide/vue'
@@ -22,6 +23,7 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
 const bookmarkStore = useBookmarkStore()
+const folderStore = useFolderStore()
 const ui = useUiStore()
 const offline = useOfflineStore()
 const isAddingBookmark = ref(false)
@@ -85,11 +87,12 @@ const containerClass = computed(() =>
       <BookmarkList />
     </div>
 
-    <CreateBookmarkDialog
+    <BookmarkDialog
       v-if="collectionStore.currentCollectionId"
       :collection-id="collectionStore.currentCollectionId"
+      :preselected-folder-id="folderStore.selectedFolderId ?? undefined"
       v-model:open="isAddingBookmark"
-      @created="isAddingBookmark = false"
+      @saved="isAddingBookmark = false"
     />
 
     <CollectionSettingsModal v-model:open="isSettingsOpen" />
