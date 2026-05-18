@@ -17,7 +17,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run Pi code review
-        uses: https://git.markushofstetter.com/dividbzero/pi-review@v2
+        uses: https://git.markushofstetter.com/dividbzero/pi-review@v3
         with:
           api_key: ${{ secrets.ZAI_API_KEY }}
           provider: zai
