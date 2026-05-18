@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Chainlink",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "Save and browse your Chainlink bookmarks",
   "permissions": ["activeTab", "tabs", "contextMenus", "storage"],
   "host_permissions": [
