@@ -68,13 +68,19 @@ public class BookmarkService {
 
         Set<Tag> tags = resolveTags(json.getTagIds());
 
-        Bookmark bookmark = new Bookmark();
-        bookmark.setCollection(collectionRepo.referenceById(collectionId));
-        bookmark.setFolder(folderId != null ? folderRepo.referenceById(folderId) : null);
-        bookmark.setTitle(json.getTitle());
-        bookmark.setUrl(parseUrl(json.getUrl()));
-        bookmark.setDescription(json.getDescription());
-        bookmark.setTags(tags);
+        Bookmark bookmark = new Bookmark(
+            collectionRepo.referenceById(collectionId),
+            folderId != null ? folderRepo.referenceById(folderId) : null,
+            json.getTitle(),
+            parseUrl(json.getUrl()),
+            json.getDescription(),
+            tags,
+            new HashSet<>(),
+            0,
+            null,
+            null,
+            null
+        );
 
         bookmarkRepo.persist(bookmark);
         return bookmark;
