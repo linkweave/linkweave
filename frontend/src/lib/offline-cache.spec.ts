@@ -1,16 +1,16 @@
 import 'fake-indexeddb/auto'
+import type { CollectionInfoJson, CollectionSummaryJson, UserInfoJson } from '@/api/generated'
 import {
-  saveUserInfo,
-  loadUserInfo,
-  saveCollections,
-  loadCollections,
-  saveCollectionInfo,
-  loadCollectionInfo,
-  purgeForUser,
-  purgeAll,
   getLastSyncedAt,
+  loadCollectionInfo,
+  loadCollections,
+  loadUserInfo,
+  purgeAll,
+  purgeForUser,
+  saveCollectionInfo,
+  saveCollections,
+  saveUserInfo,
 } from './offline-cache'
-import type { UserInfoJson, CollectionSummaryJson, CollectionInfoJson } from '@/api/generated'
 
 const fakeUser: UserInfoJson = {
   email: 'alice@example.com',
@@ -18,11 +18,24 @@ const fakeUser: UserInfoJson = {
   lastName: 'User',
   roles: new Set(['USER']),
   defaultCollectionId: 'col-1',
+  settings: { offlineCachingEnabled: true },
 }
 
 const fakeCollections: CollectionSummaryJson[] = [
-  { id: 'col-1', name: 'Default', isDefault: true, role: 'ADMIN' as CollectionSummaryJson['role'], shared: false },
-  { id: 'col-2', name: 'Other', isDefault: false, role: 'READER' as CollectionSummaryJson['role'], shared: false },
+  {
+    id: 'col-1',
+    name: 'Default',
+    isDefault: true,
+    role: 'ADMIN' as CollectionSummaryJson['role'],
+    shared: false,
+  },
+  {
+    id: 'col-2',
+    name: 'Other',
+    isDefault: false,
+    role: 'READER' as CollectionSummaryJson['role'],
+    shared: false,
+  },
 ]
 
 const fakeCollectionInfo: CollectionInfoJson = {
@@ -88,7 +101,15 @@ describe('offline-cache', () => {
 
     it('should isolate collections between users', async () => {
       await saveCollections('alice@example.com', fakeCollections)
-      await saveCollections('bob@example.com', [{ id: 'col-bob', name: 'Bobs Collection', isDefault: false, role: 'ADMIN' as CollectionSummaryJson['role'], shared: false }])
+      await saveCollections('bob@example.com', [
+        {
+          id: 'col-bob',
+          name: 'Bobs Collection',
+          isDefault: false,
+          role: 'ADMIN' as CollectionSummaryJson['role'],
+          shared: false,
+        },
+      ])
 
       const aliceResult = await loadCollections('alice@example.com')
       const bobResult = await loadCollections('bob@example.com')

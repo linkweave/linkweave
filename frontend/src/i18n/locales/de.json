@@ -118,7 +118,10 @@
     "defaultLayoutHint": "Wird verwendet, wenn eine Sammlung kein eigenes Layout hat. Jede Sammlung merkt sich ihre Auswahl, sobald du sie änderst.",
     "layoutList": "Liste",
     "layoutGrid": "Raster",
-    "layoutGrouped": "Gruppiert"
+    "layoutGrouped": "Gruppiert",
+    "offlineCaching": "Offline-Zwischenspeicherung",
+    "offlineCachingHint": "Lesezeichen lokal für Offline-Nutzung speichern.",
+    "offlineCachingUpdateError": "Offline-Zwischenspeicherung konnte nicht aktualisiert werden."
   },
   "toolbar": {
     "layout": "Bookmark-Layout",

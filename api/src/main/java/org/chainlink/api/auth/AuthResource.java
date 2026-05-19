@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
@@ -43,6 +44,7 @@ public class AuthResource {
     private final EnsureUserService ensureUserService;
     private final RegistrationService registrationService;
     private final UserService userService;
+    private final UserSettingsService userSettingsService;
 
     private final  UriInfo uriInfo;
 
@@ -105,6 +107,14 @@ public class AuthResource {
         }
 
         return Response.noContent().build();
+    }
+
+    @PUT
+    @Path("/settings")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Authenticated
+    public UserSettingsJson updateSettings(@Valid UserSettingsUpdateJson json) {
+        return userSettingsService.updateSettings(json);
     }
 
     @POST

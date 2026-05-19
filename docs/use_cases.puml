@@ -159,6 +159,12 @@ rectangle "Chainlink Bookmark Manager" {
         usecase "UC-079\nManage Bookmarks\nvia CLI" as UC079
         usecase "UC-080\nConfigure CLI\nLogin" as UC080
     }
+
+    rectangle "Observability" {
+        usecase "UC-088\nCollect Application\nMetrics" as UC088
+        usecase "UC-089\nExport Metrics to\nObservability Stack" as UC089
+        usecase "UC-090\nVisualize Metrics\nin Dashboard" as UC090
+    }
 }
 
 ' Authentication
@@ -329,6 +335,21 @@ note right of UC079
   API key (X-API-Key header).
   All commands go through
   the HTTP API.
+end note
+
+' Observability
+operator --> UC088
+operator --> UC089
+operator --> UC090
+
+UC088 ..> UC089 : <<include>>
+UC089 ..> UC090 : <<extend>>
+
+note right of UC088
+  Metrics via Micrometer.
+  Prometheus format at /q/metrics.
+  Stack (Prometheus, VictoriaMetrics,
+  etc.) is operator's choice.
 end note
 
 legend right

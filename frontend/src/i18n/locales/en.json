@@ -118,7 +118,10 @@
     "defaultLayoutHint": "Used when a collection has no layout of its own. Each collection remembers its own choice once you change it.",
     "layoutList": "List",
     "layoutGrid": "Grid",
-    "layoutGrouped": "Grouped"
+    "layoutGrouped": "Grouped",
+    "offlineCaching": "Offline Caching",
+    "offlineCachingHint": "Store bookmark data locally for offline browsing.",
+    "offlineCachingUpdateError": "Failed to update offline caching setting."
   },
   "toolbar": {
     "layout": "Bookmark Layout",

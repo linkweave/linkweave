@@ -3,7 +3,6 @@ package org.chainlink.api.auth;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
 import io.quarkus.security.identity.SecurityIdentity;
@@ -16,9 +15,11 @@ import org.chainlink.api.benutzer.UserRepo;
 import org.chainlink.api.shared.auth.FachRolle;
 import org.chainlink.api.shared.user.AuthProvider;
 import org.chainlink.api.shared.user.User;
+import org.chainlink.api.shared.user.UserSettings;
+import org.chainlink.api.shared.user.UserSettingsRepo;
 import org.chainlink.api.shared.util.EnumSetUtil;
-import org.hibernate.exception.ConstraintViolationException;
 import org.chainlink.infrastructure.stereotypes.Service;
+import org.hibernate.exception.ConstraintViolationException;
 import org.jspecify.annotations.NonNull;
 
 @Service
@@ -28,6 +29,7 @@ public class EnsureUserService {
 
     private final SecurityIdentity identity;
     private final UserRepo userRepo;
+    private final UserSettingsRepo userSettingsRepo;
 
     @Transactional(TxType.NOT_SUPPORTED)
     @NonNull
@@ -77,6 +79,7 @@ public class EnsureUserService {
 
         try {
             userRepo.provisionNewUser(newUser);
+            userSettingsRepo.provisionSettings(new UserSettings(newUser));
             LOG.info("Created new user: {}", newUser.getEmail());
             return newUser;
         } catch (PersistenceException e) {

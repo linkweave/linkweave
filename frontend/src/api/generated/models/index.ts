@@ -49,4 +49,6 @@ export * from './time-travel-status';
 export * from './trashbin-count-json';
 export * from './trashbin-json';
 export * from './user-info-json';
+export * from './user-settings-json';
+export * from './user-settings-update-json';
 export * from './violation-json';

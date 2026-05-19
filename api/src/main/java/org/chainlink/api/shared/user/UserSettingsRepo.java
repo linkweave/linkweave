@@ -2,11 +2,16 @@ package org.chainlink.api.shared.user;
 
 import java.util.Optional;
 
+import ch.dvbern.dvbstarter.runas.RunAs;
 import ch.dvbern.dvbstarter.types.id.ID;
+import jakarta.transaction.Transactional;
+import jakarta.transaction.Transactional.TxType;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.infrastructure.db.BaseRepo;
 import org.chainlink.infrastructure.stereotypes.Repository;
 import org.jspecify.annotations.NonNull;
+
+import static org.chainlink.api.shared.auth.BerechtigungName.SYSTEM_ADMIN;
 
 @Repository
 @RequiredArgsConstructor
@@ -17,6 +22,18 @@ public class UserSettingsRepo extends BaseRepo<UserSettings> {
         return db.selectFrom(QUserSettings.userSettings)
             .where(QUserSettings.userSettings.user.id.eq(userId.getUUID()))
             .fetchOne();
+    }
+
+    @Transactional(TxType.REQUIRES_NEW)
+    @RunAs(username = "sysadmin", roles = {SYSTEM_ADMIN})
+    public void provisionSettings(@NonNull UserSettings settings) {
+        db.persist(settings);
+    }
+
+    public void deleteByUserId(@NonNull ID<User> userId) {
+        db.delete(QUserSettings.userSettings)
+            .where(QUserSettings.userSettings.user.id.eq(userId.getUUID()))
+            .execute();
     }
 
     @NonNull

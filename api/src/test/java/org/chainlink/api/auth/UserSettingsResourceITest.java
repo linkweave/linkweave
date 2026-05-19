@@ -13,43 +13,7 @@ class UserSettingsResourceITest {
 
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
-    void shouldGetDefaultSettings() {
-        RestAssured.given()
-            .get("/auth/settings")
-            .then()
-            .statusCode(200)
-            .body("offlineCachingEnabled", equalTo(true));
-    }
-
-    @Test
-    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
-    void shouldUpdateOfflineCachingEnabled() {
-        RestAssured.given()
-            .contentType(ContentType.JSON)
-            .body("{\"offlineCachingEnabled\":false}")
-            .put("/auth/settings")
-            .then()
-            .statusCode(200)
-            .body("offlineCachingEnabled", equalTo(false));
-
-        RestAssured.given()
-            .get("/auth/settings")
-            .then()
-            .statusCode(200)
-            .body("offlineCachingEnabled", equalTo(false));
-
-        RestAssured.given()
-            .contentType(ContentType.JSON)
-            .body("{\"offlineCachingEnabled\":true}")
-            .put("/auth/settings")
-            .then()
-            .statusCode(200)
-            .body("offlineCachingEnabled", equalTo(true));
-    }
-
-    @Test
-    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
-    void shouldIncludeSettingsInUserInfo() {
+    void shouldIncludeDefaultSettingsInUserInfo() {
         RestAssured.given()
             .get("/auth/me")
             .then()
@@ -59,13 +23,14 @@ class UserSettingsResourceITest {
 
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
-    void shouldReflectUpdatedSettingsInUserInfo() {
+    void shouldUpdateOfflineCachingAndReflectInUserInfo() {
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body("{\"offlineCachingEnabled\":false}")
             .put("/auth/settings")
             .then()
-            .statusCode(200);
+            .statusCode(200)
+            .body("offlineCachingEnabled", equalTo(false));
 
         RestAssured.given()
             .get("/auth/me")
@@ -78,6 +43,7 @@ class UserSettingsResourceITest {
             .body("{\"offlineCachingEnabled\":true}")
             .put("/auth/settings")
             .then()
-            .statusCode(200);
+            .statusCode(200)
+            .body("offlineCachingEnabled", equalTo(true));
     }
 }

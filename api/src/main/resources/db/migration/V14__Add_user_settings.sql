@@ -6,7 +6,7 @@ CREATE TABLE UserSettings (
     userMutiert VARCHAR(255) NOT NULL,
     version BIGINT NOT NULL,
     offlineCachingEnabled BOOLEAN NOT NULL DEFAULT TRUE,
-    CONSTRAINT fk_UserSettings_user FOREIGN KEY (user_id) REFERENCES User(id)
+    CONSTRAINT fk_usersettings_user FOREIGN KEY (user_id) REFERENCES User(id)
 );
 
 CREATE TABLE UserSettings_AUD (
@@ -22,7 +22,7 @@ CREATE TABLE UserSettings_AUD (
     PRIMARY KEY (REV, user_id)
 );
 
-CREATE INDEX ix_UserSettings_id ON UserSettings (user_id, version);
+CREATE INDEX ix_usersettings_id ON UserSettings (user_id, version);
 
 INSERT INTO UserSettings (user_id, timestampErstellt, timestampMutiert, userErstellt, userMutiert, version, offlineCachingEnabled)
 SELECT id, timestampErstellt, timestampMutiert, userErstellt, userMutiert, version, TRUE

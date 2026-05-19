@@ -1,5 +1,6 @@
 package org.chainlink.api.auth;
 
+import ch.dvbern.dvbstarter.types.id.ID;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,14 +20,6 @@ public class UserSettingsService {
     private final CurrentUserService currentUserService;
 
     @NonNull
-    public UserSettingsJson getSettings() {
-        User user = currentUserService.currentUser();
-        UserSettings settings = userSettingsRepo.getOrCreateForUser(user);
-        return toJson(settings);
-    }
-
-    @Transactional
-    @NonNull
     public UserSettingsJson updateSettings(@NonNull UserSettingsUpdateJson update) {
         User user = currentUserService.currentUser();
         UserSettings settings = userSettingsRepo.getOrCreateForUser(user);
@@ -36,8 +29,13 @@ public class UserSettingsService {
 
     @NonNull
     public UserSettingsJson getSettingsForUser(@NonNull User user) {
-        UserSettings settings = userSettingsRepo.getOrCreateForUser(user);
-        return toJson(settings);
+        return userSettingsRepo.findByUserId(user.getId())
+            .map(this::toJson)
+            .orElseGet(() -> new UserSettingsJson(true));
+    }
+
+    public void deleteSettingsForUser(@NonNull ID<User> userId) {
+        userSettingsRepo.deleteByUserId(userId);
     }
 
     private UserSettingsJson toJson(@NonNull UserSettings settings) {

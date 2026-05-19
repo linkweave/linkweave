@@ -37,16 +37,19 @@ public class UserService {
     private final PropertyDefinitionService propertyDefinitionService;
     private final CollectionService collectionService;
     private final CurrentUserService currentUserService;
+    private final UserSettingsService userSettingsService;
 
     public @NonNull UserInfoJson buildCurrentUserInfo(@NonNull String email, @NonNull Set<String> roles) {
         User user = currentUserService.findCurrentUser().orElseThrow(AppAuthException::new);
         Collection collection = collectionService.getDefaultCollectionOrAutoprovision(user);
+        UserSettingsJson settings = userSettingsService.getSettingsForUser(user);
         return new UserInfoJson(
             email,
             user.getVorname(),
             user.getNachname(),
             roles,
-            collection.getId()
+            collection.getId(),
+            settings
         );
     }
 
@@ -91,7 +94,10 @@ public class UserService {
             collectionRepo.remove(collectionId);
         }
 
-        // 3. Finally remove the user. UserPermission cascades via the
+        // Remove settings (may not exist for legacy users — bulk delete is a no-op if absent).
+        userSettingsService.deleteSettingsForUser(userId);
+
+        // Finally remove the user. UserPermission cascades via the
         // User.berechtigungen @OneToMany(cascade = ALL, orphanRemoval = true).
         userRepo.remove(userId);
     }

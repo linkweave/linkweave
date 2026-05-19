@@ -1,11 +1,20 @@
 <script setup lang="ts">
-import { DialogCl } from '@/components/ui'
-import { useUiStore, type Theme, type BookmarkLayout } from '@/stores/ui'
-import { LayoutGrid, LayoutList, Monitor, Moon, Sun, Layers } from '@lucide/vue'
+import { config } from '@/api'
+import { AuthResourceApi } from '@/api/generated'
+import { DialogCl, SwitchCl } from '@/components/ui'
+import { useAuthStore } from '@/stores/auth'
+import { useNotificationStore } from '@/stores/notification'
+import { type BookmarkLayout, type Theme, useUiStore } from '@/stores/ui'
+import { Layers, LayoutGrid, LayoutList, Monitor, Moon, Sun } from '@lucide/vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const ui = useUiStore()
+const auth = useAuthStore()
+const notification = useNotificationStore()
+
+const authApi = new AuthResourceApi(config)
 
 interface Props {
   open?: boolean
@@ -19,6 +28,36 @@ const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
+const offlineCachingSettingToggle = ref(true)
+const settingsLoading = ref(false)
+
+watch(
+  () => auth.user?.settings?.offlineCachingEnabled,
+  (val) => {
+    if (val != null) offlineCachingSettingToggle.value = val
+  },
+  { immediate: true },
+)
+
+async function onOfflineCachingChange(value: boolean) {
+  const previous = offlineCachingSettingToggle.value
+  offlineCachingSettingToggle.value = value
+  settingsLoading.value = true
+  try {
+    const result = await authApi.apiAuthSettingsPut({
+      userSettingsUpdateJson: { offlineCachingEnabled: value },
+    })
+    if (auth.user) {
+      auth.user = { ...auth.user, settings: result }
+    }
+  } catch {
+    offlineCachingSettingToggle.value = previous
+    notification.handleApiError(null, t('settings.offlineCachingUpdateError'))
+  } finally {
+    settingsLoading.value = false
+  }
+}
+
 const themes: { value: Theme; icon: typeof Sun; labelKey: string }[] = [
   { value: 'light', icon: Sun, labelKey: 'settings.themeLight' },
   { value: 'dark', icon: Moon, labelKey: 'settings.themeDark' },
@@ -30,8 +69,6 @@ const layouts: { value: BookmarkLayout; icon: typeof LayoutList; labelKey: strin
   { value: 'grid', icon: LayoutGrid, labelKey: 'settings.layoutGrid' },
   { value: 'grouped', icon: Layers, labelKey: 'settings.layoutGrouped' },
 ]
-
-
 </script>
 
 <template>
@@ -89,8 +126,26 @@ const layouts: { value: BookmarkLayout; icon: typeof LayoutList; labelKey: strin
         </div>
       </div>
 
+      <div>
+        <h3 class="text-sm font-medium text-foreground mb-3">
+          {{ t('settings.dataManagement') }}
+        </h3>
+        <div class="flex items-center justify-between gap-3 px-2.5 py-2 rounded-md bg-secondary/60">
+          <div class="min-w-0">
+            <div class="text-sm font-medium">{{ t('settings.offlineCaching') }}</div>
+            <div class="text-xs text-muted-foreground mt-0.5">
+              {{ t('settings.offlineCachingHint') }}
+            </div>
+          </div>
+          <SwitchCl
+            :model-value="offlineCachingSettingToggle"
+            :disabled="settingsLoading"
+            @update:model-value="onOfflineCachingChange"
+            :aria-label="t('settings.offlineCaching')"
+            data-testid="toggle-offline-caching"
+          />
+        </div>
+      </div>
     </div>
   </DialogCl>
-
-
 </template>

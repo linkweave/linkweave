@@ -26,7 +26,7 @@ import org.jspecify.annotations.NonNull;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(indexes = {
-    @Index(name = "ix_UserSettings_id", columnList = "user_id, version")
+    @Index(name = "ix_usersettings_id", columnList = "user_id, version")
 })
 public class UserSettings extends AbstractEntity<UserSettings> {
 
@@ -37,7 +37,7 @@ public class UserSettings extends AbstractEntity<UserSettings> {
     @MapsId
     @JoinColumn(
         name = "user_id",
-        foreignKey = @ForeignKey(name = "fk_UserSettings_user"),
+        foreignKey = @ForeignKey(name = "fk_usersettings_user"),
         nullable = false,
         updatable = false
     )
