@@ -14,6 +14,8 @@ import org.chainlink.api.benutzer.UserRepo;
 import org.chainlink.api.shared.auth.FachRolle;
 import org.chainlink.api.shared.user.AuthProvider;
 import org.chainlink.api.shared.user.User;
+import org.chainlink.api.shared.user.UserSettings;
+import org.chainlink.api.shared.user.UserSettingsRepo;
 import org.chainlink.api.shared.util.EnumSetUtil;
 import org.chainlink.infrastructure.errorhandling.AppValidationException;
 import org.chainlink.infrastructure.errorhandling.AppValidationMessage;
@@ -27,6 +29,7 @@ import org.jspecify.annotations.NonNull;
 public class RegistrationService {
 
     private final UserRepo userRepo;
+    private final UserSettingsRepo userSettingsRepo;
 
     @NonNull
     @Transactional(TxType.NOT_SUPPORTED)
@@ -57,6 +60,7 @@ public class RegistrationService {
 
         try {
             userRepo.provisionNewUser(newUser);
+            userSettingsRepo.provisionSettings(new UserSettings(newUser));
             LOG.info("Registered new form user: {}", email);
             return newUser;
         } catch (PersistenceException e) {

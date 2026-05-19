@@ -3,6 +3,7 @@ package org.chainlink.api.auth;
 import java.util.Set;
 
 import ch.dvbern.dvbstarter.types.id.ID;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
@@ -14,6 +15,7 @@ public record UserInfoJson(
     @NotNull @NonNull String firstName,
     @NotNull @NonNull String lastName,
     @NotNull @NonNull Set<String> roles,
-    @NotNull @NonNull ID<Collection> defaultCollectionId
+    @NotNull @NonNull ID<Collection> defaultCollectionId,
+    @NotNull @NonNull @Valid UserSettingsJson settings
 ) {
 }

@@ -4,7 +4,6 @@
 
 **Type**: Quarkus-based Java web application with vue frontend
 **Language**: Java 25 / typescript
-**Framework**: Quarkus 3.30.8  and VueJS
 **Build System**: Maven 3.9.12 and pnpm 11
 **Database**: SQLite with Hibernate ORM  
 **Frontend**: VueJS 
@@ -13,6 +12,7 @@
 
 Always make sure that at the end of your task you run a build for the relevant module (api or frontend)
 Verify that your changes don't break any existing tests.
+**Always add tests for new features and bug fixes** — backend integration tests for new endpoints/services, frontend component or E2E tests as appropriate.
 The web app is running at https://local-chainlink.localhost:5173 the quarkus is at 8443
 
 
@@ -29,8 +29,8 @@ pnpm exec playwright test --project=chromium
 
 ## Architecture
 
-Adhere to the layering model: **Entities → Repository → Service → Resource**.  
-Use stereotype annotations like `org.chainlink.infrastructure.stereotypes.JaxResource` and `@JaxRendereable`.
+Adhere to the layering model: **Entities → Repository → Service → (Mapper) → Resource**.  
+Use stereotype annotations like `@JaxResource` and `@Service`. They mark the layer AND the include **@Transactional** by default.
 
 ### Authorization
 
