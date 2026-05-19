@@ -16,6 +16,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch base branch
+        run: git fetch origin main
+
       - name: Run Pi code review
         uses: https://git.markushofstetter.com/dividbzero/pi-review@v4
         with:
