@@ -79,6 +79,15 @@ export default defineConfig(({ command }) => {
               proxyReq.setHeader('X-Forwarded-Proto', 'https')
               proxyReq.setHeader('X-Forwarded-Port', '5173')
             })
+            // Mirror Caddy's behavior: upstream-down → 502, timeout → 504.
+            // Without this handler, http-proxy emits a socket hang up that
+            // surfaces as a TypeError in the browser, diverging from prod.
+            proxy.on('error', (err: NodeJS.ErrnoException, _req, res) => {
+              if (!('writeHead' in res) || res.headersSent) return
+              const status = err.code === 'ETIMEDOUT' || err.code === 'ECONNRESET' ? 504 : 502
+              res.writeHead(status, { 'Content-Type': 'text/plain' })
+              res.end(`${status === 504 ? 'Gateway Timeout' : 'Bad Gateway'}: ${err.code ?? err.message}`)
+            })
           },
         },
       },

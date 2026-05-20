@@ -6,6 +6,7 @@ import type { UserInfoJson } from '@/api/generated'
 import { useCollectionStore } from '@/stores/collection'
 import { useBookmarkStore } from '@/stores/bookmark'
 import * as offlineCache from '@/lib/offline-cache'
+import { setSessionExpiredHandler } from '@/lib/offline-middleware'
 import router from '@/router'
 
 const authApi = new AuthResourceApi(config)
@@ -34,6 +35,14 @@ export const useAuthStore = defineStore('auth', () => {
   })
 
   let fetchPromise: Promise<boolean> | null = null
+  let sessionExpiryHandled = false
+
+  setSessionExpiredHandler(() => {
+    if (sessionExpiryHandled) return
+    if (user.value === null) return
+    sessionExpiryHandled = true
+    void logout()
+  })
 
   async function fetchCurrentUser(): Promise<boolean> {
     if (fetchPromise) {
@@ -43,6 +52,7 @@ export const useAuthStore = defineStore('auth', () => {
       try {
         user.value = await authApi.apiAuthMeGet()
         if (user.value) {
+          sessionExpiryHandled = false
           offlineCache.saveUserInfo(user.value.email, user.value).catch(err => console.error('Failed to cache user info for offline use:', err))
         }
         return true

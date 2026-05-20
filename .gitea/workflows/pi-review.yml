@@ -16,11 +16,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Fetch base branch
-        run: git fetch origin refs/heads/main:refs/remotes/origin/main
-
       - name: Run Pi code review
-        uses: https://git.markushofstetter.com/dividbzero/pi-review@v4
+        uses: https://git.markushofstetter.com/dividbzero/pi-review@v6
         with:
           api_key: ${{ secrets.ZAI_API_KEY }}
           provider: zai

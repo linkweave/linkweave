@@ -338,7 +338,8 @@
     "maxTags": "Maximal {max} Tags erlaubt"
   },
   "offline": {
-    "banner": "Sie sind offline. Cachedaten werden angezeigt.",
+    "bannerBrowser": "Sie sind offline. Cachedaten werden angezeigt.",
+    "bannerServer": "Server nicht erreichbar. Cachedaten werden angezeigt.",
     "bannerNoCache": "Sie sind offline. Keine Cachedaten verfügbar.",
     "lastSynced": "Zuletzt synchronisiert {time}",
     "writeDisabled": "Diese Aktion ist offline nicht verfügbar."
