@@ -341,7 +341,8 @@
     "maxTags": "Maximum {max} tags allowed"
   },
   "offline": {
-    "banner": "You're offline. Showing cached data.",
+    "bannerBrowser": "You're offline. Showing cached data.",
+    "bannerServer": "Can't reach the server. Showing cached data.",
     "bannerNoCache": "You're offline. No cached data available.",
     "lastSynced": "Last synced {time}",
     "writeDisabled": "This action is not available while offline."

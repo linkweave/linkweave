@@ -32,4 +32,4 @@ create index ix_user_id on User (id, version);
 create index ix_user_email on User (email, id);
 create index ix_user_keycloakId on User (keycloakId, id);
 create index ix_userpermission_user_id on UserPermission (user_id, id);
-create index ix_UserSettings_id on UserSettings (user_id, version);
+create index ix_usersettings_id on UserSettings (user_id, version);

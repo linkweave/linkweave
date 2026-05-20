@@ -3,13 +3,13 @@ import CreateCollectionDialog from '@/components/collection/CreateCollectionDial
 import EditCollectionDialog from '@/components/collection/EditCollectionDialog.vue'
 import DeleteCollectionDialog from '@/components/collection/DeleteCollectionDialog.vue'
 import ShareCollectionDialog from '@/components/collection/ShareCollectionDialog.vue'
-import {MainLayout} from '@/components/layout'
-import {ButtonCl, ResponsiveButton, SearchBar} from '@/components/ui'
+import { MainLayout } from '@/components/layout'
+import { ButtonCl, ResponsiveButton, SearchBar } from '@/components/ui'
 import router from '@/router'
-import {useCollectionStore} from '@/stores/collection'
-import {ArrowLeft, Pencil, Plus, Star, Trash2, Users} from '@lucide/vue'
-import {computed, onMounted, ref} from 'vue'
-import {useI18n} from 'vue-i18n'
+import { useCollectionStore } from '@/stores/collection'
+import { ArrowLeft, Pencil, Plus, Star, Trash2, Users } from '@lucide/vue'
+import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
@@ -62,17 +62,29 @@ function goBack() {
 <template>
   <MainLayout hide-sidebar>
     <template #header-leading>
-      <ButtonCl variant="ghost" size="icon" data-testid="collection-manage-back-btn" :aria-label="t('common.back')" @click="goBack">
+      <ButtonCl
+        variant="ghost"
+        size="icon"
+        data-testid="collection-manage-back-btn"
+        :aria-label="t('common.back')"
+        @click="goBack"
+      >
         <ArrowLeft class="h-4 w-4" />
       </ButtonCl>
     </template>
 
     <template #header-title>
-      <span class="text-base font-semibold text-foreground truncate">{{ t('collectionManage.title') }}</span>
+      <span class="text-base font-semibold text-foreground truncate">{{
+        t('collectionManage.title')
+      }}</span>
     </template>
 
     <template #header-actions>
-      <ResponsiveButton :label="t('common.create')" data-testid="collection-manage-create-btn" @click="createOpen = true">
+      <ResponsiveButton
+        :label="t('common.create')"
+        data-testid="collection-manage-create-btn"
+        @click="createOpen = true"
+      >
         <Plus />
       </ResponsiveButton>
     </template>
@@ -83,11 +95,17 @@ function goBack() {
         :placeholder="t('collectionSearch.placeholder')"
       />
 
-      <div v-if="collections.length === 0 && !collectionStore.searchQuery" class="text-center py-8 text-muted-foreground">
+      <div
+        v-if="collections.length === 0 && !collectionStore.searchQuery"
+        class="text-center py-8 text-muted-foreground"
+      >
         {{ t('collectionManage.noCollections') }}
       </div>
 
-      <div v-if="collections.length === 0 && collectionStore.searchQuery" class="text-center py-8 text-muted-foreground">
+      <div
+        v-if="collections.length === 0 && collectionStore.searchQuery"
+        class="text-center py-8 text-muted-foreground"
+      >
         {{ t('collectionSearch.noResults') }}
       </div>
 
@@ -100,7 +118,13 @@ function goBack() {
         >
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2">
-              <span class="font-medium text-foreground truncate">{{ col.name }}</span>
+              <router-link
+                :to="`/collections/${col.id}`"
+                class="font-medium text-foreground truncate hover:underline"
+              >
+                {{ col.name }}
+              </router-link>
+
               <span
                 v-if="col.isDefault"
                 class="text-[9px] bg-primary/25 text-primary px-1.5 py-0.5 rounded shrink-0"
@@ -165,10 +189,7 @@ function goBack() {
         </div>
       </div>
 
-      <CreateCollectionDialog
-        :open="createOpen"
-        @update:open="createOpen = $event"
-      />
+      <CreateCollectionDialog :open="createOpen" @update:open="createOpen = $event" />
 
       <EditCollectionDialog
         :open="editOpen"

@@ -1,11 +1,16 @@
 import * as offlineCache from '@/lib/offline-cache'
+import {
+  installNetworkStatusListeners,
+  isOffline,
+  offlineReason,
+  setBrowserOffline,
+} from '@/lib/network-status'
 import { useAuthStore } from '@/stores/auth'
 import { useCollectionStore } from '@/stores/collection'
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export const useOfflineStore = defineStore('offline', () => {
-  const isOffline = ref(!navigator.onLine)
   const lastSyncedAt = ref<number | null>(null)
 
   const timeSinceSync = computed(() => {
@@ -29,15 +34,15 @@ export const useOfflineStore = defineStore('offline', () => {
   }
 
   function setupListeners() {
-    const debouncedSetOffline = debounce((value: boolean) => {
-      isOffline.value = value
-      if (!value) {
-        onBackOnline()
-      }
+    const debouncedSetBrowserOffline = debounce((value: boolean) => {
+      setBrowserOffline(value)
+      if (!value) onBackOnline()
     }, 2000)
 
-    window.addEventListener('online', () => debouncedSetOffline(false))
-    window.addEventListener('offline', () => debouncedSetOffline(true))
+    window.addEventListener('online', () => debouncedSetBrowserOffline(false))
+    window.addEventListener('offline', () => debouncedSetBrowserOffline(true))
+
+    installNetworkStatusListeners({ onServerBack: onBackOnline })
   }
 
   async function onBackOnline() {
@@ -51,6 +56,7 @@ export const useOfflineStore = defineStore('offline', () => {
 
   return {
     isOffline,
+    offlineReason,
     lastSyncedAt,
     timeSinceSync,
     loadLastSyncTime,
