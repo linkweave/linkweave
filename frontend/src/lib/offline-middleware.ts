@@ -62,6 +62,11 @@ function isSameOrigin(url: string): boolean {
 
 const UPSTREAM_DOWN_STATUSES = new Set([404, 502, 503, 504])
 
+let onSessionExpired: (() => void) | null = null
+export function setSessionExpiredHandler(handler: (() => void) | null) {
+  onSessionExpired = handler
+}
+
 export function createOfflineMiddleware(): Middleware {
   return {
     post: async (context) => {
@@ -89,6 +94,17 @@ export function createOfflineMiddleware(): Middleware {
       }
 
       if (status < 500) markServerReachable()
+
+      if (status === 401 && isGet) {
+        try {
+          const url = new URL(context.url, window.location.href)
+          if (!url.pathname.startsWith('/api/auth/')) {
+            onSessionExpired?.()
+          }
+        } catch {
+          // ignore — malformed URL, no action
+        }
+      }
       return undefined
     },
     onError: async (context) => {
