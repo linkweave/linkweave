@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+concurrency:
+  group: pi-review-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   pull-requests: write
 
@@ -12,12 +16,12 @@ jobs:
     name: Pi Review
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v8
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Run Pi code review
-        uses: https://git.markushofstetter.com/dividbzero/pi-review@v6
+        uses: https://git.markushofstetter.com/dividbzero/pi-review@v8
         with:
           api_key: ${{ secrets.ZAI_API_KEY }}
           provider: zai
