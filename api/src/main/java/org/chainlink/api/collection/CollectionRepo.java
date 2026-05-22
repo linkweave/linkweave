@@ -31,4 +31,11 @@ public class CollectionRepo extends BaseRepo<Collection> {
             .where(QCollection.collection.owner.id.eq(ownerId.getUUID()))
             .fetch();
     }
+
+    public long countAll() {
+        return db.select(QCollection.collection.id.count())
+            .from(QCollection.collection)
+            .fetchOne()
+            .orElse(0L);
+    }
 }

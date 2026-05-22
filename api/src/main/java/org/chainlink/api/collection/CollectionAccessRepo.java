@@ -100,6 +100,15 @@ public class CollectionAccessRepo extends BaseRepo<CollectionAccess> {
             .fetch();
     }
 
+    public long countSharedCollections() {
+        return db.select(QCollectionAccess.collectionAccess.collection.id)
+            .from(QCollectionAccess.collectionAccess)
+            .groupBy(QCollectionAccess.collectionAccess.collection.id)
+            .having(QCollectionAccess.collectionAccess.collection.id.count().gt(1L))
+            .fetch()
+            .size();
+    }
+
     @NonNull
     public List<CollectionSummaryJson> findCollectionSummariesForUser(@NonNull ID<User> userId) {
         var ca = QCollectionAccess.collectionAccess;

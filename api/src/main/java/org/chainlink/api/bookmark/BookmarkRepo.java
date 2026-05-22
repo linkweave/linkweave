@@ -2,6 +2,10 @@ package org.chainlink.api.bookmark;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import ch.dvbern.dvbstarter.clock.AppClock;
 import ch.dvbern.dvbstarter.types.id.ID;
@@ -126,6 +130,24 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             .orderBy(QBookmark.bookmark.lastClickedAt.asc().nullsLast())
             .orderBy(QBookmark.bookmark.timestampErstellt.asc())
             .fetch();
+    }
+
+    @NonNull
+    public Map<UUID, Long> countByCollectionGrouped() {
+        var collectionId = QBookmark.bookmark.collection.id;
+        var bookmarkCount = QBookmark.bookmark.id.count();
+        var rowTuples = db.select(collectionId, bookmarkCount)
+            .from(QBookmark.bookmark)
+            .where(notDeleted())
+            .groupBy(collectionId)
+            .fetch();
+
+        return rowTuples.stream()
+            .filter(row -> row.get(collectionId) != null)  // exclude uncollected bookmarks
+            .collect(Collectors.toMap(
+                row -> Objects.requireNonNull(row.get(collectionId)),
+                row -> Objects.requireNonNull(row.get(bookmarkCount))
+            ));
     }
 
     public void deleteByCollection(@NonNull ID<Collection> collectionId) {

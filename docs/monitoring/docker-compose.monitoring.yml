@@ -1,0 +1,45 @@
+version: '3.8'
+
+# Optional reference monitoring stack for local evaluation.
+# Starts VictoriaMetrics (single-node) + Grafana with the Chainlink dashboard pre-loaded.
+#
+# Usage:
+#   docker compose -f docker-compose.monitoring.yml up -d
+#
+# Grafana: http://localhost:3000  (admin / admin)
+# VictoriaMetrics: http://localhost:8428
+
+services:
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:latest
+    ports:
+      - "8428:8428"
+    volumes:
+      - victoriametrics-data:/storage
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--storageDataPath=/storage'
+      - '--promscrape.config=/etc/prometheus/prometheus.yml'
+      - '--retentionPeriod=60d'
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+  #    - GF_SECURITY_ADMIN_PASSWORD=My_Password_123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana-provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - victoriametrics
+    restart: unless-stopped
+
+networks:
+  chainlink-internal:
+
+volumes:
+  victoriametrics-data:
+  grafana-data:
