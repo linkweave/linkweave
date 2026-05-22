@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Optional reference monitoring stack for local evaluation.
 # Starts VictoriaMetrics (single-node) + Grafana with the Chainlink dashboard pre-loaded.
 #
@@ -8,6 +6,8 @@ version: '3.8'
 #
 # Grafana: http://localhost:3000  (admin / admin)
 # VictoriaMetrics: http://localhost:8428
+#
+# Change GF_SECURITY_ADMIN_PASSWORD before exposing to any network.
 
 services:
   victoriametrics:
@@ -21,6 +21,8 @@ services:
       - '--storageDataPath=/storage'
       - '--promscrape.config=/etc/prometheus/prometheus.yml'
       - '--retentionPeriod=60d'
+    networks:
+      - chainlink-internal
     restart: unless-stopped
 
   grafana:
@@ -35,6 +37,8 @@ services:
       - ./grafana-provisioning:/etc/grafana/provisioning:ro
     depends_on:
       - victoriametrics
+    networks:
+      - chainlink-internal
     restart: unless-stopped
 
 networks:

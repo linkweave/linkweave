@@ -11,10 +11,11 @@ cd docs/monitoring
 docker compose -f docker-compose.monitoring.yml up -d
 ```
 
-- **Grafana**: http://localhost:3000 — user `admin`, password `admin`
+- **Grafana**: http://localhost:3000 — user `admin`, password `my-secret-pw`
+  > ⚠️ **These are default credentials for local development only.** Change `GF_SECURITY_ADMIN_PASSWORD` in `docker-compose.monitoring.yml` before exposing Grafana to any network.
 - **VictoriaMetrics**: http://localhost:8428
 
-Import `grafana-chainlink-dashboard.json` via Grafana → Dashboards → Import, then select the VictoriaMetrics data source.
+Import `grafana-provisioning/dashboards/chainlink-overview.json` via Grafana → Dashboards → Import, then select the VictoriaMetrics data source.
 
 ## Metrics Endpoint
 
@@ -30,7 +31,7 @@ curl -k https://local-chainlink.localhost:8443/q/metrics | grep chainlink
 |---|---|
 | `prometheus.yml` | Scraper configuration for VictoriaMetrics vmagent or Prometheus |
 | `docker-compose.monitoring.yml` | Optional local stack: VictoriaMetrics + Grafana |
-| `grafana-chainlink-dashboard.json` | Grafana dashboard (HTTP, JVM, DB pool, business metrics, jobs) |
+| `grafana-provisioning/dashboards/chainlink-overview.json` | Grafana dashboard (HTTP, JVM, DB pool, business metrics, jobs) |
 
 ## Available Metrics
 
