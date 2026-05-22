@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.JPAExpressions;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.infrastructure.db.BaseRepo;
@@ -98,6 +99,20 @@ public class CollectionAccessRepo extends BaseRepo<CollectionAccess> {
         return db.selectFrom(QCollectionAccess.collectionAccess)
             .where(QCollectionAccess.collectionAccess.collection.id.eq(collectionId.getUUID()))
             .fetch();
+    }
+
+    public long countSharedCollections() {
+        var ca = QCollectionAccess.collectionAccess;
+        return db.select(ca.collection.id.countDistinct())
+            .from(ca)
+            .where(ca.collection.id.in(
+                JPAExpressions.select(ca.collection.id)
+                    .from(ca)
+                    .groupBy(ca.collection.id)
+                    .having(ca.collection.id.count().gt(1L))
+            ))
+            .fetchOne()
+            .orElse(0L);
     }
 
     @NonNull

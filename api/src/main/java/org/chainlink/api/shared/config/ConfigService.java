@@ -135,6 +135,9 @@ public class ConfigService {
     @ConfigProperty(name = "chainlink.feature.bookmark-properties.enabled", defaultValue = "true")
     boolean bookmarkPropertiesEnabled;
 
+    @ConfigProperty(name = "chainlink.metrics.refresh.enabled", defaultValue = "true")
+    boolean metricsRefreshEnabled;
+
 
 
 
