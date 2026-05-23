@@ -63,6 +63,7 @@ rectangle "Chainlink Bookmark Manager" {
         usecase "UC-067\nDefine Bookmark\nProperty" as UC067 <<implemented>>
         usecase "UC-068\nSet Bookmark\nProperty Value" as UC068 <<implemented>>
         usecase "UC-069\nFilter Bookmarks\nby Property" as UC069 <<implemented>>
+        usecase "UC-091\nCollapsible Properties\nSection" as UC091
     }
 
     rectangle "Search & Filtering" {
@@ -215,6 +216,9 @@ user --> UC032
 owner --> UC067
 user --> UC068
 user --> UC069
+user --> UC091
+
+UC091 ..> UC068 : <<extend>>
 
 ' Search Operators & Saved Searches
 user --> UC070

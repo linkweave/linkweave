@@ -33,6 +33,7 @@
     "addProperty": "Eigenschaft hinzufügen",
     "newProperty": "Neue Eigenschaft",
     "sectionHeading": "Eigenschaften",
+    "filledHint": "{n} ausgefüllt",
     "clearValue": "Zurücksetzen",
     "notSet": "— nicht gesetzt —",
     "noDefinitionsInline": "Noch keine Eigenschaften definiert — öffne die Sammlungseinstellungen, um welche hinzuzufügen.",

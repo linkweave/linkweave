@@ -3,6 +3,7 @@ import type { BookmarkJson } from '@/api/generated'
 import AutoTagRulesDialog from '@/components/autotagrule/AutoTagRulesDialog.vue'
 import {
   ButtonCl,
+  CollapsibleCl,
   DialogCl,
   DialogFooterCl,
   FolderSelectCl,
@@ -12,6 +13,7 @@ import {
 } from '@/components/ui'
 import { useDuplicateCheck } from '@/composables/useDuplicateCheck'
 import { useFormDialog } from '@/composables/useFormDialog'
+import { usePropsExpandedPref } from '@/composables/usePropsExpandedPref'
 import { useTagSuggestions } from '@/composables/useTagSuggestions'
 import {
   decodePropertyValue,
@@ -27,7 +29,7 @@ import { useNotificationStore } from '@/stores/notification'
 import { usePropertyStore } from '@/stores/property'
 import { useTagStore } from '@/stores/tag'
 import { toTypedSchema } from '@vee-validate/zod'
-import { Box, Pencil, Plus } from '@lucide/vue'
+import { Box, ChevronDown, Pencil, Plus } from '@lucide/vue'
 import { useForm } from 'vee-validate'
 import { computed, reactive, ref, toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -205,6 +207,21 @@ function toggleTagId(tagId: string) {
     next.add(tagId)
   }
   tagIds.value = next
+}
+
+const filledCount = computed(() =>
+  propertyStore.definitions.filter((pd) => {
+    const v = propertyValuesByDefinitionId.get(pd.id)
+    return v !== undefined && v !== null && v !== ''
+  }).length,
+)
+
+const PROPS_COLLAPSE_THRESHOLD = 6
+const propsIsCollapsible = computed(() => propertyStore.definitions.length >= PROPS_COLLAPSE_THRESHOLD)
+const propsExpandedStorage = usePropsExpandedPref(effectiveCollectionId.value)
+const propsIsExpanded = computed(() => !propsIsCollapsible.value || propsExpandedStorage.value)
+function toggleProps() {
+  if (propsIsCollapsible.value) propsExpandedStorage.value = !propsExpandedStorage.value
 }
 
 function buildWirePropertyValues() {
@@ -404,16 +421,60 @@ const onSubmit = handleSubmit(async (values) => {
       </div>
 
       <template v-if="propertyStore.definitions.length > 0">
-        <div class="flex items-center gap-2.5 pt-1">
+        <!-- Collapsible header (6+ props) or static divider (≤5 props) -->
+        <component
+          :is="propsIsCollapsible ? 'button' : 'div'"
+          v-bind="
+            propsIsCollapsible
+              ? { type: 'button', 'aria-expanded': propsIsExpanded, onClick: toggleProps }
+              : {}
+          "
+          class="flex items-center gap-2.5 pt-1 w-full text-left"
+          :class="propsIsCollapsible ? 'cursor-pointer group' : ''"
+        >
           <span
-            class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[.06em] text-muted-foreground"
+            class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[.06em] text-muted-foreground shrink-0"
           >
             <Box class="h-3 w-3" aria-hidden="true" />
             {{ t('property.sectionHeading') }}
           </span>
+          <span
+            v-if="propsIsCollapsible"
+            class="inline-flex items-center justify-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold leading-none text-muted-foreground shrink-0"
+          >
+            {{ propertyStore.definitions.length }}
+          </span>
+          <span
+            v-if="propsIsCollapsible && !propsIsExpanded && filledCount > 0"
+            class="text-[10px] text-muted-foreground shrink-0"
+          >
+            {{ t('property.filledHint', { n: filledCount }) }}
+          </span>
           <div class="flex-1 h-px bg-border" />
-        </div>
-        <div class="space-y-3">
+          <ChevronDown
+            v-if="propsIsCollapsible"
+            class="h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform duration-200"
+            :class="propsIsExpanded ? 'rotate-180' : ''"
+            aria-hidden="true"
+          />
+        </component>
+
+        <!-- Collapse wrapper using CSS grid trick -->
+        <CollapsibleCl v-if="propsIsCollapsible" :open="propsIsExpanded">
+          <div class="space-y-3 pt-[14px]">
+            <BookmarkPropertyInput
+              v-for="def in propertyStore.definitions"
+              :key="def.id"
+              :prop-def="def"
+              :model-value="propertyValuesByDefinitionId.get(def.id)"
+              @update:model-value="(value: PropertyFormValue) => setPropertyValue(def.id, value)"
+              @clear="setPropertyValue(def.id, undefined)"
+            />
+          </div>
+        </CollapsibleCl>
+
+        <!-- Always-expanded (≤5 props) -->
+        <div v-else class="space-y-3">
           <BookmarkPropertyInput
             v-for="def in propertyStore.definitions"
             :key="def.id"
