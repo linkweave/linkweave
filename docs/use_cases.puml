@@ -161,9 +161,9 @@ rectangle "Chainlink Bookmark Manager" {
     }
 
     rectangle "Observability" {
-        usecase "UC-088\nCollect Application\nMetrics" as UC088
-        usecase "UC-089\nExport Metrics to\nObservability Stack" as UC089
-        usecase "UC-090\nVisualize Metrics\nin Dashboard" as UC090
+        usecase "UC-088\nCollect Application\nMetrics" as UC088 <<implemented>>
+        usecase "UC-089\nExport Metrics to\nObservability Stack" as UC089 <<implemented>>
+        usecase "UC-090\nVisualize Metrics\nin Dashboard" as UC090 <<implemented>>
     }
 }
 
