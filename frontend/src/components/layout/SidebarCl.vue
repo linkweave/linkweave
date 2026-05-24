@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { CreateFolderDialog, FolderTree } from '@/components/folder'
+import SmartCollectionsList from '@/components/savedsearch/SmartCollectionsList.vue'
 import TagList from '@/components/tag/TagList.vue'
-import { ButtonCl } from '@/components/ui'
+import { ButtonCl, CollapsibleCl } from '@/components/ui'
+import { useSidebarSectionExpandedPref } from '@/composables/useSidebarSectionExpandedPref'
 import BuildversionCl from '@/components/ui/BuildversionCl.vue'
 import { useDndMove } from '@/composables/useDndMove'
 import {
@@ -18,7 +20,7 @@ import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { useOfflineStore } from '@/stores/offline'
 import { usePropertyStore } from '@/stores/property'
-import { Box, Folder, Plus, Tag } from '@lucide/vue'
+import { Box, ChevronDown, Folder, Plus, Tag } from '@lucide/vue'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -38,6 +40,11 @@ const showPropertiesSidebar = useShowPropertiesSidebar()
 const { moveBookmarkWithUndo, moveFolderWithUndo } = useDndMove()
 
 const collectionId = computed(() => collectionStore.currentCollectionId ?? '')
+const tagsExpanded = useSidebarSectionExpandedPref('tagsExpanded')
+const showPropertiesSection = computed(
+  () => showPropertiesSidebar.value && propertyStore.definitions.length > 0,
+)
+const showSmartCollectionsSection = computed(() => collectionId.value !== '')
 const showCreateFolder = ref(false)
 const subfolderParentId = ref<string | undefined>(undefined)
 const allBookmarksDragOver = ref(false)
@@ -200,11 +207,9 @@ async function onAllBookmarksDrop(event: DragEvent) {
       </div>
     </div>
 
-    <!-- Properties Section — gated by user pref + non-empty definitions.
-         Sits between Folders and Tags; the `mt-auto` on Tags below pushes
-         this whole block to the bottom of the sidebar, just like Tags. -->
+    <!-- Properties Section — gated by user pref + non-empty definitions. -->
     <div
-      v-if="showPropertiesSidebar && propertyStore.definitions.length > 0"
+      v-if="showPropertiesSection"
       class="mt-auto min-h-0 flex flex-col border-t border-border max-h-[35%]"
     >
       <div class="p-3 flex items-center justify-between shrink-0">
@@ -238,23 +243,42 @@ async function onAllBookmarksDrop(event: DragEvent) {
       </ul>
     </div>
 
+    <!-- Smart Collections Section -->
+    <SmartCollectionsList
+      v-if="showSmartCollectionsSection"
+      :class="showPropertiesSection ? '' : 'mt-auto'"
+    />
+
     <!-- Tags Section -->
     <div
       :class="[
-        showPropertiesSidebar && propertyStore.definitions.length > 0 ? '' : 'mt-auto',
+        showPropertiesSection || showSmartCollectionsSection ? '' : 'mt-auto',
         'min-h-0 flex flex-col border-t border-border max-h-[50%]',
       ]"
     >
-      <div class="p-3 flex items-center justify-between shrink-0">
+      <button
+        type="button"
+        class="w-full p-3 flex items-center justify-between shrink-0 text-left hover:bg-accent/50 transition-colors"
+        :aria-expanded="tagsExpanded"
+        data-testid="tags-toggle"
+        @click="tagsExpanded = !tagsExpanded"
+      >
         <span class="text-sm font-medium text-muted-foreground flex items-center gap-2">
           <Tag class="h-4 w-4" />
           {{ t('sidebar.tags') }}
         </span>
-      </div>
-      <TagList
-        class-name="px-2 pb-2 overflow-y-auto flex-1 min-h-0"
-        :collection-id="collectionId"
-      />
+        <ChevronDown
+          class="h-3.5 w-3.5 text-muted-foreground transition-transform duration-200"
+          :class="tagsExpanded ? 'rotate-180' : ''"
+          aria-hidden="true"
+        />
+      </button>
+      <CollapsibleCl :open="tagsExpanded">
+        <TagList
+          class-name="px-2 pb-2 overflow-y-auto min-h-0"
+          :collection-id="collectionId"
+        />
+      </CollapsibleCl>
     </div>
     <div class="border-t border-border shrink-0">
       <div class="p-3 flex items-center justify-between">

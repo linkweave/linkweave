@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.chainlink.api.benutzer.UserRepo;
 import org.chainlink.api.bookmark.AutoTagRuleService;
 import org.chainlink.api.bookmark.BookmarkService;
+import org.chainlink.api.bookmark.SavedSearchService;
 import org.chainlink.api.bookmark.TagService;
 import org.chainlink.api.bookmark.folder.FolderService;
 import org.chainlink.api.bookmark.property.PropertyDefinitionService;
@@ -36,6 +37,7 @@ public class CollectionService {
     private final AutoTagRuleService autoTagRuleService;
     private final BookmarkService bookmarkService;
     private final PropertyDefinitionService propertyDefinitionService;
+    private final SavedSearchService savedSearchService;
     private final UserRepo userRepo;
     private final CurrentUserService currentUserService;
 
@@ -149,6 +151,7 @@ public class CollectionService {
         tagService.deleteByCollection(collectionId);
         autoTagRuleService.deleteByCollection(collectionId);
         propertyDefinitionService.deleteByCollection(collectionId);
+        savedSearchService.deleteByCollection(collectionId);
 
         var allAccessesForCollection = collectionAccessRepo.findByCollection(collectionId);
         for (var access : allAccessesForCollection) {
