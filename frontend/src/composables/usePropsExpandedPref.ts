@@ -1,18 +1,41 @@
 import { useAuthStore } from '@/stores/auth'
-import { ref, watch } from 'vue'
+import { ref, watch, type Ref } from 'vue'
 
-export function usePropsExpandedPref(collectionId: string) {
+function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeSetItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    console.warn('localStorage unavailable')
+    // localStorage may be unavailable (private mode, quota exceeded) — fail silently.
+  }
+}
+
+export function usePropsExpandedPref(collectionId: Ref<string>) {
   const auth = useAuthStore()
-  const key = `${auth.user?.email ?? 'anon'}:propsExpanded:${collectionId}`
+  const keyFor = (id: string) =>
+    `${auth.user?.email ?? 'anon'}:propsExpanded:${id}`
 
-  const stored =
-    typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null
-  const state = ref<boolean>(stored !== null ? stored === 'true' : false)
+  const state = ref<boolean>(safeGetItem(keyFor(collectionId.value)) === 'true')
+
+  let suppressWrite = false
+
+  watch(collectionId, (id) => {
+    suppressWrite = true
+    state.value = safeGetItem(keyFor(id)) === 'true'
+    suppressWrite = false
+  })
 
   watch(state, (value) => {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(key, String(value))
-    }
+    if (suppressWrite) return
+    safeSetItem(keyFor(collectionId.value), String(value))
   })
 
   return state
