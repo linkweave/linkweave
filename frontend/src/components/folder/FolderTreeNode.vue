@@ -207,10 +207,7 @@ async function onDrop(event: DragEvent, targetFolder: FolderJson) {
         </DropdownMenuContentCl>
       </DropdownMenuRoot>
 
-      <div
-        v-if="node.children.length > 0 && isExpanded(node.folder.id)"
-        class="s-children"
-      >
+      <div v-if="node.children.length > 0 && isExpanded(node.folder.id)">
         <FolderTreeNode
           :nodes="node.children"
           :depth="requireValue(depth) + 1"
@@ -225,11 +222,18 @@ async function onDrop(event: DragEvent, targetFolder: FolderJson) {
 
 <style scoped>
 .folder-group {
+  --group-border: color-mix(in oklab, var(--color-primary) 22%, transparent);
+  --group-bg: color-mix(in oklab, var(--color-primary) 3.5%, var(--color-background));
+  --group-active-bg: color-mix(in oklab, var(--color-primary) 15%, transparent);
+  --group-hover-bg: color-mix(in oklab, var(--color-foreground) 5%, transparent);
+
   border-radius: 7px;
-  border: 1px solid color-mix(in oklab, var(--color-primary) 22%, transparent);
-  background: color-mix(in oklab, var(--color-primary) 3.5%, var(--color-background));
-  overflow: hidden;
-  margin: 2px 0;
+  border: 1px solid var(--group-border);
+  background: var(--group-bg);
+  /* `clip` with margin lets focus outlines on the last child remain visible
+     past the rounded corners, unlike `hidden`. */
+  overflow: clip;
+  overflow-clip-margin: 4px;
 }
 
 .folder-group :deep(.s-row) {
@@ -237,11 +241,11 @@ async function onDrop(event: DragEvent, targetFolder: FolderJson) {
 }
 
 .folder-group :deep(.s-row-active) {
-  background: color-mix(in oklab, var(--color-primary) 15%, transparent);
+  background: var(--group-active-bg);
   color: var(--color-foreground);
 }
 
 .folder-group :deep(.s-row:not(.s-row-active):hover) {
-  background: color-mix(in oklab, var(--color-foreground) 5%, transparent);
+  background: var(--group-hover-bg);
 }
 </style>
