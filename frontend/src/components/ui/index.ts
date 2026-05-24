@@ -1,4 +1,5 @@
 export { default as ButtonCl } from './ButtonCl.vue'
+export { default as CollapsibleCl } from './CollapsibleCl.vue'
 export { default as ResponsiveButton } from './ResponsiveButton.vue'
 export { default as ColorInputCl } from './ColorInputCl.vue'
 export { default as DialogCl } from './DialogCl.vue'
