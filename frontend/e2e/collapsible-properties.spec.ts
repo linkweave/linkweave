@@ -74,12 +74,7 @@ test.describe('UC-091 collapsible properties section', () => {
   })
 
   test.afterAll(async ({ browser }) => {
-    const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
-    try {
-      await deleteTestUserCleanup(ctx.request, user)
-    } finally {
-      await ctx.close()
-    }
+    await deleteTestUserCleanup(browser, () => user)
   })
 
   test.use({
