@@ -45,6 +45,12 @@ function isExpanded(folderId: string): boolean {
   return expanded[folderId] ?? true
 }
 
+function isGrouped(node: FolderNode): boolean {
+  return folderStore.selectedFolderId === node.folder.id
+    && node.children.length > 0
+    && isExpanded(node.folder.id)
+}
+
 function toggleExpand(folderId: string) {
   expanded[folderId] = !isExpanded(folderId)
 }
@@ -138,17 +144,17 @@ async function onDrop(event: DragEvent, targetFolder: FolderJson) {
 
 <template>
   <ul class="space-y-0.5">
-    <li v-for="node in nodes" :key="node.folder.id">
+    <li v-for="node in nodes" :key="node.folder.id" :class="isGrouped(node) ? 'folder-group' : ''">
       <DropdownMenuRoot>
         <div
           :draggable="!isTouch"
           :data-testid="`folder-row-${node.folder.id}`"
           :data-folder-name="node.folder.data.name"
           :data-selected="folderStore.selectedFolderId === node.folder.id ? 'true' : 'false'"
-          class="group flex items-center gap-1 rounded-md py-1.5 pr-2 text-sm cursor-pointer transition-colors"
+          class="s-row group flex items-center gap-1 rounded-md py-1.5 pr-2 text-sm cursor-pointer transition-colors"
           :class="[
             folderStore.selectedFolderId === node.folder.id
-              ? 'bg-accent text-accent-foreground'
+              ? 's-row-active bg-accent text-accent-foreground'
               : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
             dragOverFolderId === node.folder.id
               ? 'ring-2 ring-primary ring-inset'
@@ -181,7 +187,7 @@ async function onDrop(event: DragEvent, targetFolder: FolderJson) {
           <span class="flex-1 truncate">{{ node.folder.data.name }}</span>
           <DropdownMenuTrigger as-child>
             <button
-              class="ml-auto h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-md transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground"
+              class="ml-auto h-8 w-8 [@media(hover:hover)]:h-5 [@media(hover:hover)]:w-5 shrink-0 inline-flex items-center justify-center rounded-md transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground"
               @click.stop
             >
               <MoreHorizontal class="h-3.5 w-3.5" />
@@ -201,14 +207,45 @@ async function onDrop(event: DragEvent, targetFolder: FolderJson) {
         </DropdownMenuContentCl>
       </DropdownMenuRoot>
 
-      <FolderTreeNode
-        v-if="node.children.length > 0 && isExpanded(node.folder.id)"
-        :nodes="node.children"
-        :depth="requireValue(depth) + 1"
-        @create-subfolder="emit('createSubfolder', $event)"
-        @rename="emit('rename', $event)"
-        @delete="emit('delete', $event)"
-      />
+      <div v-if="node.children.length > 0 && isExpanded(node.folder.id)">
+        <FolderTreeNode
+          :nodes="node.children"
+          :depth="requireValue(depth) + 1"
+          @create-subfolder="emit('createSubfolder', $event)"
+          @rename="emit('rename', $event)"
+          @delete="emit('delete', $event)"
+        />
+      </div>
     </li>
   </ul>
 </template>
+
+<style scoped>
+.folder-group {
+  --group-border: color-mix(in oklab, var(--color-primary) 22%, transparent);
+  --group-bg: color-mix(in oklab, var(--color-primary) 3.5%, var(--color-background));
+  --group-active-bg: color-mix(in oklab, var(--color-primary) 15%, transparent);
+  --group-hover-bg: color-mix(in oklab, var(--color-foreground) 5%, transparent);
+
+  border-radius: 7px;
+  border: 1px solid var(--group-border);
+  background: var(--group-bg);
+  /* `clip` with margin lets focus outlines on the last child remain visible
+     past the rounded corners, unlike `hidden`. */
+  overflow: clip;
+  overflow-clip-margin: 4px;
+}
+
+.folder-group :deep(.s-row) {
+  border-radius: 0;
+}
+
+.folder-group :deep(.s-row-active) {
+  background: var(--group-active-bg);
+  color: var(--color-foreground);
+}
+
+.folder-group :deep(.s-row:not(.s-row-active):hover) {
+  background: var(--group-hover-bg);
+}
+</style>
