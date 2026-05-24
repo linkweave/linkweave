@@ -207,15 +207,14 @@ async function onDrop(event: DragEvent, targetFolder: FolderJson) {
         </DropdownMenuContentCl>
       </DropdownMenuRoot>
 
-      <div v-if="node.children.length > 0 && isExpanded(node.folder.id)">
-        <FolderTreeNode
-          :nodes="node.children"
-          :depth="requireValue(depth) + 1"
-          @create-subfolder="emit('createSubfolder', $event)"
-          @rename="emit('rename', $event)"
-          @delete="emit('delete', $event)"
-        />
-      </div>
+      <FolderTreeNode
+        v-if="node.children.length > 0 && isExpanded(node.folder.id)"
+        :nodes="node.children"
+        :depth="requireValue(depth) + 1"
+        @create-subfolder="emit('createSubfolder', $event)"
+        @rename="emit('rename', $event)"
+        @delete="emit('delete', $event)"
+      />
     </li>
   </ul>
 </template>
