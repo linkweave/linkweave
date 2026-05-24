@@ -218,7 +218,7 @@ const filledCount = computed(() =>
 
 const PROPS_COLLAPSE_THRESHOLD = 6
 const propsIsCollapsible = computed(() => propertyStore.definitions.length >= PROPS_COLLAPSE_THRESHOLD)
-const propsExpandedStorage = usePropsExpandedPref(effectiveCollectionId.value)
+const propsExpandedStorage = usePropsExpandedPref(effectiveCollectionId)
 const propsIsExpanded = computed(() => !propsIsCollapsible.value || propsExpandedStorage.value)
 function toggleProps() {
   if (propsIsCollapsible.value) propsExpandedStorage.value = !propsExpandedStorage.value
@@ -459,9 +459,9 @@ const onSubmit = handleSubmit(async (values) => {
           />
         </component>
 
-        <!-- Collapse wrapper using CSS grid trick -->
-        <CollapsibleCl v-if="propsIsCollapsible" :open="propsIsExpanded">
-          <div class="space-y-3 pt-[14px]">
+        <!-- Collapse wrapper using CSS grid trick; always open when not collapsible -->
+        <CollapsibleCl :open="propsIsExpanded">
+          <div class="space-y-3" :class="propsIsCollapsible ? 'pt-[14px]' : ''">
             <BookmarkPropertyInput
               v-for="def in propertyStore.definitions"
               :key="def.id"
@@ -472,18 +472,6 @@ const onSubmit = handleSubmit(async (values) => {
             />
           </div>
         </CollapsibleCl>
-
-        <!-- Always-expanded (≤5 props) -->
-        <div v-else class="space-y-3">
-          <BookmarkPropertyInput
-            v-for="def in propertyStore.definitions"
-            :key="def.id"
-            :prop-def="def"
-            :model-value="propertyValuesByDefinitionId.get(def.id)"
-            @update:model-value="(value: PropertyFormValue) => setPropertyValue(def.id, value)"
-            @clear="setPropertyValue(def.id, undefined)"
-          />
-        </div>
       </template>
     </form>
 

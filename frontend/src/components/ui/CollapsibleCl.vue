@@ -3,7 +3,7 @@ defineProps<{ open: boolean }>()
 </script>
 
 <template>
-  <div class="collapsible-wrap" :class="{ shut: !open }">
+  <div class="collapsible-wrap" :class="{ shut: !open }" :inert="!open">
     <div class="collapsible-inner">
       <slot />
     </div>
