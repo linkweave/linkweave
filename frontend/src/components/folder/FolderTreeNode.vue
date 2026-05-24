@@ -227,7 +227,8 @@ async function onDrop(event: DragEvent, targetFolder: FolderJson) {
   --group-hover-bg: color-mix(in oklab, var(--color-foreground) 5%, transparent);
 
   border-radius: 7px;
-  border: 1px solid var(--group-border);
+  /* inset shadow instead of border to avoid a 1px layout shift on selection */
+  box-shadow: inset 0 0 0 1px var(--group-border);
   background: var(--group-bg);
   /* `clip` with margin lets focus outlines on the last child remain visible
      past the rounded corners, unlike `hidden`. */
