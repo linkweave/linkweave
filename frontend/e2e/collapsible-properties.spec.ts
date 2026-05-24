@@ -98,13 +98,12 @@ test.describe('UC-091 collapsible properties section', () => {
     await expect(dialog).toBeVisible()
 
     // The section header should be a button (collapsible mode)
-    const toggleBtn = dialog.locator('button[aria-expanded]')
+    const toggleBtn = dialog.locator('[data-testid="properties-toggle"]')
     await expect(toggleBtn).toBeVisible()
     await expect(toggleBtn).toHaveAttribute('aria-expanded', 'false')
 
     // Property inputs should not be visible (section is collapsed / opacity 0 + grid 0fr)
-    const collapseWrap = dialog.locator('.props-collapse-wrap')
-    await expect(collapseWrap).toBeVisible()
+    const collapseWrap = dialog.locator('.collapsible-wrap')
     await expect(collapseWrap).toHaveClass(/shut/)
   })
 
@@ -121,14 +120,14 @@ test.describe('UC-091 collapsible properties section', () => {
     const dialog = page.locator('[role="dialog"]')
     await expect(dialog).toBeVisible()
 
-    const toggleBtn = dialog.locator('button[aria-expanded]')
+    const toggleBtn = dialog.locator('[data-testid="properties-toggle"]')
     await expect(toggleBtn).toHaveAttribute('aria-expanded', 'false')
 
     // Expand
     await toggleBtn.click()
     await expect(toggleBtn).toHaveAttribute('aria-expanded', 'true')
 
-    const collapseWrap = dialog.locator('.props-collapse-wrap')
+    const collapseWrap = dialog.locator('.collapsible-wrap')
     await expect(collapseWrap).not.toHaveClass(/shut/)
 
     // Close and reopen the dialog — state should be remembered
@@ -140,9 +139,9 @@ test.describe('UC-091 collapsible properties section', () => {
 
     const dialog2 = page.locator('[role="dialog"]')
     await expect(dialog2).toBeVisible()
-    const toggleBtn2 = dialog2.locator('button[aria-expanded]')
+    const toggleBtn2 = dialog2.locator('[data-testid="properties-toggle"]')
     await expect(toggleBtn2).toHaveAttribute('aria-expanded', 'true')
-    await expect(dialog2.locator('.props-collapse-wrap')).not.toHaveClass(/shut/)
+    await expect(dialog2.locator('.collapsible-wrap')).not.toHaveClass(/shut/)
   })
 
   test('count badge is visible on the section header', async ({ page }) => {
@@ -159,7 +158,7 @@ test.describe('UC-091 collapsible properties section', () => {
     await expect(dialog).toBeVisible()
 
     // Count badge should show 6
-    const toggleBtn = dialog.locator('button[aria-expanded]')
+    const toggleBtn = dialog.locator('[data-testid="properties-toggle"]')
     await expect(toggleBtn).toContainText('6')
   })
 })

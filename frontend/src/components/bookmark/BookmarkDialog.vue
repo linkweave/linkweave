@@ -426,7 +426,7 @@ const onSubmit = handleSubmit(async (values) => {
           :is="propsIsCollapsible ? 'button' : 'div'"
           v-bind="
             propsIsCollapsible
-              ? { type: 'button', 'aria-expanded': propsIsExpanded, onClick: toggleProps }
+              ? { type: 'button', 'aria-expanded': propsIsExpanded, onClick: toggleProps, 'data-testid': 'properties-toggle' }
               : {}
           "
           class="flex items-center gap-2.5 pt-1 w-full text-left"
