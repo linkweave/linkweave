@@ -145,7 +145,31 @@
     "allBookmarks": "{name}",
     "tags": "Tags",
     "properties": "Properties",
-    "newFolder": "New Folder"
+    "newFolder": "New Folder",
+    "smartCollections": "Smart Collections"
+  },
+  "savedSearch": {
+    "saveTitle": "Save search",
+    "saveTooltip": "Save search",
+    "renameTitle": "Rename",
+    "renameSubmit": "Rename",
+    "namePlaceholder": "Name this search",
+    "saveButton": "Save",
+    "cancelButton": "Cancel",
+    "saved": "Saved \"{name}\"",
+    "updated": "Updated \"{name}\"",
+    "renamed": "Renamed to \"{name}\"",
+    "deleted": "Deleted \"{name}\"",
+    "renameError": "Failed to rename saved search.",
+    "createError": "Failed to save search.",
+    "updateError": "Failed to update saved search.",
+    "deleteError": "Failed to delete saved search.",
+    "renameAction": "Rename",
+    "deleteAction": "Delete",
+    "moreActions": "More actions",
+    "empty": "No saved searches yet.",
+    "pillUpdate": "Update",
+    "pillDeselect": "Deselect saved search"
   },
   "collectionManage": {
     "title": "Manage Collections",

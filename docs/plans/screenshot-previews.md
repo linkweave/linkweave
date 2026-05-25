@@ -27,6 +27,7 @@ Screenshots are captured by a Playwright-based microservice running as a Docker 
 - File-based cache with TTL, negative cache entries, and size-based eviction.
 - Same SSRF protection as the favicon proxy.
 - Completely separate from the default code path — no impact on existing layouts when disabled.
+- Backfill captures for existing bookmarks when a collection's `screenshotEnabled` toggle flips from `false` → `true`.
 
 ## Non-goals
 
@@ -35,6 +36,7 @@ Screenshots are captured by a Playwright-based microservice running as a Docker 
 - Screenshots behind authentication (only public pages).
 - OCR or content extraction from screenshots.
 - Rate limiting on the screenshot sidecar (handled by the sidecar's internal cache).
+- Synchronous capture on display. The GET endpoint is **cache-read-only**; it never triggers a sidecar call. Captures are exclusively driven by async events (create / update / toggle-enable backfill).
 
 ---
 
@@ -75,7 +77,7 @@ No new entity is needed. Screenshot state is purely cache-based (filesystem).
 
 ### Flyway Migration
 
-`api/src/main/resources/db/migration/V10__Add_screenshot_enabled.sql`
+`api/src/main/resources/db/migration/V15__Add_screenshot_enabled.sql`
 
 ```sql
 ALTER TABLE Collection ADD COLUMN screenshot_enabled BOOLEAN NOT NULL DEFAULT 0;
@@ -106,6 +108,8 @@ api/src/main/java/org/chainlink/api/screenshot/
 - Success TTL: 30 days. Negative TTL: 12 hours.
 - Atomic writes via temp file + `Files.move`.
 - Cache dir: configurable, default `developer-local-settings/screenshot-cache/`.
+- Negative entries count toward the cleanup size budget (same as success entries — they consume inodes and tiny amounts of disk, and including them keeps accounting simple).
+- The cache is **URL-keyed, not bookmark-keyed.** Multiple bookmarks pointing at the same canonical URL share a single cache entry. Consequently the cache itself never has its entries "invalidated on URL change" — only the cleanup job removes entries. See *URL-update semantics* below.
 
 Config properties:
 ```properties
@@ -132,16 +136,24 @@ chainlink.screenshot.enabled=true
 
 ### ScreenshotService
 
-**Pattern:** Mirrors `FaviconService` — cache-first, fetch-if-miss.
+**Pattern:** Differs from `FaviconService` — read-only on the request path. Capture is always driven by the async trigger service, never by a user-facing GET. This avoids per-tile 15s blocking on first view and prevents thundering-herd captures when a user opens a freshly-enabled tiles layout.
 
 ```java
-Optional<CachedScreenshot> getScreenshot(ID<Bookmark> bookmarkId)
+Optional<CachedScreenshot> getScreenshot(ID<Bookmark> bookmarkId)   // read-only
+void triggerCapture(ID<Bookmark> bookmarkId, URL url)                // called by trigger service
 ```
 
+`getScreenshot` (called from the REST endpoint):
 1. Load bookmark → compute cache key from canonical URL.
-2. Check `ScreenshotCacheService.get(key)`.
-3. If miss: `ScreenshotFetcherService.fetch(url)` → store in cache → return.
-4. If feature disabled or sidecar unreachable: return empty.
+2. Return `ScreenshotCacheService.get(key)` (which may be a success entry, a negative entry treated as empty, or a miss treated as empty).
+3. **Never** calls the fetcher.
+
+`triggerCapture` (called from the async observer):
+1. Skip if feature disabled globally or for the collection.
+2. Skip if a success entry already exists and is fresh (TTL not expired).
+3. Skip if a negative entry exists and is fresh (don't retry failures within the negative TTL).
+4. Dedup: maintain an in-process `ConcurrentHashMap<CacheKey, CompletableFuture<?>>` of in-flight captures. If a capture for this key is already running, no-op. (Mitigates duplicate bookmarks of the same URL created in quick succession; the sidecar's own cache is a second layer of defense, not the primary one.)
+5. Call `ScreenshotFetcherService.fetch(url)` → write success or negative entry → remove from in-flight map.
 
 ### ScreenshotResource
 
@@ -172,9 +184,21 @@ public Response getScreenshot(
 ```java
 public record BookmarkCreatedEvent(ID<Bookmark> bookmarkId, URL url, ID<Collection> collectionId) {}
 public record BookmarkUpdatedEvent(ID<Bookmark> bookmarkId, URL oldUrl, URL newUrl, ID<Collection> collectionId) {}
+public record CollectionScreenshotsEnabledEvent(ID<Collection> collectionId) {}
 ```
 
-Fired from `BookmarkService.createBookmark()` and `BookmarkService.updateBookmark()` (only when URL changes).
+Firing rules:
+- `BookmarkCreatedEvent` — from `BookmarkService.createBookmark()`.
+- `BookmarkUpdatedEvent` — from `BookmarkService.updateBookmark()`, only when the URL actually changes.
+- `CollectionScreenshotsEnabledEvent` — from `CollectionService.updateCollection()` when `screenshotEnabled` transitions `false → true`. Drives the backfill (see below).
+
+### URL-update semantics
+
+When a bookmark's URL changes, the trigger service:
+1. Fires a capture for the **new** URL (if not already cached).
+2. Does **not** delete the cache entry for the old URL. Other bookmarks (in this or other collections) may still point at it, and the size-based cleanup job will reclaim it once it's stale.
+
+Rationale: a per-URL cache trivially shared across bookmarks is much simpler than reference-counting; the only cost is slightly delayed disk reclamation.
 
 ### ScreenshotTriggerService
 
@@ -189,7 +213,24 @@ void onBookmarkCreated(@ObservesAsync BookmarkCreatedEvent event) {
 }
 ```
 
-On URL update: invalidate old cache entry → trigger new capture.
+On URL update: trigger new capture for the new URL (old entry is left for the cleanup job — see *URL-update semantics*).
+
+### Backfill on toggle
+
+`ScreenshotTriggerService` also observes `CollectionScreenshotsEnabledEvent`:
+
+```java
+void onScreenshotsEnabled(@ObservesAsync CollectionScreenshotsEnabledEvent event) {
+    if (!screenshotEnabledGlobally) return;
+    bookmarkRepo.streamByCollection(event.collectionId())
+        .forEach(b -> screenshotService.triggerCapture(b.getId(), b.getUrl()));
+}
+```
+
+- Streamed (not loaded all at once) to avoid memory blow-up on large collections.
+- The dedup map and existing-cache-entry checks inside `triggerCapture` prevent re-capturing URLs that are already cached from another collection.
+- No backfill is triggered on `true → false` (data stays cached until cleanup; flipping back on then re-uses it).
+- No rate limiting beyond the dedup map; if this proves problematic on huge collections, add a token bucket in a follow-up — call out as known limitation, not a blocker.
 
 ### ScreenshotCacheCleanupJob
 
@@ -211,7 +252,7 @@ chainlink.screenshot.cache-cleanup.enabled=true
 | `CollectionUpdateJson.java` | Add `screenshotEnabled` field |
 | `CollectionInfoJson.java` | Add `screenshotEnabled` field |
 | `CollectionInfoMapperService.java` | Map `screenshotEnabled` |
-| `CollectionService.updateCollection()` | Persist `screenshotEnabled` |
+| `CollectionService.updateCollection()` | Persist `screenshotEnabled`; fire `CollectionScreenshotsEnabledEvent` on `false → true` transition. Owner-only enforcement is already handled by the existing collection update authorization in the Resource layer — no new check needed, but assert it in tests. |
 | `BookmarkService.java` | Fire `BookmarkCreatedEvent` / `BookmarkUpdatedEvent` on create/update |
 | `application.properties` | Add all screenshot config properties |
 
@@ -253,13 +294,21 @@ export type BookmarkLayout = 'list' | 'grid' | 'grouped' | 'tiles'
 
 ### Layout Availability Logic
 
-```
-When user switches collection:
-  if collection.screenshotEnabled == false && ui.bookmarkLayout == 'tiles':
-    ui.setBookmarkLayout('grid')
+Implemented as a Vue `watch` on `collectionStore.collectionInfo?.screenshotEnabled` (so it fires both on collection switch *and* when the current collection's flag flips server-side, e.g. another tab disables it):
+
+```ts
+watch(
+  () => collectionStore.collectionInfo?.screenshotEnabled,
+  (enabled) => {
+    if (!enabled && ui.bookmarkLayout === 'tiles') {
+      ui.setBookmarkLayout('grid')
+    }
+  },
+  { immediate: true },
+)
 ```
 
-This ensures the tiles layout is never active for a collection that doesn't support screenshots.
+Mobile tile sizing: the grid uses `min-w-[140px]` per tile via `grid-cols-[repeat(auto-fill,minmax(140px,1fr))]` rather than fixed `grid-cols-2`, so 1280×800 source images don't render at a postage-stamp size on narrow viewports.
 
 ---
 
@@ -283,7 +332,7 @@ ScreenshotTriggerService.onBookmarkCreated() [async]
     → ScreenshotCacheService.putSuccess(key, bytes, "image/jpeg")
 ```
 
-### Display Flow (On-Demand, Cached)
+### Display Flow (Cache-Read-Only)
 
 ```
 BookmarkTile renders
@@ -292,10 +341,12 @@ BookmarkTile renders
     → authorizationService.requireCollectionAccess()
     → ScreenshotService.getScreenshot(bookmarkId)
       → ScreenshotCacheService.get(key)
-        → HIT → return CachedScreenshot
-        → MISS → fetch via sidecar → cache → return
+        → SUCCESS HIT → return CachedScreenshot
+        → NEGATIVE HIT or MISS → return Optional.empty()
     → 200 OK (bytes) or 204 No Content
 ```
+
+The GET path never calls the sidecar. If the cache is cold for a bookmark, the client receives 204 and shows a placeholder; the async trigger (create/update/backfill) is responsible for populating the cache. Clients may refresh the image after a short delay (~2s) following a bookmark create to pick up a freshly-captured screenshot; otherwise the placeholder persists until the next render.
 
 ### Cache Cleanup Flow (Scheduled)
 
@@ -312,7 +363,7 @@ BookmarkTile renders
 
 ### Phase 1: Backend — Entity & Screenshot Infrastructure
 
-- [ ] Create Flyway migration `V10__Add_screenshot_enabled.sql`
+- [ ] Create Flyway migration `V15__Add_screenshot_enabled.sql`
 - [ ] Modify `Collection` entity + DTOs + Service for `screenshotEnabled`
 - [ ] Create `ScreenshotCacheService` (adapt from `FaviconCacheService`)
 - [ ] Create `ScreenshotFetcherService` with HTTP client + SSRF guards
@@ -341,9 +392,13 @@ BookmarkTile renders
 
 ### Phase 3: Docker & Deployment
 
-- [ ] Add `screenshot-service` container to Docker Compose
-- [ ] Verify ARM64 + AMD64 image availability
-- [ ] Configure network so Quarkus API can reach sidecar
+- [ ] Add `screenshot-service` container to Docker Compose with:
+  - `mem_limit: 1g`, `cpus: 1.0` (Chromium is memory-hungry; cap it so a runaway can't OOM the host).
+  - `healthcheck` hitting the sidecar's own health endpoint; `restart: unless-stopped`.
+  - Exposed only on the internal compose network — not published to the host.
+- [ ] Verify ARM64 + AMD64 image availability for the chosen image tag (pin a specific digest, not `:latest`).
+- [ ] Configure network so Quarkus API can reach sidecar by service name (`http://screenshot-service:3000`).
+- [ ] Document local dev story: the sidecar is **optional** in `pnpm run dev` / `mvnw quarkus:dev`. With `chainlink.screenshot.enabled=false` (or sidecar simply unreachable), `ScreenshotTriggerService` no-ops cleanly and all tile renders return 204 → placeholders. Devs who want to test the full flow start the sidecar via `docker compose up screenshot-service`.
 
 ---
 
@@ -387,9 +442,10 @@ chainlink.screenshot.cache-cleanup.cron=0 0 3 ? * SUN
 |------------|-------|
 | `ScreenshotCacheServiceTest` | Cache read/write/eviction, TTL expiry, negative entries |
 | `ScreenshotFetcherServiceTest` | Mock HTTP client, SSRF guards, timeout |
-| `ScreenshotServiceTest` | Cache-hit, cache-miss, feature-disabled paths |
-| `ScreenshotResourceTest` | Auth checks, 200/204 responses |
-| `ScreenshotTriggerServiceTest` | Async event handling, skip-when-disabled |
+| `ScreenshotServiceTest` | Cache-hit returns bytes; cache-miss returns empty (no sidecar call); negative entry returns empty; `triggerCapture` dedup via in-flight map; `triggerCapture` skips when fresh entry exists; `triggerCapture` skips when fresh negative entry exists |
+| `ScreenshotResourceTest` | Auth checks, 200/204 responses, GET never triggers a capture (verify fetcher mock is untouched) |
+| `ScreenshotTriggerServiceTest` | Async create/update event handling, skip-when-disabled (global + per-collection), URL-update fires capture for new URL only, backfill on `CollectionScreenshotsEnabledEvent` streams all bookmarks and dedups against pre-existing cache entries |
+| `CollectionServiceTest` | Owner-only enforcement of `screenshotEnabled` toggle; `CollectionScreenshotsEnabledEvent` fired only on `false → true` transition (not on no-op updates) |
 | `ScreenshotCacheCleanupJobTest` | Size-based eviction, skip when under budget |
 
 ### Frontend
@@ -424,7 +480,7 @@ chainlink.screenshot.cache-cleanup.cron=0 0 3 ? * SUN
 - `api/.../screenshot/ScreenshotTriggerService.java`
 - `api/.../screenshot/ScreenshotCacheCleanupJob.java`
 - `api/.../screenshot/BookmarkEvents.java`
-- `api/src/main/resources/db/migration/V10__Add_screenshot_enabled.sql`
+- `api/src/main/resources/db/migration/V15__Add_screenshot_enabled.sql`
 - `frontend/src/components/bookmark/BookmarkTile.vue`
 - `frontend/src/components/bookmark/BookmarkTileLayout.vue`
 

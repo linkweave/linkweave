@@ -145,7 +145,31 @@
     "allBookmarks": "{name}",
     "tags": "Tags",
     "properties": "Eigenschaften",
-    "newFolder": "Neuer Ordner"
+    "newFolder": "Neuer Ordner",
+    "smartCollections": "Intelligente Sammlungen"
+  },
+  "savedSearch": {
+    "saveTitle": "Suche speichern",
+    "saveTooltip": "Suche speichern",
+    "renameTitle": "Umbenennen",
+    "renameSubmit": "Umbenennen",
+    "namePlaceholder": "Diese Suche benennen",
+    "saveButton": "Speichern",
+    "cancelButton": "Abbrechen",
+    "saved": "\"{name}\" gespeichert",
+    "updated": "\"{name}\" aktualisiert",
+    "renamed": "Umbenannt zu \"{name}\"",
+    "deleted": "\"{name}\" gelöscht",
+    "renameError": "Umbenennen der gespeicherten Suche fehlgeschlagen.",
+    "createError": "Suche konnte nicht gespeichert werden.",
+    "updateError": "Gespeicherte Suche konnte nicht aktualisiert werden.",
+    "deleteError": "Gespeicherte Suche konnte nicht gelöscht werden.",
+    "renameAction": "Umbenennen",
+    "deleteAction": "Löschen",
+    "moreActions": "Weitere Aktionen",
+    "empty": "Noch keine gespeicherten Suchen.",
+    "pillUpdate": "Aktualisieren",
+    "pillDeselect": "Gespeicherte Suche abwählen"
   },
   "collectionManage": {
     "title": "Sammlungen verwalten",

@@ -31,6 +31,27 @@ public class AuthorizationService {
         requireCollectionAccess(entity.getCollectionId());
     }
 
+    /**
+     * Rejects attempts to associate an entity with a collection other than its own.
+     * Prevents privilege escalation when a user has access to both the source and
+     * target collections (e.g. updating a saved search and silently re-homing it
+     * to another collection to overwrite a name there).
+     */
+    public void requireSameCollection(
+        @NonNull BelongsToCollection entity,
+        @NonNull ID<Collection> expectedCollectionId
+    ) {
+        if (!entity.getCollectionId().equals(expectedCollectionId)) {
+            throw new AppAuthorizationException(
+                I18nMessage.of(
+                    "AppAuthorization.COLLECTION_MISMATCH",
+                    "expected", expectedCollectionId.getUUID().toString(),
+                    "actual", entity.getCollectionId().getUUID().toString()
+                )
+            );
+        }
+    }
+
     public boolean hasCollectionAccess(@NonNull ID<Collection> collectionId) {
         var currentUserId = currentUserService.currentUserID();
         return collectionAccessRepo.hasAccess(currentUserId, collectionId);

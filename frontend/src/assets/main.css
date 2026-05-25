@@ -30,6 +30,11 @@
      active prop-chip border/bg). Darker shade in light mode to keep contrast
      against the secondary background; the dark theme uses violet-400. */
   --color-property: #7c3aed;
+  /* Accent color for Smart Collections (sidebar funnel icon, save trigger,
+     active-saved-search pill). Teal — distinct from Tags (--primary blue) and
+     Properties (--color-property purple). Light-mode value tuned for contrast
+     against secondary background. */
+  --color-ss: oklch(44% 0.10 188);
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.5rem;
@@ -62,6 +67,7 @@
   --color-input: #252a32;
   --color-ring: #3b82f6;
   --color-property: #a78bfa;
+  --color-ss: oklch(64% 0.10 188);
 }
 
 /* Everything below lives in `@layer base` so Tailwind utilities (which live in
