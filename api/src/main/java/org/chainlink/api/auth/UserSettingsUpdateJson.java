@@ -9,5 +9,8 @@ import org.jspecify.annotations.NonNull;
 public record UserSettingsUpdateJson(
     @NotNull @NonNull
     @Schema(required = true)
-    boolean offlineCachingEnabled
+    boolean offlineCachingEnabled,
+    @NotNull @NonNull
+    @Schema(required = true)
+    boolean savedSearchesEnabled
 ) {}

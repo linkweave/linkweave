@@ -7,10 +7,12 @@ const AUTH_ME_PATH = '/api/auth/me'
 const CACHEABLE_PATHS = {
   COLLECTIONS: '/api/collections',
   COLLECTION_BY_ID: /^\/api\/collections\/([^/]+)$/,
+  SAVED_SEARCHES: '/api/saved-searches',
 } as const
 
 function isCacheablePath(pathname: string): boolean {
   if (pathname === CACHEABLE_PATHS.COLLECTIONS) return true
+  if (pathname === CACHEABLE_PATHS.SAVED_SEARCHES) return true
   if (CACHEABLE_PATHS.COLLECTION_BY_ID.test(pathname)) return true
   return false
 }
@@ -27,7 +29,10 @@ function toResponse(data: unknown): Response {
   })
 }
 
-async function tryServeFromCache(pathname: string): Promise<Response | undefined> {
+async function tryServeFromCache(
+  pathname: string,
+  searchParams: URLSearchParams,
+): Promise<Response | undefined> {
   const cachedUser = await offlineCache.loadUserInfo()
   if (!cachedUser) return undefined
 
@@ -36,6 +41,13 @@ async function tryServeFromCache(pathname: string): Promise<Response | undefined
   if (pathname === CACHEABLE_PATHS.COLLECTIONS) {
     const data = await offlineCache.loadCollections(email)
     return data ? toResponse({ collections: data }) : undefined
+  }
+
+  if (pathname === CACHEABLE_PATHS.SAVED_SEARCHES) {
+    const collectionId = searchParams.get('collectionId')
+    if (!collectionId) return undefined
+    const data = await offlineCache.loadSavedSearches(email, collectionId)
+    return data ? toResponse({ savedSearchList: data }) : undefined
   }
 
   const match = pathname.match(CACHEABLE_PATHS.COLLECTION_BY_ID)
@@ -75,7 +87,7 @@ export function createOfflineMiddleware(): Middleware {
         try {
           const url = new URL(context.url, window.location.href)
           if (isCacheablePath(url.pathname)) {
-            const cached = await tryServeFromCache(url.pathname)
+            const cached = await tryServeFromCache(url.pathname, url.searchParams)
             if (cached) {
               if (navigator.onLine) markServerUnreachable()
               return cached
@@ -108,8 +120,11 @@ export function createOfflineMiddleware(): Middleware {
       if (!isSameOrigin(context.url)) return undefined
 
       let pathname: string
+      let searchParams: URLSearchParams
       try {
-        pathname = new URL(context.url, window.location.href).pathname
+        const parsed = new URL(context.url, window.location.href)
+        pathname = parsed.pathname
+        searchParams = parsed.searchParams
       } catch {
         return undefined
       }
@@ -124,7 +139,7 @@ export function createOfflineMiddleware(): Middleware {
 
       if (!isCacheablePath(pathname)) return undefined
       try {
-        return await tryServeFromCache(pathname)
+        return await tryServeFromCache(pathname, searchParams)
       } catch {
         return undefined
       }

@@ -6,7 +6,9 @@ import { config } from '@/api'
 import type { SavedSearchJson, SavedSearchSaveJson } from '@/api/generated'
 import { useCollectionStore } from '@/stores/collection'
 import { useBookmarkStore } from '@/stores/bookmark'
+import { useAuthStore } from '@/stores/auth'
 import { stringifyTokens, tokenize } from '@/lib/searchQuery'
+import * as offlineCache from '@/lib/offline-cache'
 
 const api = new SavedSearchResourceApi(config)
 
@@ -17,12 +19,20 @@ function normalize(query: string): string {
 export const useSavedSearchStore = defineStore('savedSearch', () => {
   const collectionStore = useCollectionStore()
   const bookmarkStore = useBookmarkStore()
+  const authStore = useAuthStore()
 
   const savedSearches = ref<SavedSearchJson[]>([])
   const loading = ref(false)
   const activeSavedSearchId = ref<string | null>(null)
 
+  const featureEnabled = computed(() => authStore.user?.settings?.savedSearchesEnabled !== false)
+
   async function loadForCurrentCollection(): Promise<void> {
+    if (!featureEnabled.value) {
+      savedSearches.value = []
+      activeSavedSearchId.value = null
+      return
+    }
     const collectionId = collectionStore.currentCollectionId
     if (isNullish(collectionId)) {
       savedSearches.value = []
@@ -33,14 +43,21 @@ export const useSavedSearchStore = defineStore('savedSearch', () => {
     try {
       const list = await api.apiSavedSearchesGet({ collectionId })
       savedSearches.value = list.savedSearchList
+      const email = authStore.user?.email
+      if (email) {
+        offlineCache
+          .saveSavedSearches(email, collectionId, list.savedSearchList)
+          .catch((err) => console.error('Failed to cache saved searches for offline use:', err))
+      }
     } finally {
       loading.value = false
     }
   }
 
-  // Reload whenever the current collection changes (or becomes available).
+  // Reload whenever the current collection changes (or becomes available),
+  // or whenever the feature flag flips on.
   watch(
-    () => collectionStore.currentCollectionId,
+    [() => collectionStore.currentCollectionId, featureEnabled],
     () => {
       activeSavedSearchId.value = null
       void loadForCurrentCollection()
@@ -141,6 +158,7 @@ export const useSavedSearchStore = defineStore('savedSearch', () => {
     loading,
     activeSavedSearchId,
     currentMatchesActive,
+    featureEnabled,
 
     loadForCurrentCollection,
     toggleSavedSearch,

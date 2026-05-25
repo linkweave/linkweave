@@ -29,6 +29,7 @@ const emit = defineEmits<{
 }>()
 
 const offlineCachingSettingToggle = ref(true)
+const savedSearchesSettingToggle = ref(true)
 const settingsLoading = ref(false)
 
 watch(
@@ -39,23 +40,57 @@ watch(
   { immediate: true },
 )
 
-async function onOfflineCachingChange(value: boolean) {
-  const previous = offlineCachingSettingToggle.value
-  offlineCachingSettingToggle.value = value
+watch(
+  () => auth.user?.settings?.savedSearchesEnabled,
+  (val) => {
+    if (val != null) savedSearchesSettingToggle.value = val
+  },
+  { immediate: true },
+)
+
+async function updateSettings(
+  patch: { offlineCachingEnabled?: boolean; savedSearchesEnabled?: boolean },
+  errorKey: string,
+  rollback: () => void,
+) {
   settingsLoading.value = true
   try {
     const result = await authApi.apiAuthSettingsPut({
-      userSettingsUpdateJson: { offlineCachingEnabled: value },
+      userSettingsUpdateJson: {
+        offlineCachingEnabled: offlineCachingSettingToggle.value,
+        savedSearchesEnabled: savedSearchesSettingToggle.value,
+        ...patch,
+      },
     })
     if (auth.user) {
       auth.user = { ...auth.user, settings: result }
     }
   } catch {
-    offlineCachingSettingToggle.value = previous
-    notification.handleApiError(null, t('settings.offlineCachingUpdateError'))
+    rollback()
+    notification.handleApiError(null, t(errorKey))
   } finally {
     settingsLoading.value = false
   }
+}
+
+async function onOfflineCachingChange(value: boolean) {
+  const previous = offlineCachingSettingToggle.value
+  offlineCachingSettingToggle.value = value
+  await updateSettings(
+    { offlineCachingEnabled: value },
+    'settings.offlineCachingUpdateError',
+    () => { offlineCachingSettingToggle.value = previous },
+  )
+}
+
+async function onSavedSearchesChange(value: boolean) {
+  const previous = savedSearchesSettingToggle.value
+  savedSearchesSettingToggle.value = value
+  await updateSettings(
+    { savedSearchesEnabled: value },
+    'settings.savedSearchesUpdateError',
+    () => { savedSearchesSettingToggle.value = previous },
+  )
 }
 
 const themes: { value: Theme; icon: typeof Sun; labelKey: string }[] = [
@@ -143,6 +178,21 @@ const layouts: { value: BookmarkLayout; icon: typeof LayoutList; labelKey: strin
             @update:model-value="onOfflineCachingChange"
             :aria-label="t('settings.offlineCaching')"
             data-testid="toggle-offline-caching"
+          />
+        </div>
+        <div class="mt-2 flex items-center justify-between gap-3 px-2.5 py-2 rounded-md bg-secondary/60">
+          <div class="min-w-0">
+            <div class="text-sm font-medium">{{ t('settings.savedSearches') }}</div>
+            <div class="text-xs text-muted-foreground mt-0.5">
+              {{ t('settings.savedSearchesHint') }}
+            </div>
+          </div>
+          <SwitchCl
+            :model-value="savedSearchesSettingToggle"
+            :disabled="settingsLoading"
+            @update:model-value="onSavedSearchesChange"
+            :aria-label="t('settings.savedSearches')"
+            data-testid="toggle-saved-searches"
           />
         </div>
       </div>

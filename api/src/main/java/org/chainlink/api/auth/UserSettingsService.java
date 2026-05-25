@@ -24,6 +24,7 @@ public class UserSettingsService {
         User user = currentUserService.currentUser();
         UserSettings settings = userSettingsRepo.getOrCreateForUser(user);
         settings.setOfflineCachingEnabled(update.offlineCachingEnabled());
+        settings.setSavedSearchesEnabled(update.savedSearchesEnabled());
         return toJson(settings);
     }
 
@@ -31,7 +32,7 @@ public class UserSettingsService {
     public UserSettingsJson getSettingsForUser(@NonNull User user) {
         return userSettingsRepo.findByUserId(user.getId())
             .map(this::toJson)
-            .orElseGet(() -> new UserSettingsJson(true));
+            .orElseGet(() -> new UserSettingsJson(true, true));
     }
 
     public void deleteSettingsForUser(@NonNull ID<User> userId) {
@@ -39,6 +40,6 @@ public class UserSettingsService {
     }
 
     private UserSettingsJson toJson(@NonNull UserSettings settings) {
-        return new UserSettingsJson(settings.isOfflineCachingEnabled());
+        return new UserSettingsJson(settings.isOfflineCachingEnabled(), settings.isSavedSearchesEnabled());
     }
 }

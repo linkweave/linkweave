@@ -6,5 +6,7 @@ import org.chainlink.infrastructure.stereotypes.JaxDTO;
 @JaxDTO
 public record UserSettingsJson(
     @Schema(required = true)
-    boolean offlineCachingEnabled
+    boolean offlineCachingEnabled,
+    @Schema(required = true)
+    boolean savedSearchesEnabled
 ) {}

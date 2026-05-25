@@ -25,6 +25,12 @@ export interface UserSettingsUpdateJson {
      * @memberof UserSettingsUpdateJson
      */
     offlineCachingEnabled: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof UserSettingsUpdateJson
+     */
+    savedSearchesEnabled: boolean;
 }
 
 /**
@@ -32,6 +38,7 @@ export interface UserSettingsUpdateJson {
  */
 export function instanceOfUserSettingsUpdateJson(value: object): value is UserSettingsUpdateJson {
     if (!('offlineCachingEnabled' in value) || value['offlineCachingEnabled'] === undefined) return false;
+    if (!('savedSearchesEnabled' in value) || value['savedSearchesEnabled'] === undefined) return false;
     return true;
 }
 
@@ -46,6 +53,7 @@ export function UserSettingsUpdateJsonFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'offlineCachingEnabled': json['offlineCachingEnabled'],
+        'savedSearchesEnabled': json['savedSearchesEnabled'],
     };
 }
 
@@ -61,6 +69,7 @@ export function UserSettingsUpdateJsonToJSONTyped(value?: UserSettingsUpdateJson
     return {
         
         'offlineCachingEnabled': value['offlineCachingEnabled'],
+        'savedSearchesEnabled': value['savedSearchesEnabled'],
     };
 }
 

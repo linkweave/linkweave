@@ -20,6 +20,7 @@ import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { useOfflineStore } from '@/stores/offline'
 import { usePropertyStore } from '@/stores/property'
+import { useSavedSearchStore } from '@/stores/savedSearch'
 import { Box, ChevronDown, Folder, Plus, Tag } from '@lucide/vue'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -36,6 +37,7 @@ const folderStore = useFolderStore()
 const offline = useOfflineStore()
 const propertyStore = usePropertyStore()
 const bookmarkStore = useBookmarkStore()
+const savedSearchStore = useSavedSearchStore()
 const showPropertiesSidebar = useShowPropertiesSidebar()
 const { moveBookmarkWithUndo, moveFolderWithUndo } = useDndMove()
 
@@ -44,7 +46,9 @@ const tagsExpanded = useSidebarSectionExpandedPref('tagsExpanded')
 const showPropertiesSection = computed(
   () => showPropertiesSidebar.value && propertyStore.definitions.length > 0,
 )
-const showSmartCollectionsSection = computed(() => collectionId.value !== '')
+const showSmartCollectionsSection = computed(
+  () => collectionId.value !== '' && savedSearchStore.featureEnabled,
+)
 const showCreateFolder = ref(false)
 const subfolderParentId = ref<string | undefined>(undefined)
 const allBookmarksDragOver = ref(false)

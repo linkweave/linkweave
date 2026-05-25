@@ -18,7 +18,7 @@ const fakeUser: UserInfoJson = {
   lastName: 'User',
   roles: new Set(['USER']),
   defaultCollectionId: 'col-1',
-  settings: { offlineCachingEnabled: true },
+  settings: { offlineCachingEnabled: true, savedSearchesEnabled: true },
 }
 
 const fakeCollections: CollectionSummaryJson[] = [

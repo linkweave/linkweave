@@ -122,7 +122,10 @@
     "layoutGrouped": "Gruppiert",
     "offlineCaching": "Offline-Zwischenspeicherung",
     "offlineCachingHint": "Lesezeichen lokal für Offline-Nutzung speichern.",
-    "offlineCachingUpdateError": "Offline-Zwischenspeicherung konnte nicht aktualisiert werden."
+    "offlineCachingUpdateError": "Offline-Zwischenspeicherung konnte nicht aktualisiert werden.",
+    "savedSearches": "Gespeicherte Suchen",
+    "savedSearchesHint": "Funktion für gespeicherte Suchen (Smart Collections) aktivieren.",
+    "savedSearchesUpdateError": "Einstellung für gespeicherte Suchen konnte nicht aktualisiert werden."
   },
   "toolbar": {
     "layout": "Bookmark-Layout",
