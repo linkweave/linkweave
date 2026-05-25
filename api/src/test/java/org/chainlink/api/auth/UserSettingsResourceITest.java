@@ -25,27 +25,35 @@ class UserSettingsResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldUpdateOfflineCachingAndReflectInUserInfo() {
-        RestAssured.given()
-            .contentType(ContentType.JSON)
-            .body("{\"offlineCachingEnabled\":false,\"savedSearchesEnabled\":true}")
-            .put("/auth/settings")
-            .then()
-            .statusCode(200)
-            .body("offlineCachingEnabled", equalTo(false));
+        try {
+            RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body("{\"offlineCachingEnabled\":false,\"savedSearchesEnabled\":true}")
+                .put("/auth/settings")
+                .then()
+                .statusCode(200)
+                .body("offlineCachingEnabled", equalTo(false));
 
-        RestAssured.given()
-            .get("/auth/me")
-            .then()
-            .statusCode(200)
-            .body("settings.offlineCachingEnabled", equalTo(false));
+            RestAssured.given()
+                .get("/auth/me")
+                .then()
+                .statusCode(200)
+                .body("settings.offlineCachingEnabled", equalTo(false));
 
-        RestAssured.given()
-            .contentType(ContentType.JSON)
-            .body("{\"offlineCachingEnabled\":true,\"savedSearchesEnabled\":true}")
-            .put("/auth/settings")
-            .then()
-            .statusCode(200)
-            .body("offlineCachingEnabled", equalTo(true));
+            RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body("{\"offlineCachingEnabled\":true,\"savedSearchesEnabled\":true}")
+                .put("/auth/settings")
+                .then()
+                .statusCode(200)
+                .body("offlineCachingEnabled", equalTo(true));
+        } finally {
+            // Restore defaults so test order does not leak state into the other tests.
+            RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body("{\"offlineCachingEnabled\":true,\"savedSearchesEnabled\":true}")
+                .put("/auth/settings");
+        }
     }
 
     @Test
