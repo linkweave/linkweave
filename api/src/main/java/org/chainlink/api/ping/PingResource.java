@@ -1,5 +1,8 @@
 package org.chainlink.api.ping;
 
+import java.time.temporal.ChronoUnit;
+
+import io.smallrye.faulttolerance.api.RateLimit;
 import jakarta.annotation.security.PermitAll;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
@@ -12,9 +15,11 @@ import org.chainlink.infrastructure.stereotypes.JaxResource;
 @Path("/ping")
 @PermitAll
 @Transactional(TxType.NOT_SUPPORTED)
+@RateLimit(value = 1200, window = 1, windowUnit = ChronoUnit.MINUTES)
 public class PingResource {
 
     @GET
+    @PermitAll
     public Response ping() {
         return Response.noContent().build();
     }
