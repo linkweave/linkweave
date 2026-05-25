@@ -1,16 +1,15 @@
 import * as offlineCache from '@/lib/offline-cache'
 import { markServerReachable, markServerUnreachable } from '@/lib/network-status'
 import type { Middleware } from '@/api/generated/runtime'
-import { UserInfoJsonToJSON } from '@/api/generated'
+
+const AUTH_ME_PATH = '/api/auth/me'
 
 const CACHEABLE_PATHS = {
-  AUTH_ME: '/api/auth/me',
   COLLECTIONS: '/api/collections',
   COLLECTION_BY_ID: /^\/api\/collections\/([^/]+)$/,
 } as const
 
 function isCacheablePath(pathname: string): boolean {
-  if (pathname === CACHEABLE_PATHS.AUTH_ME) return true
   if (pathname === CACHEABLE_PATHS.COLLECTIONS) return true
   if (CACHEABLE_PATHS.COLLECTION_BY_ID.test(pathname)) return true
   return false
@@ -32,11 +31,7 @@ async function tryServeFromCache(pathname: string): Promise<Response | undefined
   const cachedUser = await offlineCache.loadUserInfo()
   if (!cachedUser) return undefined
 
-  const { email, data: userData } = cachedUser
-
-  if (pathname === CACHEABLE_PATHS.AUTH_ME) {
-    return toResponse(UserInfoJsonToJSON(userData))
-  }
+  const { email } = cachedUser
 
   if (pathname === CACHEABLE_PATHS.COLLECTIONS) {
     const data = await offlineCache.loadCollections(email)
@@ -110,16 +105,26 @@ export function createOfflineMiddleware(): Middleware {
     onError: async (context) => {
       if (!(context.error instanceof TypeError)) return undefined
       if (context.init.method !== 'GET') return undefined
+      if (!isSameOrigin(context.url)) return undefined
 
-      if (navigator.onLine && isSameOrigin(context.url)) {
-        markServerUnreachable()
+      let pathname: string
+      try {
+        pathname = new URL(context.url, window.location.href).pathname
+      } catch {
+        return undefined
       }
 
-      try {
-        const url = new URL(context.url, window.location.href)
-        if (!isCacheablePath(url.pathname)) return undefined
+      // Errors on /api/auth/me are typically auth redirects (e.g. OIDC 302
+      // to the IDP that fails CORS), not real network failures. They must
+      // not flip the app into "offline" mode or serve cached user info —
+      // server reachability is the dedicated probe's job.
+      if (pathname === AUTH_ME_PATH) return undefined
 
-        return await tryServeFromCache(url.pathname)
+      if (navigator.onLine) markServerUnreachable()
+
+      if (!isCacheablePath(pathname)) return undefined
+      try {
+        return await tryServeFromCache(pathname)
       } catch {
         return undefined
       }
