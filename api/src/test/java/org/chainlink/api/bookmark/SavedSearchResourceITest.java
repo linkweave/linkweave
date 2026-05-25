@@ -174,7 +174,7 @@ class SavedSearchResourceITest {
             .body("{\"collectionId\":\"%s\",\"name\":\"Movable\",\"query\":\"#x\"}".formatted(sourceId))
             .post("/saved-searches").then().statusCode(200).extract().path("id");
 
-        // Attempt to move it to the target collection — must be rejected.
+        // Attempt to move it to the target collection — must be rejected as 403.
         String moveBody = """
             {"collectionId":"%s","name":"Movable","query":"#x"}
             """.formatted(targetId);
@@ -184,7 +184,7 @@ class SavedSearchResourceITest {
             .body(moveBody)
             .put("/saved-searches/" + id)
             .then()
-            .statusCode(400);
+            .statusCode(403);
 
         // The saved search must still belong to the source collection.
         RestAssured.given()

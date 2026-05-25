@@ -4,6 +4,7 @@ import java.time.temporal.ChronoUnit;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.Authenticated;
+import io.smallrye.faulttolerance.api.RateLimit;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
@@ -22,9 +23,6 @@ import org.chainlink.api.bookmark.json.SavedSearchListJson;
 import org.chainlink.api.bookmark.json.SavedSearchSaveJson;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.auth.AuthorizationService;
-import io.smallrye.faulttolerance.api.RateLimit;
-import org.chainlink.infrastructure.errorhandling.AppValidationException;
-import org.chainlink.infrastructure.errorhandling.AppValidationMessage;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
@@ -74,11 +72,7 @@ public class SavedSearchResource {
     ) {
         SavedSearch saved = savedSearchService.getSavedSearch(savedSearchId);
         authorizationService.requireAccessTo(saved);
-        if (!json.getCollectionId().equals(saved.getCollection().getId())) {
-            throw new AppValidationException(
-                AppValidationMessage.genericMessage("AppValidation.savedSearch.collectionMismatch")
-            );
-        }
+        authorizationService.requireSameCollection(saved, json.getCollectionId());
         SavedSearch updated = savedSearchService.updateSavedSearch(saved, json);
         return SavedSearchMapper.toJson(updated);
     }

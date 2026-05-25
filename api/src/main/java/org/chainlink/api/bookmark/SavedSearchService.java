@@ -23,9 +23,10 @@ public class SavedSearchService {
 
     @NonNull
     public SavedSearch createSavedSearch(@NonNull SavedSearchSaveJson json) {
-        SavedSearch saved = SavedSearchMapper.toEntity(
+        SavedSearch saved = new SavedSearch(
             collectionRepo.referenceById(json.getCollectionId()),
-            json
+            json.getName(),
+            json.getQuery()
         );
         upsertAndFlush(saved);
         return saved;
@@ -38,8 +39,6 @@ public class SavedSearchService {
 
     @NonNull
     public SavedSearch updateSavedSearch(@NonNull SavedSearch saved, @NonNull SavedSearchSaveJson json) {
-        // Collection is intentionally not updated — the resource layer enforces
-        // that the supplied collectionId matches the existing one.
         saved.setName(json.getName());
         saved.setQuery(json.getQuery());
         upsertAndFlush(saved);

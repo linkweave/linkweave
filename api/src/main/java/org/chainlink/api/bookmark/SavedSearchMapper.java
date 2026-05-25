@@ -3,7 +3,6 @@ package org.chainlink.api.bookmark;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.json.SavedSearchJson;
 import org.chainlink.api.bookmark.json.SavedSearchSaveJson;
-import org.chainlink.api.collection.Collection;
 import org.chainlink.infrastructure.json.EntityInfoJson;
 import org.chainlink.infrastructure.stereotypes.JaxMapper;
 import org.jspecify.annotations.NonNull;
@@ -23,10 +22,5 @@ public class SavedSearchMapper {
                 savedSearch.getQuery()
             )
         );
-    }
-
-    @NonNull
-    public static SavedSearch toEntity(@NonNull Collection collection, @NonNull SavedSearchSaveJson json) {
-        return new SavedSearch(collection, json.getName(), json.getQuery());
     }
 }
