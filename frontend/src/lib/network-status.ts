@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 export type OfflineReason = 'browser' | 'server' | null
 
 const POLL_DELAYS_MS = [5_000, 10_000, 20_000, 30_000]
-const PROBE_PATH = '/api/auth/me'
+const PROBE_PATH = '/api/ping'
 
 const browserOffline = ref(!navigator.onLine)
 const serverUnreachable = ref(false)
@@ -37,7 +37,7 @@ const UPSTREAM_DOWN_STATUSES = new Set([404, 502, 503, 504])
 async function probe() {
   pollTimer = null
   try {
-    const res = await fetch(PROBE_PATH, { credentials: 'include', cache: 'no-store' })
+    const res = await fetch(PROBE_PATH, { credentials: 'omit', cache: 'no-store' })
     if (UPSTREAM_DOWN_STATUSES.has(res.status)) {
       schedulePoll()
       return

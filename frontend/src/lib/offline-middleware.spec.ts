@@ -3,7 +3,6 @@ import 'fake-indexeddb/auto'
 import {
   CollectionInfoJsonFromJSON,
   CollectionSummaryListJsonFromJSON,
-  UserInfoJsonFromJSON,
 } from '@/api/generated'
 import type { CollectionInfoJson, CollectionSummaryJson, UserInfoJson } from '@/api/generated'
 import {
@@ -60,18 +59,15 @@ function makeErrorContext(url: string) {
 }
 
 describe('offline-middleware onError cache fallback', () => {
-  it('serves /api/auth/me in a shape UserInfoJsonFromJSON can parse', async () => {
+  it('does not serve /api/auth/me from cache — auth must hit the server', async () => {
     const middleware = createOfflineMiddleware()
-    const res = await middleware.onError!(makeErrorContext('https://app.test/api/auth/me'))
-    expect(res).toBeInstanceOf(Response)
-
-    const parsed = UserInfoJsonFromJSON(await res!.json())
-    expect(parsed.email).toBe('alice@example.com')
+    const res = await middleware.onError!(makeErrorContext('/api/auth/me'))
+    expect(res).toBeUndefined()
   })
 
   it('serves /api/collections wrapped so CollectionSummaryListJsonFromJSON can parse', async () => {
     const middleware = createOfflineMiddleware()
-    const res = await middleware.onError!(makeErrorContext('https://app.test/api/collections'))
+    const res = await middleware.onError!(makeErrorContext('/api/collections'))
     expect(res).toBeInstanceOf(Response)
 
     // Regression guard: the parser expects { collections: [...] }, not the bare array.
@@ -82,7 +78,7 @@ describe('offline-middleware onError cache fallback', () => {
 
   it('serves /api/collections/:id in a shape CollectionInfoJsonFromJSON can parse', async () => {
     const middleware = createOfflineMiddleware()
-    const res = await middleware.onError!(makeErrorContext('https://app.test/api/collections/col-1'))
+    const res = await middleware.onError!(makeErrorContext('/api/collections/col-1'))
     expect(res).toBeInstanceOf(Response)
 
     const parsed = CollectionInfoJsonFromJSON(await res!.json())
@@ -92,13 +88,13 @@ describe('offline-middleware onError cache fallback', () => {
 
   it('returns undefined when path is not cacheable', async () => {
     const middleware = createOfflineMiddleware()
-    const res = await middleware.onError!(makeErrorContext('https://app.test/api/bookmarks'))
+    const res = await middleware.onError!(makeErrorContext('/api/bookmarks'))
     expect(res).toBeUndefined()
   })
 
   it('returns undefined for non-GET requests', async () => {
     const middleware = createOfflineMiddleware()
-    const ctx = { ...makeErrorContext('https://app.test/api/collections'), init: { method: 'POST' } as RequestInit }
+    const ctx = { ...makeErrorContext('/api/collections'), init: { method: 'POST' } as RequestInit }
     const res = await middleware.onError!(ctx)
     expect(res).toBeUndefined()
   })
