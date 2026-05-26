@@ -102,7 +102,10 @@ export function createOfflineMiddleware(): Middleware {
 
       if (status < 500) markServerReachable()
 
-      if (status === 401 && isGet) {
+      // 499 is Quarkus OIDC's "unauthenticated AJAX request" response (see
+      // quarkus.oidc.authentication.java-script-auto-redirect=false) — semantically
+      // identical to 401 for our purposes.
+      if ((status === 401 || status === 499) && isGet) {
         try {
           const url = new URL(context.url, window.location.href)
           if (!url.pathname.startsWith('/api/auth/')) {
