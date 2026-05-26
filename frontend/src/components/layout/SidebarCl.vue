@@ -43,6 +43,7 @@ const { moveBookmarkWithUndo, moveFolderWithUndo } = useDndMove()
 
 const collectionId = computed(() => collectionStore.currentCollectionId ?? '')
 const tagsExpanded = useSidebarSectionExpandedPref('tagsExpanded')
+const propertiesExpanded = useSidebarSectionExpandedPref('propertiesExpanded')
 const showPropertiesSection = computed(
   () => showPropertiesSidebar.value && propertyStore.definitions.length > 0,
 )
@@ -216,12 +217,24 @@ async function onAllBookmarksDrop(event: DragEvent) {
       v-if="showPropertiesSection"
       class="mt-auto min-h-0 flex flex-col border-t border-border max-h-[35%]"
     >
-      <div class="p-3 flex items-center justify-between shrink-0">
-        <span class="text-sm font-medium text-muted-foreground flex items-center gap-2">
-          <Box class="h-4 w-4" style="color: var(--color-property)" />
+      <button
+        type="button"
+        class="w-full p-3 flex items-center justify-between shrink-0 text-left hover:bg-accent/50 transition-colors"
+        :aria-expanded="propertiesExpanded"
+        data-testid="properties-toggle"
+        @click="propertiesExpanded = !propertiesExpanded"
+      >
+        <span class="text-[10px] font-semibold uppercase tracking-[.06em] text-muted-foreground inline-flex items-center gap-2">
+          <Box class="h-3 w-3" style="color: var(--color-property)" />
           {{ t('sidebar.properties') }}
         </span>
-      </div>
+        <ChevronDown
+          class="h-3.5 w-3.5 text-muted-foreground transition-transform duration-200"
+          :class="propertiesExpanded ? 'rotate-180' : ''"
+          aria-hidden="true"
+        />
+      </button>
+      <CollapsibleCl :open="propertiesExpanded">
       <ul
         class="px-2 pb-2 overflow-y-auto flex-1 min-h-0"
         data-testid="sidebar-properties"
@@ -229,7 +242,7 @@ async function onAllBookmarksDrop(event: DragEvent) {
         <li v-for="def in propertyStore.definitions" :key="def.id">
           <button
             type="button"
-            class="w-full flex items-center gap-2 rounded-md px-2 py-1 text-sm cursor-pointer transition-colors"
+            class="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors"
             :class="
               isPropertyKeyInQuery(def.data.name)
                 ? 'bg-[color-mix(in_oklab,var(--color-property)_12%,var(--color-secondary))] text-foreground'
@@ -245,6 +258,7 @@ async function onAllBookmarksDrop(event: DragEvent) {
           </button>
         </li>
       </ul>
+      </CollapsibleCl>
     </div>
 
     <!-- Smart Collections Section -->
@@ -267,8 +281,8 @@ async function onAllBookmarksDrop(event: DragEvent) {
         data-testid="tags-toggle"
         @click="tagsExpanded = !tagsExpanded"
       >
-        <span class="text-sm font-medium text-muted-foreground flex items-center gap-2">
-          <Tag class="h-4 w-4" />
+        <span class="text-[10px] font-semibold uppercase tracking-[.06em] text-muted-foreground inline-flex items-center gap-2">
+          <Tag class="h-3 w-3" />
           {{ t('sidebar.tags') }}
         </span>
         <ChevronDown

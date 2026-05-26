@@ -140,7 +140,7 @@ async function confirmDelete() {
     <button
       v-if="props.collectionId"
       data-testid="new-tag-btn"
-      class="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors text-muted-foreground hover:text-foreground mt-1"
+      class="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground mt-1"
       @click="showCreateDialog = true"
     >
       <Plus class="h-3.5 w-3.5" />
