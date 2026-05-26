@@ -71,8 +71,8 @@ rectangle "Chainlink Bookmark Manager" {
         usecase "UC-022\nFilter Bookmarks\nby Folder" as UC022 <<implemented>>
         usecase "UC-032\nSearch Bookmarks" as UC032 <<implemented>>
         usecase "UC-070\nSearch with Operators" as UC070 <<implemented>>
-        usecase "UC-071\nSave Search Query" as UC071
-        usecase "UC-072\nUse Smart Collection" as UC072
+        usecase "UC-071\nSave Search Query" as UC071 <<implemented>>
+        usecase "UC-072\nUse Smart Collection" as UC072 <<implemented>>
     }
 
     rectangle "Batch Operations" {

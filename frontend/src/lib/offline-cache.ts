@@ -1,8 +1,17 @@
 import type { CollectionInfoJson, CollectionSummaryJson, SavedSearchJson, UserInfoJson } from '@/api/generated'
-import { UserInfoJsonToJSON, UserInfoJsonFromJSON } from '@/api/generated'
+import {
+  CollectionInfoJsonToJSON,
+  CollectionSummaryJsonToJSON,
+  SavedSearchJsonToJSON,
+  UserInfoJsonFromJSON,
+  UserInfoJsonToJSON,
+} from '@/api/generated'
 
 const DB_NAME = 'chainlink-offline'
-const DB_VERSION = 2
+// v3: collections/collection-info/saved-searches now stored in OpenAPI JSON
+// wire-shape (Sets→arrays). Pre-v3 entries were JSON.stringify'd runtime objects
+// where Sets serialized to "{}" — re-hydration with *FromJSON throws. Drop those.
+const DB_VERSION = 3
 
 const STORES = {
   USER_INFO: 'user-info',
@@ -20,7 +29,7 @@ function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION)
 
-    request.onupgradeneeded = () => {
+    request.onupgradeneeded = (event) => {
       const db = request.result
       if (!db.objectStoreNames.contains(STORES.USER_INFO)) {
         db.createObjectStore(STORES.USER_INFO)
@@ -33,6 +42,12 @@ function openDB(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(STORES.SAVED_SEARCHES)) {
         db.createObjectStore(STORES.SAVED_SEARCHES)
+      }
+      const tx = request.transaction
+      if (event.oldVersion < 3 && tx) {
+        tx.objectStore(STORES.COLLECTIONS).clear()
+        tx.objectStore(STORES.COLLECTION_INFO).clear()
+        tx.objectStore(STORES.SAVED_SEARCHES).clear()
       }
     }
 
@@ -102,16 +117,22 @@ export function saveUserInfo(email: string, user: UserInfoJson): Promise<void> {
   })
 }
 
+// All save* functions store the OpenAPI JSON wire-shape (Sets→arrays, Dates→ISO
+// strings) produced by the generated *ToJSON helpers. A naive structuredClone or
+// JSON.parse(JSON.stringify(...)) silently drops Sets to "{}" and corrupts the cache
+// — the offline middleware later JSON.stringify's this back into a Response body
+// for the openapi client to parse with *FromJSON, so it must already be wire-shape.
+
 export function saveCollections(email: string, collections: CollectionSummaryJson[]): Promise<void> {
   return put(STORES.COLLECTIONS, userKey(email, 'collections'), {
-    data: collections,
+    data: collections.map(c => CollectionSummaryJsonToJSON(c)),
     cachedAt: Date.now(),
   })
 }
 
 export function saveCollectionInfo(email: string, info: CollectionInfoJson): Promise<void> {
   return put(STORES.COLLECTION_INFO, userKey(email, `collection-info:${info.id}`), {
-    data: info,
+    data: CollectionInfoJsonToJSON(info),
     cachedAt: Date.now(),
   })
 }
@@ -122,7 +143,7 @@ export function saveSavedSearches(
   savedSearches: SavedSearchJson[],
 ): Promise<void> {
   return put(STORES.SAVED_SEARCHES, userKey(email, `saved-searches:${collectionId}`), {
-    data: savedSearches,
+    data: savedSearches.map(s => SavedSearchJsonToJSON(s)),
     cachedAt: Date.now(),
   })
 }

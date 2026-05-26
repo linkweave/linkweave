@@ -4,7 +4,6 @@ import {CollectionResourceApi} from '@/api/generated'
 import {SYSTEM_DEFAULT_SORT} from '@/utils/bookmarkSort'
 import {useCollectionSettingsWriter} from '@/composables/useCollectionSettingsWriter'
 import * as offlineCache from '@/lib/offline-cache'
-import { toSerializable } from '@/lib/to-serializable'
 import router from '@/router'
 import {useAuthStore} from '@/stores/auth'
 import {useNotificationStore} from '@/stores/notification'
@@ -73,7 +72,7 @@ export const useCollectionStore = defineStore('collection', () => {
       collections.value = (await collectionApi.apiCollectionsGet()).collections
       const auth = useAuthStore()
       if (auth.user?.email) {
-        offlineCache.saveCollections(auth.user.email, toSerializable(collections.value)).catch(err => console.error('Failed to cache collections for offline use:', err))
+        offlineCache.saveCollections(auth.user.email, collections.value).catch(err => console.error('Failed to cache collections for offline use:', err))
       }
     } catch (err) {
       console.error('Failed to fetch collections:', err)
@@ -99,7 +98,7 @@ export const useCollectionStore = defineStore('collection', () => {
       settings.value = fetchedSettings
       const auth = useAuthStore()
       if (auth.user?.email && collectionInfo.value) {
-        offlineCache.saveCollectionInfo(auth.user.email, toSerializable(collectionInfo.value)).catch(err => console.error('Failed to cache collection info for offline use:', err))
+        offlineCache.saveCollectionInfo(auth.user.email, collectionInfo.value).catch(err => console.error('Failed to cache collection info for offline use:', err))
       }
     } catch (err) {
       console.error('Failed to fetch collection info:', err)
