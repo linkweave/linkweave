@@ -79,7 +79,7 @@ async function deleteSaved(saved: SavedSearchJson) {
           class="group relative"
         >
           <div
-            class="flex items-center gap-2 rounded-md px-2 py-1 text-sm cursor-pointer transition-colors"
+            class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors"
             :class="
               savedSearchStore.activeSavedSearchId === saved.id
                 ? 'bg-[color-mix(in_oklab,var(--color-primary)_12%,var(--color-secondary))] text-primary'
