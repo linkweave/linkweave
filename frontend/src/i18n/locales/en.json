@@ -122,7 +122,10 @@
     "layoutGrouped": "Grouped",
     "offlineCaching": "Offline Caching",
     "offlineCachingHint": "Store bookmark data locally for offline browsing.",
-    "offlineCachingUpdateError": "Failed to update offline caching setting."
+    "offlineCachingUpdateError": "Failed to update offline caching setting.",
+    "savedSearches": "Saved Searches",
+    "savedSearchesHint": "Enable the saved searches (smart collections) feature.",
+    "savedSearchesUpdateError": "Failed to update saved searches setting."
   },
   "toolbar": {
     "layout": "Bookmark Layout",

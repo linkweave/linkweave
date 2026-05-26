@@ -48,6 +48,9 @@ public class UserSettings extends AbstractEntity<UserSettings> {
     @Column(nullable = false)
     private boolean offlineCachingEnabled = true;
 
+    @Column(nullable = false)
+    private boolean savedSearchesEnabled = true;
+
     public UserSettings(@NonNull User user) {
         this.user = user;
     }

@@ -1,13 +1,14 @@
-import type { CollectionInfoJson, CollectionSummaryJson, UserInfoJson } from '@/api/generated'
+import type { CollectionInfoJson, CollectionSummaryJson, SavedSearchJson, UserInfoJson } from '@/api/generated'
 import { UserInfoJsonToJSON, UserInfoJsonFromJSON } from '@/api/generated'
 
 const DB_NAME = 'chainlink-offline'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 const STORES = {
   USER_INFO: 'user-info',
   COLLECTIONS: 'collections',
   COLLECTION_INFO: 'collection-info',
+  SAVED_SEARCHES: 'saved-searches',
 } as const
 
 export interface Cached<T> {
@@ -29,6 +30,9 @@ function openDB(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(STORES.COLLECTION_INFO)) {
         db.createObjectStore(STORES.COLLECTION_INFO)
+      }
+      if (!db.objectStoreNames.contains(STORES.SAVED_SEARCHES)) {
+        db.createObjectStore(STORES.SAVED_SEARCHES)
       }
     }
 
@@ -112,6 +116,17 @@ export function saveCollectionInfo(email: string, info: CollectionInfoJson): Pro
   })
 }
 
+export function saveSavedSearches(
+  email: string,
+  collectionId: string,
+  savedSearches: SavedSearchJson[],
+): Promise<void> {
+  return put(STORES.SAVED_SEARCHES, userKey(email, `saved-searches:${collectionId}`), {
+    data: savedSearches,
+    cachedAt: Date.now(),
+  })
+}
+
 export async function loadUserInfo(): Promise<{ email: string; data: UserInfoJson; cachedAt: number } | null> {
   const allKeys = await getAllKeys(STORES.USER_INFO)
   const userInfoKey = allKeys.find(k => k.endsWith(':user-info'))
@@ -131,6 +146,17 @@ export async function loadCollections(email: string): Promise<CollectionSummaryJ
 
 export async function loadCollectionInfo(email: string, collectionId: string): Promise<CollectionInfoJson | null> {
   const cached = await get<CollectionInfoJson>(STORES.COLLECTION_INFO, userKey(email, `collection-info:${collectionId}`))
+  return cached?.data ?? null
+}
+
+export async function loadSavedSearches(
+  email: string,
+  collectionId: string,
+): Promise<SavedSearchJson[] | null> {
+  const cached = await get<SavedSearchJson[]>(
+    STORES.SAVED_SEARCHES,
+    userKey(email, `saved-searches:${collectionId}`),
+  )
   return cached?.data ?? null
 }
 

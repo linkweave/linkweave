@@ -10,6 +10,7 @@ export * from './export-resource-api';
 export * from './favicon-resource-api';
 export * from './folder-resource-api';
 export * from './import-resource-api';
+export * from './ping-resource-api';
 export * from './property-definition-resource-api';
 export * from './saved-search-resource-api';
 export * from './tag-resource-api';

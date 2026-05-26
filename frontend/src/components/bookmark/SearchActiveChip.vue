@@ -15,6 +15,7 @@ const savedSearchStore = useSavedSearchStore()
 const tokens = computed(() => bookmarkStore.queryTokens)
 const resultCount = computed(() => bookmarkStore.filteredBookmarks.length)
 const hasActiveSavedSearch = computed(() => savedSearchStore.activeSavedSearchId !== null)
+const savedSearchesEnabled = computed(() => savedSearchStore.featureEnabled)
 
 const saveOpen = ref(false)
 
@@ -49,8 +50,8 @@ function clear() {
     <span class="ml-auto text-muted-foreground text-xs shrink-0">
       {{ t('search.resultCount', { n: resultCount }) }}
     </span>
-    <SavedSearchPill v-if="hasActiveSavedSearch" />
-    <SavedSearchPopover v-else v-model:open="saveOpen" mode="create">
+    <SavedSearchPill v-if="savedSearchesEnabled && hasActiveSavedSearch" />
+    <SavedSearchPopover v-else-if="savedSearchesEnabled" v-model:open="saveOpen" mode="create">
       <button
         type="button"
         data-testid="saved-search-save-trigger"
