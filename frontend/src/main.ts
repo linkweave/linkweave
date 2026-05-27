@@ -3,6 +3,7 @@ import 'vue-color/style.css'
 import { createPinia } from 'pinia'
 import { configure } from 'vee-validate'
 
+import * as Sentry from '@sentry/vue'
 import { createApp } from 'vue'
 
 import App from './App.vue'
@@ -18,6 +19,23 @@ configure({
 
 async function initializeApp() {
   const app = createApp(App)
+
+  Sentry.init({
+    app,
+    dsn: import.meta.env.VITE_SENTRY_DSN ?? 'https://dd086e579810c04e75f2e37463ac7378@o4509425614520320.ingest.de.sentry.io/4511463699120208',
+    tunnel: '/api/sentry-tunnel',
+    enabled: !import.meta.env.VITEST && !import.meta.env.VITE_E2E,
+    environment: import.meta.env.MODE,
+    integrations: [Sentry.browserTracingIntegration({ router })],
+    tracesSampleRate: 0.2,
+    tracePropagationTargets: [
+      'local-chainlink.localhost',
+      'dev-chainlink.markushofstetter.com',
+      'chainlink.markushofstetter.com',
+    ],
+    sendDefaultPii: true,
+    enableLogs: true,
+  })
 
   app.use(createPinia())
   app.use(router)

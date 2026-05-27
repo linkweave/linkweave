@@ -6,6 +6,7 @@ registries:
 onlyBuiltDependencies:
   - '@nestjs/core'
   - '@openapitools/openapi-generator-cli'
+  - '@sentry/cli'
   - esbuild
   - spawn-sync
   - vue-demi
@@ -13,6 +14,7 @@ onlyBuiltDependencies:
 allowBuilds:
   '@nestjs/core': true
   '@openapitools/openapi-generator-cli': true
+  '@sentry/cli': true
   esbuild: true
   spawn-sync: true
   vue-demi: true

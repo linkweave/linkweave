@@ -49,6 +49,7 @@ export default defineConfig({
     command: 'npm run dev',
     url: baseURL,
     reuseExistingServer: !process.env.CI,
+    env: { VITE_E2E: 'true' },
     stdout: 'pipe',
     stderr: 'pipe',
     ignoreHTTPSErrors: true,
