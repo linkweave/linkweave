@@ -6,6 +6,7 @@ WORKDIR /app
 
 ARG COMMIT_HASH
 ARG VERSION
+ARG VITE_SENTRY_DSN
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile

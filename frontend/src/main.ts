@@ -22,7 +22,7 @@ async function initializeApp() {
 
   Sentry.init({
     app,
-    dsn: import.meta.env.VITE_SENTRY_DSN ?? 'https://dd086e579810c04e75f2e37463ac7378@o4509425614520320.ingest.de.sentry.io/4511463699120208',
+    dsn: import.meta.env.VITE_SENTRY_DSN,
     tunnel: '/api/sentry-tunnel',
     enabled: !import.meta.env.VITEST && !import.meta.env.VITE_E2E,
     environment: import.meta.env.MODE,

@@ -39,7 +39,7 @@ jobs:
       - name: Upload Sentry source bundle
         if: gitea.ref == 'refs/heads/main' || startsWith(gitea.ref, 'refs/tags/v')
         working-directory: api
-        run: ./mvnw package -DskipTests -Psentry-upload
+        run: ./mvnw sentry:uploadSourceBundle -Psentry-upload
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
@@ -146,6 +146,7 @@ jobs:
           build-args: |
             COMMIT_HASH=${{ steps.commit-hash.outputs.COMMIT_HASH }}
             VERSION=${{ steps.version.outputs.VERSION }}
+            VITE_SENTRY_DSN=https://dd086e579810c04e75f2e37463ac7378@o4509425614520320.ingest.de.sentry.io/4511463699120208
           secrets: |
             sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
           labels: |
