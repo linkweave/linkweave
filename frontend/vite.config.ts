@@ -7,6 +7,7 @@ import {fileURLToPath, URL} from 'node:url'
 import {defineConfig} from 'vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import {VitePWA} from 'vite-plugin-pwa'
+import {sentryVitePlugin} from '@sentry/vite-plugin'
 
 export default defineConfig(({ command }) => {
   const isDev = command === 'serve' && !process.env.VITEST
@@ -24,6 +25,13 @@ export default defineConfig(({ command }) => {
       vue(),
       vueDevTools(),
       tailwindcss(),
+      sentryVitePlugin({
+        org: 'mh03r932',
+        project: 'chainlink-vue',
+        authToken: process.env.SENTRY_AUTH_TOKEN,
+        // Only upload in CI — skip silently when token is absent
+        disable: !process.env.SENTRY_AUTH_TOKEN,
+      }),
       VitePWA({
         registerType: 'autoUpdate',
         workbox: {
@@ -93,6 +101,7 @@ export default defineConfig(({ command }) => {
       },
     },
     build: {
+      sourcemap: 'hidden',
       rollupOptions: {
         output: {
           manualChunks: {

@@ -138,6 +138,9 @@ public class ConfigService {
     @ConfigProperty(name = "chainlink.metrics.refresh.enabled", defaultValue = "true")
     boolean metricsRefreshEnabled;
 
+    @ConfigProperty(name = "chainlink.sentry.frontend-project-id", defaultValue = "4511463699120208")
+    String sentryFrontendProject;
+
 
 
 

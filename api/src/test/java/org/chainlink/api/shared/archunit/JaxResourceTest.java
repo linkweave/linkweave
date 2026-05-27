@@ -2,6 +2,7 @@ package org.chainlink.api.shared.archunit;
 
 import java.util.Collection;
 
+import org.chainlink.api.sentry.SentryTunnelResource;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaAnnotation;
@@ -91,6 +92,8 @@ class JaxResourceTest {
             .that()
             .areDeclaredInClassesThat()
             .areAnnotatedWith(JaxResource.class)
+            .and()
+            .areNotDeclaredIn(SentryTunnelResource.class)
             .and()
             .arePublic()
             .should(have(paramsThatAreJsonDTOsOrJaxRSParams()))
