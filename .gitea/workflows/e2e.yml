@@ -30,6 +30,8 @@ jobs:
       # Form-login cookie encryption key. Tests don't care about the value, but
       # Quarkus refuses to boot without one.
       CL_FORM_LOGIN_COOKIE_SECRET: ci-e2e-cookie-secret-placeholder
+      VITE_E2E: "true"
+      QUARKUS_LOG_SENTRY_ENABLED: "false"
       # Dedicated CI hostname keeps any future concurrent dev/CI usage from
       # colliding on cookies/storage and makes it obvious in test reports
       # that the run was an e2e run rather than dev.
