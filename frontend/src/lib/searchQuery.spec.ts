@@ -158,6 +158,22 @@ describe('matchesTokens', () => {
     expect(matchesTokens(bookmark, [{ kind: 'tag', value: 'quarkus', neg: true }], ctx)).toBe(false)
   })
 
+  it('matches tag: operator as an alias for #tag (exact, case-insensitive)', () => {
+    expect(
+      matchesTokens(bookmark, [{ kind: 'operator', key: 'tag', value: 'quarkus', neg: false }], ctx),
+    ).toBe(true)
+    expect(
+      matchesTokens(bookmark, [{ kind: 'operator', key: 'tag', value: 'QUARKUS', neg: false }], ctx),
+    ).toBe(true)
+    expect(
+      matchesTokens(bookmark, [{ kind: 'operator', key: 'tag', value: 'react', neg: false }], ctx),
+    ).toBe(false)
+    // Substring must NOT match — tag matching is exact, unlike folder:.
+    expect(
+      matchesTokens(bookmark, [{ kind: 'operator', key: 'tag', value: 'quark', neg: false }], ctx),
+    ).toBe(false)
+  })
+
   it('matches folder operator (flat substring on direct folder name)', () => {
     expect(
       matchesTokens(

@@ -313,7 +313,25 @@
     "resultCount": "{n} result | {n} results",
     "clear": "Clear search",
     "filters": "Filters",
-    "clearAll": "Clear all"
+    "clearAll": "Clear all",
+    "autocomplete": {
+      "tags": "Tags",
+      "folders": "Folders",
+      "properties": "Properties",
+      "operators": "Operators",
+      "propValues": "\"{key}\" values",
+      "noMatches": "No matches",
+      "hintNav": "↑↓",
+      "hintConfirm": "↵ Tab",
+      "hintDismiss": "Esc",
+      "hintValue": "then =value",
+      "opTag": "filter by tag (also #)",
+      "opFolder": "filter by folder name",
+      "opUnder": "filter by folder and its subfolders",
+      "opProperty": "filter by property value",
+      "or": "or",
+      "negate": "negate"
+    }
   },
   "collectionSearch": {
     "placeholder": "Search collections...",

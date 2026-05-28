@@ -64,7 +64,7 @@ onUnmounted(() => {
   <Teleport to="body">
     <div v-if="open" class="fixed inset-0 z-[70] sm:hidden">
       <div class="absolute inset-0 bg-background/40" data-testid="mobile-search-backdrop" @click="open = false" />
-      <div ref="overlayPanelRef" class="relative bg-card border-b border-border p-3 flex items-center gap-2">
+      <div ref="overlayPanelRef" data-testid="mobile-search-panel" class="relative bg-card border-b border-border p-3 flex items-center gap-2">
         <SearchBar
           v-model="bookmarkStore.searchQuery"
           :placeholder="t('search.placeholder')"

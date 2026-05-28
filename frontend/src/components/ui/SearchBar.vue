@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { Search, X } from '@lucide/vue'
+import SearchAutocompleteDropdown from './SearchAutocompleteDropdown.vue'
+import { useSearchAutocomplete, type AcResult, type AcItem } from '@/composables/useSearchAutocomplete'
 
 const props = withDefaults(defineProps<{
   modelValue: string
@@ -16,6 +18,105 @@ const emit = defineEmits<{
 }>()
 
 const inputRef = ref<HTMLInputElement | null>(null)
+
+// ── Autocomplete ──────────────────────────────────────────────────────────
+const { parseQueryForAutoCompl } = useSearchAutocomplete()
+const acResult = ref<AcResult | null>(null)
+const acIdx = ref(0)
+const acMouseDown = ref(false)
+
+function refreshAc(val: string, pos?: number) {
+  const c = pos ?? inputRef.value?.selectionStart ?? val.length
+  const r = parseQueryForAutoCompl(val, c)
+  acResult.value = r && r.items.length > 0 ? r : null
+  acIdx.value = 0
+}
+
+function onInput(e: Event) {
+  const target = e.target as HTMLInputElement
+  emit('update:modelValue', target.value)
+  refreshAc(target.value, target.selectionStart ?? undefined)
+}
+
+function onClick() {
+  refreshAc(props.modelValue, inputRef.value?.selectionStart ?? undefined)
+}
+
+// Caret-moving keys re-evaluate suggestions for the token the cursor lands on,
+// so arrowing back into an operator token reopens the dropdown (parity with
+// clicking into it). Handled on keyup, after the browser has moved the caret.
+// ArrowUp/ArrowDown are excluded — when the dropdown is open they navigate the
+// list (and are preventDefault-ed in onAcKeyDown, so the caret never moves).
+const CARET_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'Home', 'End'])
+function onKeyUp(e: KeyboardEvent) {
+  if (CARET_KEYS.has(e.key)) {
+    refreshAc(props.modelValue, inputRef.value?.selectionStart ?? undefined)
+  }
+}
+
+function onBlur() {
+  // Selecting a suggestion blurs the input before the click lands. `acMouseDown`
+  // (set in onAcMouseDown) tells us the blur was caused by pressing inside the
+  // dropdown, so we keep it open until the click runs. We deliberately avoid
+  // `@mousedown.prevent` on the dropdown — preventDefault on a synthesized
+  // mousedown can swallow the follow-up click on some touch browsers.
+  if (!acMouseDown.value) acResult.value = null
+}
+
+function onAcKeyDown(e: KeyboardEvent) {
+  if (!acResult.value) return
+  const n = acResult.value.items.length
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    acIdx.value = Math.min(acIdx.value + 1, n - 1)
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    acIdx.value = Math.max(acIdx.value - 1, 0)
+  } else if ((e.key === 'Enter' || e.key === 'Tab') && n > 0) {
+    const item = acResult.value.items[acIdx.value]
+    if (item) {
+      e.preventDefault()
+      commit(item)
+    }
+  } else if (e.key === 'Escape') {
+    e.preventDefault()
+    acResult.value = null
+  }
+}
+
+function commit(item: AcItem) {
+  if (!acResult.value) return
+  const [s, e] = acResult.value.range
+  const q = props.modelValue
+  // No trailing space for property:key= — the user types the value next.
+  const suffix = item.insert.endsWith('=') ? '' : ' '
+  const tail = q.slice(e).replace(/^\s+/, '')
+  const newQuery = q.slice(0, s) + item.insert + suffix + tail
+  const newCursor = s + item.insert.length + suffix.length
+
+  emit('update:modelValue', newQuery)
+  acResult.value = null
+
+  nextTick(() => {
+    inputRef.value?.focus()
+    inputRef.value?.setSelectionRange(newCursor, newCursor)
+    // Chain off `newQuery` (the value we just emitted), not props.modelValue:
+    // this is a controlled input, so the displayed value is whatever we emit,
+    // and the follow-up suggestions must align with the cursor we just set.
+    const follow = parseQueryForAutoCompl(newQuery, newCursor)
+    if (follow && follow.items.length > 0) {
+      acResult.value = follow
+      acIdx.value = 0
+    }
+  })
+}
+
+function onAcMouseDown() {
+  acMouseDown.value = true
+  setTimeout(() => {
+    acMouseDown.value = false
+  }, 200)
+}
 
 const shortcutKeys = computed(() => {
   if (navigator.userAgent.includes('Mac')) return ['⌘', 'K']
@@ -70,7 +171,11 @@ onUnmounted(() => {
         props.variant === 'header' ? 'h-9' : 'h-10',
         props.modelValue ? 'border-primary/30 bg-primary/5' : 'border-border',
       ]"
-      @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+      @input="onInput"
+      @keydown="onAcKeyDown"
+      @keyup="onKeyUp"
+      @click="onClick"
+      @blur="onBlur"
     />
     <kbd
       v-if="!props.modelValue"
@@ -95,5 +200,13 @@ onUnmounted(() => {
     >
       <X class="h-4 w-4" />
     </button>
+
+    <SearchAutocompleteDropdown
+      v-if="acResult"
+      :result="acResult"
+      :active-idx="acIdx"
+      @select="commit"
+      @mousedown="onAcMouseDown"
+    />
   </div>
 </template>
