@@ -64,8 +64,8 @@ async function seedWorld(browser: Browser): Promise<void> {
       color: '#22c55e',
     })
 
-    await api<Created>(ctx.request, '/api/folders', { collectionId, name: folderInsel })
-    await api<Created>(ctx.request, '/api/folders', { collectionId, name: folderDev })
+    const insel = await api<Created>(ctx.request, '/api/folders', { collectionId, name: folderInsel })
+    const dev = await api<Created>(ctx.request, '/api/folders', { collectionId, name: folderDev })
 
     const statusDef = await api<Created>(ctx.request, '/api/property-definitions', {
       collectionId,
@@ -80,12 +80,14 @@ async function seedWorld(browser: Browser): Promise<void> {
       title: `Quarkus Guide ${ts}`,
       url: 'https://quarkus.io/guides',
       tagIds: [quarkus.id],
+      folderId: insel.id,
     })
     await api<Created>(ctx.request, '/api/bookmarks', {
       collectionId,
       title: `Docs Site ${ts}`,
       url: 'https://docs.example.com',
       tagIds: [docs.id],
+      folderId: dev.id,
     })
     // Give the quarkus bookmark a status so property-value suggestions also
     // include values that came from real bookmark data, not just allowedValues.

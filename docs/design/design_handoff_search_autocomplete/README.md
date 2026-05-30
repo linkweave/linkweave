@@ -60,9 +60,10 @@ Three additions, one modification:
 | `#` or `#qu…` | Tags | All tag names in current collection |
 | `tag:` or `tag:qu…` | Tags | Same as above |
 | `folder:` or `folder:de…` | Folders | All folder names in current collection |
+| `under:` or `under:de…` | Folders (hierarchical) | All folder names — matches folder and all subfolders |
 | `property:` or `property:st…` | Property keys | All property key names on bookmarks in collection |
 | `property:status=` or `property:status=dr…` | Property values | All known values for that specific key |
-| `fo`, `ta`, `prop` (≥2 chars, no colon yet) | Operator discovery | Fixed list: `folder:`, `tag:`, `property:` |
+| `fo`, `ta`, `prop`, `un` (≥2 chars, no colon yet) | Operator discovery | Fixed list: `folder:`, `tag:`, `property:`, `under:` |
 | Anything else | — | Dropdown hidden |
 
 The dropdown appears **only for the token at the cursor** — not for other tokens already committed in the query.
@@ -88,7 +89,7 @@ export interface AcItem {
 }
 
 export interface AcResult {
-  mode: 'tag' | 'folder' | 'prop-key' | 'prop-val' | 'operator'
+  mode: 'tag' | 'folder' | 'under' | 'prop-key' | 'prop-val' | 'operator'
   label: string           // dropdown header text, e.g. "Tags", "Folders"
   items: AcItem[]
   range: [number, number] // [tokenStart, tokenEnd] — the slice of query to replace
@@ -173,6 +174,7 @@ export function useSearchAutocomplete() {
       const OPS = [
         { trigger: 'tag',      full: 'tag:',       hint: 'filter by tag (also #)' },
         { trigger: 'folder',   full: 'folder:',    hint: 'filter by folder name' },
+        { trigger: 'under',    full: 'under:',     hint: 'filter by folder (includes subfolders)' },
         { trigger: 'property', full: 'property:',  hint: 'filter by property value' },
       ]
       const matched = OPS.filter(op => op.trigger.startsWith(tl) && tl !== op.trigger)
