@@ -22,9 +22,9 @@ export const useCollectionStore = defineStore('collection', () => {
 
   const collectionName = computed(() => collectionInfo.value?.name ?? null)
 
-  const settingsLayout = computed<'list' | 'grid' | 'grouped' | null>(() => {
+  const settingsLayout = computed<'list' | 'grid' | 'grouped' | 'tiles' | null>(() => {
     const v = settings.value?.layout
-    return v === 'list' || v === 'grid' || v === 'grouped' ? v : null
+    return v === 'list' || v === 'grid' || v === 'grouped' || v === 'tiles' ? v : null
   })
 
   // Two primitive computeds (rather than a packed {field, direction} object)
@@ -144,11 +144,12 @@ export const useCollectionStore = defineStore('collection', () => {
     collectionId: string,
     name: string,
     faviconAllowlist?: string,
+    screenshotEnabled = false,
   ): Promise<boolean> {
     try {
       await collectionApi.apiCollectionsIdPut({
         id: collectionId,
-        collectionUpdateJson: { name, faviconAllowlist },
+        collectionUpdateJson: { name, faviconAllowlist, screenshotEnabled },
       })
       await fetchCollections()
       if (currentCollectionId.value === collectionId) {

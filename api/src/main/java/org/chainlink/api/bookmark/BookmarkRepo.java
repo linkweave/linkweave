@@ -123,6 +123,25 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             .fetch();
     }
 
+    /**
+     * Uncaptured bookmarks in screenshot-enabled collections, newest-modified
+     * first. The DB filter ensures every returned row is pending work; {@code
+     * offset} lets the job page past rows blocked by a negative cache entry
+     * without re-scanning them.
+     */
+    @NonNull
+    public List<Bookmark> findPendingScreenshotCaptures(int limit, int offset) {
+        return db.selectFrom(QBookmark.bookmark)
+            .where(notDeleted()
+                .and(QBookmark.bookmark.collection.screenshotEnabled.isTrue())
+                .and(QBookmark.bookmark.screenshotCapturedAt.isNull()))
+            .orderBy(QBookmark.bookmark.timestampMutiert.desc().nullsLast())
+            .orderBy(QBookmark.bookmark.timestampErstellt.desc())
+            .offset(offset)
+            .limit(limit)
+            .fetch();
+    }
+
     @NonNull
     public List<Bookmark> findAllOldestFirstNotDeleted() {
         return db.selectFrom(QBookmark.bookmark)

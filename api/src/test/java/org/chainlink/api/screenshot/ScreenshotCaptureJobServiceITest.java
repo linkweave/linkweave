@@ -1,0 +1,211 @@
+package org.chainlink.api.screenshot;
+
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
+import jakarta.inject.Inject;
+import org.assertj.core.api.Assertions;
+import org.chainlink.api.bookmark.Bookmark;
+import org.chainlink.api.bookmark.BookmarkRepo;
+import org.chainlink.api.collection.Collection;
+import org.chainlink.api.testutil.fixture.FixtureService;
+import org.junit.jupiter.api.Test;
+
+/**
+ * Drives {@link ScreenshotCaptureJobService#run(int)} directly so we can
+ * assert per-tick selection logic without waiting on the @Scheduled cadence
+ * or standing up the real sidecar. The sidecar is unreachable in tests, so
+ * any "captured" attempt resolves to a negative cache entry — exactly the
+ * signal we use to confirm the job *tried* to capture a given URL.
+ *
+ * <p>Test methods don't reset the DB between runs, so each assertion targets
+ * the specific bookmark that test created (via a unique URL) rather than
+ * totals.
+ */
+@QuarkusTest
+@TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+class ScreenshotCaptureJobServiceITest {
+
+    @Inject
+    FixtureService fixtureService;
+
+    @Inject
+    ScreenshotCaptureJobService job;
+
+    @Inject
+    ScreenshotCacheService cache;
+
+    @Inject
+    BookmarkRepo bookmarkRepo;
+
+    @Test
+    void shouldSkipBookmarksFromCollectionsWithScreenshotsDisabled() {
+        Collection disabled = fixtureService.createTestCollection(b -> b.withScreenshotEnabled(false));
+        Bookmark bookmark = fixtureService.persistBookmark(builder -> builder
+            .withCollection(disabled)
+            .withUrl("https://example.com/skip-" + UUID.randomUUID())
+        );
+        String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
+
+        job.run(50);
+
+        // The disabled-collection bookmark must never have been touched. Other
+        // tests may have left enabled-collection bookmarks behind; we don't
+        // care about those — only that *this* URL got no cache entry.
+        Assertions.assertThat(cache.get(key)).isEmpty();
+    }
+
+    @Test
+    void shouldRespectBatchBudget() {
+        Collection enabled = fixtureService.createTestCollection(b -> b.withScreenshotEnabled(true));
+        for (int i = 0; i < 5; i++) {
+            fixtureService.persistBookmark(builder -> builder
+                .withCollection(enabled)
+                .withUrl("https://example.com/budget-" + UUID.randomUUID())
+            );
+        }
+
+        var result = job.run(2);
+
+        // Capture loop must stop at the budget regardless of how many cache
+        // misses remain.
+        Assertions.assertThat(result.captured() + result.failed()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldSkipBookmarksWithFreshCacheEntry() {
+        Collection enabled = fixtureService.createTestCollection(b -> b.withScreenshotEnabled(true));
+        Bookmark cached = fixtureService.persistBookmark(builder -> builder
+            .withCollection(enabled)
+            .withUrl("https://example.com/already-cached-" + UUID.randomUUID())
+        );
+        String key = ScreenshotCacheService.keyFor(cached.getUrl());
+        byte[] sentinel = new byte[]{1, 2, 3};
+        cache.putSuccess(key, sentinel, "image/jpeg");
+
+        try {
+            job.run(50);
+
+            // If the job re-fetched, the cache entry would now be a negative
+            // entry (sidecar unreachable in tests). A fresh cache hit must be
+            // preserved unchanged.
+            var loaded = cache.get(key);
+            Assertions.assertThat(loaded).isPresent();
+            Assertions.assertThat(loaded.get().negative()).isFalse();
+            Assertions.assertThat(loaded.get().bytes()).isEqualTo(sentinel);
+        } finally {
+            cache.deleteForKey(key);
+        }
+    }
+
+    @Test
+    void shouldNoOpWithZeroBudget() {
+        Collection enabled = fixtureService.createTestCollection(b -> b.withScreenshotEnabled(true));
+        Bookmark bookmark = fixtureService.persistBookmark(builder -> builder
+            .withCollection(enabled)
+            .withUrl("https://example.com/zero-budget-" + UUID.randomUUID())
+        );
+        String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
+
+        var result = job.run(0);
+
+        Assertions.assertThat(result.captured()).isZero();
+        Assertions.assertThat(result.scanned()).isZero();
+        Assertions.assertThat(cache.get(key)).isEmpty();
+    }
+
+    /**
+     * Seals every currently-pending bookmark into the negative cache so that
+     * only the bookmark created by the caller is uncached. This lets subsequent
+     * assertions about the target be made in isolation despite the shared DB.
+     */
+    private void blockAllExistingPendingBookmarks() {
+        bookmarkRepo.findPendingScreenshotCaptures(Integer.MAX_VALUE, 0)
+            .forEach(b -> cache.putNegative(ScreenshotCacheService.keyFor(b.getUrl())));
+    }
+
+    @Test
+    void shouldPagePastAFullyBlockedPageToReachWork() {
+        // Block every pre-existing pending bookmark so only our target is uncached.
+        blockAllExistingPendingBookmarks();
+
+        Collection enabled = fixtureService.createTestCollection(b -> b.withScreenshotEnabled(true));
+
+        // Target: push its timestamp far into the past so the blocked bookmarks,
+        // created immediately after, sort ahead of it in newest-modified-first order.
+        Bookmark target = fixtureService.persistBookmark(builder -> builder
+            .withCollection(enabled)
+            .withUrl("https://example.com/pagination-target-" + UUID.randomUUID())
+        );
+        fixtureService.setTimestampErstellt(target, OffsetDateTime.now().minusYears(10));
+        String targetKey = ScreenshotCacheService.keyFor(target.getUrl());
+
+        // Three blocked bookmarks are newer → they fill page 1 entirely.
+        int pageSize = 3;
+        for (int i = 0; i < pageSize; i++) {
+            Bookmark blocked = fixtureService.persistBookmark(builder -> builder
+                .withCollection(enabled)
+                .withUrl("https://example.com/pagination-blocked-" + UUID.randomUUID())
+            );
+            cache.putNegative(ScreenshotCacheService.keyFor(blocked.getUrl()));
+        }
+
+        // Run with limit == pageSize: without pagination the job would load the 3 blocked
+        // bookmarks, skip all of them, and stop — never reaching the target.
+        job.run(pageSize);
+
+        Assertions.assertThat(cache.get(targetKey))
+            .as("job must page past the fully-blocked first page to reach the target")
+            .isPresent();
+    }
+
+    @Test
+    void shouldStopOnEmptyPage() {
+        // Block everything pending so the very next page query returns nothing.
+        blockAllExistingPendingBookmarks();
+
+        var result = job.run(10);
+
+        Assertions.assertThat(result.captured()).isZero();
+        Assertions.assertThat(result.failed()).isZero();
+    }
+
+    @Test
+    void shouldStopOnPartialPage() {
+        blockAllExistingPendingBookmarks();
+
+        Collection enabled = fixtureService.createTestCollection(b -> b.withScreenshotEnabled(true));
+        // Only 2 uncached bookmarks exist; budget is 5 → the page is partial (2 < 5)
+        // and the loop must stop rather than spinning on further empty pages.
+        for (int i = 0; i < 2; i++) {
+            fixtureService.persistBookmark(builder -> builder
+                .withCollection(enabled)
+                .withUrl("https://example.com/partial-page-" + UUID.randomUUID())
+            );
+        }
+
+        var result = job.run(5);
+
+        // Both bookmarks were attempted (sidecar unreachable → failed) and the loop
+        // stopped without spinning — captured + failed == 2, not 5.
+        Assertions.assertThat(result.captured() + result.failed()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldSkipBookmarksWithNonNullScreenshotCapturedAt() {
+        Collection enabled = fixtureService.createTestCollection(b -> b.withScreenshotEnabled(true));
+        Bookmark bookmark = fixtureService.persistBookmark(builder -> builder
+            .withCollection(enabled)
+            .withUrl("https://example.com/already-captured-" + UUID.randomUUID())
+            .withScreenshotCapturedAt(OffsetDateTime.now().minusHours(1))
+        );
+        String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
+
+        job.run(50);
+
+        // The DB query filters this bookmark out — no cache entry means no attempt was made.
+        Assertions.assertThat(cache.get(key)).isEmpty();
+    }
+}

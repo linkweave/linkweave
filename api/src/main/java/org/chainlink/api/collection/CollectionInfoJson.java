@@ -5,6 +5,7 @@ import java.util.List;
 import ch.dvbern.dvbstarter.types.id.ID;
 import jakarta.validation.constraints.NotNull;
 import lombok.Value;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.chainlink.api.bookmark.folder.json.FolderJson;
 import org.chainlink.api.bookmark.json.AutoTagRuleJson;
 import org.chainlink.api.bookmark.json.BookmarkJson;
@@ -21,6 +22,7 @@ public class CollectionInfoJson {
     @NotNull @NonNull ID<Collection> id;
     @NotNull @NonNull String name;
     @Nullable String faviconAllowlist;
+    @Schema(required = true) boolean screenshotEnabled;
     @NotNull @NonNull List<BookmarkJson> bookmarks;
     @NotNull @NonNull List<TagJson> tags;
     @NotNull @NonNull List<FolderJson> folders;
@@ -31,6 +33,7 @@ public class CollectionInfoJson {
         @NotNull @NonNull ID<Collection> id,
         @NotNull @NonNull String name,
         @Nullable String faviconAllowlist,
+        boolean screenshotEnabled,
         @NonNull List<BookmarkJson> bookmarks,
         @NonNull List<FolderJson> folders,
         @NonNull List<TagJson> tags,
@@ -40,6 +43,7 @@ public class CollectionInfoJson {
         this.id = id;
         this.name = name;
         this.faviconAllowlist = faviconAllowlist;
+        this.screenshotEnabled = screenshotEnabled;
         this.folders = folders;
         this.bookmarks = bookmarks;
         this.tags = tags;

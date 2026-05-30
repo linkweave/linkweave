@@ -120,6 +120,7 @@
     "layoutList": "Liste",
     "layoutGrid": "Raster",
     "layoutGrouped": "Gruppiert",
+    "layoutTiles": "Kacheln",
     "offlineCaching": "Offline-Zwischenspeicherung",
     "offlineCachingHint": "Lesezeichen lokal für Offline-Nutzung speichern.",
     "offlineCachingUpdateError": "Offline-Zwischenspeicherung konnte nicht aktualisiert werden.",
@@ -132,6 +133,7 @@
     "layoutGrid": "Rasteransicht",
     "layoutList": "Listenansicht",
     "layoutGrouped": "Gruppierte Ansicht",
+    "layoutTiles": "Kachelansicht",
     "changeLayout": "Ansicht ändern"
   },
   "import": {
@@ -186,6 +188,8 @@
     "faviconAllowlistHelp": "Ein Host-Muster pro Zeile. Hosts auf dieser Liste werden direkt vom Browser geladen (z. B. für interne/Intranet-Seiten, die der Server nicht erreichen kann). Kleinbuchstaben, optional mit \"*.\" — Beispiel: *.firma.domain",
     "faviconAllowlistPlaceholder": "*.firma.domain\nintranet.local",
     "faviconAllowlistInvalid": "Ungültiges Muster. Nur Kleinbuchstaben, optional mit \"*.\". Keine Schemata, Pfade oder reinen IPs.",
+    "screenshotEnabled": "Screenshot-Vorschau",
+    "screenshotEnabledHelp": "Erstellt eine kleine Vorschau jeder Lesezeichen-Seite, damit das Kachel-Layout visuelle Cover anzeigen kann. Standardmäßig deaktiviert — die Erstellung erfolgt serverseitig und kann nach dem Speichern eines Lesezeichens einen Moment dauern.",
     "createError": "Sammlung konnte nicht erstellt werden.",
     "updateError": "Sammlung konnte nicht aktualisiert werden.",
     "deleteConfirm": "Möchten Sie diese Sammlung wirklich löschen? Alle Lesezeichen, Ordner und Tags darin werden dauerhaft gelöscht.",

@@ -204,7 +204,7 @@ public class FaviconFetcherService {
             if (x <= 0) continue;
             try {
                 best = Math.max(best, Integer.parseInt(part.substring(0, x)));
-            } catch (NumberFormatException ignored) { /* skip malformed */ }
+            } catch (NumberFormatException _) { /* skip malformed */ }
         }
         return best > 0 ? Optional.of(best) : Optional.empty();
     }
@@ -263,11 +263,11 @@ public class FaviconFetcherService {
         return scheme + "://" + host + ":" + port;
     }
 
-    static boolean isAllowedScheme(String scheme) {
+    public static boolean isAllowedScheme(String scheme) {
         return "http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme);
     }
 
-    static boolean isPublicHost(String host) {
+    public static boolean isPublicHost(String host) {
         if (host == null || host.isBlank()) {
             return false;
         }

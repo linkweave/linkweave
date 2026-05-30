@@ -7,6 +7,7 @@ import { useNotificationStore } from '@/stores/notification'
 import { useUiStore } from '@/stores/ui'
 import BookmarkCard from './BookmarkCard.vue'
 import BookmarkGroupedLayout from './BookmarkGroupedLayout.vue'
+import BookmarkTileLayout from './BookmarkTileLayout.vue'
 import BookmarkDialog from './BookmarkDialog.vue'
 import MoveBookmarkDialog from './MoveBookmarkDialog.vue'
 import NeverOpenedDivider from './NeverOpenedDivider.vue'
@@ -96,6 +97,14 @@ async function confirmDelete() {
   <div v-else-if="bookmarkStore.filteredBookmarks.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
     <p class="text-muted-foreground">{{ t('bookmarkList.empty') }}</p>
   </div>
+
+  <BookmarkTileLayout
+    v-else-if="effectiveLayout === 'tiles'"
+    :bookmarks="bookmarkStore.filteredBookmarks"
+    @edit="handleEdit"
+    @delete="handleDelete"
+    @move="handleMove"
+  />
 
   <div v-else-if="effectiveLayout !== 'grouped'" :class="classForCards">
     <template v-for="(bookmark, idx) in bookmarkStore.filteredBookmarks" :key="bookmark.id">

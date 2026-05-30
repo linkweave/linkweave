@@ -44,6 +44,9 @@ public class Collection extends AbstractEntity<Collection> {
     @Column(length = DbConst.DB_TEXTAREA_MAX_LENGTH_2000)
     private String faviconAllowlist;
 
+    @Column(nullable = false)
+    private boolean screenshotEnabled;
+
     public Collection(@NotBlank String name, @NonNull User owner) {
         this.name = name;
         this.owner = owner;

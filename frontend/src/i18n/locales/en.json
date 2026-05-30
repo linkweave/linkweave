@@ -120,6 +120,7 @@
     "layoutList": "List",
     "layoutGrid": "Grid",
     "layoutGrouped": "Grouped",
+    "layoutTiles": "Tiles",
     "offlineCaching": "Offline Caching",
     "offlineCachingHint": "Store bookmark data locally for offline browsing.",
     "offlineCachingUpdateError": "Failed to update offline caching setting.",
@@ -132,6 +133,7 @@
     "layoutGrid": "Grid view",
     "layoutList": "List view",
     "layoutGrouped": "Grouped view",
+    "layoutTiles": "Tiles view",
     "changeLayout": "Change layout"
   },
   "import": {
@@ -186,6 +188,8 @@
     "faviconAllowlistHelp": "One host pattern per line. Hosts on this list are loaded directly by the browser (e.g. for internal/intranet sites the server can't reach). Use lowercase domains, optionally prefixed with \"*.\" — example: *.mycompany.domain",
     "faviconAllowlistPlaceholder": "*.mycompany.domain\nintranet.local",
     "faviconAllowlistInvalid": "Invalid pattern. Use lowercase domains, optionally prefixed with \"*.\". No schemes, paths, or bare IPs.",
+    "screenshotEnabled": "Screenshot previews",
+    "screenshotEnabledHelp": "Captures a small screenshot of each bookmark's page so a Tiles layout can show visual covers. Off by default — captures are server-side and may take a moment after you save a bookmark.",
     "createError": "Failed to create collection.",
     "updateError": "Failed to update collection.",
     "deleteConfirm": "Are you sure you want to delete this collection? All bookmarks, folders, and tags inside will be permanently deleted.",

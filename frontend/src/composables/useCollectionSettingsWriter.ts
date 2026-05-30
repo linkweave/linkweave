@@ -66,7 +66,7 @@ export function useCollectionSettingsWriter(
   }
 
   function updateSettings(collectionId: string, patch: CollectionSettingsJson): void {
-    settings.value = {...(settings.value ?? {}), ...patch}
+    settings.value = {...settings.value, ...patch}
     pendingPatch = {
       collectionId,
       patch: {...(pendingPatch?.collectionId === collectionId ? pendingPatch.patch : {}), ...patch},

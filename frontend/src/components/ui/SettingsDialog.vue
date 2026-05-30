@@ -3,15 +3,17 @@ import { config } from '@/api'
 import { AuthResourceApi } from '@/api/generated'
 import { DialogCl, SwitchCl } from '@/components/ui'
 import { useAuthStore } from '@/stores/auth'
+import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
 import { type BookmarkLayout, type Theme, useUiStore } from '@/stores/ui'
-import { Layers, LayoutGrid, LayoutList, Monitor, Moon, Sun } from '@lucide/vue'
-import { ref, watch } from 'vue'
+import { Layers, LayoutDashboard, LayoutGrid, LayoutList, Monitor, Moon, Sun } from '@lucide/vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const ui = useUiStore()
 const auth = useAuthStore()
+const collectionStore = useCollectionStore()
 const notification = useNotificationStore()
 
 const authApi = new AuthResourceApi(config)
@@ -99,11 +101,16 @@ const themes: { value: Theme; icon: typeof Sun; labelKey: string }[] = [
   { value: 'system', icon: Monitor, labelKey: 'settings.themeSystem' },
 ]
 
-const layouts: { value: BookmarkLayout; icon: typeof LayoutList; labelKey: string }[] = [
+const allLayouts: { value: BookmarkLayout; icon: typeof LayoutList; labelKey: string; requiresScreenshots?: boolean }[] = [
   { value: 'list', icon: LayoutList, labelKey: 'settings.layoutList' },
   { value: 'grid', icon: LayoutGrid, labelKey: 'settings.layoutGrid' },
   { value: 'grouped', icon: Layers, labelKey: 'settings.layoutGrouped' },
+  { value: 'tiles', icon: LayoutDashboard, labelKey: 'settings.layoutTiles', requiresScreenshots: true },
 ]
+
+const layouts = computed(() =>
+  allLayouts.filter(l => !l.requiresScreenshots || collectionStore.collectionInfo?.screenshotEnabled),
+)
 </script>
 
 <template>

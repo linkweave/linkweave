@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, watchEffect } from 'vue'
 
 export type Theme = 'light' | 'dark' | 'system'
-export type BookmarkLayout = 'list' | 'grid' | 'grouped'
+export type BookmarkLayout = 'list' | 'grid' | 'grouped' | 'tiles'
 
 function loadTheme(): Theme {
   const stored = localStorage.getItem('theme')
@@ -12,7 +12,7 @@ function loadTheme(): Theme {
 
 function loadBookmarkLayout(): BookmarkLayout {
   const stored = localStorage.getItem('bookmarkLayout')
-  if (stored === 'list' || stored === 'grid' || stored === 'grouped') return stored
+  if (stored === 'list' || stored === 'grid' || stored === 'grouped' || stored === 'tiles') return stored
   return 'grid'
 }
 

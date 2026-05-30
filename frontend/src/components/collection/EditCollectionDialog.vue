@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { config } from '@/api'
 import { CollectionResourceApi } from '@/api/generated'
-import { DialogCl, DialogFooterCl, FormFieldCl, InputCl } from '@/components/ui'
+import { DialogCl, DialogFooterCl, FormFieldCl, InputCl, SwitchCl } from '@/components/ui'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { collectionUpdateSchema } from '@/schemas/collection'
 import { useCollectionStore } from '@/stores/collection'
@@ -30,14 +30,15 @@ const collectionApi = new CollectionResourceApi(config)
 
 const { defineField, handleSubmit, errors, resetForm, isSubmitting } = useForm({
   validationSchema: toTypedSchema(collectionUpdateSchema(t)),
-  initialValues: { name: '', faviconAllowlist: '' },
+  initialValues: { name: '', faviconAllowlist: '', screenshotEnabled: false },
 })
 
 const [name, nameAttrs] = defineField('name')
 const [faviconAllowlist, faviconAllowlistAttrs] = defineField('faviconAllowlist')
+const [screenshotEnabled] = defineField('screenshotEnabled')
 
 useFormDialog(toRef(props, 'open'), async () => {
-  resetForm({ values: { name: props.currentName, faviconAllowlist: '' } })
+  resetForm({ values: { name: props.currentName, faviconAllowlist: '', screenshotEnabled: false } })
   if (!props.collectionId) return
   try {
     const info = await collectionApi.apiCollectionsIdGet({ id: props.collectionId })
@@ -45,6 +46,7 @@ useFormDialog(toRef(props, 'open'), async () => {
       values: {
         name: info.name ?? props.currentName,
         faviconAllowlist: info.faviconAllowlist ?? '',
+        screenshotEnabled: info.screenshotEnabled ?? false,
       },
     })
   } catch (err) {
@@ -55,7 +57,12 @@ useFormDialog(toRef(props, 'open'), async () => {
 
 const onSubmit = handleSubmit(async (values) => {
   const allowlist = values.faviconAllowlist.trim() ? values.faviconAllowlist : ''
-  const ok = await collectionStore.updateCollection(props.collectionId, values.name, allowlist)
+  const ok = await collectionStore.updateCollection(
+    props.collectionId,
+    values.name,
+    allowlist,
+    values.screenshotEnabled,
+  )
   if (ok) {
     emit('update:open', false)
     notification.success(t('collectionManage.editTitle'))
@@ -103,6 +110,23 @@ const onSubmit = handleSubmit(async (values) => {
           {{ t('collectionManage.faviconAllowlistHelp') }}
         </p>
       </FormFieldCl>
+      <div
+        v-if="props.isOwner"
+        class="flex items-center justify-between gap-3 px-2.5 py-2 rounded-md bg-secondary/60"
+      >
+        <div class="min-w-0">
+          <div class="text-sm font-medium">{{ t('collectionManage.screenshotEnabled') }}</div>
+          <div class="text-xs text-muted-foreground mt-0.5">
+            {{ t('collectionManage.screenshotEnabledHelp') }}
+          </div>
+        </div>
+        <SwitchCl
+          :model-value="screenshotEnabled ?? false"
+          @update:model-value="screenshotEnabled = $event"
+          :aria-label="t('collectionManage.screenshotEnabled')"
+          data-testid="edit-collection-screenshot-enabled"
+        />
+      </div>
     </form>
 
     <template #footer>

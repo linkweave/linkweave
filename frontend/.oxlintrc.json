@@ -6,5 +6,13 @@
   },
   "categories": {
     "correctness": "error"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["e2e/**/*.spec.ts"],
+      "rules": {
+        "no-empty-pattern": "off"
+      }
+    }
+  ]
 }

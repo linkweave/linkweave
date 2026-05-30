@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.chainlink.infrastructure.db.DbConst;
 import org.chainlink.infrastructure.stereotypes.JaxDTO;
 import org.jspecify.annotations.NonNull;
@@ -20,4 +21,6 @@ public class CollectionUpdateJson {
 
     @Size(max = DbConst.DB_TEXTAREA_MAX_LENGTH_2000) @Nullable
     String faviconAllowlist;
+
+    @Schema(required = true) boolean screenshotEnabled;
 }

@@ -23,7 +23,7 @@ import { useNotificationStore } from '@/stores/notification'
 import { usePropertyStore } from '@/stores/property'
 import { type BookmarkLayout, useUiStore } from '@/stores/ui'
 import { toTypedSchema } from '@vee-validate/zod'
-import { Download, Layers, LayoutGrid, LayoutList, Loader2, Pencil, Plus, Trash2, Upload } from '@lucide/vue'
+import { Download, Layers, LayoutDashboard, LayoutGrid, LayoutList, Loader2, Pencil, Plus, Trash2, Upload } from '@lucide/vue'
 import { useForm } from 'vee-validate'
 import { computed, ref, toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -39,15 +39,20 @@ const showSidebar = useShowPropertiesSidebar()
 // Layout chooser — same card-button visual as the user-menu Settings dialog,
 // wired to the collection-scoped setting when a collection is loaded (falling
 // back to the global UI default for the no-collection case).
-const layouts: { value: BookmarkLayout; icon: typeof LayoutList; labelKey: string }[] = [
+const allLayouts: { value: BookmarkLayout; icon: typeof LayoutList; labelKey: string; requiresScreenshots?: boolean }[] = [
   { value: 'list', icon: LayoutList, labelKey: 'settings.layoutList' },
   { value: 'grid', icon: LayoutGrid, labelKey: 'settings.layoutGrid' },
   { value: 'grouped', icon: Layers, labelKey: 'settings.layoutGrouped' },
+  { value: 'tiles', icon: LayoutDashboard, labelKey: 'settings.layoutTiles', requiresScreenshots: true },
 ]
+
+const layouts = computed(() =>
+  allLayouts.filter(l => !l.requiresScreenshots || collectionStore.collectionInfo?.screenshotEnabled),
+)
 
 const currentLayout = computed<BookmarkLayout>(() => {
   const fromBackend = collectionStore.settings?.layout
-  if (fromBackend === 'list' || fromBackend === 'grid' || fromBackend === 'grouped') {
+  if (fromBackend === 'list' || fromBackend === 'grid' || fromBackend === 'grouped' || fromBackend === 'tiles') {
     return fromBackend
   }
   return ui.bookmarkLayout
