@@ -181,6 +181,7 @@ test.describe('FR-072 Search Autocomplete', () => {
     await expect(items(page).filter({ hasText: folderInsel })).toBeVisible()
 
     await input.fill('under:insel')
+    await expect(items(page).filter({ hasText: folderInsel })).toBeVisible()
     await page.keyboard.press('Enter')
     await expect(input).toHaveValue(`under:${folderInsel} `)
   })
