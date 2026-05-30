@@ -1,0 +1,994 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Chainlink — FR-072 Search Operator Autocomplete</title>
+<style>
+.dark{--bg:#14161a;--fg:#ededed;--card:#1e2028;--pri:#3b82f6;--sec:#252a32;--mfg:#a3a3a3;--dst:#dc2626;--pop:#22262f;--bdr:#363d49;--inp:#252a32;--rng:#3b82f6;--ss:oklch(64% 0.10 188)}
+:root{--bg:#f9fafb;--fg:#111827;--card:#ffffff;--pri:#2563eb;--sec:#f3f4f6;--mfg:#6b7280;--dst:#ef4444;--pop:#ffffff;--bdr:#e5e7eb;--inp:#e5e7eb;--rng:#2563eb;--ss:oklch(44% 0.10 188)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font:14px/1.5 ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+
+/* ── Layout ── */
+.app{display:grid;grid-template-columns:224px 1fr;grid-template-rows:52px 1fr;height:100vh;grid-template-areas:"hd hd""sb mn"}
+.hd{grid-area:hd;border-bottom:1px solid var(--bdr);background:var(--card);display:flex;align-items:center;padding:0 16px;gap:14px;position:relative;z-index:40}
+.brand{display:flex;align-items:center;gap:8px;width:208px;flex-shrink:0}
+.bmark{width:24px;height:24px;border-radius:6px;background:var(--pri);display:grid;place-items:center;color:#fff;font-weight:700;font-size:11px}
+.coll-btn{display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:6px;font-weight:600;font-size:13.5px;background:transparent;border:0}
+.coll-btn:hover{background:var(--sec)}
+.search-wrap{flex:1;display:flex;justify-content:center}
+.search-shell{position:relative;width:min(540px,100%)}
+.search{display:flex;align-items:center;gap:7px;height:32px;padding:0 7px 0 10px;background:var(--inp);border:1px solid var(--bdr);border-radius:6px;transition:border-color .12s,box-shadow .12s}
+.search:focus-within{border-color:var(--rng);box-shadow:0 0 0 3px color-mix(in oklab,var(--rng) 20%,transparent)}
+.search input{flex:1;background:transparent;border:0;outline:0;color:var(--fg);font:13px/1 ui-monospace,SFMono-Regular,Menlo,monospace;min-width:0}
+.search input::placeholder{color:var(--mfg);font-family:ui-sans-serif,system-ui,sans-serif}
+.kbd{padding:1px 5px;font-size:10px;color:var(--mfg);background:var(--card);border:1px solid var(--bdr);border-radius:4px;flex-shrink:0}
+.h-acts{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.btn-pri{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;background:var(--pri);color:#fff;border:0;border-radius:6px;font-weight:500;font-size:13px}
+.btn-pri:hover{filter:brightness(1.08)}
+.btn-ghost{display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 8px;background:transparent;border:0;border-radius:6px;font-size:13px}
+.btn-ghost:hover{background:var(--sec)}
+.btn-sm{display:inline-flex;align-items:center;gap:4px;height:27px;padding:0 10px;border-radius:5px;font-size:12px;font-weight:500;border:1px solid var(--bdr);background:transparent;color:var(--fg)}
+.btn-sm:hover{background:var(--sec)}
+.btn-sm.pri{background:var(--pri);color:#fff;border-color:transparent}
+.btn-sm.pri:hover{filter:brightness(1.08)}
+.btn-sm:disabled{opacity:.4;pointer-events:none}
+.icon-btn{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:5px;border:0;background:transparent;color:var(--mfg)}
+.icon-btn:hover{background:var(--sec);color:var(--fg)}
+.save-icon-btn{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:4px;border:0;background:transparent;color:var(--ss);flex-shrink:0;transition:color .15s,opacity .2s,background .12s;opacity:0;pointer-events:none}
+.save-icon-btn.vis{opacity:1;pointer-events:auto}
+.save-icon-btn:hover{color:var(--ss);background:color-mix(in oklab,var(--ss) 12%,transparent)}
+
+/* ── Sidebar ── */
+.sb{grid-area:sb;border-right:1px solid var(--bdr);overflow-y:auto;padding:10px 8px}
+.s-row{display:flex;align-items:center;gap:8px;height:28px;padding:0 8px;border-radius:6px;font-size:13px;cursor:pointer;position:relative;user-select:none}
+.s-row:hover{background:var(--sec)}
+.s-row.active{background:color-mix(in oklab,var(--pri) 12%,var(--sec));color:var(--pri)}
+.folder-group{border-radius:7px;border:1px solid color-mix(in oklab,var(--pri) 22%,transparent);background:color-mix(in oklab,var(--pri) 3.5%,var(--bg));overflow:hidden;margin:2px 0}
+.folder-group .s-row{border-radius:0}
+.folder-group .s-row.active{background:color-mix(in oklab,var(--pri) 15%,transparent)}
+.folder-group .s-row:hover:not(.active){background:color-mix(in oklab,var(--fg) 5%,transparent)}
+.s-ico{display:inline-flex;flex-shrink:0}
+.s-lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.sc-hd{display:flex;align-items:center;width:100%;padding:14px 8px 4px;color:var(--mfg);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;background:transparent;border:0;border-radius:5px;gap:5px;cursor:pointer;user-select:none}
+.sc-hd:hover{color:var(--fg)}
+.sc-hd-lbl{flex:1;text-align:left}
+.sc-hd-add{opacity:0;display:inline-grid;place-items:center;width:15px;height:15px;border-radius:3px;transition:opacity .12s,color .1s;color:var(--mfg);flex-shrink:0;background:transparent;border:0;padding:0}
+.sc-hd:hover .sc-hd-add{opacity:1}
+.sc-hd-add:hover{color:var(--pri) !important}
+.sc-chev{display:inline-flex;transition:transform .22s ease;flex-shrink:0}
+.sc-chev.open{transform:rotate(180deg)}
+.sc-wrap{display:grid;grid-template-rows:1fr;transition:grid-template-rows .22s ease,opacity .18s ease;opacity:1}
+.sc-wrap.shut{grid-template-rows:0fr;opacity:0;pointer-events:none}
+.sc-inner{overflow:hidden}
+.sc-empty{padding:5px 8px 6px;font-size:12px;color:var(--mfg)}
+.sc-act{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:4px;border:0;background:transparent;color:var(--mfg);opacity:0;transition:opacity .1s;flex-shrink:0}
+.s-row:hover .sc-act,.s-row:focus-within .sc-act{opacity:1}
+.sc-act:hover{background:var(--sec);color:var(--fg)}
+.sc-menu{position:absolute;right:6px;top:calc(100% + 3px);background:var(--pop);border:1px solid var(--bdr);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.45);z-index:300;min-width:126px;padding:3px}
+.sc-mi{display:flex;align-items:center;gap:7px;padding:6px 10px;font-size:12.5px;border-radius:5px;width:100%;background:transparent;border:0;text-align:left;color:var(--fg);cursor:pointer}
+.sc-mi:hover{background:var(--sec)}
+.sc-mi.red{color:var(--dst)}
+.sc-mi.red:hover{background:color-mix(in oklab,var(--dst) 8%,var(--sec))}
+.sc-rename{flex:1;background:var(--inp);border:1px solid var(--rng);border-radius:4px;color:var(--fg);font:13px/1 ui-sans-serif,system-ui,sans-serif;padding:0 5px;height:22px;outline:0;min-width:0;box-shadow:0 0 0 2px color-mix(in oklab,var(--rng) 18%,transparent)}
+
+/* ── Main ── */
+.mn{grid-area:mn;overflow-y:auto}
+.toolbar{position:sticky;top:0;z-index:30;height:44px;display:flex;align-items:center;padding:0 20px;background:color-mix(in oklab,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--bdr)}
+.bc{flex:1;font-size:13px;color:var(--mfg);display:flex;align-items:center;gap:6px}
+.content{padding:16px 20px 80px}
+
+/* ── Chip strip ── */
+.chip-strip{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid color-mix(in oklab,var(--pri) 30%,transparent);background:color-mix(in oklab,var(--pri) 6%,transparent);border-radius:8px;margin-bottom:14px;flex-wrap:wrap;position:relative}
+.chip-lead{color:var(--pri);display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;flex-shrink:0}
+.chip-count{margin-left:auto;color:var(--mfg);font-size:12px;flex-shrink:0}
+.chip-clear{color:var(--mfg);background:transparent;border:0;font-size:12px;padding:4px 6px;border-radius:4px}
+.chip-clear:hover{color:var(--fg);background:var(--sec)}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 4px 2px 8px;border-radius:9999px;font-size:11.5px;background:var(--card);border:1px solid var(--bdr);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--fg)}
+.pill .pk{color:var(--mfg)}
+.pill .px{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:9999px;background:transparent;border:0;color:var(--mfg);cursor:pointer;margin-left:2px}
+.pill .px:hover{background:var(--sec);color:var(--fg)}
+
+/* ── Cards ── */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.card{border:1px solid var(--bdr);background:var(--card);border-radius:8px;padding:14px;display:flex;gap:12px}
+.card-fav{width:18px;height:18px;flex-shrink:0;border-radius:3px;background:var(--sec);display:grid;place-items:center;color:var(--mfg);margin-top:2px}
+.card-body{flex:1;min-width:0}
+.card-title{font-weight:500;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.card-url{font-size:12px;color:var(--mfg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.tag-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:9999px;font-size:11.5px;background:var(--sec);border:1px solid transparent}
+
+/* ── Save popover ── */
+.save-pop{position:fixed;z-index:500;width:308px;background:var(--pop);border:1px solid var(--bdr);border-radius:10px;box-shadow:0 20px 56px rgba(0,0,0,.55);padding:15px;animation:popIn .13s ease-out}
+@keyframes popIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+.sp-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sp-hd h3{font-size:13px;font-weight:600}
+.sp-query{font:11px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--mfg);background:var(--sec);border:1px solid var(--bdr);border-radius:5px;padding:6px 8px;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-field label{display:block;font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--mfg);margin-bottom:5px}
+.inp{width:100%;height:32px;padding:0 9px;background:var(--inp);border:1px solid var(--bdr);border-radius:6px;color:var(--fg);font:13px/1 ui-sans-serif,system-ui,sans-serif;outline:0}
+.inp:focus{border-color:var(--rng);box-shadow:0 0 0 2px color-mix(in oklab,var(--rng) 18%,transparent)}
+.sp-acts{display:flex;justify-content:flex-end;gap:6px;margin-top:11px}
+.sp-hint{font-size:12px;color:var(--mfg);line-height:1.5}
+.backdrop{position:fixed;inset:0;z-index:499}
+
+/* ══════════════════════════════════════════════
+   FR-072  AUTOCOMPLETE DROP
+   ══════════════════════════════════════════════ */
+.ac-drop{
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;right:0;
+  background:var(--pop);
+  border:1px solid var(--bdr);
+  border-radius:10px;
+  box-shadow:0 16px 48px rgba(0,0,0,.55);
+  z-index:200;
+  overflow:hidden;
+  animation:acIn .11s cubic-bezier(.16,1,.3,1);
+}
+@keyframes acIn{from{opacity:0;transform:translateY(-5px) scale(.98)}to{opacity:1;transform:none}}
+
+/* Header row */
+.ac-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 10px 5px;
+  border-bottom:1px solid var(--bdr);
+}
+.ac-hd-mode{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mfg)}
+.ac-hd-mode svg{opacity:.7}
+.ac-hd-keys{display:flex;align-items:center;gap:4px}
+.ac-key{
+  padding:1px 5px;font-size:9.5px;
+  color:var(--mfg);background:var(--sec);
+  border:1px solid var(--bdr);border-radius:4px;
+  line-height:1.6;white-space:nowrap;
+}
+
+/* Item list */
+.ac-list{max-height:228px;overflow-y:auto}
+.ac-list::-webkit-scrollbar{width:4px}
+.ac-list::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:2px}
+
+.ac-item{
+  display:flex;align-items:center;gap:8px;
+  padding:5px 10px;
+  width:100%;border:0;background:transparent;
+  text-align:left;color:var(--fg);cursor:pointer;
+  transition:background .07s;
+}
+.ac-item:hover,.ac-item.sel{background:color-mix(in oklab,var(--pri) 9%,transparent)}
+.ac-item.sel{color:var(--pri)}
+.ac-item-ico{display:flex;align-items:center;flex-shrink:0;color:var(--mfg);width:14px;justify-content:center}
+.ac-item.sel .ac-item-ico{color:var(--pri)}
+.ac-item-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+.ac-item-label{
+  flex:1;
+  font:12px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  display:flex;align-items:baseline;gap:0;
+}
+.ac-pfx{color:var(--mfg)}
+.ac-item.sel .ac-pfx{color:color-mix(in oklab,var(--pri) 65%,var(--mfg))}
+.ac-val{color:var(--fg);font-weight:500}
+.ac-item.sel .ac-val{color:var(--pri)}
+.ac-hit{
+  background:color-mix(in oklab,var(--pri) 22%,transparent);
+  color:inherit;
+  border-radius:2px;
+  padding:0 1px;
+}
+.ac-item-sub{font-size:10.5px;color:var(--mfg);flex-shrink:0;font-family:ui-sans-serif,system-ui,sans-serif}
+
+/* Empty state */
+.ac-empty{padding:12px 10px;text-align:center;font-size:12px;color:var(--mfg)}
+
+/* Footer — syntax reference */
+.ac-foot{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:5px 10px 6px;
+  border-top:1px solid var(--bdr);
+  font-size:10.5px;color:var(--mfg);
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+.ac-foot-chip{display:inline-flex;align-items:center;gap:2px;opacity:.75}
+.ac-foot-chip b{color:color-mix(in oklab,var(--fg) 80%,var(--pri));font-weight:600;opacity:1}
+.ac-foot-sep{opacity:.3}
+
+/* ── Tweaks ── */
+.tweaks{position:fixed;left:16px;bottom:16px;background:var(--pop);border:1px solid var(--bdr);border-radius:10px;padding:12px;width:252px;z-index:9999;box-shadow:0 12px 32px rgba(0,0,0,.5)}
+.tweaks b{font-size:12px;display:block;margin-bottom:8px}
+.tw-sec{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mfg);margin:10px 0 5px}
+.seg{display:flex;border:1px solid var(--bdr);border-radius:5px;overflow:hidden}
+.seg button{flex:1;padding:5px 6px;background:transparent;color:var(--mfg);border:0;font-size:11px;border-right:1px solid var(--bdr);line-height:1.3}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--sec);color:var(--fg)}
+.tw-note{font-size:11px;color:var(--mfg);margin-top:8px;line-height:1.6}
+.tw-note b{display:inline;font-size:inherit}
+.tw-preset{display:flex;flex-direction:column;gap:3px}
+.tw-preset button{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 8px;border-radius:5px;
+  border:1px solid var(--bdr);background:transparent;
+  font:11.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:var(--mfg);text-align:left;
+}
+.tw-preset button:hover{background:var(--sec);color:var(--fg)}
+
+/* ── Responsive / Mobile ── */
+@media (max-width: 639px) {
+  /* Collapse sidebar, single-column layout */
+  .app{
+    grid-template-columns:1fr;
+    grid-template-rows:52px 1fr;
+    grid-template-areas:"hd""mn";
+  }
+  .sb{display:none}
+
+  /* Header: tighten brand, let search stretch */
+  .brand{width:auto;gap:6px}
+  .coll-btn span:last-child{display:none} /* hide chevron label text */
+  .coll-btn{font-size:12.5px;padding:4px 6px}
+  .h-acts .btn-ghost{display:none} /* hide user button */
+  .search-shell{width:100%}
+
+  /* Dropdown: pull out to full-width minus gutter */
+  .ac-drop{left:-4px;right:-4px;border-radius:8px}
+
+  /* Cards single column */
+  .grid{grid-template-columns:1fr}
+
+  /* Tweaks: full-width strip at bottom */
+  .tweaks{
+    left:0;right:0;bottom:0;
+    width:100%;border-radius:10px 10px 0 0;
+    border-bottom:none;
+    max-height:55vh;overflow-y:auto;
+  }
+}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--pop);color:var(--fg);border:1px solid var(--bdr);padding:8px 16px;border-radius:8px;font-size:12.5px;box-shadow:0 16px 40px rgba(0,0,0,.5);z-index:999;display:flex;align-items:center;gap:8px;animation:toastIn .16s ease-out;white-space:nowrap}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+.empty{padding:48px 24px;text-align:center;color:var(--mfg);font-size:13px}
+</style>
+</head>
+<body class="dark">
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" data-presets="react">
+const {useState, useMemo, useEffect, useRef, useCallback} = React;
+
+/* ── Mock data ─────────────────────────────────────────────── */
+const TAGS = {
+  quarkus:   {c:"#dc2626"},
+  docs:      {c:"#22c55e"},
+  prod:      {c:"#f59e0b"},
+  uat:       {c:"#a855f7"},
+  monitoring:{c:"#0ea5e9"},
+  vacme:     {c:"#3b82f6"},
+};
+const BMS = [
+  {id:"b1", title:"VacMe – Portal",              url:"be.vacme.ch/start",           folder:"vacme-prod", tags:["vacme","prod"],            props:{status:"published"}},
+  {id:"b2", title:"prod kc other",               url:"be.vacme.ch/auth/admin",      folder:"vacme-prod", tags:["vacme","prod"],            props:{}},
+  {id:"b3", title:"impfen VacMe – Portal",       url:"impfen-be.vacme.ch/start",    folder:"vacme-prod", tags:["vacme","prod"],            props:{status:"published"}},
+  {id:"b4", title:"Quarkus – Scheduling Tasks",  url:"quarkus.io/guides/scheduler", folder:"insel",      tags:["quarkus","docs"],          props:{status:"draft","needs-review":"true"}},
+  {id:"b5", title:"Topology · Apollo Cluster",   url:"apollo.dvbern.ch/topology",   folder:"dev",        tags:["monitoring"],              props:{}},
+  {id:"b6", title:"Grafana UAT",                 url:"grafana-uat.vacme.ch/d/main", folder:"uat",        tags:["vacme","uat","monitoring"],props:{status:"review"}},
+  {id:"b7", title:"eSchool",                     url:"eschool.dvbern.ch",           folder:"dev",        tags:["docs"],                    props:{}},
+  {id:"b8", title:"Mocking CDI beans in Quarkus",url:"quarkus.io/blog/mocking",     folder:"insel",      tags:["quarkus","docs"],          props:{status:"draft"}},
+  {id:"b9", title:"keycloak iat",                url:"vacme-be-iat.dvbern.ch",      folder:"iat",        tags:["vacme"],                   props:{}},
+  {id:"b10",title:"VacMe Demo Portal",           url:"be-demo.vacme.ch/start",      folder:"demo",       tags:["vacme"],                   props:{status:"published"}},
+  {id:"b11",title:"Prod Monitoring Dashboard",   url:"monitor.dvbern.ch/prod",      folder:"dev",        tags:["prod","monitoring"],       props:{}},
+  {id:"b12",title:"VacMe Dev",                   url:"dev-vacme.dvbern.ch",         folder:"dev",        tags:["vacme"],                   props:{"needs-review":"true"}},
+];
+const INIT_SAVED = [
+  {id:"ss1", name:"Quarkus drafts",  query:"#quarkus property:status=draft"},
+  {id:"ss2", name:"Needs review",    query:"property:needs-review=true"},
+  {id:"ss3", name:"Prod monitoring", query:"#prod #monitoring"},
+];
+
+/* ── Derived autocomplete data ─────────────────────────────── */
+const AC_TAGS    = Object.keys(TAGS);
+const AC_FOLDERS = [...new Set(BMS.map(b => b.folder))].sort();
+const AC_PROP_KEYS = [...new Set(BMS.flatMap(b => Object.keys(b.props || {})))].sort();
+const AC_PROP_VALS = (() => {
+  const m = {};
+  BMS.forEach(b => Object.entries(b.props || {}).forEach(([k,v]) => {
+    if (!m[k]) m[k] = new Set();
+    m[k].add(String(v));
+  }));
+  return Object.fromEntries(Object.entries(m).map(([k,s]) => [k, [...s].sort()]));
+})();
+
+/* ── Tokenizer / matcher ───────────────────────────────────── */
+function tokenize(q) {
+  const tokens = [], re = /(-)?(#([\w-]+)|property:([\w-]+)(=|>=|<=|>|<)([^\s]+)|([a-z]+):([^\s]+)|"([^"]*)"|(\S+))/gi;
+  let m;
+  while ((m = re.exec(q)) !== null) {
+    const neg = !!m[1], raw = m[0];
+    if (m[3]  != null) tokens.push({kind:"tag",   value:m[3],   neg, raw});
+    else if (m[4] != null) tokens.push({kind:"prop",  propKey:m[4], op:m[5], propValue:m[6], neg, raw});
+    else if (m[7] != null) tokens.push({kind:"op",    key:m[7].toLowerCase(), value:m[8], neg, raw});
+    else if (m[9] != null) tokens.push({kind:"text",  value:m[9],  neg, raw});
+    else                   tokens.push({kind:"text",  value:m[10], neg, raw});
+  }
+  return tokens;
+}
+function matches(b, tokens) {
+  for (const t of tokens) {
+    let ok = true;
+    if      (t.kind === "tag")  ok = b.tags.some(id => id.toLowerCase() === t.value.toLowerCase());
+    else if (t.kind === "op" && t.key === "tag")    ok = b.tags.some(id => id.toLowerCase() === t.value.toLowerCase());
+    else if (t.kind === "op" && t.key === "folder") ok = b.folder.toLowerCase().includes(t.value.toLowerCase());
+    else if (t.kind === "prop") {
+      const bv = String(b.props?.[t.propKey] ?? "");
+      ok = t.op === "=" ? bv.toLowerCase() === t.propValue.toLowerCase()
+         : t.op === ">" ? Number(bv) > Number(t.propValue)
+         : t.op === "<" ? Number(bv) < Number(t.propValue) : false;
+    } else if (t.kind === "text") ok = (b.title + " " + b.url + (b.desc || "")).toLowerCase().includes(t.value.toLowerCase());
+    if (t.neg) ok = !ok;
+    if (!ok) return false;
+  }
+  return true;
+}
+
+/* ── parseAutocomplete ─────────────────────────────────────── */
+function parseAutocomplete(query, cursor) {
+  if (cursor == null) cursor = query.length;
+  const before = query.slice(0, cursor);
+  // token start = after last whitespace
+  const lastSp = Math.max(before.lastIndexOf(' '), before.lastIndexOf('\t'));
+  const tokenStart = lastSp + 1;
+  const token = before.slice(tokenStart);
+  // token end = position of next whitespace after cursor, or end of string
+  const after = query.slice(cursor);
+  const nextSp = after.search(/\s/);
+  const tokenEnd = cursor + (nextSp === -1 ? after.length : nextSp);
+  const range = [tokenStart, tokenEnd];
+  const tl = token.toLowerCase();
+
+  // ── TAG mode: starts with # or tag:
+  if (token.startsWith('#')) {
+    const filter = token.slice(1).toLowerCase();
+    const items = AC_TAGS
+      .filter(t => filter === '' || t.toLowerCase().includes(filter))
+      .map(t => ({key:t, label:t, insert:'#'+t, type:'tag', color:TAGS[t]?.c, filter}));
+    return {mode:'tag', label:'Tags', items, range};
+  }
+  if (tl.startsWith('tag:')) {
+    const filter = token.slice(4).toLowerCase();
+    const items = AC_TAGS
+      .filter(t => filter === '' || t.toLowerCase().includes(filter))
+      .map(t => ({key:t, label:t, insert:'tag:'+t, type:'tag', color:TAGS[t]?.c, filter}));
+    return {mode:'tag', label:'Tags', items, range};
+  }
+
+  // ── FOLDER mode: starts with folder:
+  if (tl.startsWith('folder:')) {
+    const filter = token.slice(7).toLowerCase();
+    const items = AC_FOLDERS
+      .filter(f => filter === '' || f.toLowerCase().includes(filter))
+      .map(f => ({key:f, label:f, insert:'folder:'+f, type:'folder', filter}));
+    return {mode:'folder', label:'Folders', items, range};
+  }
+
+  // ── PROPERTY mode: starts with property:
+  if (tl.startsWith('property:')) {
+    const rest = token.slice(9);
+    const eqIdx = rest.indexOf('=');
+    if (eqIdx === -1) {
+      // property key
+      const filter = rest.toLowerCase();
+      const items = AC_PROP_KEYS
+        .filter(k => filter === '' || k.toLowerCase().includes(filter))
+        .map(k => ({key:k, label:k, insert:'property:'+k+'=', type:'prop-key', hint:'then =value', filter}));
+      return {mode:'prop-key', label:'Properties', items, range};
+    } else {
+      // property value
+      const propKey = rest.slice(0, eqIdx);
+      const valFilter = rest.slice(eqIdx + 1).toLowerCase();
+      const vals = AC_PROP_VALS[propKey] || [];
+      const items = vals
+        .filter(v => valFilter === '' || v.toLowerCase().includes(valFilter))
+        .map(v => ({key:v, label:v, insert:'property:'+propKey+'='+v, type:'prop-val', propKey, filter:valFilter}));
+      return {mode:'prop-val', label:`"${propKey}" values`, items, range};
+    }
+  }
+
+  // ── OPERATOR DISCOVERY: typing a prefix of a keyword
+  if (token.length >= 2) {
+    const OPS = [
+      {trigger:'tag',      full:'tag:',       hint:'filter by tag (alt. to #)'},
+      {trigger:'folder',   full:'folder:',   hint:'filter by folder name'},
+      {trigger:'property', full:'property:',  hint:'filter by property value'},
+    ];
+    const matched = OPS.filter(op =>
+      op.trigger.startsWith(tl) && tl !== op.trigger && !tl.includes(':')
+    );
+    if (matched.length) {
+      return {
+        mode:'operator',
+        label:'Operators',
+        items: matched.map(op => ({
+          key:op.full, label:op.full, insert:op.full,
+          type:'operator', hint:op.hint, filter:token
+        })),
+        range
+      };
+    }
+  }
+
+  return null;
+}
+
+/* ── Icons ─────────────────────────────────────────────────── */
+const ic = {
+  bm:    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>,
+  search:<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>,
+  save:  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><path d="M12 8v5M9.5 10.5l2.5-2.5 2.5 2.5"/></svg>,
+  plus:  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5v14"/></svg>,
+  x:     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>,
+  chevD: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="m6 9 6 6 6-6"/></svg>,
+  folder:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor" fillOpacity=".15"/><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>,
+  funnel:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 3H2l8 9.46V19l4 2V12.46L22 3z" fill="currentColor" fillOpacity=".12"/><path d="M22 3H2l8 9.46V19l4 2V12.46L22 3z"/></svg>,
+  hash:  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></svg>,
+  cube:  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><line x1="12" y1="22" x2="12" y2="12"/><path d="M3.27 6.96 12 12l8.73-5.04"/></svg>,
+  globe: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a14 14 0 0 1 0 20M12 2a14 14 0 0 0 0 20"/></svg>,
+  pencil:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
+  trash: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>,
+  ellip: <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>,
+  check: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg>,
+  bolt:  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>,
+};
+
+/* ── Highlight ─────────────────────────────────────────────── */
+function Highlight({text, filter}) {
+  if (!filter || !text) return <>{text}</>;
+  const idx = text.toLowerCase().indexOf(filter.toLowerCase());
+  if (idx === -1) return <>{text}</>;
+  return <>
+    {text.slice(0, idx)}
+    <mark className="ac-hit">{text.slice(idx, idx + filter.length)}</mark>
+    {text.slice(idx + filter.length)}
+  </>;
+}
+
+/* ── AutocompleteDropdown ───────────────────────────────────── */
+function AutocompleteDropdown({result, activeIdx, onSelect, onMouseDown}) {
+  const {mode, label, items} = result;
+  const listRef = useRef(null);
+
+  // Scroll active item into view
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const active = list.querySelector('.sel');
+    if (active) active.scrollIntoView({block:'nearest'});
+  }, [activeIdx]);
+
+  const modeIcon = {
+    tag:       ic.hash,
+    folder:    ic.folder,
+    'prop-key':ic.cube,
+    'prop-val':ic.cube,
+    operator:  ic.bolt,
+  }[mode] || ic.search;
+
+  return (
+    <div className="ac-drop" onMouseDown={onMouseDown}>
+      {/* Header */}
+      <div className="ac-hd">
+        <div className="ac-hd-mode">
+          {modeIcon}
+          {label}
+        </div>
+        {items.length > 0 &&
+          <div className="ac-hd-keys">
+            <span className="ac-key">↑↓</span>
+            <span className="ac-key">↵ Tab</span>
+            <span className="ac-key">Esc</span>
+          </div>
+        }
+      </div>
+
+      {/* List */}
+      <div className="ac-list" ref={listRef}>
+        {items.length === 0
+          ? <div className="ac-empty">No matches</div>
+          : items.map((item, idx) => (
+            <button
+              key={item.key + idx}
+              className={`ac-item${idx === activeIdx ? ' sel' : ''}`}
+              onClick={() => onSelect(item)}
+            >
+              {/* Color dot for tags */}
+              {item.type === 'tag' && item.color
+                ? <span className="ac-item-dot" style={{background: item.color}}/>
+                : <span className="ac-item-ico">{modeIcon}</span>
+              }
+
+              {/* Label */}
+              <span className="ac-item-label">
+                {item.type === 'tag' &&
+                  <><span className="ac-pfx">#</span><span className="ac-val"><Highlight text={item.label} filter={item.filter}/></span></>}
+                {item.type === 'folder' &&
+                  <><span className="ac-pfx">folder:</span><span className="ac-val"><Highlight text={item.label} filter={item.filter}/></span></>}
+                {item.type === 'prop-key' &&
+                  <><span className="ac-pfx">property:</span><span className="ac-val"><Highlight text={item.label} filter={item.filter}/></span><span className="ac-pfx">=</span></>}
+                {item.type === 'prop-val' &&
+                  <><span className="ac-pfx">property:{item.propKey}=</span><span className="ac-val"><Highlight text={item.label} filter={item.filter}/></span></>}
+                {item.type === 'operator' &&
+                  <><span className="ac-val"><Highlight text={item.label} filter={item.filter}/></span></>}
+              </span>
+
+              {item.hint && <span className="ac-item-sub">{item.hint}</span>}
+            </button>
+          ))
+        }
+      </div>
+
+      {/* Footer — syntax guide */}
+      <div className="ac-foot">
+        <span className="ac-foot-chip"><b>#</b>tag</span>
+        <span className="ac-foot-chip" style={{opacity:.5}}>or</span>
+        <span className="ac-foot-chip"><b>tag:</b>name</span>
+        <span className="ac-foot-sep">·</span>
+        <span className="ac-foot-chip"><b>folder:</b>name</span>
+        <span className="ac-foot-sep">·</span>
+        <span className="ac-foot-chip"><b>property:</b>k=v</span>
+        <span className="ac-foot-sep">·</span>
+        <span className="ac-foot-chip"><b>-</b>negate</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── SearchBar ─────────────────────────────────────────────── */
+function SearchBar({query, onChange, saveMode, onSave, saveIconRef, shellRef}) {
+  const inputRef   = useRef(null);
+  const acMouseRef = useRef(false);
+  const [acResult, setAcResult] = useState(null);
+  const [acIdx,    setAcIdx]    = useState(0);
+
+  function computeAc(val, pos) {
+    const r = parseAutocomplete(val, pos != null ? pos : (inputRef.current?.selectionStart ?? val.length));
+    setAcResult(r && r.items.length > 0 ? r : null);
+    setAcIdx(0);
+  }
+
+  function handleChange(e) {
+    const v = e.target.value;
+    onChange(v);
+    computeAc(v, e.target.selectionStart);
+  }
+
+  function handleKeyDown(e) {
+    if (!acResult) return;
+    const n = acResult.items.length;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setAcIdx(i => Math.min(i+1, n-1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setAcIdx(i => Math.max(i-1, 0)); }
+    else if ((e.key === 'Enter' || e.key === 'Tab') && n > 0) { e.preventDefault(); commit(acResult.items[acIdx]); }
+    else if (e.key === 'Escape') setAcResult(null);
+  }
+
+  function handleBlur() {
+    if (!acMouseRef.current) setAcResult(null);
+  }
+
+  function handleClick() {
+    computeAc(query, inputRef.current?.selectionStart);
+  }
+
+  function commit(item) {
+    const [s, e] = acResult.range;
+    // No trailing space for property:key= (user will type the value next)
+    const suffix = item.insert.endsWith('=') ? '' : ' ';
+    const tail = query.slice(e).replace(/^\s+/, '');
+    const newQ = query.slice(0, s) + item.insert + suffix + tail;
+    const newCursor = s + item.insert.length + suffix.length;
+    onChange(newQ);
+    setAcResult(null);
+    setTimeout(() => {
+      inputRef.current?.focus();
+      inputRef.current?.setSelectionRange(newCursor, newCursor);
+      // Chain: after selecting a property key (ends with =), immediately show value suggestions
+      const follow = parseAutocomplete(newQ, newCursor);
+      if (follow && follow.items.length > 0) {
+        setAcResult(follow);
+        setAcIdx(0);
+      }
+    }, 0);
+  }
+
+  return (
+    <div className="search-shell" ref={shellRef}>
+      <div className="search">
+        {ic.search}
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onClick={handleClick}
+          onBlur={handleBlur}
+          placeholder="Search — try typing # or folder: …"
+          spellCheck={false} autoCapitalize="off" autoCorrect="off"
+        />
+        {!query && <span className="kbd">⌘K</span>}
+        {saveMode === 'A' && (
+          <button
+            ref={saveIconRef}
+            className={'save-icon-btn' + (query ? ' vis' : '')}
+            title="Save as Smart Collection"
+            onClick={() => onSave(saveIconRef)}
+          >
+            {ic.save}
+          </button>
+        )}
+      </div>
+      {acResult && (
+        <AutocompleteDropdown
+          result={acResult}
+          activeIdx={acIdx}
+          onSelect={commit}
+          onMouseDown={() => {
+            acMouseRef.current = true;
+            setTimeout(() => { acMouseRef.current = false; }, 200);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ── TokenPill ─────────────────────────────────────────────── */
+function TokenPill({t, onRemove}) {
+  return (
+    <span className="pill">
+      {t.kind === "tag"  && <span style={{color:"var(--pri)"}}>{ic.hash}</span>}
+      {t.kind === "prop" && <span style={{color:"#a78bfa"}}>{ic.cube}</span>}
+      {t.neg && <span style={{color:"var(--dst)", marginRight:1}}>−</span>}
+      {t.kind === "tag"  && t.value}
+      {t.kind === "prop" && <><span className="pk">{t.propKey}</span><span style={{color:"var(--mfg)",margin:"0 1px"}}>{t.op}</span>{t.propValue}</>}
+      {t.kind === "op"   && <><span className="pk">{t.key}:</span>{t.value}</>}
+      {t.kind === "text" && `"${t.value}"`}
+      <button className="px" onClick={onRemove}>{ic.x}</button>
+    </span>
+  );
+}
+
+/* ── FilterChips ───────────────────────────────────────────── */
+function FilterChips({tokens, count, onRemove, onClear}) {
+  if (!tokens.length) return null;
+  return (
+    <div className="chip-strip">
+      <span className="chip-lead">{ic.search} Filters</span>
+      {tokens.map((t,i) => <TokenPill key={i} t={t} onRemove={() => onRemove(i)}/>)}
+      <span className="chip-count">{count} result{count === 1 ? '' : 's'}</span>
+      <button className="chip-clear" onClick={onClear}>Clear all</button>
+    </div>
+  );
+}
+
+/* ── SavePopover ───────────────────────────────────────────── */
+function SavePopover({query, anchorEl, savedSearches, activeSsId, onSave, onUpdate, onClose}) {
+  const activeSs = savedSearches.find(s => s.id === activeSsId);
+  const isAlreadySaved = activeSs && activeSs.query.trim() === query.trim();
+  const isUpdate = activeSs && !isAlreadySaved;
+  const [name, setName] = useState(activeSs?.name || '');
+  const inputRef = useRef(null);
+  const [pos, setPos] = useState({top:64, left:180});
+
+  useEffect(() => {
+    if (anchorEl) {
+      const r = anchorEl.getBoundingClientRect();
+      setPos({top: r.bottom + 8, left: Math.min(window.innerWidth - 320, Math.max(8, r.left + r.width/2 - 154))});
+    }
+    if (!isAlreadySaved) setTimeout(() => inputRef.current?.focus(), 60);
+    const esc = e => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', esc);
+    return () => document.removeEventListener('keydown', esc);
+  }, []);
+
+  function handleSave() {
+    if (!name.trim()) return;
+    if (isUpdate) onUpdate(activeSs.id, name.trim(), query);
+    else onSave(name.trim(), query);
+  }
+
+  const title = isAlreadySaved ? 'Already saved' : isUpdate ? 'Update saved search' : 'Save search';
+
+  return <>
+    <div className="backdrop" onClick={onClose}/>
+    <div className="save-pop" style={pos}>
+      <div className="sp-hd">
+        <h3>{title}</h3>
+        <button className="icon-btn" onClick={onClose}>{ic.x}</button>
+      </div>
+      <div className="sp-query">{query}</div>
+      {isAlreadySaved && <p className="sp-hint">"{activeSs.name}" already saves this exact query.</p>}
+      {!isAlreadySaved && <div className="sp-field">
+        <label>Name</label>
+        <input ref={inputRef} className="inp" value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="e.g. Quarkus drafts"
+          onKeyDown={e => { if (e.key === 'Enter') handleSave(); }}/>
+      </div>}
+      {isUpdate && <p className="sp-hint" style={{marginTop:7,fontSize:11}}>
+        Will update the query for "{activeSs.name}".
+      </p>}
+      <div className="sp-acts">
+        <button className="btn-sm" onClick={onClose}>Cancel</button>
+        {isAlreadySaved && <button className="btn-sm pri" onClick={onClose}>OK</button>}
+        {!isAlreadySaved && <button className="btn-sm pri" onClick={handleSave} disabled={!name.trim()}>
+          {isUpdate ? 'Update' : 'Save'}
+        </button>}
+      </div>
+    </div>
+  </>;
+}
+
+/* ── SmartCollectionsSection ───────────────────────────────── */
+function SmartCollectionsSection({savedSearches, activeSsId, expanded, onToggle, onLoad, onRename, onDelete, onAddNew}) {
+  const [menuId,     setMenuId]     = useState(null);
+  const [renamingId, setRenamingId] = useState(null);
+  const [renameVal,  setRenameVal]  = useState('');
+
+  useEffect(() => {
+    if (!menuId) return;
+    const h = e => { if (!e.target.closest('.sc-menu')) setMenuId(null); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [menuId]);
+
+  function startRename(ss) { setMenuId(null); setRenamingId(ss.id); setRenameVal(ss.name); }
+  function commitRename(id) { if (renameVal.trim()) onRename(id, renameVal.trim()); setRenamingId(null); }
+
+  return <>
+    <button className="sc-hd" onClick={onToggle}>
+      <span className="sc-hd-lbl">Smart Collections</span>
+      <span className="sc-hd-add" title="Save current search"
+        onClick={e => { e.stopPropagation(); onAddNew(); }}>
+        {ic.plus}
+      </span>
+      <span className={'sc-chev' + (expanded ? ' open' : '')}>{ic.chevD}</span>
+    </button>
+    <div className={'sc-wrap' + (expanded ? '' : ' shut')}>
+      <div className="sc-inner">
+        {savedSearches.length === 0 && <div className="sc-empty">No saved searches yet</div>}
+        {savedSearches.map(ss => {
+          const isRenaming = ss.id === renamingId;
+          return (
+            <div key={ss.id} className={'s-row' + (ss.id === activeSsId ? ' active' : '')}
+              onClick={() => { if (!isRenaming) onLoad(ss); }}>
+              <span className="s-ico" style={{color:'#a78bfa'}}>{ic.funnel}</span>
+              {isRenaming
+                ? <input className="sc-rename" value={renameVal} autoFocus
+                    onChange={e => setRenameVal(e.target.value)}
+                    onClick={e => e.stopPropagation()}
+                    onKeyDown={e => { if (e.key==='Enter') commitRename(ss.id); if (e.key==='Escape') setRenamingId(null); }}
+                    onBlur={() => commitRename(ss.id)}/>
+                : <span className="s-lbl">{ss.name}</span>
+              }
+              {!isRenaming && <button className="sc-act" onClick={e => { e.stopPropagation(); setMenuId(id => id===ss.id?null:ss.id); }}>{ic.ellip}</button>}
+              {menuId === ss.id && <div className="sc-menu" onClick={e => e.stopPropagation()}>
+                <button className="sc-mi" onClick={() => startRename(ss)}>{ic.pencil} Rename</button>
+                <button className="sc-mi red" onClick={() => { setMenuId(null); onDelete(ss.id); }}>{ic.trash} Delete</button>
+              </div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </>;
+}
+
+/* ── Card ──────────────────────────────────────────────────── */
+function Card({b}) {
+  return (
+    <div className="card">
+      <div className="card-fav">{ic.globe}</div>
+      <div className="card-body">
+        <div className="card-title">{b.title}</div>
+        <div style={{fontSize:12,color:'var(--mfg)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>https://{b.url}</div>
+        <div className="card-meta">
+          {b.tags.map(t => (
+            <span key={t} className="tag-chip">
+              <span className="tag-dot" style={{background: TAGS[t]?.c || '#64748b'}}/>
+              {t}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── App ───────────────────────────────────────────────────── */
+function App() {
+  const [query,        setQuery]        = useState('');
+  const [savedSearches,setSavedSearches]= useState(INIT_SAVED);
+  const [scExpanded,   setScExpanded]   = useState(true);
+  const [tagsExpanded, setTagsExpanded] = useState(true);
+  const [bmExpanded,   setBmExpanded]   = useState(true);
+  const [activeSsId,   setActiveSsId]   = useState(null);
+  const [popoverOpen,  setPopoverOpen]  = useState(false);
+  const [popoverAnchor,setPopoverAnchor]= useState(null);
+  const [theme,        setTheme]        = useState('dark');
+  const [saveMode,     setSaveMode]     = useState('A');
+  const [toast,        setToast]        = useState(null);
+
+  const searchShellRef = useRef(null);
+  const saveIconRef    = useRef(null);
+
+  const tokens   = useMemo(() => tokenize(query),           [query]);
+  const filtered = useMemo(() => BMS.filter(b => matches(b, tokens)), [tokens]);
+
+  useEffect(() => { document.body.classList.toggle('dark', theme === 'dark'); }, [theme]);
+
+  function flash(msg) { setToast(msg); setTimeout(() => setToast(null), 1900); }
+
+  function openSavePopover(ref) {
+    setPopoverAnchor(ref?.current || searchShellRef.current);
+    setPopoverOpen(true);
+  }
+  function handleSave(name, q)  { const id='ss'+Date.now(); setSavedSearches(s=>[...s,{id,name,query:q}]); setActiveSsId(id); setPopoverOpen(false); flash(`Saved "${name}"`); }
+  function handleUpdate(id,name,q){ setSavedSearches(s=>s.map(x=>x.id===id?{...x,name,query:q}:x)); setPopoverOpen(false); flash(`Updated "${name}"`); }
+  function handleRename(id,name){ setSavedSearches(s=>s.map(x=>x.id===id?{...x,name}:x)); flash(`Renamed to "${name}"`); }
+  function handleDelete(id)     { const ss=savedSearches.find(s=>s.id===id); setSavedSearches(s=>s.filter(x=>x.id!==id)); if(activeSsId===id) setActiveSsId(null); flash(`Deleted "${ss?.name}"`); }
+  function removeToken(i)       { setQuery(tokens.filter((_,j)=>j!==i).map(t=>t.raw).join(' ').trim()); }
+
+  // Quick presets for the Tweaks panel
+  function setPreset(q)         { setQuery(q); setActiveSsId(null); }
+
+  return <>
+    <div className="app">
+      {/* ── Header ── */}
+      <div className="hd">
+        <div className="brand">
+          <div className="bmark">{ic.bm}</div>
+          <button className="coll-btn">My Bookmarks {ic.chevD}</button>
+        </div>
+
+        <div className="search-wrap">
+          <SearchBar
+            query={query}
+            onChange={setQuery}
+            saveMode={saveMode}
+            onSave={openSavePopover}
+            saveIconRef={saveIconRef}
+            shellRef={searchShellRef}
+          />
+        </div>
+
+        <div className="h-acts">
+          <button className="btn-pri">{ic.plus} Add</button>
+          <button className="btn-ghost">
+            <span style={{width:22,height:22,borderRadius:'50%',background:'#a78bfa',display:'grid',placeItems:'center',fontSize:10,fontWeight:700,color:'#fff'}}>A</span>
+            Alice {ic.chevD}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Sidebar ── */}
+      <aside className="sb">
+        <button className="sc-hd" onClick={() => setBmExpanded(e => !e)}>
+          <span className="sc-hd-lbl">Bookmarks</span>
+          <span className={'sc-chev' + (bmExpanded ? ' open' : '')}>{ic.chevD}</span>
+        </button>
+        <div className={'sc-wrap' + (bmExpanded ? '' : ' shut')}>
+          <div className="sc-inner">
+            <div className="folder-group">
+              <div className="s-row active"><span className="s-ico" style={{color:'var(--pri)'}}>{ic.folder}</span><span className="s-lbl">My Bookmarks</span></div>
+              <div style={{paddingLeft:10}}>
+                {['vacme-prod','insel','dev','uat','demo','iat'].map(n => (
+                  <div key={n} className="s-row"><span className="s-ico" style={{color:'var(--mfg)'}}>{ic.folder}</span><span className="s-lbl">{n}</span></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <SmartCollectionsSection
+          savedSearches={savedSearches}
+          activeSsId={activeSsId}
+          expanded={scExpanded}
+          onToggle={() => setScExpanded(e => !e)}
+          onLoad={ss => { setQuery(ss.query); setActiveSsId(ss.id); }}
+          onRename={handleRename}
+          onDelete={handleDelete}
+          onAddNew={() => openSavePopover(searchShellRef)}
+        />
+
+        <button className="sc-hd" onClick={() => setTagsExpanded(e => !e)}>
+          <span className="sc-hd-lbl">Tags</span>
+          <span className={'sc-chev' + (tagsExpanded ? ' open' : '')}>{ic.chevD}</span>
+        </button>
+        <div className={'sc-wrap' + (tagsExpanded ? '' : ' shut')}>
+          <div className="sc-inner">
+            {Object.entries(TAGS).map(([name, {c}]) => (
+              <div key={name} className="s-row">
+                <span className="s-ico"><span className="tag-dot" style={{background:c}}/></span>
+                <span className="s-lbl">{name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      {/* ── Main ── */}
+      <main className="mn">
+        <div className="toolbar">
+          <div className="bc">
+            <span style={{cursor:'pointer'}}>All Bookmarks</span>
+            <span style={{opacity:.5}}>/</span>
+            <span style={{fontWeight:500,color:'var(--fg)'}}>vacme-be</span>
+          </div>
+        </div>
+        <div className="content">
+          <FilterChips
+            tokens={tokens}
+            count={filtered.length}
+            onRemove={removeToken}
+            onClear={() => { setQuery(''); setActiveSsId(null); }}
+          />
+          {filtered.length === 0
+            ? <div className="empty">No bookmarks match your search.</div>
+            : <div className="grid">{filtered.map(b => <Card key={b.id} b={b}/>)}</div>
+          }
+        </div>
+      </main>
+    </div>
+
+    {popoverOpen && <SavePopover
+      query={query}
+      anchorEl={popoverAnchor}
+      savedSearches={savedSearches}
+      activeSsId={activeSsId}
+      onSave={handleSave}
+      onUpdate={handleUpdate}
+      onClose={() => setPopoverOpen(false)}
+    />}
+
+    {toast && <div className="toast">{ic.check} {toast}</div>}
+
+    {/* ── Tweaks ── */}
+    <div className="tweaks">
+      <b>FR-072 · Search Autocomplete</b>
+
+      <div className="tw-sec">Try a trigger</div>
+      <div className="tw-preset">
+        <button onClick={() => setPreset('#')} title="Opens tag autocomplete"># — tags</button>
+        <button onClick={() => setPreset('folder:')} title="Opens folder autocomplete">folder: — folders</button>
+        <button onClick={() => setPreset('property:')} title="Opens property key autocomplete">property: — property keys</button>
+        <button onClick={() => setPreset('property:status=')} title="Opens value autocomplete for status">property:status= — values</button>
+      </div>
+
+      <div className="tw-sec">Save trigger</div>
+      <div className="seg">
+        <button className={saveMode==='A'?'on':''} onClick={()=>setSaveMode('A')}>Icon in bar</button>
+        <button className={saveMode==='B'?'on':''} onClick={()=>setSaveMode('B')}>None</button>
+      </div>
+
+      <div className="tw-sec">Theme</div>
+      <div className="seg">
+        <button className={theme==='light'?'on':''} onClick={()=>setTheme('light')}>Light</button>
+        <button className={theme==='dark'?'on':''} onClick={()=>setTheme('dark')}>Dark</button>
+      </div>
+
+      <p className="tw-note">
+        Click a preset above, then click the search bar to interact. Also try typing <b>fo</b> or <b>prop</b> to see operator discovery.
+      </p>
+    </div>
+  </>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

@@ -310,7 +310,25 @@
     "resultCount": "{n} Ergebnis | {n} Ergebnisse",
     "clear": "Suche löschen",
     "filters": "Filter",
-    "clearAll": "Alle löschen"
+    "clearAll": "Alle löschen",
+    "autocomplete": {
+      "tags": "Tags",
+      "folders": "Ordner",
+      "properties": "Eigenschaften",
+      "operators": "Operatoren",
+      "propValues": "Werte für \"{key}\"",
+      "noMatches": "Keine Treffer",
+      "hintNav": "↑↓",
+      "hintConfirm": "↵ Tab",
+      "hintDismiss": "Esc",
+      "hintValue": "dann =Wert",
+      "opTag": "nach Tag filtern (auch #)",
+      "opFolder": "nach Ordnername filtern",
+      "opUnder": "nach Ordner inkl. Unterordner filtern",
+      "opProperty": "nach Eigenschaftswert filtern",
+      "or": "oder",
+      "negate": "ausschließen"
+    }
   },
   "collectionSearch": {
     "placeholder": "Sammlungen durchsuchen...",

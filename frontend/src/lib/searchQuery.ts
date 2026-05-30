@@ -198,18 +198,28 @@ export function toggleToken(
   return [...tokens, { ...token, neg: false }]
 }
 
+// Exact (case-insensitive) tag-name match. Shared by the `#name` (tag kind) and
+// `tag:name` (operator alias) forms so they always behave identically.
+function bookmarkHasTagNamed(b: MatchableBookmark, value: string, ctx: MatchContext): boolean {
+  if (!b.data.tagIds) return false
+  const target = value.toLowerCase()
+  for (const tagId of b.data.tagIds) {
+    const name = ctx.tagNamesById.get(tagId)
+    if (name && name === target) return true
+  }
+  return false
+}
+
 function bookmarkMatchesToken(b: MatchableBookmark, t: QueryToken, ctx: MatchContext): boolean {
   if (t.kind === 'tag') {
-    const target = t.value.toLowerCase()
-    if (!b.data.tagIds) return false
-    for (const tagId of b.data.tagIds) {
-      const name = ctx.tagNamesById.get(tagId)
-      if (name && name === target) return true
-    }
-    return false
+    return bookmarkHasTagNamed(b, t.value, ctx)
   }
   if (t.kind === 'operator') {
     const v = t.value.toLowerCase()
+    // `tag:name` is an alias for `#name`.
+    if (t.key === 'tag') {
+      return bookmarkHasTagNamed(b, t.value, ctx)
+    }
     if (t.key === 'folder') {
       return (ctx.folderName ?? '').includes(v)
     }
