@@ -5,7 +5,7 @@ import BookmarkPreview from '@/components/bookmark/BookmarkPreview.vue'
 import { DropdownMenuContentCl, DropdownMenuItemCl } from '@/components/ui'
 import { DRAG_TYPE_BOOKMARK, setDraggingBookmark } from '@/composables/useDragState'
 import { useMediaQuery } from '@/composables/useMediaQuery'
-import { useShowPropertyBadges } from '@/composables/usePropertyDisplayPrefs'
+import { useShowPropertyBadges, useShowPreviewPopup } from '@/composables/usePropertyDisplayPrefs'
 import { useRelativeTime } from '@/composables/useRelativeTime'
 import { decodePropertyValue } from '@/lib/propertyValueMapper'
 import { matchesPropertyToken, parsePropertyValue } from '@/lib/searchQueryProperty'
@@ -34,6 +34,7 @@ const ui = useUiStore()
 const isTouch = useMediaQuery('(hover: none) and (pointer: coarse)')
 const { formatRelativeTime } = useRelativeTime()
 const showPropertyBadges = useShowPropertyBadges()
+const showPreviewPopup = useShowPreviewPopup()
 
 const props = defineProps<{
   bookmark: BookmarkJson
@@ -253,7 +254,12 @@ const rowEl = ref<HTMLElement | null>(null)
 // the device must have real hover, and the bookmark's preview must not be
 // in a failed/capturing state we don't want to enlarge into a broken image.
 const hoverPreviewActive = computed(
-  () => previewsVisible.value && props.layout === 'list' && !isTouch.value && !!previewHover,
+  () =>
+    previewsVisible.value &&
+    props.layout === 'list' &&
+    !isTouch.value &&
+    !!previewHover &&
+    showPreviewPopup.value,
 )
 
 function onRowEnter() {

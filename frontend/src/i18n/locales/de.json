@@ -15,6 +15,8 @@
     "tabData": "Daten",
     "sectionPreview": "Seitenvorschau",
     "sectionPreviewHint": "Gilt für alle mit Zugriff auf diese Sammlung.",
+    "previewPopupToggle": "Vorschau-Popup beim Hover",
+    "previewPopupToggleDesc": "Vergrößerte Vorschau beim Überfahren eines Lesezeichens in der Listenansicht anzeigen.",
     "sectionImport": "Importieren",
     "sectionExport": "Exportieren",
     "exportDescription": "Alle Lesezeichen und Ordner dieser Sammlung als Netscape-HTML-Datei herunterladen.",

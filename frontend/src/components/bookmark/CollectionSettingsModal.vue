@@ -16,6 +16,7 @@ import { useFormDialog } from '@/composables/useFormDialog'
 import {
   useShowPropertiesSidebar,
   useShowPropertyBadges,
+  useShowPreviewPopup,
 } from '@/composables/usePropertyDisplayPrefs'
 import { propertyDefinitionSaveSchema } from '@/schemas/property'
 import { useCollectionStore } from '@/stores/collection'
@@ -35,6 +36,7 @@ const notification = useNotificationStore()
 const ui = useUiStore()
 const showBadges = useShowPropertyBadges()
 const showSidebar = useShowPropertiesSidebar()
+const showPreviewPopup = useShowPreviewPopup()
 
 // Layout chooser — same card-button visual as the user-menu Settings dialog,
 // wired to the collection-scoped setting when a collection is loaded (falling
@@ -518,6 +520,23 @@ function optionsPreview(allowedValues: string | undefined): string {
             :aria-label="t('collectionManage.screenshotEnabled')"
             data-testid="collection-settings-screenshot-enabled"
             @update:model-value="onToggleScreenshot"
+          />
+        </div>
+        <div
+          class="flex items-center justify-between gap-3 px-2.5 py-2 rounded-md transition-opacity"
+          :class="screenshotEnabled ? 'bg-secondary/60' : 'bg-secondary/30 opacity-50 pointer-events-none'"
+        >
+          <div class="min-w-0">
+            <div class="text-sm font-medium">{{ t('collectionSettings.previewPopupToggle') }}</div>
+            <div class="text-xs text-muted-foreground mt-0.5">
+              {{ t('collectionSettings.previewPopupToggleDesc') }}
+            </div>
+          </div>
+          <SwitchCl
+            v-model="showPreviewPopup"
+            :disabled="!screenshotEnabled"
+            :aria-label="t('collectionSettings.previewPopupToggle')"
+            data-testid="collection-settings-preview-popup"
           />
         </div>
         <p class="text-xs text-muted-foreground mt-2">
