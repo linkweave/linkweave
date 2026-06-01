@@ -44,17 +44,23 @@ const host = computed(() => hostnameOf(props.bookmark.data.url) ?? '')
 
 // Stable hash → hue → oklch color, derived from hostname. Same domain always
 // gets the same color so the fallback tile is recognizable, and oklch lets us
-// pick a fixed lightness/chroma that stays visually consistent across hues.
+// pin lightness/chroma so the hue reads consistently across domains.
 const fallbackHue = computed(() => {
   let h = 0
   for (const ch of host.value) h = (h * 31 + (ch.codePointAt(0) ?? 0)) >>> 0
   return h % 360
 })
 
+// The hue is kept only as a faint tint: chroma is dialed right down and the
+// lightness is anchored near the surrounding surface so the tile reads as a
+// quiet backdrop rather than a billboard that fights the favicon on top.
+// `light-dark()` resolves off the `color-scheme` set in main.css, so the tile
+// follows the theme toggle (very light tint in light mode, very dark in dark)
+// with no store wiring.
 const fallbackGradient = computed(() => {
   const hue = fallbackHue.value
-  const inner = `oklch(60% 0.14 ${hue})`
-  const outer = `oklch(20% 0.06 ${hue})`
+  const inner = `light-dark(oklch(96% 0.02 ${hue}), oklch(26% 0.03 ${hue}))`
+  const outer = `light-dark(oklch(90% 0.03 ${hue}), oklch(18% 0.02 ${hue}))`
   return `radial-gradient(circle at 50% 38%, ${inner} 0%, ${outer} 78%)`
 })
 
@@ -119,7 +125,7 @@ function onImgError() { status.value = 'fallback' }
         />
         <span
           v-if="showDomain && host"
-          class="font-mono text-[11px] tracking-tight text-white/85 truncate max-w-full"
+          class="font-mono text-[11px] tracking-tight text-muted-foreground truncate max-w-full"
         >
           {{ host }}
         </span>
