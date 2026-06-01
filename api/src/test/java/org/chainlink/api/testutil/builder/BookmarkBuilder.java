@@ -4,6 +4,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -76,6 +77,12 @@ public class BookmarkBuilder {
     @NonNull
     public BookmarkBuilder withTags(Set<Tag> tags) {
         bookmark.setTags(tags);
+        return this;
+    }
+
+    @NonNull
+    public BookmarkBuilder withScreenshotCapturedAt(@Nullable OffsetDateTime at) {
+        bookmark.setScreenshotCapturedAt(at);
         return this;
     }
 

@@ -123,6 +123,14 @@ public class ConfigService {
     @ConfigProperty(name = "chainlink.favicon.max-redirects", defaultValue = "3")
     int faviconMaxRedirects;
 
+    // A realistic browser User-Agent. Many sites sit behind a WAF/CDN (e.g.
+    // CloudFront, Akamai) that returns 403 to non-browser User-Agents, so a
+    // bespoke token like "Chainlink-FaviconProxy/1.0" never reaches the icon.
+    @ConfigProperty(name = "chainlink.favicon.user-agent",
+        defaultValue = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+            + "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+    String faviconUserAgent;
+
     @ConfigProperty(name = "chainlink.favicon.cache-cleanup.max-size", defaultValue = "40MB")
     String faviconCacheCleanupMaxSize;
 
@@ -131,6 +139,33 @@ public class ConfigService {
 
     @ConfigProperty(name = "chainlink.favicon.cache-cleanup.enabled", defaultValue = "true")
     boolean faviconCacheCleanupEnabled;
+
+    @ConfigProperty(name = "chainlink.screenshot.enabled", defaultValue = "true")
+    boolean screenshotEnabled;
+
+    @ConfigProperty(name = "chainlink.screenshot.capture-job.enabled", defaultValue = "true")
+    boolean screenshotCaptureJobEnabled;
+
+    @ConfigProperty(name = "chainlink.screenshot.capture-job.batch-size", defaultValue = "10")
+    int screenshotCaptureJobBatchSize;
+
+    @ConfigProperty(name = "chainlink.screenshot.cache-dir", defaultValue = "developer-local-settings/screenshot-cache")
+    String screenshotCacheDir;
+
+    @ConfigProperty(name = "chainlink.screenshot.success-ttl", defaultValue = "30D")
+    Duration screenshotSuccessTtl;
+
+    @ConfigProperty(name = "chainlink.screenshot.negative-ttl", defaultValue = "12H")
+    Duration screenshotNegativeTtl;
+
+    @ConfigProperty(name = "chainlink.screenshot.cache-cleanup.enabled", defaultValue = "true")
+    boolean screenshotCacheCleanupEnabled;
+
+    @ConfigProperty(name = "chainlink.screenshot.cache-cleanup.max-size", defaultValue = "200MB")
+    String screenshotCacheCleanupMaxSize;
+
+    @ConfigProperty(name = "chainlink.screenshot.cache-cleanup.min-bookmark-age", defaultValue = "28D")
+    Duration screenshotCacheCleanupMinBookmarkAge;
 
     @ConfigProperty(name = "chainlink.feature.bookmark-properties.enabled", defaultValue = "true")
     boolean bookmarkPropertiesEnabled;

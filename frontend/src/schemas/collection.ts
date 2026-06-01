@@ -36,6 +36,7 @@ export const collectionUpdateSchema = (t: TFunction) =>
         },
         { message: t('collectionManage.faviconAllowlistInvalid') },
       ),
+    screenshotEnabled: z.boolean(),
   })
 
 export type CollectionUpdateInput = z.infer<ReturnType<typeof collectionUpdateSchema>>

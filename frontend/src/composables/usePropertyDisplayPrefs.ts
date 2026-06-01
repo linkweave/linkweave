@@ -16,6 +16,7 @@ function usePersistedBoolean(key: string, defaultValue: boolean): Ref<boolean> {
 // Module-level singletons so every consumer mutates the same reactive ref.
 const showPropertyBadgesRef = usePersistedBoolean('chainlink:showPropertyBadges', false)
 const showPropertiesSidebarRef = usePersistedBoolean('chainlink:showPropertiesSidebar', true)
+const showPreviewPopupRef = usePersistedBoolean('chainlink:showPreviewPopup', true)
 
 export function useShowPropertyBadges() {
   return showPropertyBadgesRef
@@ -23,4 +24,8 @@ export function useShowPropertyBadges() {
 
 export function useShowPropertiesSidebar() {
   return showPropertiesSidebarRef
+}
+
+export function useShowPreviewPopup() {
+  return showPreviewPopupRef
 }

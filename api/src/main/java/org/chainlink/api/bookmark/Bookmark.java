@@ -101,6 +101,10 @@ public class Bookmark extends AbstractEntity<Bookmark> implements BelongsToColle
     @Column(name = "suggestion_dismissed_at", nullable = true)
     private OffsetDateTime suggestionDismissedAt;
 
+    @Nullable
+    @Column(name = "screenshot_captured_at", nullable = true)
+    private OffsetDateTime screenshotCapturedAt;
+
     @Override
     public @NonNull ID<Collection> getCollectionId() {
         return collection.getId();

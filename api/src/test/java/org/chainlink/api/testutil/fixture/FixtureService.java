@@ -1,5 +1,6 @@
 package org.chainlink.api.testutil.fixture;
 
+import java.time.OffsetDateTime;
 import java.util.function.Consumer;
 
 import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
@@ -108,13 +109,23 @@ public class FixtureService {
      */
     @NonNull
     public Collection createTestCollection() {
+        return createTestCollection(_ -> {});
+    }
+
+    /**
+     * Variant that lets the test customize the collection (e.g. flip the
+     * screenshot flag) before persistence. Owner + CollectionAccess for the
+     * test user are still set up automatically.
+     */
+    @NonNull
+    public Collection createTestCollection(Consumer<org.chainlink.api.testutil.builder.CollectionBuilder> block) {
         User user = userRepo.findByEmail(EmailAddress.fromString("test@example.com"))
             .orElseThrow(() -> new RuntimeException("Test user not found"));
 
-        Collection collection = org.chainlink.api.testutil.builder.CollectionBuilder.build(b -> b
-            .withOwner(user)
-            .withName("Test Collection")
-        );
+        Collection collection = org.chainlink.api.testutil.builder.CollectionBuilder.build(b -> {
+            b.withOwner(user).withName("Test Collection");
+            block.accept(b);
+        });
         collectionService.saveCollection(collection);
 
         CollectionAccess access = org.chainlink.api.testutil.builder.CollectionAccessBuilder.build(b -> b
@@ -162,5 +173,9 @@ public class FixtureService {
             b.withCollection(collection);
             block.accept(b);
         });
+    }
+
+    public void setTimestampErstellt(@NonNull Bookmark bookmark, @NonNull OffsetDateTime at) {
+        bookmarkRepo.getById(bookmark.getId()).setTimestampErstellt(at);
     }
 }

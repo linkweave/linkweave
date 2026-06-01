@@ -1,6 +1,5 @@
 package org.chainlink.api.collection.favicon;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -8,7 +7,6 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import ch.dvbern.dvbstarter.clock.ClockProvider;
 import io.quarkus.scheduler.Scheduled;
@@ -19,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.chainlink.api.bookmark.BookmarkService;
 import org.chainlink.api.bookmark.BookmarkService.FaviconEvictionCandidate;
 import org.chainlink.api.shared.config.ConfigService;
+import org.chainlink.api.shared.util.FileCacheCleanupUtil;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
 
@@ -54,7 +53,8 @@ public class FaviconCacheCleanupJobService {
      */
     @NonNull
     Result run() {
-        return run(parseSize(configService.getFaviconCacheCleanupMaxSize()), configService.getFaviconCacheCleanupMinBookmarkAge());
+        return run(FileCacheCleanupUtil.parseSize(configService.getFaviconCacheCleanupMaxSize()),
+            configService.getFaviconCacheCleanupMinBookmarkAge());
     }
 
     @NonNull
@@ -65,7 +65,7 @@ public class FaviconCacheCleanupJobService {
             return Result.ofSkipped();
         }
 
-        long currentSize = computeDirectorySize(dir);
+        long currentSize = FileCacheCleanupUtil.computeDirectorySize(dir, LOG);
 
         if (currentSize <= maxBytes) {
             LOG.info("Favicon cache size {} bytes within budget {} bytes; nothing to evict", currentSize, maxBytes);
@@ -118,44 +118,6 @@ public class FaviconCacheCleanupJobService {
             );
         }
         return new Result(false, evictedFiles, bytesFreed, currentSize, oldestEvictedAge);
-    }
-
-    private static long computeDirectorySize(@NonNull Path dir) {
-        try (Stream<Path> stream = Files.list(dir)) {
-            return stream.filter(Files::isRegularFile).mapToLong(p -> {
-                try {
-                    return Files.size(p);
-                } catch (IOException e) {
-                    LOG.warn("Failed to stat favicon cache file {}: {}", p, e.getMessage());
-                    return 0L;
-                }
-            }).sum();
-        } catch (IOException e) {
-            LOG.warn("Failed to list favicon cache directory {}: {}", dir, e.getMessage());
-            return 0L;
-        }
-    }
-
-    /**
-     * Parses sizes such as {@code "40MB"}, {@code "100K"}, {@code "1G"} or a bare byte
-     * count. Spaces and case are tolerated.
-     */
-    static long parseSize(@NonNull String raw) {
-        String s = raw.trim().toUpperCase();
-        long mult = 1L;
-        if (s.endsWith("KB") || s.endsWith("K")) {
-            mult = 1024L;
-            s = s.substring(0, s.length() - (s.endsWith("KB") ? 2 : 1));
-        } else if (s.endsWith("MB") || s.endsWith("M")) {
-            mult = 1024L * 1024L;
-            s = s.substring(0, s.length() - (s.endsWith("MB") ? 2 : 1));
-        } else if (s.endsWith("GB") || s.endsWith("G")) {
-            mult = 1024L * 1024L * 1024L;
-            s = s.substring(0, s.length() - (s.endsWith("GB") ? 2 : 1));
-        } else if (s.endsWith("B")) {
-            s = s.substring(0, s.length() - 1);
-        }
-        return Long.parseLong(s.trim()) * mult;
     }
 
     record Result(boolean skipped, long evictedFiles, long bytesFreed, long finalSize, @NonNull Duration oldestEvictedAge) {

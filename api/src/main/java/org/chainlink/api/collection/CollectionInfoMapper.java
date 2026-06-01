@@ -52,6 +52,7 @@ public class CollectionInfoMapper {
             collection.getId(),
             collection.getName(),
             collection.getFaviconAllowlist(),
+            collection.isScreenshotEnabled(),
             bookmarks.stream()
                 .map(b -> BookmarkMapper.toJson(b, propsByBookmark.getOrDefault(b.getId(), List.of())))
                 .toList(),
@@ -95,6 +96,7 @@ public class CollectionInfoMapper {
             collection.getId(),
             collection.getName(),
             collection.getFaviconAllowlist(),
+            collection.isScreenshotEnabled(),
             bookmarks.stream().map(BookmarkMapper::toJson).toList(),
             folders.stream().map(FolderMapper::toJson).toList(),
             tags.stream().map(TagMapper::toJson).toList(),

@@ -1,0 +1,2 @@
+ALTER TABLE Collection ADD COLUMN screenshotEnabled BOOLEAN NOT NULL DEFAULT 0;
+ALTER TABLE Collection_AUD ADD COLUMN screenshotEnabled BOOLEAN;

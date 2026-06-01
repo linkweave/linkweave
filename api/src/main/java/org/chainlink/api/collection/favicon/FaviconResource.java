@@ -10,6 +10,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.Bookmark;
+import org.chainlink.api.bookmark.BookmarkService;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.auth.AuthorizationService;
 import io.smallrye.faulttolerance.api.RateLimit;
@@ -25,6 +26,7 @@ import org.chainlink.infrastructure.stereotypes.JaxResource;
 public class FaviconResource {
 
     private final FaviconService faviconService;
+    private final BookmarkService bookmarkService;
     private final AuthorizationService authorizationService;
 
     @GET
@@ -33,7 +35,9 @@ public class FaviconResource {
         @PathParam("collectionId") ID<Collection> collectionId,
         @PathParam("bookmarkId") ID<Bookmark> bookmarkId
     ) {
-        authorizationService.requireCollectionAccess(collectionId);
+        Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
+        authorizationService.requireAccessTo(bookmark);
+        authorizationService.requireSameCollection(bookmark, collectionId);
         return faviconService.getFavicon(bookmarkId)
             .map(c -> Response.ok(c.bytes()).header("Content-Type", c.contentType())
                 .header("Cache-Control", "private, max-age=86400")

@@ -34,9 +34,10 @@ const searchPlaceholder = computed(() =>
 )
 
 const effectiveLayout = computed(() => collectionStore.settingsLayout ?? ui.bookmarkLayout)
-const containerClass = computed(() =>
-  effectiveLayout.value === 'grouped' || effectiveLayout.value === 'grid' ? 'max-w-7xl' : 'max-w-4xl',
-)
+const containerClass = computed(() => {
+  const l = effectiveLayout.value
+  return l === 'grouped' || l === 'grid' ? 'max-w-7xl' : 'max-w-4xl'
+})
 </script>
 
 <template>
