@@ -1,0 +1,25 @@
+[package]
+name = "chainlink-desktop"
+version = "0.1.0"
+description = "Chainlink desktop shell"
+edition = "2021"
+
+[lib]
+# The bulk of the app lives in the lib so it can be shared/tested; main.rs is a thin entry point.
+name = "chainlink_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-single-instance = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Tiny blocking HTTP client, used only to poll the backend readiness probe on startup.
+ureq = "2"
+
+# Used to send SIGTERM for a graceful backend shutdown (std's Child::kill only does SIGKILL).
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"

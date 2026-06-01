@@ -49,7 +49,7 @@ chainlink/
     ├── src-tauri/
     │   ├── Cargo.toml
     │   ├── tauri.conf.json   # bundle config, sidecar binaries, window settings
-    │   ├── src/main.rs       # spawn JVM, poll /q/health, load 127.0.0.1:${port}
+    │   ├── src/main.rs       # spawn JVM, poll /api/ping, load 127.0.0.1:${port}
     │   └── bin/              # bundled sidecar payload (see build pipeline)
     └── (no frontend sources — Quarkus serves the SPA under Option B)
 ```
@@ -133,7 +133,16 @@ There are two ways to wire the SPA to the sidecar, and the choice matters becaus
 %desktop.quarkus.rest.path=/api                                    # build-time: REST stays /api
 %desktop.quarkus.oidc.enabled=false                               # build-time: compile OIDC out
 %desktop.quarkus.http.auth.form.post-location=/api/j_security_check  # runtime: keep login at /api
+# Self-contained / offline defaults for config that is env-var-required only in prod, otherwise
+# the bundled backend won't boot (it has no Sentry DSN / deployment env / cookie secret to read):
+%desktop.quarkus.log.sentry.enabled=false
+%desktop.app.deployment.environment=LOCAL
+%desktop.app.deployment.public-url=http://127.0.0.1/
+%desktop.app.deployment.instance=desktop
+%desktop.quarkus.http.auth.session.encryption-key=chainlink-desktop-local-session-key  # local-only
 ```
+
+> Lesson learned: a `@QuarkusTest` runs under the `test` profile, which already neutralizes Sentry/deployment/secret — so it does **not** prove the `desktop` profile boots. The build pipeline therefore boots the packaged jar under `QUARKUS_PROFILE=desktop` and probes `/api/ping` before bundling (see Build Pipeline).
 
 - **Docker build** (`mvnw package`, no profile): completely unchanged — `root-path=/api`, OIDC on, Google callback at `/api/q/authorized` intact. The `%desktop` lines do not apply.
 - **Desktop build** (`mvnw package -Dquarkus.profile=desktop`, run with `QUARKUS_PROFILE=desktop`): SPA served at `/`, REST under `/api`, OIDC absent, form login at `/api/j_security_check`.
@@ -196,7 +205,7 @@ A `.app`/`.dmg` (macOS first) whose Tauri resources contain two self-contained p
 | 2 | Package backend | `./mvnw -DskipTests package` (`api/`) | `api/target/quarkus-app/` (fast-jar, **no SPA inside**) |
 | 3 | Stage payloads into shell | copy `frontend/dist/` → `desktop/src-tauri/bin/web/` **and** `api/target/quarkus-app/` → `desktop/src-tauri/bin/quarkus-app/` | two Tauri resources |
 | 4 | Bundle | `pnpm install && pnpm tauri build` (`desktop/`) | `desktop/src-tauri/target/release/bundle/**` |
-| 5 | Collect | copy the `.dmg`/`.app` to `dist-desktop/` at repo root | one predictable artifact location |
+| 5 | Collect | copy the `.dmg`/`.app` to `desktop/dist/` (git-ignored) | one predictable artifact location |
 
 The SPA is **never** copied into `api/src/main/resources/` — that's the whole point of #4c. The backend build in stage 2 is the same `mvnw package` the Docker image uses, so the jar is identical across deployments.
 
@@ -205,7 +214,7 @@ The SPA is **never** copied into `api/src/main/resources/` — that's the whole 
 - **`VITE_DESKTOP=true` is set only in stage 1**, so the desktop SPA build hides the OIDC button (#2) while the normal web build is unaffected. The flag belongs to the build script, not to `frontend/`'s default scripts.
 - **No tracked source tree is written.** Both payloads are staged into `desktop/src-tauri/bin/` (a gitignored build location). Nothing under `api/src/` is touched, so there's no risk of the SPA leaking into the Docker image.
 - **The shell exports `CHAINLINK_DESKTOP_WEB_ROOT`** (pointing at the bundled `bin/web/`) alongside `CHAINLINK_DB_PATH` and `CHAINLINK_FAVICON_CACHE_DIR` when it spawns the JVM. These three env vars are the entire desktop-specific runtime contract.
-- **JRE strategy is a `--with-jre` flag, default off.** For the prototype the script assumes a system JVM (documented prerequisite). Bundling a `jlink`-trimmed runtime and wiring `tauri.conf.json` to ship it is a follow-up; leave a stub stage so it's an obvious extension point, not a rewrite.
+- **JRE is bundled by default (`--no-jre` to skip).** This turned out to be *required*, not optional: a dependency (`dvbstarter`) is compiled for Java 25, and a Finder/launchd launch resolves whatever (often older) `java` the OS has — on the dev machine that was a system Java 21, which crashed the backend with `UnsupportedClassVersionError` (the app just spun on the splash). Stage 4 `jlink`s a trimmed Java 25 runtime (~94 MB, `--add-modules ALL-MODULE-PATH` for correctness over size) into `bin/runtime`, ships it as a Tauri resource, and the shell prefers `runtime/bin/java` over PATH. `--no-jre` skips it for environments with a guaranteed system Java 25+.
 - **`mvnw -DskipTests`** in the build script — tests run in their own CI stage / `mvnw verify`, not in the packaging path. Keep packaging fast and deterministic.
 - **Idempotent staging.** Stage 3 `rm -rf`s each destination before copying so stale assets from a previous build never leak into the bundle.
 - **Platform-parameterized, macOS-first.** Keep stage commands platform-neutral where possible so a later `build-desktop.ps1` (Windows) and Linux target are additive, mirroring `scripts/certs/generate-keypair.{sh,ps1}`.
@@ -230,12 +239,12 @@ This isolates "did the build wire the SPA + paths correctly" from "does Tauri sp
 
 1. **Make paths env-configurable** (#1, #3). Edit only the JDBC URL; favicon dir needs no code change. Verify `CHAINLINK_DB_PATH=/tmp/foo.db CHAINLINK_FAVICON_CACHE_DIR=/tmp/fav java -jar quarkus-app/quarkus-run.jar` writes to those locations.
 2. **Add `DesktopWebRootRoute`** (#4c) gated on `CHAINLINK_DESKTOP_WEB_ROOT`. With it set to `frontend/dist`, confirm the SPA + `/api/*` + form login all work from a single `http://127.0.0.1:port` origin in a plain browser; with it unset, confirm Quarkus serves no SPA (Docker/Caddy path unaffected). This removes the port-injection and CORS work entirely and keeps the API jar identical across deployments.
-3. **Scaffold a minimal Tauri project in `desktop/`**. Get it to spawn the JVM, poll `/q/health`, then point the webview at `http://127.0.0.1:${port}`.
+3. **Scaffold a minimal Tauri project in `desktop/`**. Get it to spawn the JVM (with `QUARKUS_PROFILE=desktop` + the three runtime env vars), poll `/api/ping` (there is no health extension), then point the webview at `http://127.0.0.1:${port}/`. The shell starts on a bundled splash page and navigates the window once the backend answers.
 4. **Hide OIDC button** when `VITE_DESKTOP=true` (#2).
 5. **Write `scripts/build-desktop.sh`** (see Build Pipeline) and produce a `.dmg`/`.app` for macOS. Verify launch → register → add bookmark → quit → relaunch → bookmark persists.
-6. **Single-instance lock** (BR-052-4) and **graceful shutdown** (BR-052-5).
+6. **Single-instance lock** (BR-052-4) via `tauri-plugin-single-instance` — a second launch focuses the existing window instead of spawning another backend. **Graceful shutdown** (BR-052-5): on exit the shell sends the JVM `SIGTERM` (so Quarkus closes SQLite/WAL cleanly), waits up to 5s, then `SIGKILL`s as a fallback.
 
-That covers the learning goal. Code signing, notarization, auto-update, Windows/Linux installers, and JRE bundling (jlink) are natural follow-ups.
+That covers the learning goal. Code signing, notarization, auto-update, and Windows/Linux installers are natural follow-ups. (JRE bundling via jlink, originally a follow-up, was pulled forward — it turned out to be required; see #4c / Build Pipeline.)
 
 ## Verification
 
@@ -243,7 +252,7 @@ After step 5:
 
 - Launch the bundled `.app` from `/Applications`
 - Confirm Quarkus starts (Console.app stdout, or shell-piped log file)
-- Confirm SPA loads and `/q/health` returns 200 from inside webview devtools
+- Confirm SPA loads and `/api/ping` returns 204 from inside webview devtools
 - Register a new local user via form auth
 - Add a bookmark, restart the app, verify it persists
 - Confirm DB file is at `~/Library/Application Support/Chainlink/chainlink.db`, **not** in the app bundle (BR-052-1)
@@ -258,4 +267,4 @@ After step 5:
 - Auto-update infrastructure
 - Code signing / notarization
 - Windows / Linux installers
-- Bundling a trimmed JRE via jlink (eventual answer for bundle size, not needed for prototype)
+- Further trimming the bundled jlink runtime (currently `ALL-MODULE-PATH` for correctness; a `jdeps`-computed module set would shrink it)
