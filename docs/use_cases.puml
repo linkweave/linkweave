@@ -63,7 +63,7 @@ rectangle "Chainlink Bookmark Manager" {
         usecase "UC-067\nDefine Bookmark\nProperty" as UC067 <<implemented>>
         usecase "UC-068\nSet Bookmark\nProperty Value" as UC068 <<implemented>>
         usecase "UC-069\nFilter Bookmarks\nby Property" as UC069 <<implemented>>
-        usecase "UC-091\nCollapsible Properties\nSection" as UC091
+        usecase "UC-091\nCollapsible Properties\nSection" as UC091 <<implemented>>
     }
 
     rectangle "Search & Filtering" {
@@ -120,8 +120,8 @@ rectangle "Chainlink Bookmark Manager" {
     }
 
     rectangle "Screenshot Previews" {
-        usecase "UC-054\nView Bookmark\nScreenshot Previews" as UC054
-        usecase "UC-055\nScreenshot Cache\nCleanup Job" as UC055
+        usecase "UC-054\nView Bookmark\nScreenshot Previews" as UC054 <<implemented>>
+        usecase "UC-055\nScreenshot Cache\nCleanup Job" as UC055 <<implemented>>
     }
 
     rectangle "Architecture & Quality Control" {

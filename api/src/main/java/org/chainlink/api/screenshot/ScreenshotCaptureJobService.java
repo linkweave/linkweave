@@ -69,7 +69,15 @@ public class ScreenshotCaptureJobService {
                 if (cache.get(key).isPresent()) {
                     continue; // negative cache still active; skip but keep budget free
                 }
-                boolean ok = screenshotService.captureNow(b.getId());
+                boolean ok;
+                try {
+                    ok = screenshotService.captureNow(b.getId());
+                } catch (Exception e) {
+                    LOG.warn("Screenshot capture failed for bookmark {}: {}", b.getId(), e.getMessage());
+                    failed++;
+                    if (captured + failed >= limitForRun) break outer;
+                    continue;
+                }
                 if (ok) { captured++; capturedInPage++; } else failed++;
                 if (captured + failed >= limitForRun) break outer;
             }

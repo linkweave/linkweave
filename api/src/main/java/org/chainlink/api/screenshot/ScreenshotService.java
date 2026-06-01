@@ -60,6 +60,11 @@ public class ScreenshotService {
         Bookmark bookmark = bookmarkRepo.getById(bookmarkId);
         String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
         cache.deleteForKey(key);
-        return captureNow(bookmarkId);
+        try {
+            return captureNow(bookmarkId);
+        } catch (Exception e) {
+            cache.putNegative(key);
+            return false;
+        }
     }
 }
