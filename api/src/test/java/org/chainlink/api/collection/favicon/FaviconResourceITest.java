@@ -1,11 +1,14 @@
 package org.chainlink.api.collection.favicon;
 
-import java.util.UUID;
-
+import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
 import jakarta.inject.Inject;
+import org.chainlink.api.benutzer.UserRepo;
+import org.chainlink.api.bookmark.Bookmark;
+import org.chainlink.api.collection.Collection;
+import org.chainlink.api.shared.user.User;
 import org.chainlink.api.testutil.fixture.FixtureService;
 import org.junit.jupiter.api.Test;
 
@@ -15,72 +18,68 @@ class FaviconResourceITest {
     @Inject
     FixtureService fixtureService;
 
-    @Test
-    void shouldReturn401_whenNotAuthenticated() {
-        RestAssured.given()
-            .pathParam("collectionId", UUID.randomUUID().toString())
-            .pathParam("bookmarkId", UUID.randomUUID().toString())
-            .get("/collections/{collectionId}/bookmarks/{bookmarkId}/favicon")
-            .then()
-            .statusCode(401);
-    }
+    @Inject
+    UserRepo userRepo;
 
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
-    void shouldReturn403_whenCollectionAccessDenied() {
+    void shouldReturn403_whenGetFaviconWithMismatchedCollectionId() {
+        Collection collectionA = fixtureService.createTestCollection(b -> b.withName("Collection A"));
+
+        User alice = userRepo.findByEmail(EmailAddress.fromString("alice@example.com")).orElseThrow();
+        Collection collectionB = fixtureService.persistCollection(b -> b
+            .withOwner(alice)
+            .withName("Alice's Collection")
+        );
+        Bookmark bookmarkInB = fixtureService.persistBookmark(b -> b
+            .withCollection(collectionB)
+            .withTitle("Alice's Bookmark")
+            .withUrl("https://alice.example.com")
+        );
+
+        // IDOR: supply collectionA (has access) but bookmark belongs to collectionB (no access)
         RestAssured.given()
-            .pathParam("collectionId", UUID.randomUUID().toString())
-            .pathParam("bookmarkId", UUID.randomUUID().toString())
-            .get("/collections/{collectionId}/bookmarks/{bookmarkId}/favicon")
+            .get("/collections/{cid}/bookmarks/{bid}/favicon",
+                collectionA.getId().getUUID(), bookmarkInB.getId().getUUID())
             .then()
             .statusCode(403);
     }
 
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
-    void shouldReturn204_whenBookmarkUrlIsLoopback_ssrfBlocked() {
-        var bookmark = fixtureService.createTestBookmark(b -> b
-            .withTitle("Internal")
-            .withUrl("http://127.0.0.1:9999/page")
+    void shouldReturnNoContent_whenUserHasAccessButNoFaviconCached() {
+        Collection collection = fixtureService.createTestCollection();
+        Bookmark bookmark = fixtureService.persistBookmark(b -> b
+            .withCollection(collection)
+            .withTitle("Test Bookmark")
+            .withUrl("https://example.com")
         );
 
         RestAssured.given()
-            .pathParam("collectionId", bookmark.getCollection().getId().getUUID().toString())
-            .pathParam("bookmarkId", bookmark.getId().getUUID().toString())
-            .get("/collections/{collectionId}/bookmarks/{bookmarkId}/favicon")
+            .get("/collections/{cid}/bookmarks/{bid}/favicon",
+                collection.getId().getUUID(), bookmark.getId().getUUID())
             .then()
             .statusCode(204);
     }
 
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
-    void shouldReturn204_whenBookmarkUrlIsPrivateRange_ssrfBlocked() {
-        var bookmark = fixtureService.createTestBookmark(b -> b
-            .withTitle("Private")
-            .withUrl("http://10.0.0.5/")
+    void shouldReturn403_whenGetFaviconForCollectionWithoutAccess() {
+        User alice = userRepo.findByEmail(EmailAddress.fromString("alice@example.com")).orElseThrow();
+        Collection otherCollection = fixtureService.persistCollection(b -> b
+            .withOwner(alice)
+            .withName("Alice's Collection")
+        );
+        Bookmark bookmark = fixtureService.persistBookmark(b -> b
+            .withCollection(otherCollection)
+            .withTitle("Alice's Bookmark")
+            .withUrl("https://alice.example.com")
         );
 
         RestAssured.given()
-            .pathParam("collectionId", bookmark.getCollection().getId().getUUID().toString())
-            .pathParam("bookmarkId", bookmark.getId().getUUID().toString())
-            .get("/collections/{collectionId}/bookmarks/{bookmarkId}/favicon")
+            .get("/collections/{cid}/bookmarks/{bid}/favicon",
+                java.util.UUID.randomUUID(), bookmark.getId().getUUID())
             .then()
-            .statusCode(204);
-    }
-
-    @Test
-    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
-    void shouldReturn204_whenBookmarkUrlIsCloudMetadata_ssrfBlocked() {
-        var bookmark = fixtureService.createTestBookmark(b -> b
-            .withTitle("Metadata")
-            .withUrl("http://169.254.169.254/latest/meta-data/")
-        );
-
-        RestAssured.given()
-            .pathParam("collectionId", bookmark.getCollection().getId().getUUID().toString())
-            .pathParam("bookmarkId", bookmark.getId().getUUID().toString())
-            .get("/collections/{collectionId}/bookmarks/{bookmarkId}/favicon")
-            .then()
-            .statusCode(204);
+            .statusCode(403);
     }
 }

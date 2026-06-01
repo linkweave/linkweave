@@ -97,7 +97,7 @@ public class FaviconFetcherService {
         conn.setConnectTimeout((int) configService.getFaviconTimeout().toMillis());
         conn.setReadTimeout((int) configService.getFaviconTimeout().toMillis());
         conn.setInstanceFollowRedirects(false);
-        conn.setRequestProperty("User-Agent", "Chainlink-FaviconProxy/1.0");
+        conn.setRequestProperty("User-Agent", configService.getFaviconUserAgent());
         conn.setRequestProperty("Accept", accept);
         return conn;
     }

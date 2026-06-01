@@ -13,6 +13,13 @@ const NAV_TIMEOUT_MS = Number(process.env.NAV_TIMEOUT_MS ?? 10_000)
 const SETTLE_TIMEOUT_MS = Number(process.env.SETTLE_TIMEOUT_MS ?? 2_500)
 const POST_LOAD_DELAY_MS = Number(process.env.POST_LOAD_DELAY_MS ?? 300)
 const MAX_BODY_BYTES = 8 * 1024
+// A realistic browser User-Agent. Playwright's default carries a "HeadlessChrome"
+// token and a bespoke token like "Chrome/Chainlink-Screenshot" is not a valid
+// Chrome version — both are routinely rejected (HTTP 403) by WAF/CDN bot rules,
+// which would capture an error page instead of the real site.
+const USER_AGENT =
+  process.env.USER_AGENT ??
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
 
 const ALLOWED_FORMATS = new Set(['jpeg', 'png'])
 
@@ -80,8 +87,7 @@ async function capture({ url, width, height, format, quality }) {
   const context = await browser.newContext({
     viewport: { width, height },
     deviceScaleFactor: 1,
-    userAgent:
-      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/Chainlink-Screenshot Safari/537.36',
+    userAgent: USER_AGENT,
   })
   try {
     const page = await context.newPage()

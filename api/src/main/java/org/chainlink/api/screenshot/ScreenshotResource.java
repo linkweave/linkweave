@@ -12,6 +12,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.Bookmark;
+import org.chainlink.api.bookmark.BookmarkService;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.auth.AuthorizationService;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
@@ -24,6 +25,7 @@ import org.chainlink.infrastructure.stereotypes.JaxResource;
 public class ScreenshotResource {
 
     private final ScreenshotService screenshotService;
+    private final BookmarkService bookmarkService;
     private final AuthorizationService authorizationService;
 
     @GET
@@ -32,7 +34,9 @@ public class ScreenshotResource {
         @PathParam("collectionId") ID<Collection> collectionId,
         @PathParam("bookmarkId") ID<Bookmark> bookmarkId
     ) {
-        authorizationService.requireCollectionAccess(collectionId);
+        Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
+        authorizationService.requireAccessTo(bookmark);
+        authorizationService.requireSameCollection(bookmark, collectionId);
         return screenshotService.getScreenshot(bookmarkId)
             .map(c -> Response.ok(c.bytes())
                 .header("Content-Type", c.contentType())
@@ -48,7 +52,9 @@ public class ScreenshotResource {
         @PathParam("collectionId") ID<Collection> collectionId,
         @PathParam("bookmarkId") ID<Bookmark> bookmarkId
     ) {
-        authorizationService.requireCollectionAccess(collectionId);
+        Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
+        authorizationService.requireAccessTo(bookmark);
+        authorizationService.requireSameCollection(bookmark, collectionId);
         screenshotService.refreshScreenshot(bookmarkId);
         return Response.noContent().build();
     }
