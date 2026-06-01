@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { BookmarkJson, PropertyDefinitionJson } from '@/api/generated'
 import BookmarkFavicon from '@/components/bookmark/BookmarkFavicon.vue'
+import BookmarkPreview from '@/components/bookmark/BookmarkPreview.vue'
 import { DropdownMenuContentCl, DropdownMenuItemCl } from '@/components/ui'
 import { DRAG_TYPE_BOOKMARK, setDraggingBookmark } from '@/composables/useDragState'
 import { useMediaQuery } from '@/composables/useMediaQuery'
@@ -9,24 +10,36 @@ import { useRelativeTime } from '@/composables/useRelativeTime'
 import { decodePropertyValue } from '@/lib/propertyValueMapper'
 import { matchesPropertyToken, parsePropertyValue } from '@/lib/searchQueryProperty'
 import { useBookmarkStore } from '@/stores/bookmark'
+import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
+import { useNotificationStore } from '@/stores/notification'
 import { usePropertyStore } from '@/stores/property'
 import { useTagStore } from '@/stores/tag'
+import { useUiStore } from '@/stores/ui'
 import { Clock, ExternalLink, Folder, MoreHorizontal, MousePointerClick } from '@lucide/vue'
 import { DropdownMenuRoot, DropdownMenuTrigger } from 'radix-vue'
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BookmarkPropertyBadge from './BookmarkPropertyBadge.vue'
+import { useBookmarkPreviewHover } from '@/composables/useBookmarkPreviewHover'
 
+const { t } = useI18n()
 const tagStore = useTagStore()
 const folderStore = useFolderStore()
 const bookmarkStore = useBookmarkStore()
 const propertyStore = usePropertyStore()
+const collectionStore = useCollectionStore()
+const notification = useNotificationStore()
+const ui = useUiStore()
 const isTouch = useMediaQuery('(hover: none) and (pointer: coarse)')
 const { formatRelativeTime } = useRelativeTime()
 const showPropertyBadges = useShowPropertyBadges()
 
 const props = defineProps<{
   bookmark: BookmarkJson
+  // 'list' draws the leading thumbnail + stats; 'grid' draws the cover-image
+  // card. Other layouts (grouped) use their own row component.
+  layout: 'grid' | 'list'
   showStats?: boolean
 }>()
 
@@ -35,6 +48,18 @@ const emit = defineEmits<{
   delete: [bookmark: BookmarkJson]
   move: [bookmark: BookmarkJson]
 }>()
+
+// Previews compose the global toolbar toggle with the per-collection
+// `screenshotEnabled` flag (which also gates server-side capture). When the
+// collection has previews disabled there's no captured image to show, so we
+// also skip the frame entirely — same DOM as before previews existed.
+const previewsVisible = computed(
+  () => ui.previewsEnabled && (collectionStore.collectionInfo?.screenshotEnabled ?? false),
+)
+
+// Bumped on a successful refresh so the preview component reloads from the
+// server with a cache-busting query param.
+const previewNonce = ref(0)
 
 function getTagById(tagId: string) {
   return tagStore.tags.find((t) => t.id === tagId)
@@ -193,6 +218,21 @@ function onToggleFolderFilter(event: MouseEvent) {
   }
 }
 
+async function refreshPreview() {
+  const cid = collectionStore.currentCollectionId
+  if (!cid) return
+  try {
+    const response = await fetch(
+      `/api/collections/${encodeURIComponent(cid)}/bookmarks/${encodeURIComponent(props.bookmark.id)}/screenshot/refresh`,
+      { method: 'POST', credentials: 'include' },
+    )
+    if (!response.ok) throw new Error(`Refresh failed: ${response.status}`)
+    previewNonce.value = Date.now()
+  } catch (err) {
+    void notification.handleApiError(err, t('bookmark.refreshPreviewError'))
+  }
+}
+
 // Lazy mount of the radix DropdownMenu. With N cards on screen, mounting an
 // open-able menu per card (Portal context, popper, listeners) is the dominant
 // cost of rendering the bookmark list. Most cards never have their menu
@@ -200,16 +240,46 @@ function onToggleFolderFilter(event: MouseEvent) {
 // swap in the full radix tree (auto-opened so the user sees the menu on that
 // very first click, just one tick later).
 const menuActivated = ref(false)
+
+// Hover-intent driver for the shared preview popup. The controller is
+// provided by BookmarkList; when the bookmark list isn't the parent (e.g.
+// the grouped layout uses its own row component) inject returns null and
+// the handlers below quietly no-op.
+const previewHover = useBookmarkPreviewHover()
+const rowEl = ref<HTMLElement | null>(null)
+
+// Gate the wiring: previews must be on, layout must be the list (the only
+// layout that benefits from a zoom — grid already shows a large cover),
+// the device must have real hover, and the bookmark's preview must not be
+// in a failed/capturing state we don't want to enlarge into a broken image.
+const hoverPreviewActive = computed(
+  () => previewsVisible.value && props.layout === 'list' && !isTouch.value && !!previewHover,
+)
+
+function onRowEnter() {
+  if (!hoverPreviewActive.value || !rowEl.value) return
+  previewHover!.onRowEnter(props.bookmark, rowEl.value)
+}
+
+function onRowLeave() {
+  if (!hoverPreviewActive.value) return
+  previewHover!.onRowLeave()
+}
 </script>
 
 <template>
   <div
+    ref="rowEl"
     :draggable="!isTouch"
     :data-testid="`bookmark-card-${props.bookmark.id}`"
     :data-bookmark-title="props.bookmark.data.title"
-    class="group relative rounded-lg border border-border bg-card p-4 hover:ring-2 hover:ring-primary/50 hover:border-primary/30 focus-within:ring-2 focus-within:ring-primary transition-[box-shadow,border-color,color] duration-150 text-muted-foreground hover:text-accent-foreground cursor-grab active:cursor-grabbing"
+    :data-layout="props.layout"
+    class="group relative rounded-lg border border-border bg-card hover:ring-2 hover:ring-primary/50 hover:border-primary/30 focus-within:ring-2 focus-within:ring-primary transition-[box-shadow,border-color,color] duration-150 text-muted-foreground hover:text-accent-foreground cursor-grab active:cursor-grabbing"
+    :class="props.layout === 'grid' ? 'overflow-hidden' : ''"
     @dragstart="onBookmarkDragStart"
     @dragend="onBookmarkDragEnd"
+    @mouseenter="onRowEnter"
+    @mouseleave="onRowLeave"
   >
     <!-- Stretched link: covers the entire card so any click on the card body opens the URL.
          Sibling (not parent) of interactive children to keep HTML valid and Cmd-click working. -->
@@ -223,8 +293,38 @@ const menuActivated = ref(false)
       @click="onCardLinkClick"
     />
 
-    <div class="relative flex items-start gap-3 pointer-events-none">
+    <!-- Grid mode preview: 16:9 cover at the top with a favicon chip
+         overlapping the bottom edge. The body wrapper below adds extra
+         padding-top to clear the −12px overhang. -->
+    <BookmarkPreview
+      v-if="previewsVisible && props.layout === 'grid'"
+      :bookmark="props.bookmark"
+      variant="grid"
+      :nonce="previewNonce"
+      class="block pointer-events-none"
+    />
+
+    <div
+      class="relative flex items-start gap-3 pointer-events-none p-4"
+      :class="previewsVisible && props.layout === 'grid' ? 'pt-[18px]' : ''"
+    >
+      <!-- List mode preview: leading 124px thumb. Sits as the first flex
+           child; the favicon then moves *inline* into the title row (see
+           below), which is what makes the row feel like a single text
+           block beside the thumb rather than two stacked columns. -->
+      <BookmarkPreview
+        v-if="previewsVisible && props.layout === 'list'"
+        :bookmark="props.bookmark"
+        variant="list"
+        :nonce="previewNonce"
+        class="w-[124px] shrink-0 mt-0.5"
+      />
+      <!-- Favicon-as-own-column only when previews aren't carrying the
+           identity. With previews on:
+             - grid: the chip overlay handles identity (no favicon here)
+             - list: the favicon moves inline into the title row -->
       <BookmarkFavicon
+        v-if="!previewsVisible"
         :bookmark-id="props.bookmark.id"
         :url="props.bookmark.data.url"
         :size="20"
@@ -232,6 +332,13 @@ const menuActivated = ref(false)
       />
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2">
+          <BookmarkFavicon
+            v-if="previewsVisible && props.layout === 'list'"
+            :bookmark-id="props.bookmark.id"
+            :url="props.bookmark.data.url"
+            :size="16"
+            class="shrink-0"
+          />
           <h3 class="font-medium text-foreground truncate">
             {{ props.bookmark.data.title }}
           </h3>
@@ -258,6 +365,12 @@ const menuActivated = ref(false)
               </DropdownMenuItemCl>
               <DropdownMenuItemCl @select="emit('move', props.bookmark)">
                 {{ $t('bookmark.moveToFolder') }}
+              </DropdownMenuItemCl>
+              <DropdownMenuItemCl
+                v-if="previewsVisible"
+                @select="refreshPreview"
+              >
+                {{ $t('bookmark.refreshPreview') }}
               </DropdownMenuItemCl>
               <DropdownMenuItemCl variant="destructive" @select="emit('delete', props.bookmark)">
                 {{ $t('common.delete') }}
@@ -363,5 +476,9 @@ const menuActivated = ref(false)
         {{ formatRelativeTime(props.bookmark.lastClickedAt) }}
       </span>
     </div>
+
+    <!-- Hover-to-enlarge popup is rendered once at BookmarkList level
+         (see BookmarkPreviewPopup) and driven by the hover-intent
+         controller; this row only reports enter/leave. -->
   </div>
 </template>

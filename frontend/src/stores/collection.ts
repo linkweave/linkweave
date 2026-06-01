@@ -22,9 +22,9 @@ export const useCollectionStore = defineStore('collection', () => {
 
   const collectionName = computed(() => collectionInfo.value?.name ?? null)
 
-  const settingsLayout = computed<'list' | 'grid' | 'grouped' | 'tiles' | null>(() => {
+  const settingsLayout = computed<'list' | 'grid' | 'grouped' | null>(() => {
     const v = settings.value?.layout
-    return v === 'list' || v === 'grid' || v === 'grouped' || v === 'tiles' ? v : null
+    return v === 'list' || v === 'grid' || v === 'grouped' ? v : null
   })
 
   // Two primitive computeds (rather than a packed {field, direction} object)

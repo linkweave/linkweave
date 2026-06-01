@@ -10,8 +10,11 @@
   "collectionSettings": {
     "title": "Sammlungseinstellungen",
     "tabDisplay": "Anzeige",
+    "tabPreview": "Vorschau",
     "tabProperties": "Eigenschaften",
     "tabData": "Daten",
+    "sectionPreview": "Seitenvorschau",
+    "sectionPreviewHint": "Gilt für alle mit Zugriff auf diese Sammlung.",
     "sectionImport": "Importieren",
     "sectionExport": "Exportieren",
     "exportDescription": "Alle Lesezeichen und Ordner dieser Sammlung als Netscape-HTML-Datei herunterladen.",
@@ -120,7 +123,6 @@
     "layoutList": "Liste",
     "layoutGrid": "Raster",
     "layoutGrouped": "Gruppiert",
-    "layoutTiles": "Kacheln",
     "offlineCaching": "Offline-Zwischenspeicherung",
     "offlineCachingHint": "Lesezeichen lokal für Offline-Nutzung speichern.",
     "offlineCachingUpdateError": "Offline-Zwischenspeicherung konnte nicht aktualisiert werden.",
@@ -133,8 +135,10 @@
     "layoutGrid": "Rasteransicht",
     "layoutList": "Listenansicht",
     "layoutGrouped": "Gruppierte Ansicht",
-    "layoutTiles": "Kachelansicht",
-    "changeLayout": "Ansicht ändern"
+    "changeLayout": "Ansicht ändern",
+    "previews": "Vorschauen",
+    "previewsOn": "Vorschauen ausblenden",
+    "previewsOff": "Vorschauen einblenden"
   },
   "import": {
     "title": "Lesezeichen importieren",
@@ -272,6 +276,9 @@
     "updateError": "Lesezeichen konnte nicht aktualisiert werden.",
     "moveError": "Lesezeichen konnte nicht verschoben werden.",
     "moveToFolder": "In Ordner verschieben",
+    "refreshPreview": "Vorschau aktualisieren",
+    "refreshPreviewError": "Vorschau konnte nicht aktualisiert werden.",
+    "previewAlt": "Seitenvorschau für {title}",
     "deleteTitle": "Lesezeichen löschen",
     "deleteConfirm": "Möchten Sie dieses Lesezeichen wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
     "deleteError": "Lesezeichen konnte nicht gelöscht werden.",

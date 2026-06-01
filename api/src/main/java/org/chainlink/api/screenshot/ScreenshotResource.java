@@ -6,6 +6,7 @@ import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.Authenticated;
 import io.smallrye.faulttolerance.api.RateLimit;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Response;
@@ -38,5 +39,17 @@ public class ScreenshotResource {
                 .header("Cache-Control", "private, max-age=86400")
                 .build())
             .orElseGet(() -> Response.noContent().build());
+    }
+
+    @POST
+    @Path("/refresh")
+    @Authenticated
+    public Response refreshScreenshot(
+        @PathParam("collectionId") ID<Collection> collectionId,
+        @PathParam("bookmarkId") ID<Bookmark> bookmarkId
+    ) {
+        authorizationService.requireCollectionAccess(collectionId);
+        screenshotService.refreshScreenshot(bookmarkId);
+        return Response.noContent().build();
     }
 }

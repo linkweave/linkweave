@@ -1,9 +1,11 @@
 package org.chainlink.api.bookmark;
 
+import java.net.URL;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -140,6 +142,25 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             .offset(offset)
             .limit(limit)
             .fetch();
+    }
+
+    /**
+     * Projects just the URL of one bookmark. The screenshot read endpoint is
+     * hit concurrently — one request per visible thumbnail/preview — and only
+     * needs the URL. Loading the full entity would extract its {@code
+     * OffsetDateTime} columns through Hibernate's shared static UTC
+     * {@link java.util.Calendar} (HHH-20355, fixed in 7.4), which is not
+     * thread-safe and races under that concurrency, throwing
+     * {@code ArrayIndexOutOfBoundsException} from deep in the JDBC driver. A
+     * scalar projection avoids timestamp extraction — and the entity load —
+     * entirely.
+     */
+    @NonNull
+    public Optional<URL> findUrlById(@NonNull ID<Bookmark> bookmarkId) {
+        return db.select(QBookmark.bookmark.url)
+            .from(QBookmark.bookmark)
+            .where(QBookmark.bookmark.id.eq(bookmarkId.getUUID()))
+            .fetchOne();
     }
 
     @NonNull

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, watchEffect } from 'vue'
 
 export type Theme = 'light' | 'dark' | 'system'
-export type BookmarkLayout = 'list' | 'grid' | 'grouped' | 'tiles'
+export type BookmarkLayout = 'list' | 'grid' | 'grouped'
 
 function loadTheme(): Theme {
   const stored = localStorage.getItem('theme')
@@ -12,8 +12,15 @@ function loadTheme(): Theme {
 
 function loadBookmarkLayout(): BookmarkLayout {
   const stored = localStorage.getItem('bookmarkLayout')
-  if (stored === 'list' || stored === 'grid' || stored === 'grouped' || stored === 'tiles') return stored
+  if (stored === 'list' || stored === 'grid' || stored === 'grouped') return stored
   return 'grid'
+}
+
+function loadPreviewsEnabled(): boolean {
+  const stored = localStorage.getItem('previewsEnabled')
+  if (stored === 'true') return true
+  if (stored === 'false') return false
+  return true
 }
 
 function applyTheme(theme: Theme) {
@@ -26,6 +33,7 @@ export const useUiStore = defineStore('ui', () => {
   const sidebarOpen = ref(false)
   const theme = ref<Theme>(loadTheme())
   const bookmarkLayout = ref<BookmarkLayout>(loadBookmarkLayout())
+  const previewsEnabled = ref<boolean>(loadPreviewsEnabled())
 
   watchEffect(() => {
     localStorage.setItem('theme', theme.value)
@@ -34,6 +42,10 @@ export const useUiStore = defineStore('ui', () => {
 
   watchEffect(() => {
     localStorage.setItem('bookmarkLayout', bookmarkLayout.value)
+  })
+
+  watchEffect(() => {
+    localStorage.setItem('previewsEnabled', String(previewsEnabled.value))
   })
 
   const toggleSidebar = () => {
@@ -48,12 +60,23 @@ export const useUiStore = defineStore('ui', () => {
     bookmarkLayout.value = layout
   }
 
+  const setPreviewsEnabled = (value: boolean) => {
+    previewsEnabled.value = value
+  }
+
+  const togglePreviewsEnabled = () => {
+    previewsEnabled.value = !previewsEnabled.value
+  }
+
   return {
     sidebarOpen,
     theme,
     bookmarkLayout,
+    previewsEnabled,
     toggleSidebar,
     setTheme,
     setBookmarkLayout,
+    setPreviewsEnabled,
+    togglePreviewsEnabled,
   }
 })

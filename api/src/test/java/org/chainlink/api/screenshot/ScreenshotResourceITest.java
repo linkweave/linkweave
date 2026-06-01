@@ -77,6 +77,84 @@ class ScreenshotResourceITest {
 
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldReturn204_whenBookmarkDoesNotExist() {
+        // The read path resolves the bookmark URL via a scalar projection, not a
+        // full entity load (which would extract OffsetDateTime columns through
+        // Hibernate's non-thread-safe shared UTC Calendar, HHH-20355). A missing
+        // bookmark in an accessible collection therefore yields "no screenshot"
+        // (204) instead of throwing entity-not-found.
+        var bookmark = fixtureService.createTestBookmark(b -> b
+            .withTitle("Access anchor")
+            .withUrl("https://example.com/anchor-" + UUID.randomUUID())
+        );
+
+        RestAssured.given()
+            .pathParam("collectionId", bookmark.getCollection().getId().getUUID().toString())
+            .pathParam("bookmarkId", UUID.randomUUID().toString())
+            .get("/collections/{collectionId}/bookmarks/{bookmarkId}/screenshot")
+            .then()
+            .statusCode(204);
+    }
+
+    @Test
+    void shouldReturn401_whenRefreshingUnauthenticated() {
+        RestAssured.given()
+            .pathParam("collectionId", UUID.randomUUID().toString())
+            .pathParam("bookmarkId", UUID.randomUUID().toString())
+            .post("/collections/{collectionId}/bookmarks/{bookmarkId}/screenshot/refresh")
+            .then()
+            .statusCode(401);
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldReturn403_whenRefreshingCollectionAccessDenied() {
+        RestAssured.given()
+            .pathParam("collectionId", UUID.randomUUID().toString())
+            .pathParam("bookmarkId", UUID.randomUUID().toString())
+            .post("/collections/{collectionId}/bookmarks/{bookmarkId}/screenshot/refresh")
+            .then()
+            .statusCode(403);
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldReplaceExistingCacheEntry_whenRefreshing() {
+        // The pre-refresh payload is a sentinel we can recognise; whatever
+        // captureNow produces afterwards — fresh image bytes if the sidecar
+        // is reachable, or a negative entry if not — the original sentinel
+        // must be gone. That swap is the signal that refresh actually dropped
+        // the old entry and re-captured.
+        var url = "https://example.com/refresh-" + UUID.randomUUID();
+        var bookmark = fixtureService.createTestBookmark(b -> b
+            .withTitle("Refresh target")
+            .withUrl(url)
+        );
+        byte[] sentinel = new byte[]{1, 2, 3, 4};
+        String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
+        cacheService.putSuccess(key, sentinel, "image/jpeg");
+
+        try {
+            RestAssured.given()
+                .pathParam("collectionId", bookmark.getCollection().getId().getUUID().toString())
+                .pathParam("bookmarkId", bookmark.getId().getUUID().toString())
+                .post("/collections/{collectionId}/bookmarks/{bookmarkId}/screenshot/refresh")
+                .then()
+                .statusCode(204);
+
+            var after = cacheService.get(key);
+            // Either the sidecar was reachable (negative=false, fresh bytes)
+            // or it wasn't (negative=true, empty bytes). Either way the cached
+            // bytes must no longer be our sentinel.
+            org.assertj.core.api.Assertions.assertThat(after).isPresent();
+            org.assertj.core.api.Assertions.assertThat(after.get().bytes()).isNotEqualTo(sentinel);
+        } finally {
+            cacheService.deleteForKey(key);
+        }
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn200WithBytes_whenCacheHit() {
         var url = "https://example.com/cached-" + UUID.randomUUID();
         var bookmark = fixtureService.createTestBookmark(b -> b

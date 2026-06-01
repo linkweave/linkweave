@@ -21,9 +21,10 @@ public class ScreenshotService {
     private final AppClock appClock;
 
     public @NonNull Optional<ScreenshotCacheService.CachedScreenshot> getScreenshot(@NonNull ID<Bookmark> bookmarkId) {
-        Bookmark bookmark = bookmarkRepo.getById(bookmarkId);
-        String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
-        return cache.get(key).filter(c -> !c.negative());
+        return bookmarkRepo.findUrlById(bookmarkId)
+            .map(ScreenshotCacheService::keyFor)
+            .flatMap(cache::get)
+            .filter(c -> !c.negative());
     }
 
     /**
@@ -45,5 +46,20 @@ public class ScreenshotService {
         }
         cache.putNegative(key);
         return false;
+    }
+
+    /**
+     * User-initiated refresh: drops the cached entry (success or negative) and
+     * recaptures synchronously. Returns true if a fresh capture was stored.
+     *
+     * <p>Bypasses the scheduled job entirely so the user sees an updated image
+     * as soon as the sidecar responds. On failure a negative-cache entry is
+     * written (same as the job path), so subsequent reads return the fallback.
+     */
+    public boolean refreshScreenshot(@NonNull ID<Bookmark> bookmarkId) {
+        Bookmark bookmark = bookmarkRepo.getById(bookmarkId);
+        String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
+        cache.deleteForKey(key);
+        return captureNow(bookmarkId);
     }
 }

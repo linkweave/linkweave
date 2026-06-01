@@ -7,12 +7,18 @@ import { useNotificationStore } from '@/stores/notification'
 import { useUiStore } from '@/stores/ui'
 import BookmarkCard from './BookmarkCard.vue'
 import BookmarkGroupedLayout from './BookmarkGroupedLayout.vue'
-import BookmarkTileLayout from './BookmarkTileLayout.vue'
 import BookmarkDialog from './BookmarkDialog.vue'
 import MoveBookmarkDialog from './MoveBookmarkDialog.vue'
 import NeverOpenedDivider from './NeverOpenedDivider.vue'
+import BookmarkPreviewPopup from './BookmarkPreviewPopup.vue'
 import { ConfirmDialog } from '@/components/ui'
 import type { BookmarkJson } from '@/api/generated'
+import { provideBookmarkPreviewHover } from '@/composables/useBookmarkPreviewHover'
+
+// One hover-intent controller drives a single popup shared by every list
+// row. Per-row popups would cascade as the pointer sweeps the list; the
+// shared controller enforces the dwell/warm/grace timing in one place.
+const previewHover = provideBookmarkPreviewHover()
 
 const { t } = useI18n()
 const bookmarkStore = useBookmarkStore()
@@ -98,14 +104,6 @@ async function confirmDelete() {
     <p class="text-muted-foreground">{{ t('bookmarkList.empty') }}</p>
   </div>
 
-  <BookmarkTileLayout
-    v-else-if="effectiveLayout === 'tiles'"
-    :bookmarks="bookmarkStore.filteredBookmarks"
-    @edit="handleEdit"
-    @delete="handleDelete"
-    @move="handleMove"
-  />
-
   <div v-else-if="effectiveLayout !== 'grouped'" :class="classForCards">
     <template v-for="(bookmark, idx) in bookmarkStore.filteredBookmarks" :key="bookmark.id">
       <NeverOpenedDivider
@@ -114,6 +112,7 @@ async function confirmDelete() {
       />
       <BookmarkCard
         :bookmark="bookmark"
+        :layout="effectiveLayout === 'list' ? 'list' : 'grid'"
         :show-stats="showStats"
         @edit="handleEdit"
         @delete="handleDelete"
@@ -151,4 +150,6 @@ async function confirmDelete() {
     @confirmed="confirmDelete"
     @update:open="handleDeleteDialogUpdate"
   />
+
+  <BookmarkPreviewPopup :controller="previewHover" />
 </template>

@@ -17,7 +17,7 @@ import { useFolderStore } from '@/stores/folder'
 import { useOfflineStore } from '@/stores/offline'
 import { useUiStore } from '@/stores/ui'
 import { BookmarkPlus, Settings } from '@lucide/vue'
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -36,24 +36,8 @@ const searchPlaceholder = computed(() =>
 const effectiveLayout = computed(() => collectionStore.settingsLayout ?? ui.bookmarkLayout)
 const containerClass = computed(() => {
   const l = effectiveLayout.value
-  return l === 'grouped' || l === 'grid' || l === 'tiles' ? 'max-w-7xl' : 'max-w-4xl'
+  return l === 'grouped' || l === 'grid' ? 'max-w-7xl' : 'max-w-4xl'
 })
-
-// Fall back from tiles to grid when screenshots get disabled for the current
-// collection (e.g. owner toggles it off here or in another tab). Fires on
-// collection switch as well as on flag-flip server-side.
-watch(
-  () => collectionStore.collectionInfo?.screenshotEnabled,
-  (enabled) => {
-    if (enabled) return
-    if (collectionStore.settingsLayout === 'tiles' && collectionStore.currentCollectionId) {
-      collectionStore.updateSettings(collectionStore.currentCollectionId, { layout: 'grid' })
-    } else if (!collectionStore.settingsLayout && ui.bookmarkLayout === 'tiles') {
-      ui.setBookmarkLayout('grid')
-    }
-  },
-  { immediate: true },
-)
 </script>
 
 <template>
