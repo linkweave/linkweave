@@ -30,14 +30,17 @@ const collectionApi = new CollectionResourceApi(config)
 
 const { defineField, handleSubmit, errors, resetForm, isSubmitting } = useForm({
   validationSchema: toTypedSchema(collectionUpdateSchema(t)),
-  initialValues: { name: '', faviconAllowlist: '' },
+  initialValues: { name: '', faviconAllowlist: '', screenshotEnabled: false },
 })
 
 const [name, nameAttrs] = defineField('name')
 const [faviconAllowlist, faviconAllowlistAttrs] = defineField('faviconAllowlist')
+// Registered (not bound to any input) so its loaded value round-trips on save;
+// the actual toggle lives in the collection-settings Preview tab.
+defineField('screenshotEnabled')
 
 useFormDialog(toRef(props, 'open'), async () => {
-  resetForm({ values: { name: props.currentName, faviconAllowlist: '' } })
+  resetForm({ values: { name: props.currentName, faviconAllowlist: '', screenshotEnabled: false } })
   if (!props.collectionId) return
   try {
     const info = await collectionApi.apiCollectionsIdGet({ id: props.collectionId })
@@ -45,6 +48,7 @@ useFormDialog(toRef(props, 'open'), async () => {
       values: {
         name: info.name ?? props.currentName,
         faviconAllowlist: info.faviconAllowlist ?? '',
+        screenshotEnabled: info.screenshotEnabled ?? false,
       },
     })
   } catch (err) {
@@ -55,7 +59,12 @@ useFormDialog(toRef(props, 'open'), async () => {
 
 const onSubmit = handleSubmit(async (values) => {
   const allowlist = values.faviconAllowlist.trim() ? values.faviconAllowlist : ''
-  const ok = await collectionStore.updateCollection(props.collectionId, values.name, allowlist)
+  const ok = await collectionStore.updateCollection(
+    props.collectionId,
+    values.name,
+    allowlist,
+    values.screenshotEnabled,
+  )
   if (ok) {
     emit('update:open', false)
     notification.success(t('collectionManage.editTitle'))

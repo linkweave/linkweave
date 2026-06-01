@@ -16,6 +16,13 @@ function loadBookmarkLayout(): BookmarkLayout {
   return 'grid'
 }
 
+function loadPreviewsEnabled(): boolean {
+  const stored = localStorage.getItem('previewsEnabled')
+  if (stored === 'true') return true
+  if (stored === 'false') return false
+  return true
+}
+
 function applyTheme(theme: Theme) {
   const isDark =
     theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
@@ -26,6 +33,7 @@ export const useUiStore = defineStore('ui', () => {
   const sidebarOpen = ref(false)
   const theme = ref<Theme>(loadTheme())
   const bookmarkLayout = ref<BookmarkLayout>(loadBookmarkLayout())
+  const previewsEnabled = ref<boolean>(loadPreviewsEnabled())
 
   watchEffect(() => {
     localStorage.setItem('theme', theme.value)
@@ -34,6 +42,10 @@ export const useUiStore = defineStore('ui', () => {
 
   watchEffect(() => {
     localStorage.setItem('bookmarkLayout', bookmarkLayout.value)
+  })
+
+  watchEffect(() => {
+    localStorage.setItem('previewsEnabled', String(previewsEnabled.value))
   })
 
   const toggleSidebar = () => {
@@ -48,12 +60,23 @@ export const useUiStore = defineStore('ui', () => {
     bookmarkLayout.value = layout
   }
 
+  const setPreviewsEnabled = (value: boolean) => {
+    previewsEnabled.value = value
+  }
+
+  const togglePreviewsEnabled = () => {
+    previewsEnabled.value = !previewsEnabled.value
+  }
+
   return {
     sidebarOpen,
     theme,
     bookmarkLayout,
+    previewsEnabled,
     toggleSidebar,
     setTheme,
     setBookmarkLayout,
+    setPreviewsEnabled,
+    togglePreviewsEnabled,
   }
 })

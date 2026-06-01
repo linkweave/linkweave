@@ -41,6 +41,7 @@ const fakeCollections: CollectionSummaryJson[] = [
 const fakeCollectionInfo: CollectionInfoJson = {
   id: 'col-1',
   name: 'Default',
+  screenshotEnabled: false,
   bookmarks: [],
   tags: [],
   folders: [],

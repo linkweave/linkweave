@@ -108,11 +108,13 @@ public class CollectionService {
         @NonNull ID<Collection> collectionId,
         @NonNull String name,
         @Nullable String faviconAllowlist,
+        boolean screenshotEnabled,
         @NonNull User user) {
         Collection collection = collectionRepo.getById(collectionId);
         collection.setName(name);
         FaviconAllowlist parsed = FaviconAllowlist.parse(faviconAllowlist);
         collection.setFaviconAllowlist(parsed.patterns().isEmpty() ? null : String.join("\n", parsed.patterns()));
+        collection.setScreenshotEnabled(screenshotEnabled);
         collectionRepo.persistAndFlush(collection);
 
         CollectionAccess access = collectionAccessRepo.findByUser(user.getId()).stream()

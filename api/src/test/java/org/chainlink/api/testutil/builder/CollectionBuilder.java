@@ -35,6 +35,12 @@ public class CollectionBuilder {
     }
 
     @NonNull
+    public CollectionBuilder withScreenshotEnabled(boolean enabled) {
+        collection.setScreenshotEnabled(enabled);
+        return this;
+    }
+
+    @NonNull
     public static Collection build(Consumer<CollectionBuilder> block) {
         CollectionBuilder builder = new CollectionBuilder();
         block.accept(builder);

@@ -16,6 +16,7 @@ import { useFormDialog } from '@/composables/useFormDialog'
 import {
   useShowPropertiesSidebar,
   useShowPropertyBadges,
+  useShowPreviewPopup,
 } from '@/composables/usePropertyDisplayPrefs'
 import { propertyDefinitionSaveSchema } from '@/schemas/property'
 import { useCollectionStore } from '@/stores/collection'
@@ -25,7 +26,7 @@ import { type BookmarkLayout, useUiStore } from '@/stores/ui'
 import { toTypedSchema } from '@vee-validate/zod'
 import { Download, Layers, LayoutGrid, LayoutList, Loader2, Pencil, Plus, Trash2, Upload } from '@lucide/vue'
 import { useForm } from 'vee-validate'
-import { computed, ref, toRef } from 'vue'
+import { computed, ref, toRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -35,6 +36,7 @@ const notification = useNotificationStore()
 const ui = useUiStore()
 const showBadges = useShowPropertyBadges()
 const showSidebar = useShowPropertiesSidebar()
+const showPreviewPopup = useShowPreviewPopup()
 
 // Layout chooser — same card-button visual as the user-menu Settings dialog,
 // wired to the collection-scoped setting when a collection is loaded (falling
@@ -69,8 +71,44 @@ const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
-type Tab = 'display' | 'properties' | 'data'
+type Tab = 'display' | 'preview' | 'properties' | 'data'
 const activeTab = ref<Tab>('display')
+
+// --- Preview tab (screenshot capture) -------------------------------------
+// `screenshotEnabled` is a backend collection property, owner-only. We surface
+// it here (moved out of the collection-manage "Edit" dialog) so all
+// collection-scoped settings live behind the gear icon. The tab is hidden for
+// non-owners, who can't change it.
+const isOwner = computed(
+  () =>
+    collectionStore.collections.find((c) => c.id === collectionStore.currentCollectionId)?.role ===
+    'OWNER',
+)
+
+// Local mirror so the switch flips instantly; reconciled from the store after
+// each save (updateCollection refetches collectionInfo).
+const screenshotEnabled = ref(false)
+watch(
+  () => collectionStore.collectionInfo?.screenshotEnabled,
+  (v) => {
+    screenshotEnabled.value = v ?? false
+  },
+  { immediate: true },
+)
+
+async function onToggleScreenshot(value: boolean) {
+  const id = collectionStore.currentCollectionId
+  const info = collectionStore.collectionInfo
+  if (!id || !info) return
+  screenshotEnabled.value = value // optimistic
+  const ok = await collectionStore.updateCollection(
+    id,
+    info.name,
+    info.faviconAllowlist ?? '',
+    value,
+  )
+  if (!ok) screenshotEnabled.value = !value // revert on failure
+}
 
 // --- Data tab (import + export) -------------------------------------------
 const importFileInput = ref<HTMLInputElement | null>(null)
@@ -320,6 +358,25 @@ function optionsPreview(allowedValues: string | undefined): string {
           />
         </button>
         <button
+          v-if="isOwner"
+          type="button"
+          class="relative px-3.5 py-2 text-sm font-medium transition-colors"
+          :class="
+            activeTab === 'preview'
+              ? 'text-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+          "
+          data-testid="collection-settings-tab-preview"
+          @click="activeTab = 'preview'"
+        >
+          {{ t('collectionSettings.tabPreview') }}
+          <span
+            v-if="activeTab === 'preview'"
+            class="absolute -bottom-px left-0 right-0 h-[2px] bg-primary"
+            aria-hidden="true"
+          />
+        </button>
+        <button
           type="button"
           class="relative px-3.5 py-2 text-sm font-medium transition-colors inline-flex items-center gap-1.5"
           :class="
@@ -435,6 +492,55 @@ function optionsPreview(allowedValues: string | undefined): string {
         </div>
         <p class="text-xs text-muted-foreground mt-2">
           {{ t('collectionSettings.localPersistedHint') }}
+        </p>
+      </section>
+    </div>
+
+    <!-- Preview tab (owner-only): the collection-scoped screenshot-capture
+         setting, moved here from the collection-manage Edit dialog. Saves
+         immediately, like the other controls in this modal. -->
+    <div v-else-if="activeTab === 'preview'" class="min-h-[380px] space-y-5">
+      <section>
+        <div
+          class="text-[11px] font-semibold uppercase tracking-[.06em] text-muted-foreground mb-2"
+        >
+          {{ t('collectionSettings.sectionPreview') }}
+        </div>
+        <div
+          class="flex items-center justify-between gap-3 px-2.5 py-2 rounded-md bg-secondary/60"
+        >
+          <div class="min-w-0">
+            <div class="text-sm font-medium">{{ t('collectionManage.screenshotEnabled') }}</div>
+            <div class="text-xs text-muted-foreground mt-0.5">
+              {{ t('collectionManage.screenshotEnabledHelp') }}
+            </div>
+          </div>
+          <SwitchCl
+            :model-value="screenshotEnabled"
+            :aria-label="t('collectionManage.screenshotEnabled')"
+            data-testid="collection-settings-screenshot-enabled"
+            @update:model-value="onToggleScreenshot"
+          />
+        </div>
+        <div
+          class="flex items-center justify-between gap-3 px-2.5 py-2 rounded-md transition-opacity"
+          :class="screenshotEnabled ? 'bg-secondary/60' : 'bg-secondary/30 opacity-50 pointer-events-none'"
+        >
+          <div class="min-w-0">
+            <div class="text-sm font-medium">{{ t('collectionSettings.previewPopupToggle') }}</div>
+            <div class="text-xs text-muted-foreground mt-0.5">
+              {{ t('collectionSettings.previewPopupToggleDesc') }}
+            </div>
+          </div>
+          <SwitchCl
+            v-model="showPreviewPopup"
+            :disabled="!screenshotEnabled"
+            :aria-label="t('collectionSettings.previewPopupToggle')"
+            data-testid="collection-settings-preview-popup"
+          />
+        </div>
+        <p class="text-xs text-muted-foreground mt-2">
+          {{ t('collectionSettings.sectionPreviewHint') }}
         </p>
       </section>
     </div>

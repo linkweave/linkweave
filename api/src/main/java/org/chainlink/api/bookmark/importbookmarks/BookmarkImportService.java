@@ -147,6 +147,7 @@ public class BookmarkImportService {
             0,
             null,
             null,
+            null,
             null
         );
         OffsetDateTime importedAddedAt = resolveImportedAddedAt(parsed.getAddedAt());

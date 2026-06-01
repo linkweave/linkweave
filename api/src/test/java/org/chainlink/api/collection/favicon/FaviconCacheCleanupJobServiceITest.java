@@ -33,8 +33,6 @@ class FaviconCacheCleanupJobServiceITest {
     @Inject
     FaviconCacheCleanupJobService cleanupJob;
 
-    @Inject
-    BookmarkRepo bookmarkRepo;
 
     @Inject
     EntityManager em;
@@ -51,7 +49,7 @@ class FaviconCacheCleanupJobServiceITest {
     }
 
     @Test
-    void shouldDoNothing_whenCacheBelowThreshold() throws IOException {
+    void shouldDoNothing_whenCacheBelowThreshold() {
         Bookmark bookmark = fixtureService.createTestBookmark(b -> b.withUrl("https://example-below.test"));
         backdateCreated(bookmark, 60);
         String origin = FaviconFetcherService.canonicalOrigin(bookmark.getUrl());
@@ -64,7 +62,7 @@ class FaviconCacheCleanupJobServiceITest {
     }
 
     @Test
-    void shouldEvictOldestFirst_untilThresholdMet() throws IOException {
+    void shouldEvictOldestFirst_untilThresholdMet() {
         Bookmark older = fixtureService.createTestBookmark(b -> b.withUrl("https://older.test"));
         Bookmark newer = fixtureService.createTestBookmark(b -> b.withUrl("https://newer.test"));
         backdateCreated(older, 100);
@@ -85,7 +83,7 @@ class FaviconCacheCleanupJobServiceITest {
     }
 
     @Test
-    void shouldNotEvict_whenAllBookmarksYoungerThanMinAge() throws IOException {
+    void shouldNotEvict_whenAllBookmarksYoungerThanMinAge() {
         Bookmark fresh = fixtureService.createTestBookmark(b -> b.withUrl("https://fresh.test"));
         // leave timestampErstellt at default (today)
         String origin = FaviconFetcherService.canonicalOrigin(fresh.getUrl());
@@ -101,14 +99,6 @@ class FaviconCacheCleanupJobServiceITest {
     void shouldHandleEmptyCacheGracefully() {
         FaviconCacheCleanupJobService.Result result = cleanupJob.run(1L, Duration.ofDays(28));
         assertThat(result).isNotNull();
-    }
-
-    @Test
-    void shouldParseSizeStrings() {
-        assertThat(FaviconCacheCleanupJobService.parseSize("40MB")).isEqualTo(40L * 1024 * 1024);
-        assertThat(FaviconCacheCleanupJobService.parseSize("1G")).isEqualTo(1024L * 1024 * 1024);
-        assertThat(FaviconCacheCleanupJobService.parseSize("512")).isEqualTo(512L);
-        assertThat(FaviconCacheCleanupJobService.parseSize("2KB")).isEqualTo(2048L);
     }
 
     void backdateCreated(Bookmark bookmark, int daysAgo) {

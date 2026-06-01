@@ -13,6 +13,8 @@ export * from './import-resource-api';
 export * from './ping-resource-api';
 export * from './property-definition-resource-api';
 export * from './saved-search-resource-api';
+export * from './screenshot-resource-api';
+export * from './sentry-tunnel-resource-api';
 export * from './tag-resource-api';
 export * from './time-travel-resource-api';
 export * from './trashbin-resource-api';

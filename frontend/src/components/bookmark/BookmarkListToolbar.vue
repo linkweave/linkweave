@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import { FolderBreadcrumbCl } from '@/components/folder'
+import { computed } from 'vue'
+import { useCollectionStore } from '@/stores/collection'
 import BookmarkLayoutToggle from './BookmarkLayoutToggle.vue'
+import BookmarkPreviewsToggle from './BookmarkPreviewsToggle.vue'
+
+const collectionStore = useCollectionStore()
+
+// Only surface the toolbar toggle in collections where previews are even
+// possible. If the per-collection setting forbids captures this control is useless
+const previewsAvailable = computed(
+  () => collectionStore.collectionInfo?.screenshotEnabled ?? false,
+)
 </script>
 
 <template>
@@ -15,6 +26,7 @@ import BookmarkLayoutToggle from './BookmarkLayoutToggle.vue'
     </div>
 
     <div class="flex items-center gap-1 shrink-0">
+      <BookmarkPreviewsToggle v-if="previewsAvailable" />
       <BookmarkLayoutToggle />
       <slot name="sort" />
       <slot name="extras" />

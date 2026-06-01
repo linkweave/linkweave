@@ -23,6 +23,7 @@ cd api && ./mvnw test -Dtest=ClassNameTest           # Specific class
 cd api && ./mvnw quarkus:dev        # Dev mode with hot reload, assume running
 cd frontend && pnpm run dev # frontend dev mode, assume running
 cd frontend && pnpm run type-check # frontend type checking
+cd frontend && pnpm run lint       # frontend linting (oxlint + eslint)
 pnpm exec playwright test --project=chromium  
 
 ```
@@ -55,7 +56,7 @@ All access checks are performed in the **Resource layer** using `AuthorizationSe
 - Use `@TestSecurity` when testing persistence/services that depend on current user
 - Most entities extend `AbstractEntity` which auto-sets `userErstellt` and `userMutiert` via `CurrentUserService`
 - Use `@AllArgsConstructor` for entity classes to ensure all fields are initialized
-- Always check your code by running pnpm run type-check and by compiling using maven
+- Always check your code by running pnpm run type-check, pnpm run lint and by compiling using maven
 - Use zod schemas to validate form input
 
 ## Custom Types

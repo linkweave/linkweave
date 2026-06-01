@@ -154,6 +154,42 @@ jobs:
             org.opencontainers.image.title=Chainlink Frontend
             org.opencontainers.image.description=Vue.js frontend for Chainlink
 
+  build-screenshot-sidecar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Get commit hash
+        id: commit-hash
+        run: |
+          hash="${{ gitea.sha }}"
+          echo "COMMIT_HASH=${hash::7}" >> $GITEA_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Registry
+        uses: docker/login-action@v3
+        with:
+          registry: git.markushofstetter.com
+          username: ${{ gitea.actor }}
+          password: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
+
+      - name: Build and push screenshot service image
+        uses: docker/build-push-action@v6
+        with:
+          context: screenshot-service
+          push: true
+          tags: |
+            git.markushofstetter.com/dividbzero/chainlink-screenshot-service:latest
+            git.markushofstetter.com/dividbzero/chainlink-screenshot-service:${{ steps.commit-hash.outputs.COMMIT_HASH }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          labels: |
+            org.opencontainers.image.commit=${{ steps.commit-hash.outputs.COMMIT_HASH }}
+            org.opencontainers.image.title=Chainlink Screenshot Service
+            org.opencontainers.image.description=Playwright-based screenshot sidecar for Chainlink
+
   build-extension:
     runs-on: ubuntu-latest
     outputs:
@@ -218,7 +254,7 @@ jobs:
           path: frontend/chainlink-extension.zip
 
   deploy:
-    needs: [build, build-frontend]
+    needs: [build, build-frontend, build-screenshot-sidecar]
     if: gitea.event_name == 'push' && gitea.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
@@ -248,6 +284,7 @@ jobs:
           cat docker-compose.yml
           sed -i "s|chainlink-api:.*|chainlink-api:${COMMIT_HASH}|g" docker-compose.yml
           sed -i "s|chainlink-frontend:.*|chainlink-frontend:${COMMIT_HASH}|g" docker-compose.yml
+          sed -i "s|chainlink-screenshot-service:.*|chainlink-screenshot-service:${COMMIT_HASH}|g" docker-compose.yml
           echo "docker-compose.yml content (after sed):"
           cat docker-compose.yml
           echo "Git diff showing changes:"
