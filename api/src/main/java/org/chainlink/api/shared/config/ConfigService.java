@@ -20,6 +20,7 @@ package org.chainlink.api.shared.config;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -107,6 +108,11 @@ public class ConfigService {
 
     @ConfigProperty(name = "chainlink.favicon.cache-dir", defaultValue = "developer-local-settings/favicon-cache")
     String faviconCacheDir;
+
+    // Desktop bundle (UC-052) only: directory the SPA is served from. Unset in the normal
+    // (Caddy-fronted) deployment, where Caddy serves the frontend. See DesktopWebRootRoute.
+    @ConfigProperty(name = "chainlink.desktop.web-root")
+    Optional<String> desktopWebRoot;
 
     @ConfigProperty(name = "chainlink.favicon.success-ttl", defaultValue = "30D")
     Duration faviconSuccessTtl;
