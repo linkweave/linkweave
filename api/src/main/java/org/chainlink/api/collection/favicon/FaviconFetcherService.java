@@ -31,27 +31,37 @@ public class FaviconFetcherService {
 
     public @NonNull Optional<FetchedFavicon> fetchFor(@NonNull URL bookmarkUrl) {
         try {
+            int maxRedirects = configService.getFaviconMaxRedirects();
             URI origin = URI.create(canonicalOrigin(bookmarkUrl));
-            URI declared = discoverIconFromHtml(origin);
+
+            // Fetch the origin HTML following redirects, and resolve icon hrefs
+            // (and the /favicon.ico fallback) against the URL we actually landed
+            // on. A site that redirects example.com -> www.example.com/ serves
+            // relative icon hrefs that only resolve to the right host when the
+            // *final* URL is used as the base — resolving against the original
+            // origin points the fetch at a host that typically 404s.
+            Optional<Resolved<String>> html = discoverHtml(origin, maxRedirects);
+            URI base = html.map(Resolved::finalUri).orElse(origin);
+
+            URI declared = html.map(h -> parseIconLink(h.value(), base)).orElse(null);
             if (declared != null) {
-                Optional<FetchedFavicon> img = fetchImage(declared, configService.getFaviconMaxRedirects());
+                Optional<FetchedFavicon> img = fetchImage(declared, maxRedirects);
                 if (img.isPresent()) {
                     return img;
                 }
             }
-            return fetchImage(origin.resolve("/favicon.ico"), configService.getFaviconMaxRedirects());
+            return fetchImage(base.resolve("/favicon.ico"), maxRedirects);
         } catch (Exception e) {
             LOG.debug("Favicon fetch failed for {}: {}", bookmarkUrl, e.getMessage());
             return Optional.empty();
         }
     }
 
-    private @Nullable URI discoverIconFromHtml(@NonNull URI origin) {
+    private @NonNull Optional<Resolved<String>> discoverHtml(@NonNull URI origin, int maxRedirects) {
         try {
-            Optional<String> html = fetchHtml(origin, configService.getFaviconMaxRedirects());
-            return html.map(s -> parseIconLink(s, origin)).orElse(null);
+            return fetchHtml(origin, maxRedirects);
         } catch (IOException e) {
-            return null;
+            return Optional.empty();
         }
     }
 
@@ -59,7 +69,10 @@ public class FaviconFetcherService {
         @NonNull Optional<T> handle(@NonNull HttpURLConnection conn) throws IOException;
     }
 
-    private <T> @NonNull Optional<T> fetch(
+    /** A successfully fetched body together with the final URL it was served from (after redirects). */
+    private record Resolved<T>(@NonNull T value, @NonNull URI finalUri) {}
+
+    private <T> @NonNull Optional<Resolved<T>> fetch(
         @NonNull URI uri, int redirectsLeft, @NonNull String accept, @NonNull ResponseHandler<T> handler
     ) throws IOException {
         if (redirectsLeft < 0 || !isAllowedScheme(uri.getScheme()) || !isPublicHost(uri.getHost())) {
@@ -78,17 +91,17 @@ public class FaviconFetcherService {
             if (status != 200) {
                 return Optional.empty();
             }
-            return handler.handle(conn);
+            return handler.handle(conn).map(value -> new Resolved<>(value, uri));
         } finally {
             conn.disconnect();
         }
     }
 
     private @NonNull Optional<FetchedFavicon> fetchImage(@NonNull URI uri, int redirectsLeft) throws IOException {
-        return fetch(uri, redirectsLeft, "image/*", this::readImageBody);
+        return fetch(uri, redirectsLeft, "image/*", this::readImageBody).map(Resolved::value);
     }
 
-    private @NonNull Optional<String> fetchHtml(@NonNull URI uri, int redirectsLeft) throws IOException {
+    private @NonNull Optional<Resolved<String>> fetchHtml(@NonNull URI uri, int redirectsLeft) throws IOException {
         return fetch(uri, redirectsLeft, "text/html,application/xhtml+xml", this::readHtmlBody);
     }
 

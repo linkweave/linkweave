@@ -120,7 +120,7 @@ public class ConfigService {
     @ConfigProperty(name = "chainlink.favicon.max-bytes", defaultValue = "262144")
     int faviconMaxBytes;
 
-    @ConfigProperty(name = "chainlink.favicon.max-redirects", defaultValue = "3")
+    @ConfigProperty(name = "chainlink.favicon.max-redirects", defaultValue = "5")
     int faviconMaxRedirects;
 
     // A realistic browser User-Agent. Many sites sit behind a WAF/CDN (e.g.

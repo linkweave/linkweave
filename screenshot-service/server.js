@@ -6,12 +6,15 @@ const PORT = Number(process.env.PORT ?? 3000)
 // networkidle settle for late-stage JS hydration / web-font swap, then a
 // short fixed pause so CSS transitions and async-decoded images get a frame
 // or two to paint. networkidle is a network signal, not a paint signal — the
-// fixed delay closes that gap. The Java caller uses a 15s HTTP read-timeout
-// so the sidecar always wins the race and returns a clean error rather than
-// getting cut off mid-response.
+// fixed delay closes that gap. Real sites frequently need more than a beat to
+// settle (hydration, lazy hero images, web-font swap), so the settle window
+// and post-load paint pause are generous. The Java caller's HTTP read-timeout
+// is sized to cover the full worst-case budget below so the sidecar always
+// wins the race and returns a clean error rather than getting cut off
+// mid-response — keep them in sync (see application.properties).
 const NAV_TIMEOUT_MS = Number(process.env.NAV_TIMEOUT_MS ?? 10_000)
-const SETTLE_TIMEOUT_MS = Number(process.env.SETTLE_TIMEOUT_MS ?? 2_500)
-const POST_LOAD_DELAY_MS = Number(process.env.POST_LOAD_DELAY_MS ?? 300)
+const SETTLE_TIMEOUT_MS = Number(process.env.SETTLE_TIMEOUT_MS ?? 4_000)
+const POST_LOAD_DELAY_MS = Number(process.env.POST_LOAD_DELAY_MS ?? 800)
 const MAX_BODY_BYTES = 8 * 1024
 // A realistic browser User-Agent. Playwright's default carries a "HeadlessChrome"
 // token and a bespoke token like "Chrome/Chainlink-Screenshot" is not a valid
