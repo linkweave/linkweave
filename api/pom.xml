@@ -302,7 +302,7 @@
                         <configuration>
                             <debugSentryCli>true</debugSentryCli>
                             <org>mh03r932</org>
-                            <project>java</project>
+                            <project>chainlink-api</project>
                             <authToken>${env.SENTRY_AUTH_TOKEN}</authToken>
                         </configuration>
                         <executions>
