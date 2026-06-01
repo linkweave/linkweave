@@ -255,7 +255,7 @@ jobs:
 
   deploy:
     needs: [build, build-frontend, build-screenshot-sidecar]
-    if: gitea.event_name == 'push' && gitea.ref == 'refs/heads/main'
+    if: gitea.event_name == 'push' && (gitea.ref == 'refs/heads/main' || startsWith(gitea.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
     steps:
       - name: Get commit hash
