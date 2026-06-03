@@ -20,6 +20,13 @@ foreach ($arg in $args) {
 
 function Log($msg) { Write-Host "`n=== $msg ===`n" }
 
+# PowerShell does NOT treat a native command's non-zero exit as a terminating error (even under
+# $ErrorActionPreference='Stop'), so check $LASTEXITCODE after each external command — otherwise a
+# failed step (e.g. jlink) silently falls through to a confusing later error.
+function Assert-LastExit($what) {
+    if ($LASTEXITCODE -ne 0) { Write-Error "$what failed (exit code $LASTEXITCODE)"; exit $LASTEXITCODE }
+}
+
 # --- Stage 0: preflight ---
 Log "0/7 preflight"
 foreach ($tool in @("node", "pnpm", "java", "cargo")) {
@@ -51,14 +58,17 @@ $VersionConfig = Join-Path $env:TEMP "tauri-version-$(Get-Random).json"
 Log "2/7 build SPA (VITE_DESKTOP=true)"
 Set-Location "$REPO_ROOT\frontend"
 pnpm install --frozen-lockfile
+Assert-LastExit "pnpm install"
 $env:VITE_DESKTOP = "true"
 pnpm run build
+Assert-LastExit "pnpm run build"
 Remove-Item Env:\VITE_DESKTOP
 
 # --- Stage 3: package backend ---
 Log "3/7 package backend (quarkus.profile=desktop)"
 Set-Location "$REPO_ROOT\api"
 .\mvnw.cmd -q -DskipTests package "-Dquarkus.profile=desktop"
+Assert-LastExit "mvnw package"
 
 # --- Stage 4: smoke-test ---
 if ($SkipSmoke) {
@@ -133,10 +143,16 @@ if ($BundleJRE) {
     # Enumerate modules from --list-modules, exclude jdk.jlink (a run-time-image link can't contain
     # it), and omit --module-path so jlink uses its own modules either way.
     $modules = ((& "$JavaHomeDir\bin\java.exe" --list-modules) |
-        ForEach-Object { ($_ -split '@')[0] } | Where-Object { $_ -ne 'jdk.jlink' }) -join ','
+        ForEach-Object { ($_ -split '@')[0].Trim() } |
+        Where-Object { $_ -and $_ -ne 'jdk.jlink' }) -join ','
+    Assert-LastExit "java --list-modules"
     & "$JavaHomeDir\bin\jlink.exe" --add-modules $modules `
         --strip-debug --no-header-files --no-man-pages --compress=zip-6 `
         --output "$Bin\runtime"
+    Assert-LastExit "jlink"
+    if (-not (Test-Path "$Bin\runtime\bin\java.exe")) {
+        Write-Error "jlink produced no runtime at $Bin\runtime"; exit 1
+    }
 } else {
     Write-Host "--no-jre: not bundling a runtime"
     New-Item -ItemType Directory -Force -Path "$Bin\runtime" | Out-Null
@@ -146,6 +162,7 @@ if ($BundleJRE) {
 Log "6/7 tauri build"
 Set-Location "$REPO_ROOT\desktop"
 cargo tauri build --config $VersionConfig
+Assert-LastExit "cargo tauri build"
 
 # --- Stage 7: collect artifacts ---
 Log "7/7 collect artifact"

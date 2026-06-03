@@ -57,7 +57,9 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: 25
-          distribution: temurin
+          # Zulu ships the `jmods` directory; Temurin 25 does not, which broke `jlink`
+          # ("does not contain packaged modules"). With jmods present, jlink works the classic way.
+          distribution: zulu
           cache: maven
 
       # --- Toolchain: Node + pnpm ---
