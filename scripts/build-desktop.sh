@@ -119,13 +119,18 @@ cp -R api/target/quarkus-app "$BIN/quarkus-app"
 cp -R frontend/dist "$BIN/web"
 if [ "$BUNDLE_JRE" = true ]; then
   echo "jlinking a trimmed Java runtime…"
-  # -version makes `java` exit 0 (otherwise it errors "no main class", which trips set -e here).
-  JAVA_HOME_DIR="$(java -XshowSettings:properties -version 2>&1 | awk -F'= ' '/java.home/{print $2; exit}')"
+  # CI's setup-java exports JAVA_HOME; locally fall back to parsing it (-version keeps java exit 0).
+  JAVA_HOME_DIR="${JAVA_HOME:-$(java -XshowSettings:properties -version 2>&1 | awk -F'= ' '/java.home/{print $2; exit}')}"
   JLINK="$JAVA_HOME_DIR/bin/jlink"
   if [ "$PLATFORM" = "windows" ]; then
     JLINK="$JAVA_HOME_DIR/bin/jlink.exe"
   fi
-  "$JLINK" --add-modules ALL-MODULE-PATH --module-path "$JAVA_HOME_DIR/jmods" \
+  # Enumerate the JDK's modules explicitly. ALL-MODULE-PATH only adds modules on the supplied
+  # --module-path that AREN'T already the JDK's default system modules, so on a standard install
+  # (CI) it finds nothing ("No module found ... with ALL-MODULE-PATH"); it only worked locally
+  # because the JDK lived at a non-default path.
+  MODULES="$("$JAVA_HOME_DIR/bin/java" --list-modules | sed 's/@.*//' | tr '\n' ',' | sed 's/,$//')"
+  "$JLINK" --module-path "$JAVA_HOME_DIR/jmods" --add-modules "$MODULES" \
     --strip-debug --no-header-files --no-man-pages --compress=zip-6 --output "$BIN/runtime"
   # jlink emits read-only files (e.g. under legal/); make them writable so tauri-build can
   # re-copy them into its OUT_DIR on incremental builds instead of failing with EACCES.

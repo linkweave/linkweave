@@ -29,7 +29,9 @@ foreach ($tool in @("node", "pnpm", "java", "cargo")) {
 }
 Write-Host "node: $(node -v)"
 Write-Host "pnpm: $(pnpm -v)"
-Write-Host "java: $(java -version 2>&1 | Select-Object -First 1)"
+# `java --version` writes to stdout (one line); `-version` writes to stderr, which under
+# $ErrorActionPreference='Stop' would surface as a terminating NativeCommandError.
+Write-Host "java: $(java --version | Select-Object -First 1)"
 Write-Host "cargo: $(cargo --version)"
 
 # --- Stage 1: determine version (single source of truth: DESKTOP_VERSION from CI; git fallback) ---
@@ -123,10 +125,13 @@ Copy-Item -Recurse "$REPO_ROOT\frontend\dist" "$Bin\web"
 
 if ($BundleJRE) {
     Write-Host "jlinking a trimmed Java runtime..."
-    $javaHomeLine = java -XshowSettings:properties -version 2>&1 | Select-String "java.home = (.+)"
-    $JavaHomeDir = $javaHomeLine.Matches.Groups[1].Value.Trim()
-    & "$JavaHomeDir\bin\jlink.exe" --add-modules ALL-MODULE-PATH `
-        --module-path "$JavaHomeDir\jmods" `
+    # CI's setup-java sets JAVA_HOME; locally derive it from java.exe's location. (Avoids
+    # `java -XshowSettings ... 2>&1`, whose stderr trips $ErrorActionPreference = 'Stop'.)
+    $JavaHomeDir = if ($env:JAVA_HOME) { $env:JAVA_HOME }
+                   else { Split-Path -Parent (Split-Path -Parent (Get-Command java).Source) }
+    # Enumerate modules explicitly; ALL-MODULE-PATH resolves to nothing on a standard JDK layout.
+    $modules = ((& "$JavaHomeDir\bin\java.exe" --list-modules) | ForEach-Object { ($_ -split '@')[0] }) -join ','
+    & "$JavaHomeDir\bin\jlink.exe" --module-path "$JavaHomeDir\jmods" --add-modules $modules `
         --strip-debug --no-header-files --no-man-pages --compress=zip-6 `
         --output "$Bin\runtime"
 } else {
