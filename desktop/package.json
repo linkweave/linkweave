@@ -1,0 +1,12 @@
+{
+  "name": "chainlink-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chainlink desktop shell (Tauri)",
+  "scripts": {
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

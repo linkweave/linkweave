@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chainlink</title>
+    <style>
+      html, body { height: 100%; margin: 0; }
+      body {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 1.25rem; background: #0f172a; color: #e2e8f0;
+        font: 500 15px/1.4 system-ui, -apple-system, Segoe UI, sans-serif;
+      }
+      .spinner {
+        width: 38px; height: 38px; border-radius: 50%;
+        border: 3px solid rgba(226, 232, 240, 0.25); border-top-color: #e2e8f0;
+        animation: spin 0.9s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body>
+    <div class="spinner"></div>
+    <div>Starting Chainlink…</div>
+  </body>
+</html>
