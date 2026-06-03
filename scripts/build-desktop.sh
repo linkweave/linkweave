@@ -125,12 +125,13 @@ if [ "$BUNDLE_JRE" = true ]; then
   if [ "$PLATFORM" = "windows" ]; then
     JLINK="$JAVA_HOME_DIR/bin/jlink.exe"
   fi
-  # Enumerate the JDK's modules explicitly. ALL-MODULE-PATH only adds modules on the supplied
-  # --module-path that AREN'T already the JDK's default system modules, so on a standard install
-  # (CI) it finds nothing ("No module found ... with ALL-MODULE-PATH"); it only worked locally
-  # because the JDK lived at a non-default path.
-  MODULES="$("$JAVA_HOME_DIR/bin/java" --list-modules | sed 's/@.*//' | tr '\n' ',' | sed 's/,$//')"
-  "$JLINK" --module-path "$JAVA_HOME_DIR/jmods" --add-modules "$MODULES" \
+  # JDK 25 (Temurin) ships WITHOUT packaged modules (no jmods); jlink links from the running
+  # run-time image instead (JEP 493). So: (1) enumerate modules from `java --list-modules` rather
+  # than ALL-MODULE-PATH (which needs jmods), (2) exclude jdk.jlink — a run-time-image link cannot
+  # contain it, and (3) omit --module-path so jlink uses its own modules (jmods when present, the
+  # run-time image otherwise). Verified on both a jmods JDK and a no-jmods JDK.
+  MODULES="$("$JAVA_HOME_DIR/bin/java" --list-modules | sed 's/@.*//' | grep -vx 'jdk.jlink' | tr '\n' ',' | sed 's/,$//')"
+  "$JLINK" --add-modules "$MODULES" \
     --strip-debug --no-header-files --no-man-pages --compress=zip-6 --output "$BIN/runtime"
   # jlink emits read-only files (e.g. under legal/); make them writable so tauri-build can
   # re-copy them into its OUT_DIR on incremental builds instead of failing with EACCES.

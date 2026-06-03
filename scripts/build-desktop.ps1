@@ -129,9 +129,12 @@ if ($BundleJRE) {
     # `java -XshowSettings ... 2>&1`, whose stderr trips $ErrorActionPreference = 'Stop'.)
     $JavaHomeDir = if ($env:JAVA_HOME) { $env:JAVA_HOME }
                    else { Split-Path -Parent (Split-Path -Parent (Get-Command java).Source) }
-    # Enumerate modules explicitly; ALL-MODULE-PATH resolves to nothing on a standard JDK layout.
-    $modules = ((& "$JavaHomeDir\bin\java.exe" --list-modules) | ForEach-Object { ($_ -split '@')[0] }) -join ','
-    & "$JavaHomeDir\bin\jlink.exe" --module-path "$JavaHomeDir\jmods" --add-modules $modules `
+    # JDK 25 ships without packaged modules (jmods); jlink links from the run-time image (JEP 493).
+    # Enumerate modules from --list-modules, exclude jdk.jlink (a run-time-image link can't contain
+    # it), and omit --module-path so jlink uses its own modules either way.
+    $modules = ((& "$JavaHomeDir\bin\java.exe" --list-modules) |
+        ForEach-Object { ($_ -split '@')[0] } | Where-Object { $_ -ne 'jdk.jlink' }) -join ','
+    & "$JavaHomeDir\bin\jlink.exe" --add-modules $modules `
         --strip-debug --no-header-files --no-man-pages --compress=zip-6 `
         --output "$Bin\runtime"
 } else {
