@@ -32,22 +32,18 @@ Write-Host "pnpm: $(pnpm -v)"
 Write-Host "java: $(java -version 2>&1 | Select-Object -First 1)"
 Write-Host "cargo: $(cargo --version)"
 
-# --- Stage 1: stamp version (single source of truth: DESKTOP_VERSION from CI; git fallback local) ---
-Log "1/7 stamp version"
+# --- Stage 1: determine version (single source of truth: DESKTOP_VERSION from CI; git fallback) ---
+# The tracked tauri.conf.json / package.json are NOT mutated; the version is merged in at bundle
+# time via `tauri build --config` (stage 6), so a failed build never leaves the tree dirty.
+Log "1/7 determine version"
 if ($env:DESKTOP_VERSION) {
     $Version = $env:DESKTOP_VERSION
 } else {
     $Version = (git rev-parse --short=7 HEAD)
 }
 Write-Host "Version: $Version"
-
-$tauriConf = Get-Content "$REPO_ROOT\desktop\src-tauri\tauri.conf.json" -Raw | ConvertFrom-Json
-$tauriConf.version = $Version
-$tauriConf | ConvertTo-Json -Depth 10 | Set-Content "$REPO_ROOT\desktop\src-tauri\tauri.conf.json"
-
-$pkgJson = Get-Content "$REPO_ROOT\desktop\package.json" -Raw | ConvertFrom-Json
-$pkgJson.version = $Version
-$pkgJson | ConvertTo-Json -Depth 10 | Set-Content "$REPO_ROOT\desktop\package.json"
+$VersionConfig = Join-Path $env:TEMP "tauri-version-$(Get-Random).json"
+'{{"version": "{0}"}}' -f $Version | Set-Content $VersionConfig -NoNewline
 
 # --- Stage 2: build SPA ---
 Log "2/7 build SPA (VITE_DESKTOP=true)"
@@ -68,9 +64,15 @@ if ($SkipSmoke) {
 } else {
     Log "4/7 smoke-test backend boots (quarkus.profile=desktop)"
     $SmokePort = 18123
+    # Fail clearly if the port is already taken, so we never probe an unrelated service.
+    if (Get-NetTCPConnection -LocalPort $SmokePort -State Listen -ErrorAction SilentlyContinue) {
+        Write-Error "smoke-test port $SmokePort is already in use; free it or pass --skip-smoke."
+        exit 1
+    }
     $SmokeLog = "$env:TEMP\chainlink-desktop-smoke.log"
-    $SmokeDb = Join-Path (New-Item -ItemType Directory -Temp) "smoke.db"
-    $SmokeFav = New-Item -ItemType Directory -Temp
+    $SmokeDir = New-Item -ItemType Directory -Path (Join-Path $env:TEMP "chainlink-smoke-$(Get-Random)")
+    $SmokeDb = Join-Path $SmokeDir "smoke.db"
+    $SmokeFav = New-Item -ItemType Directory -Path (Join-Path $env:TEMP "chainlink-fav-$(Get-Random)")
 
     $env:QUARKUS_PROFILE = "desktop"
     $env:QUARKUS_HTTP_HOST = "127.0.0.1"
@@ -135,7 +137,7 @@ if ($BundleJRE) {
 # --- Stage 6: tauri build ---
 Log "6/7 tauri build"
 Set-Location "$REPO_ROOT\desktop"
-cargo tauri build
+cargo tauri build --config $VersionConfig
 
 # --- Stage 7: collect artifacts ---
 Log "7/7 collect artifact"

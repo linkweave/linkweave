@@ -50,7 +50,7 @@ fn spawn_backend(app: &tauri::App, port: u16) -> Result<Child, Box<dyn std::erro
     // Prefer the bundled Java runtime so the app doesn't depend on whatever `java` (if any) is on
     // the system: a dependency requires Java 25, and a Finder/launchd launch often resolves an
     // older system JVM. Fall back to `java` on PATH only if the runtime wasn't bundled.
-    let bundled_java = resource_dir.join("runtime").join("bin").join("java");
+    let bundled_java = resource_dir.join("runtime").join("bin").join(if cfg!(windows) { "java.exe" } else { "java" });
     let java = if bundled_java.is_file() {
         bundled_java.into_os_string()
     } else {
@@ -87,8 +87,17 @@ fn shutdown_backend(child: &mut Child) {
     unsafe {
         libc::kill(child.id() as libc::pid_t, libc::SIGTERM);
     }
-    #[cfg(not(unix))]
-    let _ = child.kill();
+    #[cfg(windows)]
+    // On Windows there's no SIGTERM. `taskkill /PID` sends CTRL_BREAK_EVENT to console
+    // processes, giving the JVM a chance to run shutdown hooks (flush SQLite/WAL).
+    {
+        let _ = Command::new("taskkill")
+            .args(["/PID", &child.id().to_string()])
+            .output();
+    }
+    #[cfg(not(any(unix, windows)))]
+    // Unknown platform — no graceful signal available, go straight to waiting.
+    {}
 
     let deadline = Instant::now() + Duration::from_secs(5);
     while Instant::now() < deadline {
@@ -100,6 +109,33 @@ fn shutdown_backend(child: &mut Child) {
     }
     let _ = child.kill(); // force-kill fallback
     let _ = child.wait();
+}
+
+/// Replaces the splash with an error message (and the log location) when the backend never came
+/// up, so a GUI launch shows actionable guidance instead of an endless spinner.
+fn show_startup_error(window: &tauri::WebviewWindow, handle: &tauri::AppHandle) {
+    let log_hint = handle
+        .path()
+        .app_data_dir()
+        .map(|d| d.join("backend.log").display().to_string())
+        .unwrap_or_else(|_| "the application data directory".to_string());
+    let html = format!(
+        "<div style=\"font:15px system-ui,sans-serif;color:#e2e8f0;max-width:34rem;text-align:center;padding:1.5rem\">\
+           <h2 style=\"margin:0 0 .75rem\">Couldn't start Chainlink</h2>\
+           <p style=\"margin:.25rem 0\">The backend didn't respond within {}s.</p>\
+           <p style=\"margin:.75rem 0 0;color:#94a3b8\">See the log at:<br><code>{}</code></p>\
+         </div>",
+        STARTUP_TIMEOUT.as_secs(),
+        html_escape(&log_hint),
+    );
+    // serde_json safely encodes the HTML into a JS string literal (quotes, backslashes, etc.).
+    let js = format!("document.body.innerHTML = {};", serde_json::to_string(&html).unwrap());
+    let _ = window.eval(&js);
+}
+
+/// Minimal HTML escaping for interpolating a filesystem path into the error markup.
+fn html_escape(s: &str) -> String {
+    s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
 }
 
 pub fn run() {
@@ -136,6 +172,7 @@ pub fn run() {
                     }
                 } else {
                     eprintln!("Chainlink backend did not become ready within {STARTUP_TIMEOUT:?}");
+                    show_startup_error(&window, &handle);
                 }
             });
 

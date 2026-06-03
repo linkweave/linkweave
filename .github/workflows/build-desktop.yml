@@ -24,8 +24,10 @@ concurrency:
 
 jobs:
   build-desktop:
+    # Only uploads artifacts (no repo writes) — least privilege. The release job below holds the
+    # contents: write needed to publish the GitHub Release.
     permissions:
-      contents: write
+      contents: read
     strategy:
       fail-fast: false
       matrix:

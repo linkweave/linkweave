@@ -57,9 +57,29 @@ class DesktopWebRootRouteITest {
         Assumptions.assumeTrue(Files.exists(link, LinkOption.NOFOLLOW_LINKS),
             "platform does not support symlinks");
 
+        // The escape must be rejected and fall through to the SPA fallback (index.html, 200) —
+        // asserting the status + index marker proves that, rather than passing trivially because
+        // the body happened not to contain the secret.
         given().basePath("").redirects().follow(false)
             .get("/" + DesktopWebRootTestProfile.ESCAPING_SYMLINK)
             .then()
+            .statusCode(200)
+            .body(containsString(DesktopWebRootTestProfile.INDEX_MARKER))
+            .body(not(containsString(DesktopWebRootTestProfile.SECRET_MARKER)));
+    }
+
+    @Test
+    void shouldNotEscapeWebRootViaPathTraversal() {
+        // Percent-encoded "../" so the HTTP client doesn't pre-collapse it. This is the portable
+        // equivalent of "/../../../etc/passwd": it targets a secret planted in the web-root's
+        // parent dir. The server must clamp the ".." (Vert.x normalizedPath, backed by the
+        // containment guard), keeping the request inside the web-root — so the secret is never
+        // served and it falls through to the SPA fallback.
+        given().basePath("").urlEncodingEnabled(false).redirects().follow(false)
+            .get("/%2e%2e/" + DesktopWebRootTestProfile.outsideSecretFileName)
+            .then()
+            .statusCode(200)
+            .body(containsString(DesktopWebRootTestProfile.INDEX_MARKER))
             .body(not(containsString(DesktopWebRootTestProfile.SECRET_MARKER)));
     }
 

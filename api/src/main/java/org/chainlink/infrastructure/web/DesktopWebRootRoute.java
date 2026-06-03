@@ -98,7 +98,10 @@ public class DesktopWebRootRoute {
 
         if (Files.isRegularFile(requested) && isWithinRoot(requested, rootDir)) {
             // Real asset (and "/" -> index.html): let StaticHandler serve it with the right
-            // content-type, caching and range support.
+            // content-type, caching and range support. Note StaticHandler re-derives the file from
+            // ctx.normalizedPath() independently of `requested` above; both start from the same
+            // normalized path, and the isWithinRoot (toRealPath) check is the authoritative
+            // containment guard regardless of which resolution ultimately serves the bytes.
             staticHandler.handle(ctx);
         } else {
             // SPA deep-link (e.g. /collections/123): serve index.html so the Vue router can

@@ -20,6 +20,9 @@ public class DesktopWebRootTestProfile implements QuarkusTestProfile {
     static final String SECRET_MARKER = "TOP-SECRET-OUTSIDE-WEBROOT";
     /** A symlink inside the web-root that escapes to {@link #SECRET_MARKER} — must NOT be served. */
     static final String ESCAPING_SYMLINK = "escape-link";
+    /** Filename of the {@link #SECRET_MARKER} secret, planted in the web-root's parent dir, so a
+     *  "../<name>" traversal would reach it if the guard failed. */
+    static String outsideSecretFileName;
     static final Path WEB_ROOT = createWebRoot();
 
     private static Path createWebRoot() {
@@ -32,12 +35,15 @@ public class DesktopWebRootTestProfile implements QuarkusTestProfile {
 
             // Plant a secret file OUTSIDE the web-root and a symlink inside it pointing there, to
             // verify the symlink-escape guard. If the platform forbids symlinks, skip silently.
+            // createTempFile uses the same java.io.tmpdir as createTempDirectory above, so the
+            // secret lands in WEB_ROOT's parent — one "../" up from the web-root.
             Path secret = Files.createTempFile("desktop-secret", ".txt");
             secret.toFile().deleteOnExit();
             Files.writeString(secret, SECRET_MARKER);
+            outsideSecretFileName = secret.getFileName().toString();
             try {
                 Files.createSymbolicLink(dir.resolve(ESCAPING_SYMLINK), secret);
-            } catch (IOException | UnsupportedOperationException ignored) {
+            } catch (IOException | UnsupportedOperationException _) {
                 // No symlink support (e.g. some Windows setups) — the symlink test will be a no-op.
             }
             return dir;
