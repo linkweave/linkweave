@@ -160,7 +160,7 @@ case "$PLATFORM" in
       -exec cp -R {} desktop/dist/ \;
     ;;
   linux)
-    find desktop/src-tauri/target/release/bundle \( -name '*.deb' -o -name '*.AppImage' \) \
+    find desktop/src-tauri/target/release/bundle -name '*.deb' \
       -exec cp {} desktop/dist/ \;
     ;;
   windows)

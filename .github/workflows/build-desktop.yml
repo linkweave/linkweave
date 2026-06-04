@@ -50,7 +50,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libfuse2
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
       # --- Toolchain: Java (also the source for the bundled jlink runtime) ---
       - name: Set up JDK 25
@@ -108,9 +108,6 @@ jobs:
         run: bash scripts/build-desktop.sh
         env:
           DESKTOP_VERSION: ${{ steps.version.outputs.VERSION }}
-          # linuxdeploy and its plugins are AppImages that need FUSE to mount-and-run, which the
-          # hosted runners restrict ("failed to run linuxdeploy"). Make them self-extract instead.
-          APPIMAGE_EXTRACT_AND_RUN: 1
 
       # --- Build (Windows) ---
       - name: Build desktop (Windows)
@@ -157,7 +154,7 @@ jobs:
             |---|---|
             | macOS (Apple Silicon) | `.dmg` |
             | Windows (x64) | `.exe` / `.msi` |
-            | Linux (x64) | `.deb` / `.AppImage` |
+            | Linux (x64) | `.deb` |
 
             Self-contained — a Java 25 runtime is bundled; no separate Java install required.
           draft: false
@@ -169,4 +166,3 @@ jobs:
             artifacts/**/*.exe
             artifacts/**/*.msi
             artifacts/**/*.deb
-            artifacts/**/*.AppImage
