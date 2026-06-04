@@ -108,6 +108,9 @@ jobs:
         run: bash scripts/build-desktop.sh
         env:
           DESKTOP_VERSION: ${{ steps.version.outputs.VERSION }}
+          # linuxdeploy and its plugins are AppImages that need FUSE to mount-and-run, which the
+          # hosted runners restrict ("failed to run linuxdeploy"). Make them self-extract instead.
+          APPIMAGE_EXTRACT_AND_RUN: 1
 
       # --- Build (Windows) ---
       - name: Build desktop (Windows)
