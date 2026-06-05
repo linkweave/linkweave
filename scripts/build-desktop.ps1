@@ -64,6 +64,14 @@ pnpm run build
 Assert-LastExit "pnpm run build"
 Remove-Item Env:\VITE_DESKTOP
 
+# Stamp build metadata into the SPA so the running app can show its version. The frontend fetches
+# /commit.json at runtime (see useCommitInfo.ts) — mirroring the Docker build (frontend/Dockerfile).
+# Without this file the app falls back to "version unknown". dist\ is copied to the web root in
+# stage 5, so writing it here is enough.
+$Commit = (git rev-parse --short=7 HEAD)
+if (-not $Commit) { $Commit = "unknown" }
+'{{"commit":"{0}","version":"{1}"}}' -f $Commit, $Version | Set-Content "$REPO_ROOT\frontend\dist\commit.json" -NoNewline
+
 # --- Stage 3: package backend ---
 Log "3/7 package backend (quarkus.profile=desktop)"
 Set-Location "$REPO_ROOT\api"

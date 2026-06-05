@@ -60,6 +60,13 @@ printf '{"version": "%s"}\n' "$VERSION" > "$VERSION_CONFIG"
 log "2/7 build SPA (VITE_DESKTOP=true)"
 ( cd frontend && pnpm install --frozen-lockfile && VITE_DESKTOP=true pnpm run build )
 
+# Stamp build metadata into the SPA so the running app can show its version. The frontend fetches
+# /commit.json at runtime (see useCommitInfo.ts) — mirroring the Docker build (frontend/Dockerfile).
+# Without this file the app falls back to "version unknown". dist/ is copied to the web root in
+# stage 5, so writing it here is enough.
+COMMIT="$(git rev-parse --short=7 HEAD 2>/dev/null || echo unknown)"
+printf '{"commit":"%s","version":"%s"}\n' "$COMMIT" "$VERSION" > frontend/dist/commit.json
+
 # Stage 3 — package the backend with the desktop profile: root-path=/, REST under /api, OIDC
 # compiled out (#4c). Same fast-jar layout as the Docker build, different build-time config.
 log "3/7 package backend (quarkus.profile=desktop)"
