@@ -85,9 +85,3 @@ export function provideBookmarkPreviewHover(): PreviewHoverController {
 export function useBookmarkPreviewHover(): PreviewHoverController | null {
   return inject(KEY, null)
 }
-
-// Re-exported so the popup can mirror the same dwell/warm values if needed.
-export const PREVIEW_HOVER_TIMINGS = { DWELL_MS, WARM_MS, GRACE_MS }
-
-// Silences "unused" warnings on the type re-export above when bundlers prune.
-export type { Ref }

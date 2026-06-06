@@ -6,7 +6,7 @@
 **Use Case Name:** Run Chainlink as a Desktop Application
 **Primary Actor:** User (running Chainlink locally on their own machine)
 **Goal:** Use Chainlink as a self-contained desktop application that does not require a separately hosted backend or a browser
-**Status:** Proposed (learning exercise)
+**Status:** Done
 
 **Notes:**
 - The desktop bundle ships the Vue SPA, the Quarkus backend, and a per-user SQLite database inside a single installable application (Tauri or Electron shell).

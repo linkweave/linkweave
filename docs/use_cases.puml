@@ -139,11 +139,11 @@ rectangle "Chainlink Bookmark Manager" {
     }
 
     rectangle "Distribution" {
-        usecase "UC-052\nRun as Desktop App" as UC052
+        usecase "UC-052\nRun as Desktop App" as UC052 <<implemented>>
     }
 
     rectangle "Mobile & UI Polish" {
-        usecase "UC-057\nImprove Mobile\nResponsiveness" as UC057
+        usecase "UC-057\nImprove Mobile\nResponsiveness" as UC057 <<implemented>>
         usecase "UC-058\nInvestigate Form\nLabel-Input Spacing" as UC058 <<implemented>>
     }
 
