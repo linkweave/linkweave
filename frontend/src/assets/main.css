@@ -5,26 +5,26 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-background: #f9fafb;
-  --color-foreground: #111827;
-  --color-card: #ffffff;
-  --color-card-foreground: #111827;
+  --color-background: #f7f6f2;
+  --color-foreground: #1b1916;
+  --color-card: #fffefb;
+  --color-card-foreground: #1b1916;
   --color-primary: #2563eb;
   --color-primary-foreground: #ffffff;
-  --color-secondary: #f3f4f6;
-  --color-secondary-foreground: #111827;
-  --color-muted: #f3f4f6;
-  --color-muted-foreground: #6b7280;
-  --color-accent: #f3f4f6;
-  --color-accent-foreground: #111827;
+  --color-secondary: #f0eee8;
+  --color-secondary-foreground: #1b1916;
+  --color-muted: #f0eee8;
+  --color-muted-foreground: #6f695d;
+  --color-accent: #f0eee8;
+  --color-accent-foreground: #1b1916;
   --color-destructive: #ef4444;
   --color-destructive-foreground: #ffffff;
-  --color-popover: #ffffff;
-  --color-popover-foreground: #111827;
-  --color-popover-hover: #f3f4f6;
-  --color-popover-selected: #e5e7eb;
-  --color-border: #e5e7eb;
-  --color-input: #e5e7eb;
+  --color-popover: #fffefb;
+  --color-popover-foreground: #1b1916;
+  --color-popover-hover: #f0eee8;
+  --color-popover-selected: #e7e2d8;
+  --color-border: #e7e2d8;
+  --color-input: #e7e2d8;
   --color-ring: #2563eb;
   /* Accent color for UC-067 properties (sidebar icon, filter-pill icon,
      active prop-chip border/bg). Darker shade in light mode to keep contrast
