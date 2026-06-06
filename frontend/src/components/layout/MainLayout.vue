@@ -70,7 +70,7 @@ const closeSidebar = () => {
         <aside
           :class="
             cn(
-              'fixed inset-y-0 left-0 z-50 w-60 bg-secondary border-r border-border transform transition-transform lg:relative lg:translate-x-0 flex flex-col',
+              'fixed inset-y-0 left-0 z-50 w-60 bg-sidebar border-r border-border transform transition-transform lg:relative lg:translate-x-0 flex flex-col',
               sidebarOpen ? 'translate-x-0' : '-translate-x-full'
             )
           "

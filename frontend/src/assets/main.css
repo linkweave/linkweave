@@ -26,6 +26,7 @@
   --color-border: #e7e2d8;
   --color-input: #e7e2d8;
   --color-ring: #2563eb;
+  --color-sidebar: #f0eee8;
   /* Accent color for UC-067 properties (sidebar icon, filter-pill icon,
      active prop-chip border/bg). Darker shade in light mode to keep contrast
      against the secondary background; the dark theme uses violet-400. */
@@ -66,6 +67,7 @@
   --color-border: #363d49;
   --color-input: #252a32;
   --color-ring: #3b82f6;
+  --color-sidebar: #1e2028;
   --color-property: #a78bfa;
   --color-ss: oklch(64% 0.10 188);
 }
