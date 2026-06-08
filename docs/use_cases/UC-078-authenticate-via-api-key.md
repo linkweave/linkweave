@@ -25,8 +25,8 @@
 2. The Quarkus custom `HttpAuthenticationMechanism` (C-018) detects the `X-API-Key` header.
 3. System strips the `cl_` prefix from the header value.
 4. System computes SHA-256 hash of the remaining value.
-5. System looks up an active `api_key` record where `key_hash` matches AND `revoked_at IS NULL`.
-6. A matching key is found.
+5. System looks up an `api_key` record where `key_hash` matches AND `revoked_at IS NULL` AND (`expires_at IS NULL` OR `expires_at > NOW()`).
+6. A matching active, non-expired key is found.
 7. System loads the owning `User` record.
 8. System builds a `SecurityIdentity` using `QuarkusSecurityIdentity.Builder` with the user's email as the principal name, the user's roles from `FachRolle.getPermissions()`, and a custom `ApiKeyCredential` holding the API key ID. An `auth-method` attribute of `"api-key"` is added for audit purposes.
 9. System updates the `last_used_at` timestamp on the `api_key` record (BR-006 in UC-077).
@@ -51,19 +51,20 @@
 **Trigger:** The `X-API-Key` header value does not match the expected format `cl_` + 64 hex chars (step 3).
 **Flow:**
 
-1. The authentication mechanism returns `Uni.createFrom().failure(new AuthenticationFailedException("Invalid API key format"))`.
+1. The authentication mechanism returns `Uni.createFrom().failure(new AuthenticationFailedException("Invalid or revoked API key"))`.
 2. Quarkus rejects the request with HTTP 401.
-3. Response body includes: `{"error": "Invalid API key format."}`
+3. Response body includes: `{"error": "Invalid or revoked API key."}`
+4. The same generic message is used as in A3 to prevent the caller from distinguishing format errors from invalid keys (per BR-013).
 
-### A3: Key Not Found or Revoked
+### A3: Key Not Found, Revoked, or Expired
 
-**Trigger:** The SHA-256 hash lookup returns no matching active key (step 5).
+**Trigger:** The SHA-256 hash lookup returns no matching key that is both non-revoked and non-expired (step 5). This covers three cases: key does not exist, key was revoked, or key has passed its `expires_at` timestamp.
 **Flow:**
 
 1. The authentication mechanism returns `Uni.createFrom().failure(new AuthenticationFailedException("Invalid or revoked API key"))`.
 2. Quarkus rejects the request with HTTP 401.
 3. Response body includes: `{"error": "Invalid or revoked API key."}`
-4. This is indistinguishable from a key-not-found response to prevent key enumeration.
+4. The response is identical regardless of whether the key was not found, was revoked, or has expired — the caller cannot distinguish these cases (per BR-013).
 
 ### A4: User Account Deleted but Key Remains
 
@@ -119,15 +120,15 @@ If a request carries both an `X-API-Key` header AND a valid session cookie, the 
 
 ### BR-013: Error Messages Do Not Leak Information
 
-Authentication failure messages must be generic: "Invalid or revoked API key." The response must not indicate whether the key exists, was revoked, or belongs to a deleted user.
+All authentication failure messages — regardless of cause (malformed key, key not found, key revoked, key expired, user deleted) — must return the same generic response: `{"error": "Invalid or revoked API key."}` with HTTP 401. The response must not indicate the specific reason for failure. Format validation errors, expired keys, and revoked keys are all treated identically to prevent the caller from learning anything about the server's key state.
 
 ### BR-014: `last_used_at` Update is Best-Effort
 
 The `last_used_at` timestamp update (BR-006 in UC-077) must not cause the request to fail if the update itself fails (e.g., database constraint error). The update should be wrapped in a try-catch and logged on failure. Additionally, the update should only occur if the current `last_used_at` value is older than 5 minutes to avoid unnecessary DB writes on every request.
 
-### BR-015: No Timing Side-Channel on Key Presence
+### BR-015: No Timing Side-Channel on Key Status
 
-When the `X-API-Key` header is present but the key is not found or is revoked, the mechanism must return the same `AuthenticationFailedException` with the same response time characteristics regardless of whether the key existed but was revoked versus never existed. The error message must be identical: "Invalid or revoked API key."
+When the `X-API-Key` header is present but the key is not found, revoked, or expired, the mechanism must return the same `AuthenticationFailedException` with the same response time characteristics regardless of the specific failure reason. The error message must be identical in all cases: "Invalid or revoked API key." The single query `WHERE key_hash = ? AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())` ensures no timing difference between "not found," "revoked," and "expired."
 
 ### BR-016: Mechanism Coexistence with OIDC and Form Auth
 
@@ -143,13 +144,12 @@ The mechanism must implement `io.quarkus.vertx.http.runtime.security.HttpAuthent
 
 #### Registration
 
-The mechanism is registered as a CDI bean. Because the application already has OIDC and form-based mechanisms active, the API key mechanism must coexist with them. There are two supported approaches:
+The mechanism is registered as a regular `@ApplicationScoped` CDI bean (not `@Alternative`). This allows it to coexist alongside the existing OIDC and form-based mechanisms — Quarkus will run all three in priority order. The API key mechanism declares `getPriority()` returning `2100` (above Basic's 2000 and OIDC's 1001) so it runs first when an `X-API-Key` header is present.
 
-**Option A (Recommended): Combining mechanism.** Register a single `@Alternative` + `@Priority(1)` + `@ApplicationScoped` bean that inspects the `X-API-Key` header and either handles the request itself or delegates to the existing OIDC/form mechanisms. This avoids Quarkus trying all mechanisms sequentially and gives full control over the challenge response.
-
-**Option B: Standalone mechanism.** Register the API key mechanism as a regular `@ApplicationScoped` bean (not `@Alternative`). Quarkus will run it alongside OIDC and form auth in priority order. Use `getPriority()` returning `2100` (above Basic's 2000 and OIDC's 1001) so it runs first.
-
-> **Note on `@Alternative`:** Using `@Alternative` + `@Priority(1)` replaces the default OIDC and form mechanisms entirely — the combining mechanism becomes the sole entry point and must delegate explicitly. Without `@Alternative`, all mechanisms coexist and Quarkus tries them in descending priority order.
+This approach is preferred over a combining `@Alternative` mechanism because:
+- It does not couple the API key mechanism to the internals of Quarkus OIDC or form auth.
+- Future changes to OIDC or form auth configuration require no changes to the API key mechanism.
+- Quarkus' built-in mechanism ordering handles delegation naturally — if the API key mechanism returns `null`, the next mechanism in priority order takes over.
 
 #### Quarkus Mechanism Return Semantics
 
@@ -178,7 +178,7 @@ The API key mechanism should have priority **2100** (higher than Basic) so it ru
 
 The Chainlink application has `quarkus.http.auth.proactive=false` (see `application.properties`). This means authentication only runs when a endpoint requires it (`@Authenticated`, `@RolesAllowed`, etc.). The API key mechanism respects this — it will only be invoked for protected endpoints.
 
-This also means the `@HttpAuthenticationMechanism("api-key")` annotation **can** be used on specific endpoints to select the mechanism, if desired. However, since API key auth should work on all endpoints (not just specific ones), the combining approach (Option A) is preferred.
+This also means the `@HttpAuthenticationMechanism("api-key")` annotation **can** be used on specific endpoints to select the mechanism, if desired. However, since API key auth should work on all endpoints (not just specific ones), no endpoint-level selection is needed — the standalone mechanism at priority 2100 handles it globally.
 
 **Flow diagram:**
 
@@ -190,8 +190,10 @@ Incoming Request → Protected endpoint? (@Authenticated)
     ├─ Priority 2100: ApiKeyAuthMechanism
     │   ├─ Has X-API-Key header?
     │   │   ├─ Yes → Strip "cl_" prefix → SHA-256 hash → Lookup active key
+    │   │   │   │  (WHERE key_hash = ? AND revoked_at IS NULL
+    │   │   │   │   AND (expires_at IS NULL OR expires_at > NOW()))
     │   │   │   ├─ Found → Build SecurityIdentity → Update last_used_at → Proceed ✓
-    │   │   │   └─ Not found / malformed → AuthenticationFailedException → 401
+    │   │   │   └─ Not found / expired / revoked → AuthenticationFailedException → 401
     │   │   └─ No → return null (skip)
     │
     ├─ Priority 1001: OIDC Code Flow (session cookie)
@@ -216,8 +218,12 @@ Construction using `QuarkusSecurityIdentity.Builder`:
 User user = userRepo.findBenutzerIdFromBenutzername(email)
     .orElseThrow(() -> new AuthenticationFailedException("User not found"));
 
-// getSecurityRoles() returns comma-separated role names; split into a Set
-Set<String> roles = Set.of(user.getSecurityRoles().split(","));
+// getSecurityRoles() returns comma-separated role names; split into a Set.
+// Guard against null/empty — a user with no roles gets an empty set, not {""}
+String securityRoles = user.getSecurityRoles();
+Set<String> roles = (securityRoles == null || securityRoles.isBlank())
+    ? Set.of()
+    : Set.of(securityRoles.split(","));
 
 QuarkusSecurityIdentity identity = QuarkusSecurityIdentity.builder()
     .setPrincipal(new QuarkusPrincipal(user.getEmail().toString()))
