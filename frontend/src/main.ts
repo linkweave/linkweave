@@ -8,6 +8,7 @@ import { createApp } from 'vue'
 
 import App from './App.vue'
 import i18n from './i18n'
+import { registerRouter } from './lib/routerNavigation'
 import router from './router'
 
 configure({
@@ -40,6 +41,7 @@ async function initializeApp() {
   app.use(createPinia())
   app.use(router)
   app.use(i18n)
+  registerRouter(router)
 
   // Auth and collection initialization is handled by the router guard
   // before any navigation proceeds, so we can mount immediately

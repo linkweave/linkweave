@@ -1,35 +1,16 @@
-import { expect, test, type Browser, type Page, type APIRequestContext } from '@playwright/test'
-import { LoginPageObject } from './models/LoginPageObject'
+import { expect, test, type APIRequestContext, type Browser } from '@playwright/test'
+import { BASE, createCollectionViaApi } from './helpers/api'
+import { login } from './helpers/auth'
+import { openAddBookmarkDialog } from './helpers/bookmarks'
 
 test.describe.configure({ mode: 'serial' })
 
-const BASE = '/api'
 const ts = Date.now()
 const collectionName = `Auto-Tag Test ${ts}`
 const bookmarkTitle = `AutoTag-${ts}`
 const bookmarkUrl = `https://dev.acme-${ts}.example.com`
 
 let collectionId: string
-
-async function login(page: Page) {
-  const loginPage = new LoginPageObject(page)
-  await loginPage.goto()
-  await loginPage.login('alice@example.com', 'alice')
-  await expect(page).toHaveURL(/\/collections\//, { timeout: 10000 })
-}
-
-async function loginAndNavigateToCollection(page: Page, collectionId: string) {
-  await login(page)
-  await page.goto(`/collections/${collectionId}`)
-  await expect(page).toHaveURL(new RegExp(`/collections/${collectionId}`))
-}
-
-async function createCollectionViaApi(request: APIRequestContext, name: string): Promise<string> {
-  const resp = await request.post(`${BASE}/collections`, { data: { name } })
-  expect(resp.ok(), `createCollection failed: ${resp.status()}`).toBeTruthy()
-  const body = await resp.json()
-  return body.id
-}
 
 async function createAutoTagRuleViaApi(
   request: APIRequestContext,
@@ -80,11 +61,7 @@ test.describe('Auto-Tag Bookmark by URL Pattern', () => {
   })
 
   test('shows suggestions, accepts them, and creates bookmark with the new tag', async ({ page }) => {
-    await loginAndNavigateToCollection(page, collectionId)
-
-    await page.getByRole('button', { name: /add bookmark/i }).click()
-    const dialog = page.locator('[role="dialog"]')
-    await expect(dialog).toBeVisible()
+    const dialog = await openAddBookmarkDialog(page, collectionId)
 
     await dialog.locator('#create-bookmark-title').fill(bookmarkTitle)
     await dialog.locator('#create-bookmark-url').fill(bookmarkUrl)
@@ -117,11 +94,7 @@ test.describe('Auto-Tag Bookmark by URL Pattern', () => {
   })
 
   test('hides suggestions section for non-matching URL', async ({ page }) => {
-    await loginAndNavigateToCollection(page, collectionId)
-
-    await page.getByRole('button', { name: /add bookmark/i }).click()
-    const dialog = page.locator('[role="dialog"]')
-    await expect(dialog).toBeVisible()
+    const dialog = await openAddBookmarkDialog(page, collectionId)
 
     await dialog.locator('#create-bookmark-url').fill('https://www.example.com')
     // Section reserves space (always rendered) but contains no chips when no rule matches.
@@ -133,11 +106,7 @@ test.describe('Auto-Tag Bookmark by URL Pattern', () => {
   })
 
   test('disables accept button when all suggestions are deselected', async ({ page }) => {
-    await loginAndNavigateToCollection(page, collectionId)
-
-    await page.getByRole('button', { name: /add bookmark/i }).click()
-    const dialog = page.locator('[role="dialog"]')
-    await expect(dialog).toBeVisible()
+    const dialog = await openAddBookmarkDialog(page, collectionId)
 
     await dialog.locator('#create-bookmark-url').fill('https://uat-api.example.com')
     const uatChip = dialog.getByTestId('suggested-tag-uat')

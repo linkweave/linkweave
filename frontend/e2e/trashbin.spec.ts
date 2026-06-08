@@ -1,44 +1,16 @@
 import { expect, type Page, test } from '@playwright/test'
-import {
-  deleteTestUserCleanup,
-  registerAndCaptureStorageState,
-  type StorageState,
-  type TestUser,
-} from './models/TestUser'
+import { BASE, createBookmarkViaApi } from './helpers/api'
+import { gotoCollection, useTestCollectionWithCleanup } from './helpers/testCollection'
 import { TrashbinPageObject } from './models/TrashbinPageObject'
 
 test.describe.configure({ mode: 'serial' })
 
 const ts = Date.now()
-const BASE = '/api'
-
-let user: TestUser
-let collectionId: string
-let storageState: StorageState
-
-async function gotoCollection(page: Page) {
-  await page.goto(`/collections/${collectionId}`)
-  await expect(page).toHaveURL(new RegExp(`/collections/${collectionId}`))
-}
 
 async function navigateToTrashbin(page: Page) {
   await page.getByTestId('user-menu-trigger').click()
   await page.getByTestId('user-menu-trashbin').click()
   await expect(page).toHaveURL(/\/trashbin/)
-}
-
-async function createBookmarkViaApi(
-  page: Page,
-  collectionId: string,
-  title: string,
-  url: string,
-): Promise<string> {
-  const resp = await page.request.post(`${BASE}/bookmarks`, {
-    data: { collectionId, title, url },
-  })
-  expect(resp.ok(), `createBookmark failed: ${resp.status()}`).toBeTruthy()
-  const body = await resp.json()
-  return body.id
 }
 
 async function deleteBookmarkViaApi(page: Page, bookmarkId: string) {
@@ -50,27 +22,21 @@ test.describe('Trashbin', () => {
   let bookmarkAId: string
   let bookmarkBId: string
 
-  test.beforeAll(async ({ browser }) => {
-    ;({ user, storageState, collectionId } = await registerAndCaptureStorageState(
-      browser,
-      'trashbin',
-    ))
-  })
-
-  test.use({ storageState: async ({}, use) => { await use(storageState) } })
+  const collection = useTestCollectionWithCleanup('trashbin')
+  test.use({ storageState: async ({}, use) => { await use(collection.storageState!) } })
 
   test('should set up bookmarks and soft-delete them', async ({ page }) => {
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
 
     bookmarkAId = await createBookmarkViaApi(
-      page,
-      collectionId,
+      page.request,
+      collection.collectionId,
       `Trash-A-${ts}`,
       'https://trash-a.example.com',
     )
     bookmarkBId = await createBookmarkViaApi(
-      page,
-      collectionId,
+      page.request,
+      collection.collectionId,
       `Trash-B-${ts}`,
       'https://trash-b.example.com',
     )
@@ -88,7 +54,7 @@ test.describe('Trashbin', () => {
   })
 
   test('should show deleted items in trashbin', async ({ page }) => {
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await navigateToTrashbin(page)
 
     const trashbin = new TrashbinPageObject(page)
@@ -98,20 +64,19 @@ test.describe('Trashbin', () => {
   })
 
   test('should restore a bookmark from trashbin', async ({ page }) => {
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await navigateToTrashbin(page)
 
     const trashbin = new TrashbinPageObject(page)
     await trashbin.restoreBookmark(bookmarkAId)
     await trashbin.expectBookmarkNotVisible(bookmarkAId)
 
-    await page.goto(`/collections/${collectionId}`)
-    await expect(page).toHaveURL(new RegExp(`/collections/${collectionId}`))
+    await gotoCollection(page, collection)
     await expect(page.locator('h3').filter({ hasText: `Trash-A-${ts}` })).toBeVisible()
   })
 
   test('should purge a bookmark permanently', async ({ page }) => {
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await navigateToTrashbin(page)
 
     const trashbin = new TrashbinPageObject(page)
@@ -120,11 +85,11 @@ test.describe('Trashbin', () => {
   })
 
   test("should show empty state after purging this spec's bookmark", async ({ page }) => {
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
 
     const bookmarkCId = await createBookmarkViaApi(
-      page,
-      collectionId,
+      page.request,
+      collection.collectionId,
       `Trash-C-${ts}`,
       'https://trash-c.example.com',
     )
@@ -137,6 +102,4 @@ test.describe('Trashbin', () => {
     await trashbin.purgeBookmark(bookmarkCId)
     await trashbin.expectBookmarkNotVisible(bookmarkCId)
   })
-
-  test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => user))
 })

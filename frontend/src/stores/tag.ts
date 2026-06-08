@@ -4,7 +4,7 @@ import { TagResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import type { TagJson, TagSaveJson } from '@/api/generated'
 import { useCollectionStore } from '@/stores/collection'
-import { useBookmarkStore } from '@/stores/bookmark'
+import { useSearchQueryStore } from '@/stores/searchQuery'
 
 const tagApi = new TagResourceApi(config)
 
@@ -22,9 +22,9 @@ export const useTagStore = defineStore('tag', () => {
   // token, and "excluded" iff it appears as a negated one. Toggling a row
   // writes back into the query string so pills and sidebar stay in sync.
   function tagIdsByTokenNeg(neg: boolean): Set<string> {
-    const bookmarkStore = useBookmarkStore()
+    const searchQueryStore = useSearchQueryStore()
     const names = new Set<string>()
-    for (const t of bookmarkStore.queryTokens) {
+    for (const t of searchQueryStore.queryTokens) {
       if (t.kind === 'tag' && t.neg === neg) names.add(t.value.toLowerCase())
     }
     const ids = new Set<string>()
@@ -41,13 +41,13 @@ export const useTagStore = defineStore('tag', () => {
   function toggleTag(tagId: string, modifier?: 'exclude') {
     const tag = tags.value.find(t => t.id === tagId)
     if (!tag) return
-    const bookmarkStore = useBookmarkStore()
-    bookmarkStore.toggleQueryToken({ kind: 'tag', value: tag.data.name, neg: false }, modifier)
+    const searchQueryStore = useSearchQueryStore()
+    searchQueryStore.toggleQueryToken({ kind: 'tag', value: tag.data.name, neg: false }, modifier)
   }
 
   function clearTagFilter() {
-    const bookmarkStore = useBookmarkStore()
-    bookmarkStore.removeTokensWhere(t => t.kind === 'tag')
+    const searchQueryStore = useSearchQueryStore()
+    searchQueryStore.removeTokensWhere(t => t.kind === 'tag')
   }
 
   function patchTags(updater: (list: TagJson[]) => TagJson[]) {
@@ -75,17 +75,15 @@ export const useTagStore = defineStore('tag', () => {
 
   async function deleteTag(tagId: string): Promise<void> {
     await tagApi.apiTagsTagIdDelete({ tagId })
-    const bookmarkStore = useBookmarkStore()
     patchTags((list) => list.filter((t) => t.id !== tagId))
 
     // No need to clean selectedTagIds: it is derived from the query tokens, and
     // a token referencing the now-deleted tag name simply matches nothing.
 
-    // Remove the tag from all bookmarks in the store
-    for (const bookmark of bookmarkStore.bookmarks) {
-      if (bookmark.data.tagIds) {
-        bookmark.data.tagIds.delete(tagId)
-      }
+    // Refetch so bookmarks drop their reference to the now-deleted tag. Mirrors
+    // deleteFolder and avoids a tag -> bookmark store dependency.
+    if (collectionStore.currentCollectionId) {
+      void collectionStore.fetchCollectionInfo(collectionStore.currentCollectionId)
     }
   }
 

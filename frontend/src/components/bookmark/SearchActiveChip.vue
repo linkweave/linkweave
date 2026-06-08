@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { Filter, Search } from '@lucide/vue'
 import { useBookmarkStore } from '@/stores/bookmark'
+import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useI18n } from 'vue-i18n'
 import FilterPill from './FilterPill.vue'
 import SavedSearchPopover from '@/components/savedsearch/SavedSearchPopover.vue'
@@ -10,9 +11,10 @@ import { useSavedSearchStore } from '@/stores/savedSearch'
 
 const { t } = useI18n()
 const bookmarkStore = useBookmarkStore()
+const searchQueryStore = useSearchQueryStore()
 const savedSearchStore = useSavedSearchStore()
 
-const tokens = computed(() => bookmarkStore.queryTokens)
+const tokens = computed(() => searchQueryStore.queryTokens)
 const resultCount = computed(() => bookmarkStore.filteredBookmarks.length)
 const hasActiveSavedSearch = computed(() => savedSearchStore.activeSavedSearchId !== null)
 const savedSearchesEnabled = computed(() => savedSearchStore.featureEnabled)
@@ -20,7 +22,7 @@ const savedSearchesEnabled = computed(() => savedSearchStore.featureEnabled)
 const saveOpen = ref(false)
 
 function clear() {
-  bookmarkStore.searchQuery = ''
+  searchQueryStore.searchQuery = ''
 }
 </script>
 
@@ -44,7 +46,7 @@ function clear() {
       v-for="(token, i) in tokens"
       :key="i"
       :token="token"
-      @remove="bookmarkStore.removeQueryTokenAt(i)"
+      @remove="searchQueryStore.removeQueryTokenAt(i)"
     />
 
     <span class="ml-auto text-muted-foreground text-xs shrink-0">

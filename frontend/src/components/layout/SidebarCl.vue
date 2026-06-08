@@ -15,7 +15,7 @@ import {
 } from '@/composables/useDragState'
 import { useShowPropertiesSidebar } from '@/composables/usePropertyDisplayPrefs'
 import { parsePropertyValue } from '@/lib/searchQueryProperty'
-import { useBookmarkStore } from '@/stores/bookmark'
+import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { useOfflineStore } from '@/stores/offline'
@@ -36,7 +36,7 @@ const collectionStore = useCollectionStore()
 const folderStore = useFolderStore()
 const offline = useOfflineStore()
 const propertyStore = usePropertyStore()
-const bookmarkStore = useBookmarkStore()
+const searchQueryStore = useSearchQueryStore()
 const savedSearchStore = useSavedSearchStore()
 const showPropertiesSidebar = useShowPropertiesSidebar()
 const { moveBookmarkWithUndo, moveFolderWithUndo } = useDndMove()
@@ -77,7 +77,7 @@ function handleCreateSubfolder(parentId: string) {
 
 function isPropertyKeyInQuery(name: string): boolean {
   const lower = name.toLowerCase()
-  return bookmarkStore.queryTokens.some((t) => {
+  return searchQueryStore.queryTokens.some((t) => {
     if (t.kind !== 'operator' || t.key !== 'property' || t.neg) return false
     const parsed = parsePropertyValue(t.value)
     return parsed?.key === lower
@@ -87,15 +87,15 @@ function isPropertyKeyInQuery(name: string): boolean {
 function onPropertyClick(name: string) {
   const lower = name.toLowerCase()
   if (isPropertyKeyInQuery(name)) {
-    bookmarkStore.removeTokensWhere((t) => {
+    searchQueryStore.removeTokensWhere((t) => {
       if (t.kind !== 'operator' || t.key !== 'property' || t.neg) return false
       return parsePropertyValue(t.value)?.key === lower
     })
     return
   }
-  const current = bookmarkStore.searchQuery.trim()
+  const current = searchQueryStore.searchQuery.trim()
   const token = `property:${name}`
-  bookmarkStore.setSearchQuery(current ? `${current} ${token}` : token)
+  searchQueryStore.setSearchQuery(current ? `${current} ${token}` : token)
   nextTick(() => {
     const input = document.querySelector<HTMLInputElement>('[data-search-input]')
     if (input) {

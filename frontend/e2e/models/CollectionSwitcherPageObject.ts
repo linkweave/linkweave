@@ -15,10 +15,7 @@ export class CollectionSwitcherPageObject {
   }
 
   async loginAndWaitForPage(email = 'alice@example.com', password = 'alice') {
-    const loginPage = new LoginPageObject(this.page)
-    await loginPage.goto()
-    await loginPage.login(email, password)
-    await expect(this.page).toHaveURL(/\/collections\//, { timeout: 15000 })
+    await new LoginPageObject(this.page).loginAndLand(email, password)
   }
 
   async openSwitcher() {

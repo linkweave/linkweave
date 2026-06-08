@@ -11,7 +11,7 @@ import { MainLayout } from '@/components/layout'
 import { ResponsiveButton, SearchBar } from '@/components/ui'
 import HeaderSearchMobile from '@/components/ui/HeaderSearchMobile.vue'
 import { useMediaQuery } from '@/composables/useMediaQuery'
-import { useBookmarkStore } from '@/stores/bookmark'
+import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { useOfflineStore } from '@/stores/offline'
@@ -22,7 +22,7 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
-const bookmarkStore = useBookmarkStore()
+const searchQueryStore = useSearchQueryStore()
 const folderStore = useFolderStore()
 const ui = useUiStore()
 const offline = useOfflineStore()
@@ -44,7 +44,7 @@ const containerClass = computed(() => {
   <MainLayout>
     <template #header-search>
       <SearchBar
-        v-model="bookmarkStore.searchQuery"
+        v-model="searchQueryStore.searchQuery"
         :placeholder="searchPlaceholder"
         variant="header"
       />

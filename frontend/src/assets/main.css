@@ -10,7 +10,7 @@
   --color-card: #fffefb;
   --color-card-foreground: #1b1916;
   --color-primary: #2563eb;
-  --color-primary-foreground: #ffffff;
+  --color-primary-foreground: #fff;
   --color-secondary: #f0eee8;
   --color-secondary-foreground: #1b1916;
   --color-muted: #f0eee8;
@@ -18,7 +18,7 @@
   --color-accent: #f0eee8;
   --color-accent-foreground: #1b1916;
   --color-destructive: #ef4444;
-  --color-destructive-foreground: #ffffff;
+  --color-destructive-foreground: #fff;
   --color-popover: #fffefb;
   --color-popover-foreground: #1b1916;
   --color-popover-hover: #f0eee8;
@@ -27,15 +27,17 @@
   --color-input: #e7e2d8;
   --color-ring: #2563eb;
   --color-sidebar: #f0eee8;
+
   /* Accent color for UC-067 properties (sidebar icon, filter-pill icon,
      active prop-chip border/bg). Darker shade in light mode to keep contrast
      against the secondary background; the dark theme uses violet-400. */
   --color-property: #7c3aed;
+
   /* Accent color for Smart Collections (sidebar funnel icon, save trigger,
      active-saved-search pill). Teal — distinct from Tags (--primary blue) and
      Properties (--color-property purple). Light-mode value tuned for contrast
      against secondary background. */
-  --color-ss: oklch(44% 0.10 188);
+  --color-ss: oklch(44% 0.10 188deg);
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.5rem;
@@ -51,7 +53,7 @@
   --color-card: #1e2028;
   --color-card-foreground: #ededed;
   --color-primary: #3b82f6;
-  --color-primary-foreground: #ffffff;
+  --color-primary-foreground: #fff;
   --color-secondary: #252a32;
   --color-secondary-foreground: #ededed;
   --color-muted: #252a32;
@@ -59,7 +61,7 @@
   --color-accent: #252a32;
   --color-accent-foreground: #ededed;
   --color-destructive: #dc2626;
-  --color-destructive-foreground: #ffffff;
+  --color-destructive-foreground: #fff;
   --color-popover: #2a2e3a;
   --color-popover-foreground: #ededed;
   --color-popover-hover: #363d4b;
@@ -69,7 +71,7 @@
   --color-ring: #3b82f6;
   --color-sidebar: #1e2028;
   --color-property: #a78bfa;
-  --color-ss: oklch(64% 0.10 188);
+  --color-ss: oklch(64% 0.10 188deg);
 }
 
 /* Everything below lives in `@layer base` so Tailwind utilities (which live in
@@ -83,6 +85,8 @@
 @layer base {
   * {
     border-color: var(--color-border);
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
   }
 
   ::placeholder {
@@ -101,11 +105,6 @@
   }
 
   /* Custom scrollbar styles */
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-border) transparent;
-  }
-
   *::-webkit-scrollbar {
     width: 6px;
     height: 6px;

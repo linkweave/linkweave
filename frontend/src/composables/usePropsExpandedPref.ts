@@ -1,22 +1,6 @@
+import { safeGetItem, safeSetItem } from '@/lib/safeStorage'
 import { useAuthStore } from '@/stores/auth'
 import { ref, watch, type Ref } from 'vue'
-
-function safeGetItem(key: string): string | null {
-  try {
-    return localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function safeSetItem(key: string, value: string): void {
-  try {
-    localStorage.setItem(key, value)
-  } catch {
-    console.warn('localStorage unavailable')
-    // localStorage may be unavailable (private mode, quota exceeded) — fail silently.
-  }
-}
 
 export function usePropsExpandedPref(collectionId: Ref<string>) {
   const auth = useAuthStore()

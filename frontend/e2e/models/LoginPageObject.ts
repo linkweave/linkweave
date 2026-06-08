@@ -27,6 +27,13 @@ export class LoginPageObject {
     await this.loginSubmitButton.click()
   }
 
+  /** Opens the login page, signs in, and waits until the app lands on a collection. */
+  async loginAndLand(email = 'alice@example.com', password = 'alice') {
+    await this.goto()
+    await this.login(email, password)
+    await expect(this.page).toHaveURL(/\/collections\//, { timeout: 15000 })
+  }
+
   async expectOnLoginPage() {
     await expect(this.page).toHaveURL(/\/login/)
     await expect(this.appTitle).toBeVisible()

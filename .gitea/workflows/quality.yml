@@ -1,0 +1,71 @@
+name: Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Java copy-paste detection. Enforced — the baseline is zero clones, so any
+  # new duplication (>= 100 tokens) fails the build. Generated sources
+  # (QueryDSL/MapStruct/Hibernate) are excluded via the plugin config in pom.xml.
+  backend-cpd:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: 25
+          distribution: temurin
+          cache: maven
+
+      - name: CPD check
+        working-directory: api
+        run: ./mvnw -B -ntp pmd:cpd-check
+
+  # Frontend CSS linting (stylelint, enforced) plus fallow dead code,
+  # duplication and health/complexity (report-only via continue-on-error).
+  # Duplication/dead-code are compared against a committed baseline so only
+  # new findings show up; drop `continue-on-error: true` to enforce.
+  frontend-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: CSS lint (stylelint)
+        working-directory: frontend
+        run: pnpm exec stylelint "src/**/*.css"
+
+      # Dead code + duplication, compared against .fallow-baseline.json so only
+      # NEW findings surface (the current backlog is accepted).
+      - name: Dead code + duplication (fallow)
+        working-directory: frontend
+        continue-on-error: true
+        run: pnpm run analyze
+
+      - name: Health + complexity (fallow)
+        working-directory: frontend
+        continue-on-error: true
+        run: pnpm run analyze:health

@@ -4,7 +4,8 @@ import {CollectionResourceApi} from '@/api/generated'
 import {SYSTEM_DEFAULT_SORT} from '@/utils/bookmarkSort'
 import {useCollectionSettingsWriter} from '@/composables/useCollectionSettingsWriter'
 import * as offlineCache from '@/lib/offline-cache'
-import router from '@/router'
+import {navigate} from '@/lib/routerNavigation'
+import {registerStoreReset} from '@/lib/storeReset'
 import {useAuthStore} from '@/stores/auth'
 import {useNotificationStore} from '@/stores/notification'
 import {defineStore} from 'pinia'
@@ -189,7 +190,7 @@ export const useCollectionStore = defineStore('collection', () => {
 
   function switchCollection(collectionId: string) {
     setCurrentCollectionId(collectionId)
-    router.push({ name: 'collection', params: { id: collectionId } })
+    navigate({ name: 'collection', params: { id: collectionId } })
   }
 
   const {updateSettings} = useCollectionSettingsWriter(settings, () => currentCollectionId.value)
@@ -237,6 +238,14 @@ export const useCollectionStore = defineStore('collection', () => {
       throw err
     }
   }
+
+  function reset() {
+    currentCollectionId.value = null
+    collectionInfo.value = null
+    collections.value = []
+    collectionsFetched.value = false
+  }
+  registerStoreReset(reset)
 
   return {
     currentCollectionId,

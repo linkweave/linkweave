@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext, type Browser, type Page } from '@playwright/test'
+import { api } from './helpers/api'
 import {
   deleteTestUserCleanup,
   loginViaApi,
@@ -28,45 +29,6 @@ let bookmarkWithPriorityOnlyId: string
 type PropDefResp = { id: string; data: { name: string } }
 type BookmarkResp = { id: string }
 
-// Parallel workers hammer the dev SQLite DB, which occasionally answers 500 on
-// concurrent writes. Same retry pattern as TestUser.ts — only retry transient
-// 5xx; let 4xx fail fast so a real bug surfaces.
-async function postJsonWithRetry(
-  request: APIRequestContext,
-  path: string,
-  body: unknown,
-): Promise<unknown> {
-  let lastStatus = 0
-  let lastBody = ''
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const resp = await request.post(path, { data: body })
-    lastStatus = resp.status()
-    if (resp.ok()) return await resp.json()
-    lastBody = await resp.text().catch(() => '')
-    if (lastStatus < 500) break
-    await new Promise((r) => setTimeout(r, 300))
-  }
-  throw new Error(`POST ${path} failed: ${lastStatus} ${lastBody}`)
-}
-
-async function putJsonWithRetry(
-  request: APIRequestContext,
-  path: string,
-  body: unknown,
-): Promise<void> {
-  let lastStatus = 0
-  let lastBody = ''
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const resp = await request.put(path, { data: body })
-    lastStatus = resp.status()
-    if (resp.ok()) return
-    lastBody = await resp.text().catch(() => '')
-    if (lastStatus < 500) break
-    await new Promise((r) => setTimeout(r, 300))
-  }
-  throw new Error(`PUT ${path} failed: ${lastStatus} ${lastBody}`)
-}
-
 async function createPropertyDef(
   request: APIRequestContext,
   body: {
@@ -77,7 +39,7 @@ async function createPropertyDef(
     sortOrder: number
   },
 ): Promise<PropDefResp> {
-  return (await postJsonWithRetry(request, '/api/property-definitions', body)) as PropDefResp
+  return api<PropDefResp>(request, 'POST', '/api/property-definitions', body)
 }
 
 async function createBookmark(
@@ -85,11 +47,7 @@ async function createBookmark(
   title: string,
   url: string,
 ): Promise<BookmarkResp> {
-  return (await postJsonWithRetry(request, '/api/bookmarks', {
-    collectionId,
-    title,
-    url,
-  })) as BookmarkResp
+  return api<BookmarkResp>(request, 'POST', '/api/bookmarks', { collectionId, title, url })
 }
 
 async function setBookmarkProperties(
@@ -97,7 +55,7 @@ async function setBookmarkProperties(
   bookmarkId: string,
   values: Array<{ definitionId: string; valueText?: string; valueNumber?: number }>,
 ): Promise<void> {
-  await putJsonWithRetry(request, `/api/bookmarks/${bookmarkId}/properties`, {
+  await api<void>(request, 'PUT', `/api/bookmarks/${bookmarkId}/properties`, {
     propertyValues: values,
   })
 }

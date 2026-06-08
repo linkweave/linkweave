@@ -1,4 +1,5 @@
-import { expect, test, type APIRequestContext, type Browser, type Page } from '@playwright/test'
+import { expect, test, type Browser, type Page } from '@playwright/test'
+import { api, type Created } from './helpers/api'
 import {
   deleteTestUserCleanup,
   loginViaApi,
@@ -26,48 +27,26 @@ let user: TestUser
 let storageState: StorageState
 let collectionId: string
 
-type Created = { id: string }
-
-async function api<T>(
-  request: APIRequestContext,
-  path: string,
-  body: unknown,
-): Promise<T> {
-  // Retry transient 5xx (SQLite write contention under parallel load); fail
-  // fast on 4xx so real bugs surface.
-  let lastStatus = 0
-  let lastBody = ''
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const resp = await request.post(path, { data: body })
-    lastStatus = resp.status()
-    if (resp.ok()) return (await resp.json()) as T
-    lastBody = await resp.text().catch(() => '')
-    if (lastStatus < 500) break
-    await new Promise((r) => setTimeout(r, 300))
-  }
-  throw new Error(`POST ${path} failed: ${lastStatus} ${lastBody}`)
-}
-
 async function seedWorld(browser: Browser): Promise<void> {
   const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
   try {
     await loginViaApi(ctx.request, user)
 
-    const quarkus = await api<Created>(ctx.request, '/api/tags', {
+    const quarkus = await api<Created>(ctx.request, 'POST', '/api/tags', {
       collectionId,
       name: tagQuarkus,
       color: '#dc2626',
     })
-    const docs = await api<Created>(ctx.request, '/api/tags', {
+    const docs = await api<Created>(ctx.request, 'POST', '/api/tags', {
       collectionId,
       name: tagDocs,
       color: '#22c55e',
     })
 
-    const insel = await api<Created>(ctx.request, '/api/folders', { collectionId, name: folderInsel })
-    const dev = await api<Created>(ctx.request, '/api/folders', { collectionId, name: folderDev })
+    const insel = await api<Created>(ctx.request, 'POST', '/api/folders', { collectionId, name: folderInsel })
+    const dev = await api<Created>(ctx.request, 'POST', '/api/folders', { collectionId, name: folderDev })
 
-    const statusDef = await api<Created>(ctx.request, '/api/property-definitions', {
+    const statusDef = await api<Created>(ctx.request, 'POST', '/api/property-definitions', {
       collectionId,
       name: 'status',
       type: 'SELECT',
@@ -75,14 +54,14 @@ async function seedWorld(browser: Browser): Promise<void> {
       sortOrder: 0,
     })
 
-    const a = await api<Created>(ctx.request, '/api/bookmarks', {
+    const a = await api<Created>(ctx.request, 'POST', '/api/bookmarks', {
       collectionId,
       title: `Quarkus Guide ${ts}`,
       url: 'https://quarkus.io/guides',
       tagIds: [quarkus.id],
       folderId: insel.id,
     })
-    await api<Created>(ctx.request, '/api/bookmarks', {
+    await api<Created>(ctx.request, 'POST', '/api/bookmarks', {
       collectionId,
       title: `Docs Site ${ts}`,
       url: 'https://docs.example.com',

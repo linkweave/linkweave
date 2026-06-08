@@ -4,7 +4,7 @@ import { FolderResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import type { FolderJson, FolderSaveJson, FolderMoveJson } from '@/api/generated'
 import { useCollectionStore } from '@/stores/collection'
-import { useBookmarkStore } from '@/stores/bookmark'
+import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useTrashbinStore } from '@/stores/trashbin'
 
 const folderApi = new FolderResourceApi(config)
@@ -24,8 +24,8 @@ export const useFolderStore = defineStore('folder', () => {
   // (so duplicate folder names don't disambiguate ambiguously); typed queries
   // can still use names, resolved as a fallback below.
   const selectedFolderId = computed<string | null>(() => {
-    const bookmarkStore = useBookmarkStore()
-    for (const t of bookmarkStore.queryTokens) {
+    const searchQueryStore = useSearchQueryStore()
+    for (const t of searchQueryStore.queryTokens) {
       if (t.kind === 'operator' && t.key === 'under' && !t.neg) {
         // Exact id first (click-path encoding) — case-sensitive.
         const byId = folders.value.find(f => f.id === t.value)
@@ -71,11 +71,11 @@ export const useFolderStore = defineStore('folder', () => {
   })
 
   function selectFolder(folderId: string | null) {
-    const bookmarkStore = useBookmarkStore()
+    const searchQueryStore = useSearchQueryStore()
     // Strip any existing `under:` tokens — folder selection is exclusive in the
     // sidebar, so we never want two active at once. Leaves `folder:` tokens
     // (the flat substring variant emitted by card labels) alone.
-    bookmarkStore.removeTokensWhere(t => t.kind === 'operator' && t.key === 'under')
+    searchQueryStore.removeTokensWhere(t => t.kind === 'operator' && t.key === 'under')
     if (folderId === null) return
     // Prefer the folder *name* for a readable query string, but fall back to
     // the id when the name isn't unique (e.g. duplicate "prod"/"uat"/"dev"
@@ -86,7 +86,7 @@ export const useFolderStore = defineStore('folder', () => {
       name !== undefined &&
       folders.value.filter(f => f.data.name.toLowerCase() === name.toLowerCase()).length === 1
     const value = isNameUnique ? name : folderId
-    bookmarkStore.toggleQueryToken({ kind: 'operator', key: 'under', value, neg: false })
+    searchQueryStore.toggleQueryToken({ kind: 'operator', key: 'under', value, neg: false })
   }
 
   function patchFolders(updater: (list: FolderJson[]) => FolderJson[]) {

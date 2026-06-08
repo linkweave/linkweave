@@ -3,25 +3,12 @@ import { ref, computed } from 'vue'
 import { AuthResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import type { UserInfoJson } from '@/api/generated'
-import { useCollectionStore } from '@/stores/collection'
-import { useBookmarkStore } from '@/stores/bookmark'
 import * as offlineCache from '@/lib/offline-cache'
 import { setSessionExpiredHandler } from '@/lib/offline-middleware'
-import router from '@/router'
+import { navigate } from '@/lib/routerNavigation'
+import { resetAllStores } from '@/lib/storeReset'
 
 const authApi = new AuthResourceApi(config)
-
-function resetAllStores() {
-  const collection = useCollectionStore()
-  const bookmark = useBookmarkStore()
-
-  collection.currentCollectionId = null
-  collection.collectionInfo = null
-  collection.collections = []
-  collection.collectionsFetched = false
-  bookmark.searchQuery = ''
-  // folder + tag selections are derived from bookmark.searchQuery — clearing the query above clears them.
-}
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<UserInfoJson | null>(null)
@@ -83,7 +70,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (email) {
         offlineCache.purgeForUser(email).catch(err => console.error('Failed to purge offline cache on logout:', err))
       }
-      router.push({ name: 'login' })
+      navigate({ name: 'login' })
     }
   }
 

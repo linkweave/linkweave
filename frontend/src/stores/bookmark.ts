@@ -12,24 +12,22 @@ import {
   EMPTY_ANCESTORS,
   type MatchContext,
   matchesTokens,
-  type QueryToken,
-  stringifyTokens,
-  toggleToken,
-  tokenize,
 } from '@/lib/searchQuery'
 import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { usePropertyStore } from '@/stores/property'
+import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useTagStore } from '@/stores/tag'
 import { sortBookmarks } from '@/utils/bookmarkSort'
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 
 const bookmarkApi = new BookmarkResourceApi(config)
 const bookmarkPropertyValueApi = new BookmarkPropertyValueResourceApi(config)
 
 export const useBookmarkStore = defineStore('bookmark', () => {
   const collectionStore = useCollectionStore()
+  const searchQueryStore = useSearchQueryStore()
 
   // ---------------------------------------------------------------------------
   // State + base getters
@@ -38,51 +36,6 @@ export const useBookmarkStore = defineStore('bookmark', () => {
   const bookmarks = computed<BookmarkJson[]>(() => collectionStore.collectionInfo?.bookmarks ?? [])
 
   const loading = computed(() => collectionStore.loading)
-
-  // ---------------------------------------------------------------------------
-  // Search query (string + parsed tokens, UC-070 lite)
-  // ---------------------------------------------------------------------------
-
-  const searchQuery = ref('')
-
-  function setSearchQuery(query: string) {
-    searchQuery.value = query
-  }
-
-  function clearSearchQuery() {
-    searchQuery.value = ''
-  }
-
-  const queryTokens = computed<QueryToken[]>(() => tokenize(searchQuery.value))
-
-  function toggleQueryToken(token: QueryToken, modifier?: 'exclude') {
-    const next = toggleToken(queryTokens.value, token, modifier)
-    searchQuery.value = stringifyTokens(next)
-  }
-
-  function removeQueryTokenAt(idx: number) {
-    const next = queryTokens.value.filter((_, i) => i !== idx)
-    searchQuery.value = stringifyTokens(next)
-  }
-
-  function removeTokensWhere(predicate: (t: QueryToken) => boolean) {
-    const remaining = queryTokens.value.filter((t) => !predicate(t))
-    searchQuery.value = stringifyTokens(remaining)
-  }
-
-  function isTagActive(name: string): boolean {
-    const lower = name.toLowerCase()
-    return queryTokens.value.some(
-      (t) => t.kind === 'tag' && !t.neg && t.value.toLowerCase() === lower,
-    )
-  }
-
-  function isTagExcluded(name: string): boolean {
-    const lower = name.toLowerCase()
-    return queryTokens.value.some(
-      (t) => t.kind === 'tag' && t.neg && t.value.toLowerCase() === lower,
-    )
-  }
 
   // ---------------------------------------------------------------------------
   // Filtered + sorted list
@@ -101,7 +54,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     // Sidebar folder + tag selections both flow through query tokens now (see
     // `folderStore.selectFolder` and `tagStore.toggleTag`); the token filter
     // below handles them via `under:` and `#tag`.
-    const tokens = queryTokens.value
+    const tokens = searchQueryStore.queryTokens
     if (tokens.length > 0) {
       const tagNamesById = new Map(tagStore.tags.map((t) => [t.id, t.data.name.toLowerCase()]))
       const folderNamesById = new Map(
@@ -163,6 +116,16 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     }
   }
 
+  /** Replace a bookmark in the in-memory list with its updated version and return it. */
+  function applyUpdatedBookmark(updated: BookmarkJson): BookmarkJson {
+    patchBookmarks((list) => {
+      const idx = list.findIndex((b) => b.id === updated.id)
+      if (idx !== -1) list[idx] = updated
+      return list
+    })
+    return updated
+  }
+
   async function createBookmark(data: BookmarkSaveJson): Promise<BookmarkJson> {
     const bookmark = await bookmarkApi.apiBookmarksPost({ bookmarkSaveJson: data })
     patchBookmarks((list) => [bookmark, ...list])
@@ -174,12 +137,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
       bookmarkId,
       bookmarkSaveJson: data,
     })
-    patchBookmarks((list) => {
-      const idx = list.findIndex((b) => b.id === bookmarkId)
-      if (idx !== -1) list[idx] = updated
-      return list
-    })
-    return updated
+    return applyUpdatedBookmark(updated)
   }
 
   async function deleteBookmark(bookmarkId: string): Promise<void> {
@@ -199,12 +157,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
       bookmarkId,
       bookmarkMoveJson: data,
     })
-    patchBookmarks((list) => {
-      const idx = list.findIndex((b) => b.id === bookmarkId)
-      if (idx !== -1) list[idx] = updated
-      return list
-    })
-    return updated
+    return applyUpdatedBookmark(updated)
   }
 
   /**
@@ -220,12 +173,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
       bookmarkId,
       bookmarkPropertyValueListJson: { propertyValues },
     })
-    patchBookmarks((list) => {
-      const idx = list.findIndex((b) => b.id === bookmarkId)
-      if (idx !== -1) list[idx] = updated
-      return list
-    })
-    return updated
+    return applyUpdatedBookmark(updated)
   }
 
   // ---------------------------------------------------------------------------
@@ -244,16 +192,6 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     // state + base
     bookmarks,
     loading,
-    // search
-    searchQuery,
-    setSearchQuery,
-    clearSearchQuery,
-    queryTokens,
-    toggleQueryToken,
-    removeQueryTokenAt,
-    removeTokensWhere,
-    isTagActive,
-    isTagExcluded,
     // filtered list
     filteredBookmarks,
     neverOpenedCount,

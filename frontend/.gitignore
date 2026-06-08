@@ -30,6 +30,9 @@ coverage
 
 .eslintcache
 
+# fallow analysis cache
+.fallow/
+
 # Cypress
 /cypress/videos/
 /cypress/screenshots/
