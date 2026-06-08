@@ -15,9 +15,14 @@ export type TestCollection = {
 /**
  * Provisions a fresh authenticated user + their default collection for the
  * enclosing `describe`, and hard-deletes the user (and everything they own) in
- * `afterAll`. Returns a handle whose fields are filled in `beforeAll`, so read
- * `handle.collectionId` / `handle.storageState` inside tests and hooks — not at
- * module load, where they are still empty.
+ * `afterAll`. Returns a handle whose fields are filled in `beforeAll`.
+ *
+ * IMPORTANT: read `handle.collectionId` / `handle.storageState` only inside a
+ * test or hook — at module-load time they are still empty (`''` / `undefined`).
+ * A hard runtime guard is deliberately avoided: Playwright probes the
+ * `storageState` override before `beforeAll` runs, where an empty value is
+ * expected and harmless (the real value is applied when the test context is
+ * created).
  *
  * Pair with a storageState override so every test boots authenticated:
  *   const collection = useTestCollectionWithCleanup('myslug')

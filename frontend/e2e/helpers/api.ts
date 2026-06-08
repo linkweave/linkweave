@@ -36,6 +36,7 @@ export async function api<T>(
     }
     lastBody = await resp.text().catch(() => '')
     if (lastStatus < 500) break
+    console.warn(`[e2e] ${method} ${path} → ${lastStatus}, retrying (attempt ${attempt + 1}/3)`)
     await new Promise((r) => setTimeout(r, 300))
   }
   throw new Error(`${method} ${path} failed: ${lastStatus} ${lastBody}`)
