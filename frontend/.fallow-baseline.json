@@ -68,10 +68,8 @@
   "unused_dependencies": [],
   "unused_dev_dependencies": [],
   "circular_dependencies": [
-    "src/components/ui/ConfirmDialog.vue->src/components/ui/index.ts",
-    "src/components/ui/LanguageSwitcherCl.vue->src/components/ui/index.ts",
-    "src/components/ui/SettingsDialog.vue->src/components/ui/index.ts",
-    "src/components/ui/SettingsDialog.vue->src/components/ui/UserMenuCl.vue->src/components/ui/index.ts",
+    "src/components/collection/CreateCollectionDialog.vue->src/router/index.ts->src/stores/collection.ts->src/views/CollectionManageView.vue",
+    "src/components/collection/DeleteCollectionDialog.vue->src/router/index.ts->src/stores/collection.ts->src/views/CollectionManageView.vue",
     "src/composables/useSessionInit.ts->src/router/index.ts->src/stores/auth.ts",
     "src/composables/useSessionInit.ts->src/router/index.ts->src/stores/collection.ts",
     "src/router/index.ts->src/stores/auth.ts",
@@ -85,6 +83,8 @@
     "src/router/index.ts->src/stores/auth.ts->src/views/LoginView.vue",
     "src/router/index.ts->src/stores/collection.ts->src/views/LoginView.vue",
     "src/router/index.ts->src/views/TrashbinView.vue",
+    "src/router/index.ts->src/stores/collection.ts->src/views/TrashbinView.vue",
+    "src/stores/auth.ts->src/stores/bookmark.ts->src/stores/collection.ts",
     "src/stores/auth.ts->src/stores/collection.ts",
     "src/stores/bookmark.ts->src/stores/folder.ts",
     "src/stores/bookmark.ts->src/stores/tag.ts"

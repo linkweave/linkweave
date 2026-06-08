@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ButtonCl, DialogCl, DialogFooterCl } from '@/components/ui'
+import ButtonCl from './ButtonCl.vue'
+import DialogCl from './DialogCl.vue'
+import DialogFooterCl from './DialogFooterCl.vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()

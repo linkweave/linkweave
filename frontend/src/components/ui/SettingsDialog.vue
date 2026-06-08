@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { config } from '@/api'
 import { AuthResourceApi } from '@/api/generated'
-import { DialogCl, SwitchCl } from '@/components/ui'
+import DialogCl from './DialogCl.vue'
+import SwitchCl from './SwitchCl.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationStore } from '@/stores/notification'
 import { type BookmarkLayout, type Theme, useUiStore } from '@/stores/ui'
