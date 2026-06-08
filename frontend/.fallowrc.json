@@ -20,5 +20,15 @@
     "ignore": [
       "src/api/generated/**"
     ]
+  },
+  "boundaries": {
+    "zones": [
+      { "name": "stores", "patterns": ["src/stores/**"] },
+      { "name": "router", "patterns": ["src/router/**"] },
+      { "name": "views", "patterns": ["src/views/**"] }
+    ],
+    "rules": [
+      { "from": "stores", "allow": ["stores"] }
+    ]
   }
 }

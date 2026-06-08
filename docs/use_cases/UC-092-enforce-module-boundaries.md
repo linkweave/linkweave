@@ -5,8 +5,8 @@
 **Use Case ID:** UC-092
 **Use Case Name:** Enforce Module Boundaries and Prevent Circular-Dependency Regressions
 **Primary Actor:** Developer (with the CI pipeline as supporting actor)
-**Goal:** Keep the frontend free of *new* circular dependencies and architecture-boundary violations, so the existing 20-cycle backlog can be paid down without silently growing.
-**Status:** Draft
+**Goal:** Keep the frontend free of *new* circular dependencies and architecture-boundary violations, so the existing cycle backlog can be paid down without silently growing.
+**Status:** Implemented (stores boundary + cycle ratchet); further zone rules optional
 
 ## Traceability
 
@@ -98,8 +98,21 @@ Enforcement may be implemented with fallow (its `boundaries` config plus the reg
 
 ---
 
-## Notes / Next Steps
+## Implementation Notes
 
-- **Quick wins first:** the barrel-file cycles (bucket 1) are the cheapest to remove — have components import siblings directly instead of through `components/ui/index.ts`.
-- **Then the architectural tangle:** break the store → router edge (bucket 2), e.g. by moving navigation out of stores or injecting the router lazily.
-- Once cycles are reduced, **promote the boundary check from report-only to enforced** (drop `continue-on-error` in `quality.yml`) and re-baseline.
+Enforcement uses **fallow** (chosen over Sheriff/dependency-cruiser, since fallow already runs in CI):
+
+- **Cycle ratchet** — `pnpm run analyze` compares against `.fallow-baseline.json`; any new circular dependency fails it. The backlog has been driven from 20 cycles down to 2 (`bookmark ↔ folder/tag`, a Pinia-supported pattern left accepted), and the count is baselined so it can't grow.
+- **Stores boundary rule** — `boundaries` in `.fallowrc.json` defines `stores`/`router`/`views` zones with `from: stores, allow: [stores]`, so any `stores → router` or `stores → views` import is reported as a boundary violation (currently 0).
+
+### Done
+
+- Barrel cycles in `components/ui` removed (direct sibling imports).
+- `stores`/components decoupled from `@/router` via `lib/routerNavigation` (stores) and `useRouter()` (components).
+- `auth ↔ collection/bookmark` cut via the `lib/storeReset` registry.
+
+### Remaining / optional
+
+- `bookmark ↔ folder/tag` — extract the shared search-query/token state into its own store if a B→A grade push is wanted later.
+- Add further zone rules (e.g. a `components` barrel rule) if desired.
+- Once findings are clean enough, **promote fallow from report-only to enforced** (drop `continue-on-error` in `quality.yml`).
