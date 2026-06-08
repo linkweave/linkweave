@@ -1,25 +1,11 @@
 import { expect, type Page, test } from '@playwright/test'
 import { BASE } from './helpers/api'
-import {
-  deleteTestUserCleanup,
-  registerAndCaptureStorageState,
-  type StorageState,
-  type TestUser,
-} from './models/TestUser'
+import { gotoCollection, useTestCollectionWithCleanup } from './helpers/testCollection'
 import { CleanupSuggestionsPageObject } from './models/CleanupSuggestionsPageObject'
 
 test.describe.configure({ mode: 'serial' })
 
 const ts = Date.now()
-
-let user: TestUser
-let collectionId: string
-let storageState: StorageState
-
-async function gotoCollection(page: Page) {
-  await page.goto(`/collections/${collectionId}`)
-  await expect(page).toHaveURL(new RegExp(`/collections/${collectionId}`))
-}
 
 async function navigateToCleanupSuggestions(page: Page) {
   await page.getByTestId('user-menu-trigger').click()
@@ -69,17 +55,11 @@ test.describe('Cleanup Suggestions', () => {
   let staleBId: string
   let neverClickedId: string
 
-  test.beforeAll(async ({ browser }) => {
-    ;({ user, storageState, collectionId } = await registerAndCaptureStorageState(
-      browser,
-      'cleanup',
-    ))
-  })
-
-  test.use({ storageState: async ({}, use) => { await use(storageState) } })
+  const collection = useTestCollectionWithCleanup('cleanup')
+  test.use({ storageState: async ({}, use) => { await use(collection.storageState!) } })
 
   test('should show empty state when no stale bookmarks exist', async ({ page }) => {
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await navigateToCleanupSuggestions(page)
 
     const cleanup = new CleanupSuggestionsPageObject(page)
@@ -88,7 +68,7 @@ test.describe('Cleanup Suggestions', () => {
   })
 
   test('should set up stale bookmarks and show them as suggestions', async ({ page }) => {
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
 
     // Time-travel the backend so newly created bookmarks land in the past.
     // staleA/B are created and clicked 7-8 months ago (clicked-but-stale).
@@ -97,7 +77,7 @@ test.describe('Cleanup Suggestions', () => {
       await travelTo(page, isoMonthsAgo(8))
       staleBId = await createBookmarkViaApi(
         page,
-        collectionId,
+        collection.collectionId,
         `Stale-B-${ts}`,
         'https://stale-b.example.com',
       )
@@ -106,7 +86,7 @@ test.describe('Cleanup Suggestions', () => {
       await travelTo(page, isoMonthsAgo(7))
       staleAId = await createBookmarkViaApi(
         page,
-        collectionId,
+        collection.collectionId,
         `Stale-A-${ts}`,
         'https://stale-a.example.com',
       )
@@ -114,7 +94,7 @@ test.describe('Cleanup Suggestions', () => {
 
       neverClickedId = await createBookmarkViaApi(
         page,
-        collectionId,
+        collection.collectionId,
         `Never-Clicked-${ts}`,
         'https://never-clicked.example.com',
       )
@@ -134,7 +114,7 @@ test.describe('Cleanup Suggestions', () => {
   })
 
   test('should dismiss a suggestion', async ({ page }) => {
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await navigateToCleanupSuggestions(page)
 
     const cleanup = new CleanupSuggestionsPageObject(page)
@@ -144,7 +124,7 @@ test.describe('Cleanup Suggestions', () => {
   })
 
   test('should move selected bookmarks to trash', async ({ page }) => {
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await navigateToCleanupSuggestions(page)
 
     const cleanup = new CleanupSuggestionsPageObject(page)
@@ -152,18 +132,16 @@ test.describe('Cleanup Suggestions', () => {
     await cleanup.moveToTrash()
     await cleanup.expectSuggestionNotVisible(staleAId)
 
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await expect(page.locator('h3').filter({ hasText: `Stale-A-${ts}` })).not.toBeVisible()
   })
 
   test('should select all and move to trash', async ({ page }) => {
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await navigateToCleanupSuggestions(page)
 
     const cleanup = new CleanupSuggestionsPageObject(page)
     await cleanup.selectAllAndMoveToTrash()
     await expect(cleanup.emptyState).toBeVisible()
   })
-
-  test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => user))
 })

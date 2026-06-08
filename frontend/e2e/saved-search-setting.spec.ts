@@ -1,23 +1,9 @@
 import { expect, type Page, test } from '@playwright/test'
-import {
-  deleteTestUserCleanup,
-  registerAndCaptureStorageState,
-  type StorageState,
-  type TestUser,
-} from './models/TestUser'
+import { gotoCollection, useTestCollectionWithCleanup } from './helpers/testCollection'
 
 test.describe.configure({ mode: 'serial' })
 
 const ts = Date.now()
-
-let user: TestUser
-let collectionId: string
-let storageState: StorageState
-
-async function gotoCollection(page: Page) {
-  await page.goto(`/collections/${collectionId}`)
-  await expect(page).toHaveURL(new RegExp(`/collections/${collectionId}`))
-}
 
 async function createBookmark(page: Page, title: string, url: string) {
   await page.getByRole('button', { name: /add bookmark/i }).click()
@@ -51,18 +37,12 @@ async function createSavedSearch(page: Page, name: string, query: string) {
 }
 
 test.describe('Saved Searches feature flag', () => {
-  test.beforeAll(async ({ browser }) => {
-    ;({ user, storageState, collectionId } = await registerAndCaptureStorageState(
-      browser,
-      'savedsearchsetting',
-    ))
-  })
-
-  test.use({ storageState: async ({}, use) => { await use(storageState) } })
+  const collection = useTestCollectionWithCleanup('savedsearchsetting')
+  test.use({ storageState: async ({}, use) => { await use(collection.storageState!) } })
 
   test('disabling the setting hides smart collections and save trigger', async ({ page }) => {
     const name = `ff-search-${ts}`
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await createBookmark(page, `Production API ${ts}`, 'https://api.prod.example.com')
     await createSavedSearch(page, name, 'Production')
 
@@ -90,7 +70,7 @@ test.describe('Saved Searches feature flag', () => {
   })
 
   test('setting persists across reload', async ({ page }) => {
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await openSettingsDialog(page)
     await page.getByTestId('toggle-saved-searches').click()
     await closeSettingsDialog(page)
@@ -105,30 +85,17 @@ test.describe('Saved Searches feature flag', () => {
     await closeSettingsDialog(page)
     await expect(page.getByTestId('smart-collections-toggle')).toBeVisible()
   })
-
-  test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => user))
 })
 
 test.describe('Saved Searches offline cache', () => {
-  let offlineUser: TestUser
-  let offlineState: StorageState
-  let offlineCollectionId: string
+  const offlineCollection = useTestCollectionWithCleanup('savedsearchoffline')
   const name = `offline-search-${ts}`
-
-  test.beforeAll(async ({ browser }) => {
-    ;({
-      user: offlineUser,
-      storageState: offlineState,
-      collectionId: offlineCollectionId,
-    } = await registerAndCaptureStorageState(browser, 'savedsearchoffline'))
-  })
-
-  test.use({ storageState: async ({}, use) => { await use(offlineState) } })
+  test.use({ storageState: async ({}, use) => { await use(offlineCollection.storageState!) } })
 
   test('serves saved searches from IndexedDB when the server returns 503', async ({ page }) => {
     // First online pass: create bookmark + saved search so the GET response
     // gets cached by the offline middleware.
-    await page.goto(`/collections/${offlineCollectionId}`)
+    await page.goto(`/collections/${offlineCollection.collectionId}`)
     await page.getByRole('button', { name: /add bookmark/i }).click()
     const dialog = page.locator('[role="dialog"]')
     await dialog.locator('#create-bookmark-title').fill(`Production API ${ts}`)
@@ -154,6 +121,4 @@ test.describe('Saved Searches offline cache', () => {
     const row = page.getByTestId(`smart-collection-row-${name}`)
     await expect(row).toBeVisible()
   })
-
-  test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => offlineUser))
 })
