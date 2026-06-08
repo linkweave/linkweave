@@ -11,18 +11,6 @@ export function isResponseError(error: unknown): error is ResponseError {
   return error instanceof ResponseError
 }
 
-export async function parseAppErrorFromResponse(response: Response): Promise<AppFailureErrorJson | null> {
-  try {
-    const body = await response.clone().json()
-    if (instanceOfAppFailureErrorJson(body)) {
-      return body
-    }
-  } catch {
-    // response body is not valid JSON or not an AppFailureErrorJson
-  }
-  return null
-}
-
 export interface ExtractedError {
   message: string
   isAppError: boolean

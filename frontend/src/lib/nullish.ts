@@ -31,10 +31,6 @@ export function hasValue<T>(value: T): value is NotNullish<T> {
   return isNotNullish(value);
 }
 
-export function isNullishOrEmpty<T>(someArray: Array<T> | undefined): boolean {
-  return isNullish(someArray) || someArray.length === 0;
-}
-
 /**
  * Convenience: throws an error if the given value is nullish, returns the value otherwise.
  * @throws Error if the given value is nullish.
