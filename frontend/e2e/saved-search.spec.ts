@@ -1,23 +1,9 @@
 import { expect, type Page, test } from '@playwright/test'
-import {
-  deleteTestUserCleanup,
-  registerAndCaptureStorageState,
-  type StorageState,
-  type TestUser,
-} from './models/TestUser'
+import { gotoCollection, useTestCollectionWithCleanup } from './helpers/testCollection'
 
 test.describe.configure({ mode: 'serial' })
 
 const ts = Date.now()
-
-let user: TestUser
-let collectionId: string
-let storageState: StorageState
-
-async function gotoCollection(page: Page) {
-  await page.goto(`/collections/${collectionId}`)
-  await expect(page).toHaveURL(new RegExp(`/collections/${collectionId}`))
-}
 
 async function createBookmark(page: Page, title: string, url: string) {
   await page.getByRole('button', { name: /add bookmark/i }).click()
@@ -35,23 +21,17 @@ async function search(page: Page, query: string) {
 }
 
 test.describe('Saved Searches & Smart Collections (v2)', () => {
-  test.beforeAll(async ({ browser }) => {
-    ;({ user, storageState, collectionId } = await registerAndCaptureStorageState(
-      browser,
-      'savedsearch',
-    ))
-  })
-
-  test.use({ storageState: async ({}, use) => { await use(storageState) } })
+  const collection = useTestCollectionWithCleanup('savedsearch')
+  test.use({ storageState: async ({}, use) => { await use(collection.storageState!) } })
 
   test('should set up test data', async ({ page }) => {
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await createBookmark(page, `Production API ${ts}`, 'https://api.prod.example.com')
     await createBookmark(page, `Dev API ${ts}`, 'https://api.dev.example.com')
   })
 
   test('save trigger hidden when query is empty; visible after typing', async ({ page }) => {
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await expect(page.getByTestId('filter-strip')).toBeHidden()
     await expect(page.getByTestId('saved-search-save-trigger')).toBeHidden()
 
@@ -65,7 +45,7 @@ test.describe('Saved Searches & Smart Collections (v2)', () => {
   test('popover saves a new search and the pill replaces the save trigger', async ({ page }) => {
     const name = `prod-search-${ts}`
 
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await search(page, 'Production')
 
     await page.getByTestId('saved-search-save-trigger').click()
@@ -95,7 +75,7 @@ test.describe('Saved Searches & Smart Collections (v2)', () => {
   }) => {
     const name = `prod-search-${ts}`
 
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await page.getByTestId(`smart-collection-row-${name}`).click()
     await expect(page.getByTestId('saved-search-pill')).toHaveAttribute('data-state', 'matched')
 
@@ -117,7 +97,7 @@ test.describe('Saved Searches & Smart Collections (v2)', () => {
   test('× on the pill deselects without clearing the query', async ({ page }) => {
     const name = `prod-search-${ts}`
 
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await page.getByTestId(`smart-collection-row-${name}`).click()
     const input = page.locator('input[type="text"]').first()
     await expect(input).toHaveValue('Production API')
@@ -136,7 +116,7 @@ test.describe('Saved Searches & Smart Collections (v2)', () => {
   test('clicking the active sidebar row toggles it off', async ({ page }) => {
     const name = `prod-search-${ts}`
 
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await page.getByTestId(`smart-collection-row-${name}`).click()
     await expect(page.getByTestId(`smart-collection-row-${name}`)).toHaveAttribute(
       'data-active',
@@ -156,7 +136,7 @@ test.describe('Saved Searches & Smart Collections (v2)', () => {
     const name = `prod-search-${ts}`
     const renamed = `${name}-renamed`
 
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await page.getByTestId(`smart-collection-row-${name}`).hover()
     await page.getByTestId(`smart-collection-more-${name}`).click()
     await page.getByRole('menuitem', { name: 'Rename' }).click()
@@ -179,7 +159,7 @@ test.describe('Saved Searches & Smart Collections (v2)', () => {
   test('delete via ellipsis removes the row', async ({ page }) => {
     const renamed = `prod-search-${ts}-renamed`
 
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     await page.getByTestId(`smart-collection-row-${renamed}`).hover()
     await page.getByTestId(`smart-collection-more-${renamed}`).click()
     await page.getByRole('menuitem', { name: 'Delete' }).click()
@@ -188,7 +168,7 @@ test.describe('Saved Searches & Smart Collections (v2)', () => {
   })
 
   test('Smart Collections section header collapses and persists', async ({ page }) => {
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     const toggle = page.getByTestId('smart-collections-toggle')
     await expect(toggle).toHaveAttribute('aria-expanded', 'true')
     await toggle.click()
@@ -202,7 +182,7 @@ test.describe('Saved Searches & Smart Collections (v2)', () => {
   })
 
   test('Tags section header collapses and persists', async ({ page }) => {
-    await gotoCollection(page)
+    await gotoCollection(page, collection)
     const toggle = page.getByTestId('tags-toggle')
     await expect(toggle).toHaveAttribute('aria-expanded', 'true')
     await toggle.click()
@@ -211,6 +191,4 @@ test.describe('Saved Searches & Smart Collections (v2)', () => {
     await page.reload()
     await expect(page.getByTestId('tags-toggle')).toHaveAttribute('aria-expanded', 'false')
   })
-
-  test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => user))
 })
