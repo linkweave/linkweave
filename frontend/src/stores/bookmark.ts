@@ -22,6 +22,7 @@ import { useFolderStore } from '@/stores/folder'
 import { usePropertyStore } from '@/stores/property'
 import { useTagStore } from '@/stores/tag'
 import { sortBookmarks } from '@/utils/bookmarkSort'
+import { registerStoreReset } from '@/lib/storeReset'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
@@ -234,6 +235,12 @@ export const useBookmarkStore = defineStore('bookmark', () => {
       credentials: 'include',
     }).catch(() => {})
   }
+
+  function reset() {
+    // folder + tag selections are derived from searchQuery, so this clears them too.
+    searchQuery.value = ''
+  }
+  registerStoreReset(reset)
 
   return {
     // state + base

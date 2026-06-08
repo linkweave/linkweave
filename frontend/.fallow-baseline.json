@@ -68,11 +68,6 @@
   "unused_dependencies": [],
   "unused_dev_dependencies": [],
   "circular_dependencies": [
-    "src/stores/auth.ts->src/stores/bookmark.ts->src/stores/collection.ts",
-    "src/stores/auth.ts->src/stores/bookmark.ts->src/stores/collection.ts->src/stores/folder.ts",
-    "src/stores/auth.ts->src/stores/bookmark.ts->src/stores/collection.ts->src/stores/property.ts",
-    "src/stores/auth.ts->src/stores/bookmark.ts->src/stores/collection.ts->src/stores/tag.ts",
-    "src/stores/auth.ts->src/stores/collection.ts",
     "src/stores/bookmark.ts->src/stores/folder.ts",
     "src/stores/bookmark.ts->src/stores/tag.ts"
   ],
