@@ -19,6 +19,10 @@ public class DbConst {
     public static final int DB_BCRYPT_HASH_LENGTH = 60;
     public static final int DB_LONG_ENUM_LENGTH = 40;
     public static final int DB_FREITEXT_LENGTH = 32768;
+
+    public static final int DB_API_KEY_NAME_LENGTH = 100;
+    public static final int DB_API_KEY_HASH_LENGTH = 64;
+    public static final int DB_API_KEY_PREFIX_LENGTH = 8;
     public static final int DB_DEFAULT_PRECISION = 30;
     public static final int DB_DEFAULT_SCALE = 2;
     public static final int DB_PRECISE_PRECISION = 30;
