@@ -30,9 +30,10 @@ jobs:
         working-directory: api
         run: ./mvnw -B -ntp pmd:cpd-check
 
-  # Frontend CSS linting (stylelint, enforced) plus dead code and duplication
-  # (fallow, report-only via continue-on-error while findings are triaged).
-  # To enforce fallow too, drop its `continue-on-error: true`.
+  # Frontend CSS linting (stylelint, enforced) plus fallow dead code,
+  # duplication and health/complexity (report-only via continue-on-error).
+  # Duplication/dead-code are compared against a committed baseline so only
+  # new findings show up; drop `continue-on-error: true` to enforce.
   frontend-quality:
     runs-on: ubuntu-latest
     steps:
@@ -57,7 +58,14 @@ jobs:
         working-directory: frontend
         run: pnpm exec stylelint "src/**/*.css"
 
+      # Dead code + duplication, compared against .fallow-baseline.json so only
+      # NEW findings surface (the current backlog is accepted).
       - name: Dead code + duplication (fallow)
         working-directory: frontend
         continue-on-error: true
         run: pnpm run analyze
+
+      - name: Health + complexity (fallow)
+        working-directory: frontend
+        continue-on-error: true
+        run: pnpm run analyze:health
