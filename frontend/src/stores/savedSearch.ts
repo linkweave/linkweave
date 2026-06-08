@@ -5,7 +5,7 @@ import { SavedSearchResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import type { SavedSearchJson, SavedSearchSaveJson } from '@/api/generated'
 import { useCollectionStore } from '@/stores/collection'
-import { useBookmarkStore } from '@/stores/bookmark'
+import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useAuthStore } from '@/stores/auth'
 import { stringifyTokens, tokenize } from '@/lib/searchQuery'
 import * as offlineCache from '@/lib/offline-cache'
@@ -18,7 +18,7 @@ function normalize(query: string): string {
 
 export const useSavedSearchStore = defineStore('savedSearch', () => {
   const collectionStore = useCollectionStore()
-  const bookmarkStore = useBookmarkStore()
+  const searchQueryStore = useSearchQueryStore()
   const authStore = useAuthStore()
 
   const savedSearches = ref<SavedSearchJson[]>([])
@@ -67,13 +67,13 @@ export const useSavedSearchStore = defineStore('savedSearch', () => {
 
   // Deactivate when the user clears the query entirely.
   watch(
-    () => bookmarkStore.searchQuery,
+    () => searchQueryStore.searchQuery,
     (q) => {
       if (q.trim() === '') activeSavedSearchId.value = null
     },
   )
 
-  const normalizedCurrentQuery = computed(() => normalize(bookmarkStore.searchQuery))
+  const normalizedCurrentQuery = computed(() => normalize(searchQueryStore.searchQuery))
 
   /** Whether the current query exactly matches the active saved search. */
   const currentMatchesActive = computed(() => {
@@ -93,7 +93,7 @@ export const useSavedSearchStore = defineStore('savedSearch', () => {
       activeSavedSearchId.value = null
       return
     }
-    bookmarkStore.setSearchQuery(savedSearch.data.query)
+    searchQueryStore.setSearchQuery(savedSearch.data.query)
     activeSavedSearchId.value = savedSearch.id
   }
 
@@ -109,7 +109,7 @@ export const useSavedSearchStore = defineStore('savedSearch', () => {
   async function updateActiveQuery(): Promise<SavedSearchJson | null> {
     const id = activeSavedSearchId.value
     if (!id) return null
-    return updateSavedSearch(id, { query: bookmarkStore.searchQuery })
+    return updateSavedSearch(id, { query: searchQueryStore.searchQuery })
   }
 
   async function createSavedSearch(name: string, query: string): Promise<SavedSearchJson> {

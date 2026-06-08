@@ -14,6 +14,7 @@ import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { useNotificationStore } from '@/stores/notification'
 import { usePropertyStore } from '@/stores/property'
+import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useTagStore } from '@/stores/tag'
 import { useUiStore } from '@/stores/ui'
 import { Clock, ExternalLink, Folder, MoreHorizontal, MousePointerClick } from '@lucide/vue'
@@ -27,6 +28,7 @@ const { t } = useI18n()
 const tagStore = useTagStore()
 const folderStore = useFolderStore()
 const bookmarkStore = useBookmarkStore()
+const searchQueryStore = useSearchQueryStore()
 const propertyStore = usePropertyStore()
 const collectionStore = useCollectionStore()
 const notification = useNotificationStore()
@@ -105,7 +107,7 @@ function getFolderName(): string | null {
 function tagClass(tagId: string): string {
   const tag = getTagById(tagId)
   if (!tag) return ''
-  if (bookmarkStore.isTagActive(tag.data.name)) {
+  if (searchQueryStore.isTagActive(tag.data.name)) {
     return 'bg-[color-mix(in_oklab,var(--tag-color)_22%,var(--color-secondary))] border-[var(--tag-color)]'
   }
   return ''
@@ -114,7 +116,7 @@ function tagClass(tagId: string): string {
 function tagTitle(tagId: string): string {
   const tag = getTagById(tagId)
   const name = tag?.data.name ?? ''
-  if (bookmarkStore.isTagActive(name)) return `Remove filter: #${name}`
+  if (searchQueryStore.isTagActive(name)) return `Remove filter: #${name}`
   return `Filter by tag: #${name} (⌥/⇧+click to exclude)`
 }
 
@@ -124,7 +126,7 @@ function onTagClick(event: MouseEvent, tagId: string) {
   const tag = getTagById(tagId)
   if (!tag) return
   const modifier = event.altKey || event.shiftKey ? 'exclude' : undefined
-  bookmarkStore.toggleQueryToken({ kind: 'tag', value: tag.data.name, neg: false }, modifier)
+  searchQueryStore.toggleQueryToken({ kind: 'tag', value: tag.data.name, neg: false }, modifier)
 }
 
 // --- Property badges ------------------------------------------------------
@@ -170,7 +172,7 @@ const propertyDefsByName = computed(
 
 function isPropertyTokenActive(name: string): boolean {
   const lower = name.toLowerCase()
-  return bookmarkStore.queryTokens.some((t) => {
+  return searchQueryStore.queryTokens.some((t) => {
     if (t.kind !== 'operator' || t.key !== 'property' || t.neg) return false
     const parsed = parsePropertyValue(t.value)
     if (!parsed || parsed.key !== lower) return false
@@ -194,7 +196,7 @@ function badgeValueAsTokenString(
 
 function onPropertyBadgeClick(propDef: PropertyDefinitionJson, value: VisibleProp['value']) {
   const tokenValue = `${propDef.data.name}=${badgeValueAsTokenString(propDef, value)}`
-  bookmarkStore.toggleQueryToken({
+  searchQueryStore.toggleQueryToken({
     kind: 'operator',
     key: 'property',
     value: tokenValue,

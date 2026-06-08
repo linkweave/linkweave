@@ -4,7 +4,7 @@ import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'radi
 import { useI18n } from 'vue-i18n'
 import { ButtonCl, DialogCl, InputCl } from '@/components/ui'
 import type { SavedSearchJson } from '@/api/generated'
-import { useBookmarkStore } from '@/stores/bookmark'
+import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useNotificationStore } from '@/stores/notification'
 import { useSavedSearchStore } from '@/stores/savedSearch'
 
@@ -28,7 +28,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const bookmarkStore = useBookmarkStore()
+const searchQueryStore = useSearchQueryStore()
 const savedSearchStore = useSavedSearchStore()
 const notification = useNotificationStore()
 
@@ -38,7 +38,7 @@ const popoverContentRef = ref<InstanceType<typeof PopoverContent> | null>(null)
 
 const queryPreview = computed(() => {
   if (props.mode === 'rename') return (props.savedSearch?.data.query ?? '').trim()
-  return bookmarkStore.searchQuery.trim()
+  return searchQueryStore.searchQuery.trim()
 })
 
 const title = computed(() =>

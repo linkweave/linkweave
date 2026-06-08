@@ -3,14 +3,14 @@ import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { Search, X } from '@lucide/vue'
 import ButtonCl from './ButtonCl.vue'
 import SearchBar from './SearchBar.vue'
-import { useBookmarkStore } from '@/stores/bookmark'
+import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
-const bookmarkStore = useBookmarkStore()
+const searchQueryStore = useSearchQueryStore()
 const open = ref(false)
 const overlayPanelRef = ref<HTMLElement | null>(null)
-const hasQuery = computed(() => bookmarkStore.searchQuery.trim().length > 0)
+const hasQuery = computed(() => searchQueryStore.searchQuery.trim().length > 0)
 
 watch(open, (val) => {
   if (val) {
@@ -66,7 +66,7 @@ onUnmounted(() => {
       <div class="absolute inset-0 bg-background/40" data-testid="mobile-search-backdrop" @click="open = false" />
       <div ref="overlayPanelRef" data-testid="mobile-search-panel" class="relative bg-card border-b border-border p-3 flex items-center gap-2">
         <SearchBar
-          v-model="bookmarkStore.searchQuery"
+          v-model="searchQueryStore.searchQuery"
           :placeholder="t('search.placeholder')"
           class="flex-1"
         />
