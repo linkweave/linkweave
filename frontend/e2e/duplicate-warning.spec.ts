@@ -1,6 +1,7 @@
 import { type APIRequestContext, type Browser, expect, test } from '@playwright/test'
 import { BASE, createCollectionViaApi } from './helpers/api'
-import { login, loginAndNavigateToCollection } from './helpers/auth'
+import { login } from './helpers/auth'
+import { openAddBookmarkDialog } from './helpers/bookmarks'
 
 test.describe.configure({ mode: 'serial' })
 
@@ -40,11 +41,7 @@ test.describe('Duplicate Bookmark Warning', () => {
   test('shows duplicate warning when creating a bookmark with an existing URL', async ({
     page,
   }) => {
-    await loginAndNavigateToCollection(page, collectionId)
-
-    await page.getByRole('button', { name: /add bookmark/i }).click()
-    const dialog = page.locator('[role="dialog"]')
-    await expect(dialog).toBeVisible()
+    const dialog = await openAddBookmarkDialog(page, collectionId)
 
     await dialog.locator('#create-bookmark-url').fill(duplicateUrl)
     await dialog.locator('#create-bookmark-title').fill('Duplicate Attempt')
@@ -58,11 +55,7 @@ test.describe('Duplicate Bookmark Warning', () => {
   })
 
   test('does not show duplicate warning for a new URL', async ({ page }) => {
-    await loginAndNavigateToCollection(page, collectionId)
-
-    await page.getByRole('button', { name: /add bookmark/i }).click()
-    const dialog = page.locator('[role="dialog"]')
-    await expect(dialog).toBeVisible()
+    const dialog = await openAddBookmarkDialog(page, collectionId)
 
     await dialog.locator('#create-bookmark-url').fill('https://new-unique-url.example.com')
     await dialog.locator('#create-bookmark-title').fill('Unique Bookmark')
@@ -74,11 +67,7 @@ test.describe('Duplicate Bookmark Warning', () => {
   })
 
   test('allows creating a duplicate despite the warning', async ({ page }) => {
-    await loginAndNavigateToCollection(page, collectionId)
-
-    await page.getByRole('button', { name: /add bookmark/i }).click()
-    const dialog = page.locator('[role="dialog"]')
-    await expect(dialog).toBeVisible()
+    const dialog = await openAddBookmarkDialog(page, collectionId)
 
     await dialog.locator('#create-bookmark-url').fill(duplicateUrl)
     await dialog.locator('#create-bookmark-title').fill('Second Copy')
@@ -96,11 +85,7 @@ test.describe('Duplicate Bookmark Warning', () => {
     page,
   }) => {
     const uniqueUrl = `https://unique-${ts}.example.com/only-one`
-    await loginAndNavigateToCollection(page, collectionId)
-
-    await page.getByRole('button', { name: /add bookmark/i }).click()
-    let dialog = page.locator('[role="dialog"]')
-    await expect(dialog).toBeVisible()
+    let dialog = await openAddBookmarkDialog(page, collectionId)
     await dialog.locator('#create-bookmark-url').fill(uniqueUrl)
     await dialog.locator('#create-bookmark-title').fill('Only Bookmark')
     await dialog.locator('button[type="submit"]').click()
@@ -124,11 +109,7 @@ test.describe('Duplicate Bookmark Warning', () => {
 
   test('shows warning when editing a bookmark URL to match another', async ({ page }) => {
     const otherUrl = `https://other-${ts}.example.com`
-    await loginAndNavigateToCollection(page, collectionId)
-
-    await page.getByRole('button', { name: /add bookmark/i }).click()
-    let dialog = page.locator('[role="dialog"]')
-    await expect(dialog).toBeVisible()
+    let dialog = await openAddBookmarkDialog(page, collectionId)
     await dialog.locator('#create-bookmark-url').fill(otherUrl)
     await dialog.locator('#create-bookmark-title').fill('Other Bookmark')
     await dialog.locator('button[type="submit"]').click()

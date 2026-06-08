@@ -1,6 +1,7 @@
 import { expect, test, type APIRequestContext, type Browser } from '@playwright/test'
 import { BASE, createCollectionViaApi } from './helpers/api'
-import { login, loginAndNavigateToCollection } from './helpers/auth'
+import { login } from './helpers/auth'
+import { openAddBookmarkDialog } from './helpers/bookmarks'
 
 test.describe.configure({ mode: 'serial' })
 
@@ -60,11 +61,7 @@ test.describe('Auto-Tag Bookmark by URL Pattern', () => {
   })
 
   test('shows suggestions, accepts them, and creates bookmark with the new tag', async ({ page }) => {
-    await loginAndNavigateToCollection(page, collectionId)
-
-    await page.getByRole('button', { name: /add bookmark/i }).click()
-    const dialog = page.locator('[role="dialog"]')
-    await expect(dialog).toBeVisible()
+    const dialog = await openAddBookmarkDialog(page, collectionId)
 
     await dialog.locator('#create-bookmark-title').fill(bookmarkTitle)
     await dialog.locator('#create-bookmark-url').fill(bookmarkUrl)
@@ -97,11 +94,7 @@ test.describe('Auto-Tag Bookmark by URL Pattern', () => {
   })
 
   test('hides suggestions section for non-matching URL', async ({ page }) => {
-    await loginAndNavigateToCollection(page, collectionId)
-
-    await page.getByRole('button', { name: /add bookmark/i }).click()
-    const dialog = page.locator('[role="dialog"]')
-    await expect(dialog).toBeVisible()
+    const dialog = await openAddBookmarkDialog(page, collectionId)
 
     await dialog.locator('#create-bookmark-url').fill('https://www.example.com')
     // Section reserves space (always rendered) but contains no chips when no rule matches.
@@ -113,11 +106,7 @@ test.describe('Auto-Tag Bookmark by URL Pattern', () => {
   })
 
   test('disables accept button when all suggestions are deselected', async ({ page }) => {
-    await loginAndNavigateToCollection(page, collectionId)
-
-    await page.getByRole('button', { name: /add bookmark/i }).click()
-    const dialog = page.locator('[role="dialog"]')
-    await expect(dialog).toBeVisible()
+    const dialog = await openAddBookmarkDialog(page, collectionId)
 
     await dialog.locator('#create-bookmark-url').fill('https://uat-api.example.com')
     const uatChip = dialog.getByTestId('suggested-tag-uat')
