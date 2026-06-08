@@ -24,6 +24,7 @@
         <mapstruct.version>1.6.3</mapstruct.version>
         <surefire-plugin.version>3.5.5</surefire-plugin.version>
         <sentry-maven-plugin.version>0.11.0</sentry-maven-plugin.version>
+        <maven-pmd-plugin.version>3.26.0</maven-pmd-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -288,6 +289,31 @@
                         <maven.home>${maven.home}</maven.home>
                     </systemPropertyVariables>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>${maven-pmd-plugin.version}</version>
+                <configuration>
+                    <!-- Copy-paste detection only; full PMD ruleset not enabled (yet). -->
+                    <minimumTokens>100</minimumTokens>
+                    <printFailingErrors>true</printFailingErrors>
+                    <failOnViolation>true</failOnViolation>
+                    <!-- Exclude codegen (QueryDSL Q-classes, MapStruct impls, Hibernate
+                         metamodel) which is highly repetitive and not ours to dedup. -->
+                    <excludeRoots>
+                        <excludeRoot>${project.build.directory}/generated-sources</excludeRoot>
+                    </excludeRoots>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>cpd-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>cpd-check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

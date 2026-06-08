@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "entry": [
+    "index.html",
+    "src/main.ts",
+    "src/extension/popup.ts",
+    "src/extension/options.ts",
+    "src/extension/background/service-worker.ts"
+  ],
+  "ignorePatterns": [
+    "src/api/generated/**"
+  ],
+  "ignoreDependencies": [
+    "@openapitools/openapi-generator-cli",
+    "jiti"
+  ],
+  "duplicates": {
+    "ignore": [
+      "src/api/generated/**"
+    ]
+  }
+}
