@@ -5,13 +5,14 @@ import DeleteCollectionDialog from '@/components/collection/DeleteCollectionDial
 import ShareCollectionDialog from '@/components/collection/ShareCollectionDialog.vue'
 import { MainLayout } from '@/components/layout'
 import { ButtonCl, ResponsiveButton, SearchBar } from '@/components/ui'
-import router from '@/router'
 import { useCollectionStore } from '@/stores/collection'
 import { ArrowLeft, Pencil, Plus, Star, Trash2, Users } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 const { t } = useI18n()
+const router = useRouter()
 const collectionStore = useCollectionStore()
 
 const collections = computed(() => collectionStore.filteredCollections)

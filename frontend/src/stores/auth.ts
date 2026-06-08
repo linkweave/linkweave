@@ -7,7 +7,7 @@ import { useCollectionStore } from '@/stores/collection'
 import { useBookmarkStore } from '@/stores/bookmark'
 import * as offlineCache from '@/lib/offline-cache'
 import { setSessionExpiredHandler } from '@/lib/offline-middleware'
-import router from '@/router'
+import { navigate } from '@/lib/routerNavigation'
 
 const authApi = new AuthResourceApi(config)
 
@@ -83,7 +83,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (email) {
         offlineCache.purgeForUser(email).catch(err => console.error('Failed to purge offline cache on logout:', err))
       }
-      router.push({ name: 'login' })
+      navigate({ name: 'login' })
     }
   }
 

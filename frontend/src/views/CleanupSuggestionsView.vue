@@ -6,13 +6,13 @@ import { MainLayout } from '@/components/layout'
 import { ButtonCl, ConfirmDialog, SelectCl } from '@/components/ui'
 import { useCleanupSuggestionsStore } from '@/stores/cleanupSuggestions'
 import { useNotificationStore } from '@/stores/notification'
-import { useRoute } from 'vue-router'
-import router from '@/router'
+import { useRoute, useRouter } from 'vue-router'
 
 const { t, locale } = useI18n()
 const store = useCleanupSuggestionsStore()
 const notify = useNotificationStore()
 const route = useRoute()
+const router = useRouter()
 
 const moveToTrashOpen = ref(false)
 const collectionId = route.query.collectionId as string

@@ -9,9 +9,10 @@ import {
 import { useCollectionStore } from '@/stores/collection'
 import { ChevronDown, LayoutGrid, Star, Settings } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
-import router from '@/router'
+import { useRouter } from 'vue-router'
 
 const { t } = useI18n()
+const router = useRouter()
 const collectionStore = useCollectionStore()
 
 const collections = computed(() => collectionStore.collections)

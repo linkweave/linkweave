@@ -7,13 +7,14 @@ import { ButtonCl, ConfirmDialog, ResponsiveButton } from '@/components/ui'
 import { useTrashbinStore } from '@/stores/trashbin'
 import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
-import router from '@/router'
 import { isNullish } from '@/lib/nullish'
+import { useRouter } from 'vue-router'
 
 const { t, locale } = useI18n()
 const trashbin = useTrashbinStore()
 const collectionStore = useCollectionStore()
 const notify = useNotificationStore()
+const router = useRouter()
 
 type PurgeKind = 'bookmark' | 'folder'
 const purgeOpen = ref(false)
