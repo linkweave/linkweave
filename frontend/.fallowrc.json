@@ -15,6 +15,7 @@
     "jiti"
   ],
   "duplicates": {
+    "ignoreImports": true,
     "ignore": [
       "src/api/generated/**"
     ]
