@@ -4,6 +4,7 @@ import {
   type APIRequestContext,
   type Page,
 } from '@playwright/test'
+import { api, type Created } from './helpers/api'
 import {
   deleteTestUserCleanup,
   loginViaApi,
@@ -40,22 +41,6 @@ let workBackendId: string
 let personalBackendId: string
 let tagAlphaId: string
 
-async function api<T>(
-  request: APIRequestContext,
-  method: 'POST' | 'GET',
-  path: string,
-  body?: unknown,
-): Promise<T> {
-  const opts: Parameters<APIRequestContext['post']>[1] = body ? { data: body } : {}
-  const res =
-    method === 'POST' ? await request.post(path, opts) : await request.get(path, opts)
-  if (!res.ok()) {
-    throw new Error(`${method} ${path} failed: ${res.status()} ${await res.text()}`)
-  }
-  return (await res.json()) as T
-}
-
-type Created = { id: string }
 type CreatedBookmark = { id: string; data: { folderId?: string } }
 
 async function createFolder(

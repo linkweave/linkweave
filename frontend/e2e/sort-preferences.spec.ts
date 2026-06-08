@@ -1,4 +1,5 @@
 import { type APIRequestContext, expect, test } from '@playwright/test'
+import { BASE } from './helpers/api'
 import {
   deleteTestUserCleanup,
   registerAndCaptureStorageState,
@@ -7,8 +8,6 @@ import {
 } from './models/TestUser'
 
 test.describe.configure({ mode: 'serial' })
-
-const BASE = '/api'
 
 let user: TestUser
 let collectionId: string

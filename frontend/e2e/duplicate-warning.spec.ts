@@ -1,35 +1,15 @@
-import { type APIRequestContext, type Browser, expect, type Page, test } from '@playwright/test'
-import { LoginPageObject } from './models/LoginPageObject'
+import { type APIRequestContext, type Browser, expect, test } from '@playwright/test'
+import { BASE, createCollectionViaApi } from './helpers/api'
+import { login, loginAndNavigateToCollection } from './helpers/auth'
 
 test.describe.configure({ mode: 'serial' })
 
-const BASE = '/api'
 const ts = Date.now()
 const collectionName = `Duplicate Check ${ts}`
 const existingBookmarkTitle = `Existing-${ts}`
 const duplicateUrl = `https://example.com/page-${ts}`
 
 let collectionId: string
-
-async function login(page: Page) {
-  const loginPage = new LoginPageObject(page)
-  await loginPage.goto()
-  await loginPage.login('alice@example.com', 'alice')
-  await expect(page).toHaveURL(/\/collections\//, { timeout: 10000 })
-}
-
-async function loginAndNavigateToCollection(page: Page, cid: string) {
-  await login(page)
-  await page.goto(`/collections/${cid}`)
-  await expect(page).toHaveURL(new RegExp(`/collections/${cid}`))
-}
-
-async function createCollectionViaApi(request: APIRequestContext, name: string): Promise<string> {
-  const resp = await request.post(`${BASE}/collections`, { data: { name } })
-  expect(resp.ok(), `createCollection failed: ${resp.status()}`).toBeTruthy()
-  const body = await resp.json()
-  return body.id
-}
 
 async function createBookmarkViaApi(
   request: APIRequestContext,

@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test'
+import { BASE } from './helpers/api'
 import {
   deleteTestUserCleanup,
   registerAndCaptureStorageState,
@@ -10,7 +11,6 @@ import { TrashbinPageObject } from './models/TrashbinPageObject'
 test.describe.configure({ mode: 'serial' })
 
 const ts = Date.now()
-const BASE = '/api'
 
 let user: TestUser
 let collectionId: string
