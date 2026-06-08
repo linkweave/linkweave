@@ -163,6 +163,16 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     }
   }
 
+  /** Replace a bookmark in the in-memory list with its updated version and return it. */
+  function applyUpdatedBookmark(updated: BookmarkJson): BookmarkJson {
+    patchBookmarks((list) => {
+      const idx = list.findIndex((b) => b.id === updated.id)
+      if (idx !== -1) list[idx] = updated
+      return list
+    })
+    return updated
+  }
+
   async function createBookmark(data: BookmarkSaveJson): Promise<BookmarkJson> {
     const bookmark = await bookmarkApi.apiBookmarksPost({ bookmarkSaveJson: data })
     patchBookmarks((list) => [bookmark, ...list])
@@ -174,12 +184,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
       bookmarkId,
       bookmarkSaveJson: data,
     })
-    patchBookmarks((list) => {
-      const idx = list.findIndex((b) => b.id === bookmarkId)
-      if (idx !== -1) list[idx] = updated
-      return list
-    })
-    return updated
+    return applyUpdatedBookmark(updated)
   }
 
   async function deleteBookmark(bookmarkId: string): Promise<void> {
@@ -199,12 +204,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
       bookmarkId,
       bookmarkMoveJson: data,
     })
-    patchBookmarks((list) => {
-      const idx = list.findIndex((b) => b.id === bookmarkId)
-      if (idx !== -1) list[idx] = updated
-      return list
-    })
-    return updated
+    return applyUpdatedBookmark(updated)
   }
 
   /**
@@ -220,12 +220,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
       bookmarkId,
       bookmarkPropertyValueListJson: { propertyValues },
     })
-    patchBookmarks((list) => {
-      const idx = list.findIndex((b) => b.id === bookmarkId)
-      if (idx !== -1) list[idx] = updated
-      return list
-    })
-    return updated
+    return applyUpdatedBookmark(updated)
   }
 
   // ---------------------------------------------------------------------------

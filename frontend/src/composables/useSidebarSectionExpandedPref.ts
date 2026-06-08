@@ -1,21 +1,6 @@
 import { ref, watch } from 'vue'
+import { safeGetItem, safeSetItem } from '@/lib/safeStorage'
 import { useAuthStore } from '@/stores/auth'
-
-function safeGetItem(key: string): string | null {
-  try {
-    return localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function safeSetItem(key: string, value: string): void {
-  try {
-    localStorage.setItem(key, value)
-  } catch {
-    // localStorage may be unavailable (private mode, quota exceeded) — fail silently.
-  }
-}
 
 /**
  * Persists a sidebar section's expanded/collapsed state to localStorage,
