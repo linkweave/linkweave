@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test'
+import { createBookmarkViaUi } from './helpers/bookmarks'
 import { gotoCollection, useTestCollectionWithCleanup } from './helpers/testCollection'
 
 test.describe.configure({ mode: 'serial' })
@@ -18,19 +19,6 @@ async function createTag(page: Page, name: string) {
   await page.getByTestId('new-tag-btn').click()
   await page.getByTestId('create-tag-name-input').fill(name)
   await page.getByTestId('create-tag-submit').click()
-}
-
-async function createBookmark(page: Page, title: string, url: string, tagNames: string[] = []) {
-  await page.getByRole('button', { name: /add bookmark/i }).click()
-  const dialog = page.locator('[role="dialog"]')
-  await expect(dialog).toBeVisible()
-  await dialog.locator('#create-bookmark-title').fill(title)
-  await dialog.locator('#create-bookmark-url').fill(url)
-  for (const tagName of tagNames) {
-    await dialog.locator('button').filter({ hasText: tagName }).click()
-  }
-  await dialog.locator('button[type="submit"]').click()
-  await expect(dialog).not.toBeVisible()
 }
 
 async function search(page: Page, query: string) {
@@ -56,7 +44,7 @@ test.describe('Multi-Term Search', () => {
     await createTag(page, tagDev)
 
     for (const bm of bookmarks) {
-      await createBookmark(page, bm.title, bm.url, bm.tag ? [bm.tag] : [])
+      await createBookmarkViaUi(page, bm.title, bm.url, bm.tag ? [bm.tag] : [])
     }
 
     for (const bm of bookmarks) {

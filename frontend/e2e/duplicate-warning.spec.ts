@@ -1,5 +1,5 @@
-import { type APIRequestContext, type Browser, expect, test } from '@playwright/test'
-import { BASE, createCollectionViaApi } from './helpers/api'
+import { type Browser, expect, test } from '@playwright/test'
+import { BASE, createBookmarkViaApi, createCollectionViaApi } from './helpers/api'
 import { login } from './helpers/auth'
 import { openAddBookmarkDialog } from './helpers/bookmarks'
 
@@ -11,19 +11,6 @@ const existingBookmarkTitle = `Existing-${ts}`
 const duplicateUrl = `https://example.com/page-${ts}`
 
 let collectionId: string
-
-async function createBookmarkViaApi(
-  request: APIRequestContext,
-  cid: string,
-  title: string,
-  url: string,
-) {
-  const resp = await request.post(`${BASE}/bookmarks`, {
-    data: { collectionId: cid, title, url },
-  })
-  expect(resp.ok(), `createBookmark failed: ${resp.status()}`).toBeTruthy()
-  return (await resp.json()) as { id: string }
-}
 
 test.describe('Duplicate Bookmark Warning', () => {
   test.beforeAll(async ({ browser }) => {

@@ -49,3 +49,14 @@ export async function createCollectionViaApi(
   const { id } = await api<Created>(request, 'POST', `${BASE}/collections`, { name })
   return id
 }
+
+/** Creates a bookmark via the REST API and returns its id. */
+export async function createBookmarkViaApi(
+  request: APIRequestContext,
+  collectionId: string,
+  title: string,
+  url: string,
+): Promise<string> {
+  const { id } = await api<Created>(request, 'POST', `${BASE}/bookmarks`, { collectionId, title, url })
+  return id
+}

@@ -1,19 +1,10 @@
 import { expect, type Page, test } from '@playwright/test'
+import { createBookmarkViaUi } from './helpers/bookmarks'
 import { gotoCollection, useTestCollectionWithCleanup } from './helpers/testCollection'
 
 test.describe.configure({ mode: 'serial' })
 
 const ts = Date.now()
-
-async function createBookmark(page: Page, title: string, url: string) {
-  await page.getByRole('button', { name: /add bookmark/i }).click()
-  const dialog = page.locator('[role="dialog"]')
-  await expect(dialog).toBeVisible()
-  await dialog.locator('#create-bookmark-title').fill(title)
-  await dialog.locator('#create-bookmark-url').fill(url)
-  await dialog.locator('button[type="submit"]').click()
-  await expect(dialog).not.toBeVisible()
-}
 
 async function openSettingsDialog(page: Page) {
   await page.getByTestId('user-menu-trigger').click()
@@ -43,7 +34,7 @@ test.describe('Saved Searches feature flag', () => {
   test('disabling the setting hides smart collections and save trigger', async ({ page }) => {
     const name = `ff-search-${ts}`
     await gotoCollection(page, collection)
-    await createBookmark(page, `Production API ${ts}`, 'https://api.prod.example.com')
+    await createBookmarkViaUi(page,`Production API ${ts}`, 'https://api.prod.example.com')
     await createSavedSearch(page, name, 'Production')
 
     // Baseline: feature is on, sidebar section visible.

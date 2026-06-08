@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test'
-import { BASE } from './helpers/api'
+import { BASE, createBookmarkViaApi } from './helpers/api'
 import { gotoCollection, useTestCollectionWithCleanup } from './helpers/testCollection'
 import { CleanupSuggestionsPageObject } from './models/CleanupSuggestionsPageObject'
 
@@ -11,20 +11,6 @@ async function navigateToCleanupSuggestions(page: Page) {
   await page.getByTestId('user-menu-trigger').click()
   await page.getByTestId('user-menu-cleanup-suggestions').click()
   await expect(page).toHaveURL(/\/cleanup-suggestions/)
-}
-
-async function createBookmarkViaApi(
-  page: Page,
-  collId: string,
-  title: string,
-  url: string,
-): Promise<string> {
-  const resp = await page.request.post(`${BASE}/bookmarks`, {
-    data: { collectionId: collId, title, url },
-  })
-  expect(resp.ok(), `createBookmark failed: ${resp.status()}`).toBeTruthy()
-  const body = await resp.json()
-  return body.id
 }
 
 async function trackClickViaApi(page: Page, bookmarkId: string) {
@@ -76,7 +62,7 @@ test.describe('Cleanup Suggestions', () => {
     try {
       await travelTo(page, isoMonthsAgo(8))
       staleBId = await createBookmarkViaApi(
-        page,
+        page.request,
         collection.collectionId,
         `Stale-B-${ts}`,
         'https://stale-b.example.com',
@@ -85,7 +71,7 @@ test.describe('Cleanup Suggestions', () => {
 
       await travelTo(page, isoMonthsAgo(7))
       staleAId = await createBookmarkViaApi(
-        page,
+        page.request,
         collection.collectionId,
         `Stale-A-${ts}`,
         'https://stale-a.example.com',
@@ -93,7 +79,7 @@ test.describe('Cleanup Suggestions', () => {
       await trackClickViaApi(page, staleAId)
 
       neverClickedId = await createBookmarkViaApi(
-        page,
+        page.request,
         collection.collectionId,
         `Never-Clicked-${ts}`,
         'https://never-clicked.example.com',

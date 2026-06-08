@@ -1,19 +1,10 @@
 import { expect, type Page, test } from '@playwright/test'
+import { createBookmarkViaUi } from './helpers/bookmarks'
 import { gotoCollection, useTestCollectionWithCleanup } from './helpers/testCollection'
 
 test.describe.configure({ mode: 'serial' })
 
 const ts = Date.now()
-
-async function createBookmark(page: Page, title: string, url: string) {
-  await page.getByRole('button', { name: /add bookmark/i }).click()
-  const dialog = page.locator('[role="dialog"]')
-  await expect(dialog).toBeVisible()
-  await dialog.locator('#create-bookmark-title').fill(title)
-  await dialog.locator('#create-bookmark-url').fill(url)
-  await dialog.locator('button[type="submit"]').click()
-  await expect(dialog).not.toBeVisible()
-}
 
 async function search(page: Page, query: string) {
   const input = page.locator('input[type="text"]').first()
@@ -26,8 +17,8 @@ test.describe('Saved Searches & Smart Collections (v2)', () => {
 
   test('should set up test data', async ({ page }) => {
     await gotoCollection(page, collection)
-    await createBookmark(page, `Production API ${ts}`, 'https://api.prod.example.com')
-    await createBookmark(page, `Dev API ${ts}`, 'https://api.dev.example.com')
+    await createBookmarkViaUi(page,`Production API ${ts}`, 'https://api.prod.example.com')
+    await createBookmarkViaUi(page,`Dev API ${ts}`, 'https://api.dev.example.com')
   })
 
   test('save trigger hidden when query is empty; visible after typing', async ({ page }) => {

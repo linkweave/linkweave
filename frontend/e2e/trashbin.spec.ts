@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test'
-import { BASE } from './helpers/api'
+import { BASE, createBookmarkViaApi } from './helpers/api'
 import { gotoCollection, useTestCollectionWithCleanup } from './helpers/testCollection'
 import { TrashbinPageObject } from './models/TrashbinPageObject'
 
@@ -11,20 +11,6 @@ async function navigateToTrashbin(page: Page) {
   await page.getByTestId('user-menu-trigger').click()
   await page.getByTestId('user-menu-trashbin').click()
   await expect(page).toHaveURL(/\/trashbin/)
-}
-
-async function createBookmarkViaApi(
-  page: Page,
-  collectionId: string,
-  title: string,
-  url: string,
-): Promise<string> {
-  const resp = await page.request.post(`${BASE}/bookmarks`, {
-    data: { collectionId, title, url },
-  })
-  expect(resp.ok(), `createBookmark failed: ${resp.status()}`).toBeTruthy()
-  const body = await resp.json()
-  return body.id
 }
 
 async function deleteBookmarkViaApi(page: Page, bookmarkId: string) {
@@ -43,13 +29,13 @@ test.describe('Trashbin', () => {
     await gotoCollection(page, collection)
 
     bookmarkAId = await createBookmarkViaApi(
-      page,
+      page.request,
       collection.collectionId,
       `Trash-A-${ts}`,
       'https://trash-a.example.com',
     )
     bookmarkBId = await createBookmarkViaApi(
-      page,
+      page.request,
       collection.collectionId,
       `Trash-B-${ts}`,
       'https://trash-b.example.com',
@@ -102,7 +88,7 @@ test.describe('Trashbin', () => {
     await gotoCollection(page, collection)
 
     const bookmarkCId = await createBookmarkViaApi(
-      page,
+      page.request,
       collection.collectionId,
       `Trash-C-${ts}`,
       'https://trash-c.example.com',
