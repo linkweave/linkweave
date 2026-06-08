@@ -31,10 +31,7 @@ export class TrashbinPageObject {
   }
 
   async loginAndNavigate(email = 'alice@example.com', password = 'alice') {
-    const loginPage = new LoginPageObject(this.page)
-    await loginPage.goto()
-    await loginPage.login(email, password)
-    await expect(this.page).toHaveURL(/\/collections\//)
+    await new LoginPageObject(this.page).loginAndLand(email, password)
 
     await this.page.getByTestId('user-menu-trigger').click()
     await this.page.getByTestId('user-menu-trashbin').click()
