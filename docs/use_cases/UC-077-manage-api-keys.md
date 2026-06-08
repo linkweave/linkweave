@@ -92,9 +92,8 @@
 **Trigger:** An incoming request carries an `X-API-Key` header that does not match any active key (lookup during FR-084).
 **Flow:**
 
-1. The Quarkus `HttpAuthenticationMechanism` returns `NOT_VALID`.
-2. The request falls through to the next auth mechanism (OIDC/form).
-3. If no other mechanism authenticates the request, the response is HTTP 401.
+1. The Quarkus `HttpAuthenticationMechanism` returns a failed `Uni` with `AuthenticationFailedException`.
+2. The request is rejected with HTTP 401. The error message is generic: "Invalid or revoked API key."
 
 ### A6: User Account Deleted
 
