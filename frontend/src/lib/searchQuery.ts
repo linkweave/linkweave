@@ -210,48 +210,9 @@ function bookmarkHasTagNamed(b: MatchableBookmark, value: string, ctx: MatchCont
   return false
 }
 
-function bookmarkMatchesToken(b: MatchableBookmark, t: QueryToken, ctx: MatchContext): boolean {
-  if (t.kind === 'tag') {
-    return bookmarkHasTagNamed(b, t.value, ctx)
-  }
-  if (t.kind === 'operator') {
-    const v = t.value.toLowerCase()
-    // `tag:name` is an alias for `#name`.
-    if (t.key === 'tag') {
-      return bookmarkHasTagNamed(b, t.value, ctx)
-    }
-    if (t.key === 'folder') {
-      return (ctx.folderName ?? '').includes(v)
-    }
-    if (t.key === 'under') {
-      // Hierarchical: matches when the bookmark's own folder, or any ancestor,
-      // is the one referenced by `value`. We try an exact folder-ID match
-      // first (case-sensitive, the click-path encoding from selectFolder), and
-      // fall back to a case-insensitive name match for typed queries. The name
-      // fallback retains the duplicate-name ambiguity by design.
-      if (ctx.ancestorFolderIds.has(t.value)) return true
-      return ctx.ancestorFolderNames.has(v)
-    }
-    if (t.key === 'note') {
-      return (b.data.description ?? '').toLowerCase().includes(v)
-    }
-    if (t.key === 'created') {
-      const parsed = parseCreatedValue(t.value)
-      if (!parsed) return true // unparseable → no-op match-all
-      const createdAt = b.entityInfo?.timestampErstellt
-      if (!createdAt) return false // bookmark with no timestamp can't satisfy a date filter
-      return matchesCreated(createdAt instanceof Date ? createdAt : new Date(createdAt), parsed)
-    }
-    if (t.key === 'property') {
-      const parsed = parsePropertyValue(t.value)
-      if (!parsed) return true // unparseable → no-op match-all
-      if (!ctx.propertyDefsByName) return false // collection has no definitions wired in
-      return matchesPropertyToken(b.propertyValues, ctx.propertyDefsByName, parsed)
-    }
-    return true
-  }
-  // Free text: match against title + url + description + tag names
-  const v = t.value.toLowerCase()
+// Free text: match against title + url + description + tag names. `v` is the
+// already-lowercased token value.
+function bookmarkMatchesText(b: MatchableBookmark, v: string, ctx: MatchContext): boolean {
   if (b.data.title?.toLowerCase().includes(v)) return true
   if (b.data.url?.toLowerCase().includes(v)) return true
   if (b.data.description?.toLowerCase().includes(v)) return true
@@ -262,6 +223,56 @@ function bookmarkMatchesToken(b: MatchableBookmark, t: QueryToken, ctx: MatchCon
     }
   }
   return false
+}
+
+function bookmarkMatchesCreated(b: MatchableBookmark, value: string): boolean {
+  const parsed = parseCreatedValue(value)
+  if (!parsed) return true // unparseable → no-op match-all
+  const createdAt = b.entityInfo?.timestampErstellt
+  if (!createdAt) return false // bookmark with no timestamp can't satisfy a date filter
+  return matchesCreated(createdAt instanceof Date ? createdAt : new Date(createdAt), parsed)
+}
+
+function bookmarkMatchesProperty(b: MatchableBookmark, value: string, ctx: MatchContext): boolean {
+  const parsed = parsePropertyValue(value)
+  if (!parsed) return true // unparseable → no-op match-all
+  if (!ctx.propertyDefsByName) return false // collection has no definitions wired in
+  return matchesPropertyToken(b.propertyValues, ctx.propertyDefsByName, parsed)
+}
+
+function bookmarkMatchesOperator(b: MatchableBookmark, t: OperatorToken, ctx: MatchContext): boolean {
+  const v = t.value.toLowerCase()
+  switch (t.key) {
+    case 'tag': // `tag:name` is an alias for `#name`.
+      return bookmarkHasTagNamed(b, t.value, ctx)
+    case 'folder':
+      return (ctx.folderName ?? '').includes(v)
+    case 'under':
+      // Hierarchical: matches when the bookmark's folder or any ancestor is the
+      // one referenced by `value`. Exact folder-ID match first (case-sensitive,
+      // the click-path encoding from selectFolder), then a case-insensitive name
+      // fallback for typed queries (which keeps duplicate-name ambiguity by design).
+      return ctx.ancestorFolderIds.has(t.value) || ctx.ancestorFolderNames.has(v)
+    case 'note':
+      return (b.data.description ?? '').toLowerCase().includes(v)
+    case 'created':
+      return bookmarkMatchesCreated(b, t.value)
+    case 'property':
+      return bookmarkMatchesProperty(b, t.value, ctx)
+    default:
+      return true
+  }
+}
+
+function bookmarkMatchesToken(b: MatchableBookmark, t: QueryToken, ctx: MatchContext): boolean {
+  switch (t.kind) {
+    case 'tag':
+      return bookmarkHasTagNamed(b, t.value, ctx)
+    case 'operator':
+      return bookmarkMatchesOperator(b, t, ctx)
+    default:
+      return bookmarkMatchesText(b, t.value.toLowerCase(), ctx)
+  }
 }
 
 export function matchesTokens(
