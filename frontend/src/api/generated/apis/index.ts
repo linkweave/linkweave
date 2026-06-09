@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './api-key-resource-api';
 export * from './auth-resource-api';
 export * from './auto-tag-rule-resource-api';
 export * from './bookmark-property-value-resource-api';
