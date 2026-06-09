@@ -6,7 +6,7 @@
 **Use Case Name:** Authenticate via API Key
 **Primary Actor:** CLI User / Script / Automation
 **Goal:** Authenticate an API request by sending an `X-API-Key` header so that non-browser clients can access the full Chainlink API without browser-based session cookies or OIDC redirects.
-**Status:** Draft
+**Status:** Done
 
 ## Traceability
 

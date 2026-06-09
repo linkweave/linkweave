@@ -1,5 +1,6 @@
 package org.chainlink.api.auth.apikey;
 
+import java.time.OffsetDateTime;
 import java.util.Set;
 
 import ch.dvbern.dvbstarter.types.id.ID;
@@ -13,6 +14,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 @ApplicationScoped
 @RequiredArgsConstructor
@@ -58,7 +60,7 @@ public class ApiKeyIdentityProvider implements IdentityProvider<ApiKeyRequest> {
             .addAttribute("auth-method", "api-key")
             .build();
 
-        apiKeyService.updateLastUsedAt(data.apiKeyId());
+        apiKeyService.recordApiKeyUse(data.apiKeyId(), data.lastUsedAt());
 
         return identity;
     }
@@ -83,6 +85,7 @@ public class ApiKeyIdentityProvider implements IdentityProvider<ApiKeyRequest> {
     public record ApiKeyIdentityData(
         ID<ApiKey> apiKeyId,
         String email,
-        Set<String> roles
+        Set<String> roles,
+        @Nullable OffsetDateTime lastUsedAt
     ) {}
 }

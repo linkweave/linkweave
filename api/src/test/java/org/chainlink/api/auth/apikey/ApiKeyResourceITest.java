@@ -1,7 +1,10 @@
 package org.chainlink.api.auth.apikey;
 
+import java.time.Instant;
 import java.util.UUID;
 
+import ch.dvbern.dvbstarter.clock.ClockProvider;
+import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
@@ -9,8 +12,10 @@ import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.api.testutil.fixture.FixtureService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -23,6 +28,17 @@ class ApiKeyResourceITest {
 
     @Inject
     FixtureService fixtureService;
+
+    @Inject
+    ApiKeyRepo apiKeyRepo;
+
+    @Inject
+    ClockProvider clockProvider;
+
+    @AfterEach
+    void resetClock() {
+        clockProvider.reset();
+    }
 
     @Test
     void shouldReturn401_whenListNotAuthenticated() {
@@ -231,6 +247,34 @@ class ApiKeyResourceITest {
             .then()
             .statusCode(200)
             .body("apiKeys.find { it.id == '" + id + "'}.revokedAt", notNullValue());
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldDebounceLastUsedAtWithinWindow() {
+        User user = fixtureService.persistUser(u -> u.withEmail("debounce-apikey-" + UUID.randomUUID() + "@example.com"));
+        ApiKey key = fixtureService.persistApiKey(k -> k
+            .withUser(user)
+            .withName("Debounce key")
+            .withKeyHash("1".repeat(64))
+            .withKeyPrefix("11111111"));
+        ID<ApiKey> id = key.getId();
+
+        Instant t0 = Instant.parse("2026-06-09T12:00:00Z");
+        clockProvider.resetUsing(t0);
+        // First use: last_used_at was null, so the write happens.
+        assertThat(apiKeyRepo.updateLastUsedAt(id)).isEqualTo(1L);
+
+        // Immediate re-use within the 5-minute window: debounced, no write.
+        assertThat(apiKeyRepo.updateLastUsedAt(id)).isZero();
+
+        // Two minutes later, still inside the window: still debounced.
+        clockProvider.resetUsing(t0.plusSeconds(120));
+        assertThat(apiKeyRepo.updateLastUsedAt(id)).isZero();
+
+        // Past the window: the write happens again.
+        clockProvider.resetUsing(t0.plusSeconds(6 * 60));
+        assertThat(apiKeyRepo.updateLastUsedAt(id)).isEqualTo(1L);
     }
 
     @Test

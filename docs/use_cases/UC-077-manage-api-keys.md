@@ -6,7 +6,7 @@
 **Use Case Name:** Manage API Keys
 **Primary Actor:** User (via Web UI)
 **Goal:** Create, list, and revoke personal API keys so that non-browser clients (CLI tools, scripts, automation) can authenticate against the Chainlink API without sharing session cookies or OIDC credentials.
-**Status:** Draft
+**Status:** Done
 
 ## Traceability
 

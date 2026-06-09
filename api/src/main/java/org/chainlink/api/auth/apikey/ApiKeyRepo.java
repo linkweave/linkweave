@@ -1,5 +1,6 @@
 package org.chainlink.api.auth.apikey;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,6 +15,15 @@ import org.jspecify.annotations.NonNull;
 @Repository
 @RequiredArgsConstructor
 public class ApiKeyRepo extends BaseRepo<ApiKey> {
+
+    /**
+     * Debounce window for {@code last_used_at} writes (BR-014, UC-078). A key authenticated
+     * more often than this only records its first use per window, avoiding a row write on every
+     * authenticated request while keeping the displayed "last used" fresh to within the window.
+     * Shared with {@link ApiKeyService}, which uses it for an in-memory fast path before touching
+     * the database.
+     */
+    public static final Duration LAST_USED_DEBOUNCE = Duration.ofMinutes(5);
 
     private final AppClock appClock;
 
@@ -54,10 +64,22 @@ public class ApiKeyRepo extends BaseRepo<ApiKey> {
             .fetchOne();
     }
 
-    public void updateLastUsedAt(@NonNull ID<ApiKey> apiKeyId) {
-        db.update(QApiKey.apiKey)
-            .set(QApiKey.apiKey.lastUsedAt, appClock.offsetDateTime().now())
+    /**
+     * Records the most recent use of a key, debounced to at most one write per
+     * LAST_USED_DEBOUNCE_MINUTES. The time guard lives in the {@code WHERE} clause so it
+     * is evaluated atomically by the database — a read-then-write in Java would let concurrent
+     * requests with the same key both see a stale timestamp and both write.
+     *
+     * @return the number of rows updated (0 when within the debounce window)
+     */
+    public long updateLastUsedAt(@NonNull ID<ApiKey> apiKeyId) {
+        var now = appClock.offsetDateTime().now();
+        var threshold = now.minus(LAST_USED_DEBOUNCE);
+        return db.update(QApiKey.apiKey)
+            .set(QApiKey.apiKey.lastUsedAt, now)
             .where(QApiKey.apiKey.id.eq(apiKeyId.getUUID()))
+            .where(QApiKey.apiKey.lastUsedAt.isNull()
+                .or(QApiKey.apiKey.lastUsedAt.lt(threshold)))
             .execute();
     }
 }

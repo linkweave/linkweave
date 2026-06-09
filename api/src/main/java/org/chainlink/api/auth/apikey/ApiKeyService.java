@@ -103,12 +103,24 @@ public class ApiKeyService {
             return new ApiKeyIdentityProvider.ApiKeyIdentityData(
                 apiKey.getId(),
                 user.getEmail().toString(),
-                roles
+                roles,
+                apiKey.getLastUsedAt()
             );
         });
     }
 
-    public void updateLastUsedAt(@NonNull ID<ApiKey> apiKeyId) {
+    /**
+     * Records that a key was just used, best-effort (never fails the request). The key was already
+     * loaded during authentication, so we use its in-memory {@code lastUsedAt} as a fast path: when
+     * it is still within the debounce window we skip the database entirely. The repo's
+     * {@code WHERE}-clause guard then handles the concurrent case where two requests both pass this
+     * check (see {@link ApiKeyRepo#updateLastUsedAt}).
+     */
+    public void recordApiKeyUse(@NonNull ID<ApiKey> apiKeyId, @Nullable OffsetDateTime lastUsedAt) {
+        OffsetDateTime now = appClock.offsetDateTime().now();
+        if (lastUsedAt != null && lastUsedAt.isAfter(now.minus(ApiKeyRepo.LAST_USED_DEBOUNCE))) {
+            return;
+        }
         try {
             apiKeyRepo.updateLastUsedAt(apiKeyId);
         } catch (Exception e) {
