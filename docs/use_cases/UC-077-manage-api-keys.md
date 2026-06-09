@@ -289,6 +289,7 @@ The `expiresIn` field is optional. Accepted values: `"30d"`, `"90d"`, `"1y"`, `"
 | CSRF with API key | API keys are not sent automatically by browsers (unlike cookies). No CSRF risk. |
 | Key ID enumeration via DELETE | The `DELETE` endpoint returns 404 both when the key does not exist and when it belongs to another user. While 403 would also be acceptable, 404 is used because API key IDs are UUIDs (128 bits of entropy) — guessing a valid ID is infeasible, so enumeration is not a realistic attack. This follows the same pattern as GitHub and Stripe for personal access tokens. |
 | Zombie expired keys | Expired keys are visually distinguished in the UI and can be revoked for cleanup. Authentication rejects them identically to revoked keys, so no security risk exists even if the user does not revoke them. |
+| API key managing API keys | **By design.** Keys are unscoped and inherit the owner's full role set (BR-008), so an API-key-authenticated request can also list, create, and revoke the same user's keys via `/auth/api-keys`. This is within a single user's own trust boundary (no cross-user access — BR-009) and matches how unscoped personal access tokens behave elsewhere (e.g. GitHub). Fine-grained per-key scopes are out of scope for this use case. |
 
 ---
 

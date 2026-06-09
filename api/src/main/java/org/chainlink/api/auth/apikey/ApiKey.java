@@ -25,7 +25,7 @@ import org.jspecify.annotations.Nullable;
 @Entity
 @Table(indexes = {
     @Index(name = "ix_apikey_user_id", columnList = "user_id, id"),
-    @Index(name = "ix_apikey_key_hash", columnList = "keyHash"),
+    @Index(name = "ix_apikey_key_hash", columnList = "keyHash", unique = true),
 })
 @NoArgsConstructor
 @AllArgsConstructor

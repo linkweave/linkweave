@@ -252,12 +252,13 @@ class ApiKeyResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldDebounceLastUsedAtWithinWindow() {
+        String uniqueHash = (UUID.randomUUID() + "" + UUID.randomUUID()).replace("-", "").substring(0, 64);
         User user = fixtureService.persistUser(u -> u.withEmail("debounce-apikey-" + UUID.randomUUID() + "@example.com"));
         ApiKey key = fixtureService.persistApiKey(k -> k
             .withUser(user)
             .withName("Debounce key")
-            .withKeyHash("1".repeat(64))
-            .withKeyPrefix("11111111"));
+            .withKeyHash(uniqueHash)
+            .withKeyPrefix(uniqueHash.substring(0, 8)));
         ID<ApiKey> id = key.getId();
 
         Instant t0 = Instant.parse("2026-06-09T12:00:00Z");

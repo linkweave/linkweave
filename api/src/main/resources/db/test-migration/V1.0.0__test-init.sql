@@ -17,7 +17,6 @@ create table UserPermission_AUD (REV integer not null, REVTYPE tinyint, timestam
 create table UserSettings (offlineCachingEnabled boolean not null, savedSearchesEnabled boolean not null, timestampErstellt timestamp not null, timestampMutiert timestamp not null, version bigint not null, user_id varchar(36) not null, userErstellt varchar(255) not null, userMutiert varchar(255) not null, primary key (user_id));
 create table UserSettings_AUD (REV integer not null, REVTYPE tinyint, offlineCachingEnabled boolean, savedSearchesEnabled boolean, timestampErstellt timestamp, timestampMutiert timestamp, user_id varchar(36) not null, userErstellt varchar(255), userMutiert varchar(255), primary key (REV, user_id));
 create index ix_apikey_user_id on ApiKey (user_id, id);
-create index ix_apikey_key_hash on ApiKey (keyHash);
 create index ix_auto_tag_rule_collection_id on AutoTagRule (collection_id, sortOrder, id);
 create index ix_bookmark_collection_id on Bookmark (collection_id, id);
 create index ix_bookmark_folder_id on Bookmark (folder_id, id);

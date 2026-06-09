@@ -20,7 +20,6 @@ import org.jspecify.annotations.Nullable;
 @RequiredArgsConstructor
 public class ApiKeyIdentityProvider implements IdentityProvider<ApiKeyRequest> {
 
-    private static final String API_KEY_PREFIX = "cl_";
     private static final int RAW_KEY_LENGTH = 64;
 
     private final ApiKeyService apiKeyService;
@@ -44,7 +43,7 @@ public class ApiKeyIdentityProvider implements IdentityProvider<ApiKeyRequest> {
             throw new AuthenticationFailedException("Invalid or revoked API key");
         }
 
-        String rawKey = apiKeyHeader.substring(API_KEY_PREFIX.length());
+        String rawKey = apiKeyHeader.substring(ApiKeyService.KEY_PREFIX.length());
         String hash = ApiKeyService.sha256Hex(rawKey);
 
         var identityData = apiKeyService.buildIdentityFromApiKey(hash);
@@ -66,10 +65,10 @@ public class ApiKeyIdentityProvider implements IdentityProvider<ApiKeyRequest> {
     }
 
     private boolean isValidFormat(@NonNull String apiKey) {
-        if (!apiKey.startsWith(API_KEY_PREFIX)) {
+        if (!apiKey.startsWith(ApiKeyService.KEY_PREFIX)) {
             return false;
         }
-        String raw = apiKey.substring(API_KEY_PREFIX.length());
+        String raw = apiKey.substring(ApiKeyService.KEY_PREFIX.length());
         if (raw.length() != RAW_KEY_LENGTH) {
             return false;
         }

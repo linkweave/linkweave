@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 public class ApiKeyService {
 
     private static final Logger log = LoggerFactory.getLogger(ApiKeyService.class);
-    static final String KEY_PREFIX = "cl_";
+    public static final String KEY_PREFIX = "cl_";
 
     public record ApiKeyCreateResult(ApiKey apiKey, String rawKey) {}
 

@@ -16,4 +16,7 @@ CREATE TABLE ApiKey (
 );
 
 CREATE INDEX ix_apikey_user_id ON ApiKey (user_id, id);
-CREATE INDEX ix_apikey_key_hash ON ApiKey (keyHash);
+-- Unique: each raw key is cryptographically distinct, so its SHA-256 hash must be too. The
+-- constraint guards against an insert bug or race ever producing a duplicate that findActiveByHash
+-- could resolve to the wrong user's key. Doubles as the O(1) lookup index for authentication.
+CREATE UNIQUE INDEX ix_apikey_key_hash ON ApiKey (keyHash);
