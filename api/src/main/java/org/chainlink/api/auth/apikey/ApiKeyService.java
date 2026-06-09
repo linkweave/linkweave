@@ -13,7 +13,6 @@ import ch.dvbern.dvbstarter.clock.AppClock;
 import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.auth.apikey.json.ApiKeyCreateJson;
-import org.chainlink.api.benutzer.UserRepo;
 import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.infrastructure.db.DbConst;
@@ -42,7 +41,6 @@ public class ApiKeyService {
     private final ApiKeyRepo apiKeyRepo;
     private final CurrentUserService currentUserService;
     private final AppClock appClock;
-    private final UserRepo userRepo;
     private final SecureRandomProvider secureRandomProvider;
 
     @NonNull
@@ -93,7 +91,8 @@ public class ApiKeyService {
     @NonNull
     public Optional<ApiKeyIdentityProvider.ApiKeyIdentityData> buildIdentityFromApiKey(@NonNull String keyHash) {
         return apiKeyRepo.findActiveByHash(keyHash).map(apiKey -> {
-            User user = userRepo.getById(apiKey.getUser().getId());
+
+            User user = apiKey.getUser();
 
             String securityRoles = user.getSecurityRoles();
             Set<String> roles = securityRoles.isBlank()

@@ -36,7 +36,7 @@
 ## Main Success Scenario — List API Keys
 
 1. User navigates to the API Keys section in the Settings page.
-2. System queries all active (non-revoked) API keys for the current user.
+2. System returns all of the current user's keys, including revoked ones — each carrying its `revokedAt` (null when active). The UI hides revoked keys so the user sees only active and expired ones; the raw list is returned so a future view could surface revoked-key history without an API change.
 3. System displays a table with columns: Name, Prefix (e.g., `cl_a1b2…`), Created, Expires, Last Used. Expired keys are visually distinguished (e.g., greyed out or marked "Expired").
 4. Each row has a "Revoke" action button.
 
@@ -268,7 +268,7 @@ The `expiresIn` field is optional. Accepted values: `"30d"`, `"90d"`, `"1y"`, `"
 ]
 ```
 
-> The full key is never included. Only the prefix is shown for identification. `expiresAt` is `null` for keys with no expiration. The frontend should display expired keys distinctly from active ones.
+> The full key is never included. Only the prefix is shown for identification. `expiresAt` is `null` for keys with no expiration. Each object also carries `revokedAt` (`null` when active); **the endpoint returns revoked keys too**, and the frontend hides them while displaying expired keys distinctly from active ones.
 
 ### `DELETE /api/auth/api-keys/{id}` — Revoke API Key
 
