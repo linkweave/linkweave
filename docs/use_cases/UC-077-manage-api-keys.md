@@ -6,7 +6,7 @@
 **Use Case Name:** Manage API Keys
 **Primary Actor:** User (via Web UI)
 **Goal:** Create, list, and revoke personal API keys so that non-browser clients (CLI tools, scripts, automation) can authenticate against the Chainlink API without sharing session cookies or OIDC credentials.
-**Status:** Draft
+**Status:** Done
 
 ## Traceability
 
@@ -36,7 +36,7 @@
 ## Main Success Scenario — List API Keys
 
 1. User navigates to the API Keys section in the Settings page.
-2. System queries all active (non-revoked) API keys for the current user.
+2. System returns all of the current user's keys, including revoked ones — each carrying its `revokedAt` (null when active). The UI hides revoked keys so the user sees only active and expired ones; the raw list is returned so a future view could surface revoked-key history without an API change.
 3. System displays a table with columns: Name, Prefix (e.g., `cl_a1b2…`), Created, Expires, Last Used. Expired keys are visually distinguished (e.g., greyed out or marked "Expired").
 4. Each row has a "Revoke" action button.
 
@@ -268,7 +268,7 @@ The `expiresIn` field is optional. Accepted values: `"30d"`, `"90d"`, `"1y"`, `"
 ]
 ```
 
-> The full key is never included. Only the prefix is shown for identification. `expiresAt` is `null` for keys with no expiration. The frontend should display expired keys distinctly from active ones.
+> The full key is never included. Only the prefix is shown for identification. `expiresAt` is `null` for keys with no expiration. Each object also carries `revokedAt` (`null` when active); **the endpoint returns revoked keys too**, and the frontend hides them while displaying expired keys distinctly from active ones.
 
 ### `DELETE /api/auth/api-keys/{id}` — Revoke API Key
 
@@ -289,6 +289,7 @@ The `expiresIn` field is optional. Accepted values: `"30d"`, `"90d"`, `"1y"`, `"
 | CSRF with API key | API keys are not sent automatically by browsers (unlike cookies). No CSRF risk. |
 | Key ID enumeration via DELETE | The `DELETE` endpoint returns 404 both when the key does not exist and when it belongs to another user. While 403 would also be acceptable, 404 is used because API key IDs are UUIDs (128 bits of entropy) — guessing a valid ID is infeasible, so enumeration is not a realistic attack. This follows the same pattern as GitHub and Stripe for personal access tokens. |
 | Zombie expired keys | Expired keys are visually distinguished in the UI and can be revoked for cleanup. Authentication rejects them identically to revoked keys, so no security risk exists even if the user does not revoke them. |
+| API key managing API keys | **By design.** Keys are unscoped and inherit the owner's full role set (BR-008), so an API-key-authenticated request can also list, create, and revoke the same user's keys via `/auth/api-keys`. This is within a single user's own trust boundary (no cross-user access — BR-009) and matches how unscoped personal access tokens behave elsewhere (e.g. GitHub). Fine-grained per-key scopes are out of scope for this use case. |
 
 ---
 

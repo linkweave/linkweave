@@ -14,6 +14,7 @@ import org.jspecify.annotations.Nullable;
 @AllArgsConstructor(staticName = "of", access = AccessLevel.PRIVATE)
 public class AppValidationMessage {
 
+    public static final String EMAIL = "email";
     // This key is sent to the client in the error response
     String clientKey;
     I18nMessage i18nMessage;
@@ -32,7 +33,7 @@ public class AppValidationMessage {
     public static AppValidationMessage invalidEmail(@NonNull String email) {
         return of(
             "InvalidEmail",
-            I18nMessage.of("AppValidation.INVALID_EMAIL", "email", email)
+            I18nMessage.of("AppValidation.INVALID_EMAIL", EMAIL, email)
         );
     }
 
@@ -199,7 +200,7 @@ public class AppValidationMessage {
     public static @NonNull AppValidationMessage emailAlreadyRegistered(@NonNull String email) {
         return of(
             "EmailAlreadyRegistered",
-            I18nMessage.of("AppValidation.EMAIL_ALREADY_REGISTERED", "email", email)
+            I18nMessage.of("AppValidation.EMAIL_ALREADY_REGISTERED", EMAIL, email)
         );
     }
 
@@ -213,7 +214,7 @@ public class AppValidationMessage {
     public static @NonNull AppValidationMessage shareUserNotFound(@NonNull String email) {
         return of(
             "ShareUserNotFound",
-            I18nMessage.of("AppValidation.SHARE_USER_NOT_FOUND", "email", email)
+            I18nMessage.of("AppValidation.SHARE_USER_NOT_FOUND", EMAIL, email)
         );
     }
 
@@ -251,6 +252,20 @@ public class AppValidationMessage {
         return of(
             "FaviconAllowlistInvalidPattern",
             I18nMessage.of("AppValidation.FAVICON_ALLOWLIST_INVALID_PATTERN", "pattern", pattern)
+        );
+    }
+
+    public static @NonNull AppValidationMessage maxApiKeysReached() {
+        return of(
+            "MaxApiKeysReached",
+            I18nMessage.of("AppValidation.MAX_API_KEYS_REACHED")
+        );
+    }
+
+    public static @NonNull AppValidationMessage apiKeyAlreadyRevoked() {
+        return of(
+            "ApiKeyAlreadyRevoked",
+            I18nMessage.of("AppValidation.API_KEY_ALREADY_REVOKED")
         );
     }
 }
