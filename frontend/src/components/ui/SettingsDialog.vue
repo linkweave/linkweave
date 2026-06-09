@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { config } from '@/api'
 import { AuthResourceApi } from '@/api/generated'
+import ApiKeySection from '@/components/apikey/ApiKeySection.vue'
 import DialogCl from './DialogCl.vue'
 import SwitchCl from './SwitchCl.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -196,6 +197,9 @@ const layouts: { value: BookmarkLayout; icon: typeof LayoutList; labelKey: strin
             data-testid="toggle-saved-searches"
           />
         </div>
+      </div>
+      <div>
+        <ApiKeySection />
       </div>
     </div>
   </DialogCl>
