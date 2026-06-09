@@ -18,7 +18,8 @@ public class ApiKeyMapper {
             apiKey.getKeyPrefix(),
             apiKey.getTimestampErstellt(),
             apiKey.getExpiresAt(),
-            apiKey.getLastUsedAt()
+            apiKey.getLastUsedAt(),
+            apiKey.getRevokedAt()
         );
     }
 

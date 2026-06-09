@@ -19,6 +19,7 @@ import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.auth.apikey.json.ApiKeyCreateJson;
 import org.chainlink.api.auth.apikey.json.ApiKeyListJson;
+import org.chainlink.api.shared.auth.AuthorizationService;
 import org.chainlink.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
@@ -30,6 +31,7 @@ import org.jspecify.annotations.NonNull;
 public class ApiKeyResource {
 
     private final ApiKeyService apiKeyService;
+    private final AuthorizationService authorizationService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -58,6 +60,7 @@ public class ApiKeyResource {
     @Path("/{apiKeyId}")
     @Authenticated
     public Response revoke(@PathParam("apiKeyId") @NotNull @NonNull ID<ApiKey> apiKeyId) {
+        authorizationService.requireApiKeyOwnership(apiKeyId);
         apiKeyService.revokeApiKey(apiKeyId);
         return Response.noContent().build();
     }

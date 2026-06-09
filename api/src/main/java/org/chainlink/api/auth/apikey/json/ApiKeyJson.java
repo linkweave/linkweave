@@ -39,4 +39,8 @@ public class ApiKeyJson {
     @Nullable
     @Schema(required = false)
     OffsetDateTime lastUsedAt;
+
+    @Nullable
+    @Schema(required = false)
+    OffsetDateTime revokedAt;
 }

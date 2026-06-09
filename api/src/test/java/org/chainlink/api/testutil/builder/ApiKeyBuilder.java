@@ -48,6 +48,12 @@ public class ApiKeyBuilder {
     }
 
     @NonNull
+    public ApiKeyBuilder withLastUsedAt(OffsetDateTime lastUsedAt) {
+        apiKey.setLastUsedAt(lastUsedAt);
+        return this;
+    }
+
+    @NonNull
     public ApiKeyBuilder withRevokedAt(OffsetDateTime revokedAt) {
         apiKey.setRevokedAt(revokedAt);
         return this;

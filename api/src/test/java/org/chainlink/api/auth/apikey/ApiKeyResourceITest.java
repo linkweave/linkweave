@@ -7,6 +7,7 @@ import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
+import org.chainlink.api.shared.user.User;
 import org.chainlink.api.testutil.fixture.FixtureService;
 import org.junit.jupiter.api.Test;
 
@@ -163,6 +164,73 @@ class ApiKeyResourceITest {
             .get("/auth/api-keys")
             .then()
             .statusCode(401);
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldReturn400_whenRevokingKeyOfAnotherUser() {
+        User otherUser = fixtureService.persistUser(u -> u.withEmail("other-apikey@example.com"));
+        var otherKey = fixtureService.persistApiKey(k -> k
+            .withUser(otherUser)
+            .withName("Other user key")
+            .withKeyHash("0".repeat(64))
+            .withKeyPrefix("00000000"));
+
+        RestAssured.given()
+            .delete("/auth/api-keys/" + otherKey.getId().getUUID())
+            .then()
+            .statusCode(400);
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldReturn400_whenRevokingAlreadyRevokedKey() {
+        String id = RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body("{\"name\":\"Key to revoke twice\"}")
+            .post("/auth/api-keys")
+            .then()
+            .statusCode(201)
+            .extract().path("id");
+
+        RestAssured.given()
+            .delete("/auth/api-keys/" + id)
+            .then()
+            .statusCode(204);
+
+        RestAssured.given()
+            .delete("/auth/api-keys/" + id)
+            .then()
+            .statusCode(400);
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldIncludeRevokedAtInListAfterRevocation() {
+        String id = RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body("{\"name\":\"Key to check revokedAt\"}")
+            .post("/auth/api-keys")
+            .then()
+            .statusCode(201)
+            .extract().path("id");
+
+        RestAssured.given()
+            .get("/auth/api-keys")
+            .then()
+            .statusCode(200)
+            .body("apiKeys.find { it.id == '" + id + "'}.revokedAt", nullValue());
+
+        RestAssured.given()
+            .delete("/auth/api-keys/" + id)
+            .then()
+            .statusCode(204);
+
+        RestAssured.given()
+            .get("/auth/api-keys")
+            .then()
+            .statusCode(200)
+            .body("apiKeys.find { it.id == '" + id + "'}.revokedAt", notNullValue());
     }
 
     @Test

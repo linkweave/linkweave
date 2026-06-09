@@ -13,14 +13,11 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @ApplicationScoped
 @RequiredArgsConstructor
 public class ApiKeyIdentityProvider implements IdentityProvider<ApiKeyRequest> {
 
-    private static final Logger log = LoggerFactory.getLogger(ApiKeyIdentityProvider.class);
     private static final String API_KEY_PREFIX = "cl_";
     private static final int RAW_KEY_LENGTH = 64;
 
@@ -61,11 +58,7 @@ public class ApiKeyIdentityProvider implements IdentityProvider<ApiKeyRequest> {
             .addAttribute("auth-method", "api-key")
             .build();
 
-        try {
-            apiKeyService.updateLastUsedAt(data.apiKeyId());
-        } catch (Exception e) {
-            log.warn("Failed to update last_used_at for API key {}", data.apiKeyId(), e);
-        }
+        apiKeyService.updateLastUsedAt(data.apiKeyId());
 
         return identity;
     }

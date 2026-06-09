@@ -81,14 +81,10 @@ public class ApiKeyService {
     }
 
     public void revokeApiKey(@NonNull ID<ApiKey> apiKeyId) {
-        ID<User> userId = currentUserService.currentUserID();
-        var apiKeyOpt = apiKeyRepo.findById(apiKeyId);
-        if (apiKeyOpt.isEmpty()) {
-            throw new AppValidationException(AppValidationMessage.genericMessage("AppValidation.API_KEY_NOT_FOUND"));
-        }
-        ApiKey apiKey = apiKeyOpt.get();
-        if (!apiKey.getUser().getId().equals(userId)) {
-            throw new AppValidationException(AppValidationMessage.genericMessage("AppValidation.API_KEY_NOT_FOUND"));
+        ApiKey apiKey = apiKeyRepo.findById(apiKeyId)
+            .orElseThrow(() -> new AppValidationException(AppValidationMessage.genericMessage("AppValidation.API_KEY_NOT_FOUND")));
+        if (apiKey.getRevokedAt() != null) {
+            throw new AppValidationException(AppValidationMessage.apiKeyAlreadyRevoked());
         }
         apiKey.setRevokedAt(appClock.offsetDateTime().now());
         apiKeyRepo.persistAndFlush(apiKey);

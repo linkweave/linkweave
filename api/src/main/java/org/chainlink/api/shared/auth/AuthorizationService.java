@@ -3,11 +3,15 @@ package org.chainlink.api.shared.auth;
 import ch.dvbern.dvbstarter.types.id.ID;
 import ch.dvbern.oss.commons.i18nl10n.I18nMessage;
 import lombok.RequiredArgsConstructor;
+import org.chainlink.api.auth.apikey.ApiKey;
+import org.chainlink.api.auth.apikey.ApiKeyRepo;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.collection.CollectionAccessRepo;
 import org.chainlink.api.collection.CollectionRole;
 import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.infrastructure.errorhandling.AppAuthorizationException;
+import org.chainlink.infrastructure.errorhandling.AppValidationException;
+import org.chainlink.infrastructure.errorhandling.AppValidationMessage;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
 
@@ -17,6 +21,7 @@ public class AuthorizationService {
 
     private final CollectionAccessRepo collectionAccessRepo;
     private final CurrentUserService currentUserService;
+    private final ApiKeyRepo apiKeyRepo;
 
     public void requireCollectionAccess(@NonNull ID<Collection> collectionId) {
         var currentUserId = currentUserService.currentUserID();
@@ -49,6 +54,17 @@ public class AuthorizationService {
                     "actual", entity.getCollectionId().getUUID().toString()
                 )
             );
+        }
+    }
+
+    /**
+     * Uses a single query (id + user_id) so not-found and not-owned produce identical
+     * timing and the same 400 response — prevents IDOR via timing side-channel.
+     */
+    public void requireApiKeyOwnership(@NonNull ID<ApiKey> apiKeyId) {
+        var currentUserId = currentUserService.currentUserID();
+        if (apiKeyRepo.findByIdAndUser(apiKeyId, currentUserId).isEmpty()) {
+            throw new AppValidationException(AppValidationMessage.genericMessage("AppValidation.API_KEY_NOT_FOUND"));
         }
     }
 

@@ -261,4 +261,11 @@ public class AppValidationMessage {
             I18nMessage.of("AppValidation.MAX_API_KEYS_REACHED")
         );
     }
+
+    public static @NonNull AppValidationMessage apiKeyAlreadyRevoked() {
+        return of(
+            "ApiKeyAlreadyRevoked",
+            I18nMessage.of("AppValidation.API_KEY_ALREADY_REVOKED")
+        );
+    }
 }
