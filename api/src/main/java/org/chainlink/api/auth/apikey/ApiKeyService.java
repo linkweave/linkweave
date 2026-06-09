@@ -79,7 +79,7 @@ public class ApiKeyService {
     }
 
     public void revokeApiKey(@NonNull ID<ApiKey> apiKeyId) {
-        ApiKey apiKey = apiKeyRepo.findById(apiKeyId)
+        ApiKey apiKey = apiKeyRepo.findByIdAndUser(apiKeyId, currentUserService.currentUserID())
             .orElseThrow(() -> new AppValidationException(AppValidationMessage.genericMessage("AppValidation.API_KEY_NOT_FOUND")));
         if (apiKey.getRevokedAt() != null) {
             throw new AppValidationException(AppValidationMessage.apiKeyAlreadyRevoked());

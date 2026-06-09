@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +60,18 @@ public class FixtureService {
 
     @Inject
     PropertyDefinitionRepo propertyDefinitionRepo;
+
+    @Inject
+    EntityManager em;
+
+    /**
+     * Removes every API key. The users behind {@code @TestSecurity} are fixed annotation values
+     * (e.g. test@example.com), so their keys survive in chainlink-test.db across runs and would
+     * otherwise accumulate until creates fail the max-active-keys check (BR-001).
+     */
+    public void deleteAllApiKeys() {
+        em.createQuery("delete from ApiKey").executeUpdate();
+    }
 
     @NonNull
     public ApiKey persistApiKey(Consumer<ApiKeyBuilder> block) {

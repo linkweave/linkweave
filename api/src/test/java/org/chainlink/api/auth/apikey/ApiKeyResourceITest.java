@@ -18,6 +18,7 @@ import org.chainlink.api.shared.user.User;
 import org.chainlink.api.testutil.fixture.FixtureService;
 import org.chainlink.infrastructure.errorhandling.AppValidationException;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,6 +54,16 @@ class ApiKeyResourceITest {
     @AfterEach
     void resetClock() {
         clockProvider.reset();
+    }
+
+    /**
+     * The test database file survives across runs and the {@code @TestSecurity} users are fixed,
+     * so leftover keys from a previous run would trip the max-active-keys check. Start each test
+     * from an empty ApiKey table instead.
+     */
+    @BeforeEach
+    void deleteAllApiKeys() {
+        fixtureService.deleteAllApiKeys();
     }
 
     /** 64 hex chars, unique per call — satisfies the keyHash format and unique constraint. */
@@ -205,17 +216,38 @@ class ApiKeyResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn400_whenRevokingKeyOfAnotherUser() {
-        User otherUser = fixtureService.persistUser(u -> u.withEmail("other-apikey@example.com"));
+        User otherUser = fixtureService.persistUser(u -> u.withEmail("other-apikey-" + UUID.randomUUID() + "@example.com"));
+        String hash = uniqueKeyHash();
         var otherKey = fixtureService.persistApiKey(k -> k
             .withUser(otherUser)
             .withName("Other user key")
-            .withKeyHash("0".repeat(64))
-            .withKeyPrefix("00000000"));
+            .withKeyHash(hash)
+            .withKeyPrefix(hash.substring(0, 8)));
 
         RestAssured.given()
             .delete("/auth/api-keys/" + otherKey.getId().getUUID())
             .then()
             .statusCode(400);
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldFailServiceLevelRevoke_whenKeyBelongsToAnotherUser() {
+        ensureUserService.ensureUserExists();
+        User otherUser = fixtureService.persistUser(u -> u.withEmail("revoke-other-" + UUID.randomUUID() + "@example.com"));
+        String hash = uniqueKeyHash();
+        ApiKey otherKey = fixtureService.persistApiKey(k -> k
+            .withUser(otherUser)
+            .withName("Foreign key")
+            .withKeyHash(hash)
+            .withKeyPrefix(hash.substring(0, 8)));
+
+        // Driven at the service level, bypassing the resource's requireApiKeyOwnership guard:
+        // the user-scoped lookup inside revokeApiKey must refuse a key owned by another user.
+        assertThatThrownBy(() -> apiKeyService.revokeApiKey(otherKey.getId()))
+            .isInstanceOf(AppValidationException.class);
+        assertThat(apiKeyRepo.findByIdAndUser(otherKey.getId(), otherUser.getId()))
+            .hasValueSatisfying(key -> assertThat(key.getRevokedAt()).isNull());
     }
 
     @Test
