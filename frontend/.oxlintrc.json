@@ -1,11 +1,14 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["eslint", "typescript", "unicorn", "oxc", "vue"],
+  "plugins": ["eslint", "typescript", "unicorn", "oxc", "vue", "import"],
   "env": {
     "browser": true
   },
   "categories": {
     "correctness": "error"
+  },
+  "rules": {
+    "import/no-cycle": "error"
   },
   "overrides": [
     {
