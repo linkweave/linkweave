@@ -372,6 +372,24 @@ class ApiKeyResourceITest {
 
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldNotBuildIdentity_forKeyOfDeactivatedUser() {
+        User deactivatedUser = fixtureService.persistUser(u -> u
+            .withEmail("deactivated-apikey-" + UUID.randomUUID() + "@example.com")
+            .withAktiv(false));
+
+        String hash = uniqueKeyHash();
+        fixtureService.persistApiKey(k -> k
+            .withUser(deactivatedUser)
+            .withName("Key of deactivated user")
+            .withKeyHash(hash)
+            .withKeyPrefix(hash.substring(0, 8)));
+
+        // API key auth bypasses the IdP, so the aktiv flag must gate it instead.
+        assertThat(apiKeyService.buildIdentityFromApiKey(hash)).isEmpty();
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldAuthenticateWithApiKeyAndAccessCollections() {
         String fullKey = RestAssured.given()
             .contentType(ContentType.JSON)

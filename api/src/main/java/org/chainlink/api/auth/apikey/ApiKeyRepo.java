@@ -61,6 +61,7 @@ public class ApiKeyRepo extends BaseRepo<ApiKey> {
             .where(QApiKey.apiKey.keyHash.eq(keyHash))
             .where(QApiKey.apiKey.revokedAt.isNull())
             .where(QApiKey.apiKey.expiresAt.isNull().or(QApiKey.apiKey.expiresAt.gt(now)))
+            .where(QApiKey.apiKey.user.aktiv.isTrue())
             .fetchOne();
     }
 
