@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ApiKeyJson } from '@/api/generated/models/api-key-json'
-import { ButtonCl, ConfirmDialog } from '@/components/ui'
+import ButtonCl from '@/components/ui/ButtonCl.vue'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import { useApiKeyStore } from '@/stores/apiKey'
 import { useNotificationStore } from '@/stores/notification'
 import { Key, Plus } from '@lucide/vue'

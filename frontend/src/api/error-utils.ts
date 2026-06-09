@@ -1,7 +1,5 @@
-import { instanceOfAppFailureErrorJson, type AppFailureErrorJson, FailureType } from '@/api/generated'
+import { instanceOfAppFailureErrorJson, FailureType } from '@/api/generated'
 import { ResponseError, FetchError } from '@/api/generated/runtime'
-
-export { instanceOfAppFailureErrorJson, type AppFailureErrorJson }
 
 export function isNetworkError(error: unknown): boolean {
   return error instanceof FetchError || error instanceof TypeError

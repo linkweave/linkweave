@@ -58,14 +58,19 @@ jobs:
         working-directory: frontend
         run: pnpm exec stylelint "src/**/*.css"
 
-      # Dead code + duplication, compared against .fallow-baseline.json so only
-      # NEW findings surface (the current backlog is accepted).
-      - name: Dead code + duplication (fallow)
+      # Dead code + circular dependencies, compared against .fallow-baseline.json
+      # so only NEW findings surface (the current backlog is accepted). Enforced:
+      # a new unused export OR a new import cycle fails the build. Duplication is
+      # excluded here because the baseline does not yet suppress dupes — it is
+      # reported separately below.
+      - name: Dead code + cycles (fallow)
         working-directory: frontend
-        continue-on-error: true
-        run: pnpm run analyze
+        run: pnpm run analyze:deadcode
 
-      - name: Health + complexity (fallow)
+      # Duplication, health and complexity — report-only (continue-on-error)
+      # because dupes are not yet baselined and health is a ratio score with no
+      # baseline, so both still carry an accepted backlog.
+      - name: Duplication + health (fallow)
         working-directory: frontend
         continue-on-error: true
-        run: pnpm run analyze:health
+        run: pnpm run analyze && pnpm run analyze:health

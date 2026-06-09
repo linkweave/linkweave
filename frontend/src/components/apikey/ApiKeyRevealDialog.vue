@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ButtonCl, DialogCl, DialogFooterCl } from '@/components/ui'
+import ButtonCl from '@/components/ui/ButtonCl.vue'
+import DialogCl from '@/components/ui/DialogCl.vue'
+import DialogFooterCl from '@/components/ui/DialogFooterCl.vue'
 import { Check, Copy, TriangleAlert } from '@lucide/vue'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'

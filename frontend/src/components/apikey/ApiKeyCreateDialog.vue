@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { DialogCl, DialogFooterCl, FormFieldCl, InputCl, SelectCl } from '@/components/ui'
+import DialogCl from '@/components/ui/DialogCl.vue'
+import DialogFooterCl from '@/components/ui/DialogFooterCl.vue'
+import FormFieldCl from '@/components/ui/FormFieldCl.vue'
+import InputCl from '@/components/ui/InputCl.vue'
+import SelectCl from '@/components/ui/SelectCl.vue'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { apiKeyCreateSchema } from '@/schemas/apiKey'
 import { useApiKeyStore } from '@/stores/apiKey'
