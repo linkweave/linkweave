@@ -45,6 +45,7 @@ export async function registerTestUser(
     // contention under parallel load). 4xx other than 401 are real errors
     // (conflict, validation) and must not be retried.
     if (lastStatus !== 401 && lastStatus < 500) break
+    console.warn(`[e2e] registerTestUser → ${lastStatus}, retrying (attempt ${attempt + 1}/5)`)
     await new Promise((r) => setTimeout(r, 800 * (attempt + 1)))
   }
   throw new Error(`registerTestUser failed: ${lastStatus} ${lastBody}`)
@@ -74,6 +75,7 @@ export async function loginViaApi(request: APIRequestContext, user: TestUser): P
     // 401 can be a transient SQLite-contention response under heavy parallel
     // load — retry with back-off. Other 4xx are real errors and must not retry.
     if (lastStatus !== 401 && lastStatus < 500) break
+    console.warn(`[e2e] loginViaApi → ${lastStatus}, retrying (attempt ${attempt + 1}/5)`)
     await new Promise((r) => setTimeout(r, 800 * (attempt + 1)))
   }
   throw new Error(`loginViaApi failed: ${lastStatus} ${lastBody}`)
@@ -95,6 +97,7 @@ async function fetchDefaultCollectionId(request: APIRequestContext): Promise<str
     }
     lastBody = await resp.text().catch(() => '')
     if (lastStatus < 500) break
+    console.warn(`[e2e] fetch /auth/me → ${lastStatus}, retrying (attempt ${attempt + 1}/3)`)
     await new Promise((r) => setTimeout(r, 500))
   }
   throw new Error(`fetch /auth/me failed: ${lastStatus} ${lastBody}`)
