@@ -1,8 +1,10 @@
 package org.chainlink.api.auth.apikey;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import ch.dvbern.dvbstarter.clock.AppClock;
 import ch.dvbern.dvbstarter.clock.ClockProvider;
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.test.junit.QuarkusTest;
@@ -10,12 +12,16 @@ import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
+import org.chainlink.api.auth.EnsureUserService;
+import org.chainlink.api.auth.apikey.json.ApiKeyCreateJson;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.api.testutil.fixture.FixtureService;
+import org.chainlink.infrastructure.errorhandling.AppValidationException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -35,9 +41,23 @@ class ApiKeyResourceITest {
     @Inject
     ClockProvider clockProvider;
 
+    @Inject
+    ApiKeyService apiKeyService;
+
+    @Inject
+    EnsureUserService ensureUserService;
+
+    @Inject
+    AppClock appClock;
+
     @AfterEach
     void resetClock() {
         clockProvider.reset();
+    }
+
+    /** 64 hex chars, unique per call — satisfies the keyHash format and unique constraint. */
+    private static String uniqueKeyHash() {
+        return (UUID.randomUUID() + "" + UUID.randomUUID()).replace("-", "").substring(0, 64);
     }
 
     @Test
@@ -252,7 +272,7 @@ class ApiKeyResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldDebounceLastUsedAtWithinWindow() {
-        String uniqueHash = (UUID.randomUUID() + "" + UUID.randomUUID()).replace("-", "").substring(0, 64);
+        String uniqueHash = uniqueKeyHash();
         User user = fixtureService.persistUser(u -> u.withEmail("debounce-apikey-" + UUID.randomUUID() + "@example.com"));
         ApiKey key = fixtureService.persistApiKey(k -> k
             .withUser(user)
@@ -276,6 +296,46 @@ class ApiKeyResourceITest {
         // Past the window: the write happens again.
         clockProvider.resetUsing(t0.plusSeconds(6 * 60));
         assertThat(apiKeyRepo.updateLastUsedAt(id)).isEqualTo(1L);
+    }
+
+    @Test
+    @TestSecurity(user = "maxkeys@example.com", roles = {"BOOKMARK_READ"})
+    void shouldRejectCreate_whenMaxActiveKeysReached() {
+        // Dedicated, freshly provisioned user so the active count starts at zero (BR-001: max 10).
+        // Driven at the service level: the resource's @RateLimit would otherwise cap creates.
+        ensureUserService.ensureUserExists();
+        for (int i = 0; i < 10; i++) {
+            apiKeyService.createApiKey(new ApiKeyCreateJson("Key " + i, null));
+        }
+
+        assertThatThrownBy(() -> apiKeyService.createApiKey(new ApiKeyCreateJson("Eleventh", null)))
+            .isInstanceOf(AppValidationException.class);
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldNotBuildIdentity_forExpiredKey() {
+        User user = fixtureService.persistUser(u -> u.withEmail("expired-apikey-" + UUID.randomUUID() + "@example.com"));
+
+        String expiredHash = uniqueKeyHash();
+        fixtureService.persistApiKey(k -> k
+            .withUser(user)
+            .withName("Expired key")
+            .withKeyHash(expiredHash)
+            .withKeyPrefix(expiredHash.substring(0, 8))
+            .withExpiresAt(appClock.offsetDateTime().now().minusDays(1)));
+
+        String activeHash = uniqueKeyHash();
+        fixtureService.persistApiKey(k -> k
+            .withUser(user)
+            .withName("Active key")
+            .withKeyHash(activeHash)
+            .withKeyPrefix(activeHash.substring(0, 8)));
+
+        // findActiveByHash filters expired keys, so authentication builds no identity for one.
+        assertThat(apiKeyService.buildIdentityFromApiKey(expiredHash)).isEmpty();
+        // Control: a non-expired key with the same owner is still accepted.
+        assertThat(apiKeyService.buildIdentityFromApiKey(activeHash)).isPresent();
     }
 
     @Test
