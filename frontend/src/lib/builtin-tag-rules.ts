@@ -1,4 +1,4 @@
-export interface ParsedUrl {
+interface ParsedUrl {
   host: string
   hostLabels: string[]
   // Labels excluding the TLD (last label) when there are 2+ labels.
@@ -6,12 +6,12 @@ export interface ParsedUrl {
   nonTldLabels: string[]
 }
 
-export interface AutoTagRule {
+interface AutoTagRule {
   tag: string
   test: (parsed: ParsedUrl) => boolean
 }
 
-export function parseHost(rawUrl: string): ParsedUrl | null {
+function parseHost(rawUrl: string): ParsedUrl | null {
   try {
     const host = new URL(rawUrl).hostname.toLowerCase()
     if (!host) return null
@@ -30,7 +30,7 @@ function labelMatches(prefix: string): (parsed: ParsedUrl) => boolean {
     nonTldLabels.some((label) => label === prefix || label.startsWith(dashed))
 }
 
-export const BUILT_IN_RULES: AutoTagRule[] = [
+const BUILT_IN_RULES: AutoTagRule[] = [
   {
     tag: 'local',
     test: ({ host, hostLabels }) =>

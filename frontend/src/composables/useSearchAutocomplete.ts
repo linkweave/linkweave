@@ -1,4 +1,5 @@
 import { computed } from 'vue'
+import type { BookmarkPropertyValueJson } from '@/api/generated'
 import { useTagStore } from '@/stores/tag'
 import { useFolderStore } from '@/stores/folder'
 import { usePropertyStore } from '@/stores/property'
@@ -30,6 +31,94 @@ interface AcTag {
   color?: string
 }
 
+/** Splits a comma-separated string into trimmed, non-empty values. */
+function csvValues(raw: string | null | undefined): string[] {
+  return (raw ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+}
+
+/** The displayable string values carried by a single bookmark property value. */
+function propertyValueStrings(pv: BookmarkPropertyValueJson): string[] {
+  if (pv.valueText) return csvValues(pv.valueText)
+  if (pv.valueNumber !== undefined) return [String(pv.valueNumber)]
+  if (pv.valueBoolean !== undefined) return [String(pv.valueBoolean)]
+  return []
+}
+
+type TokenCtx = ReturnType<typeof tokenAtCursor>
+
+/** `#tag` / `tag:` → matching tags. */
+function tagSuggestions({ token, colonToken, range }: TokenCtx, allTags: AcTag[]): AcResult | null {
+  if (!token.startsWith('#') && !colonToken.toLowerCase().startsWith('tag:')) return null
+  const isHash = token.startsWith('#')
+  const filter = (isHash ? token.slice(1) : colonToken.slice(4)).toLowerCase()
+  const prefix = isHash ? '#' : 'tag:'
+  const items: AcItem[] = allTags
+    .filter((t) => !filter || t.name.toLowerCase().includes(filter))
+    .map((t) => ({ key: t.name, label: t.name, insert: prefix + t.name, type: 'tag', color: t.color, filter }))
+  return { mode: 'tag', label: 'tags', items, range }
+}
+
+/** `folder:` (flat) / `under:` (hierarchical) → matching folders. */
+function folderSuggestions({ colonToken, range }: TokenCtx, allFolders: string[]): AcResult | null {
+  const ctl = colonToken.toLowerCase()
+  const folderOp = (['folder', 'under'] as const).find((op) => ctl.startsWith(op + ':'))
+  if (!folderOp) return null
+  const filter = colonToken.slice(folderOp.length + 1).toLowerCase()
+  const items: AcItem[] = allFolders
+    .filter((f) => !filter || f.toLowerCase().includes(filter))
+    .map((f) => ({ key: f, label: f, insert: folderOp + ':' + f, type: folderOp, filter }))
+  return { mode: folderOp, label: 'folders', items, range }
+}
+
+/** `property:` → keys before `=`, values after. */
+function propertySuggestions(
+  { colonToken, range }: TokenCtx,
+  allPropKeys: string[],
+  allPropVals: Record<string, string[]>,
+): AcResult | null {
+  if (!colonToken.toLowerCase().startsWith('property:')) return null
+  const rest = colonToken.slice(9)
+  const eqIdx = rest.indexOf('=')
+  if (eqIdx === -1) {
+    const filter = rest.toLowerCase()
+    const items: AcItem[] = allPropKeys
+      .filter((k) => !filter || k.toLowerCase().includes(filter))
+      .map((k) => ({ key: k, label: k, insert: 'property:' + k + '=', type: 'prop-key', hint: 'hintValue', filter }))
+    return { mode: 'prop-key', label: 'properties', items, range }
+  }
+  const propKey = rest.slice(0, eqIdx)
+  const valFilter = rest.slice(eqIdx + 1).toLowerCase()
+  const vals = allPropVals[propKey.toLowerCase()] ?? []
+  const items: AcItem[] = vals
+    .filter((v) => !valFilter || v.toLowerCase().includes(valFilter))
+    .map((v) => ({ key: v, label: v, insert: 'property:' + propKey + '=' + v, type: 'prop-val', propKey, filter: valFilter }))
+  return { mode: 'prop-val', label: propKey, items, range }
+}
+
+/** A 2+ char bare word ("fo", "prop") → matching operator names. */
+function operatorSuggestions({ token, range }: TokenCtx): AcResult | null {
+  const tl = token.toLowerCase()
+  if (token.length < 2 || token.includes(':')) return null
+  const matched = OPS.filter((op) => op.trigger.startsWith(tl) && tl !== op.trigger)
+  if (!matched.length) return null
+  return {
+    mode: 'operator',
+    label: 'operators',
+    items: matched.map((op) => ({
+      key: op.full,
+      label: op.full,
+      insert: op.full,
+      type: 'operator',
+      hint: op.hintKey,
+      filter: token,
+    })),
+    range,
+  }
+}
+
 export function useSearchAutocomplete() {
   const tagStore = useTagStore()
   const folderStore = useFolderStore()
@@ -56,129 +145,49 @@ export function useSearchAutocomplete() {
   // (lowercased) name. Combines declared `allowedValues` with values actually
   // present on bookmarks so free-text properties also get suggestions.
   const allPropVals = computed<Record<string, string[]>>(() => {
-    const byName = new Map<string, string>() // definitionId -> lowercased name
-    const sets = new Map<string, Set<string>>() // lowercased name -> values
+    const nameByDefId = new Map<string, string>() // definitionId -> lowercased name
+    const valuesByName = new Map<string, Set<string>>() // lowercased name -> values
+
+    const collect = (name: string, values: string[]) => {
+      const set = valuesByName.get(name) ?? new Set<string>()
+      for (const v of values) set.add(v)
+      valuesByName.set(name, set)
+    }
+
+    // Seed each property's value set from its declared allowedValues.
     for (const def of propertyStore.definitions) {
       const name = def.data.name.toLowerCase()
-      byName.set(def.id, name)
-      const set = sets.get(name) ?? new Set<string>()
-      for (const raw of (def.data.allowedValues ?? '').split(',')) {
-        const v = raw.trim()
-        if (v) set.add(v)
-      }
-      sets.set(name, set)
+      nameByDefId.set(def.id, name)
+      collect(name, csvValues(def.data.allowedValues))
     }
+
+    // Augment with values actually present on bookmarks (covers free-text props).
     for (const b of bookmarkStore.bookmarks) {
       for (const pv of b.propertyValues ?? []) {
-        const name = byName.get(pv.definitionId)
-        if (!name) continue
-        const set = sets.get(name) ?? new Set<string>()
-        if (pv.valueText) {
-          for (const part of pv.valueText.split(',')) {
-            const v = part.trim()
-            if (v) set.add(v)
-          }
-        } else if (pv.valueNumber !== undefined) set.add(String(pv.valueNumber))
-        else if (pv.valueBoolean !== undefined) set.add(String(pv.valueBoolean))
-        sets.set(name, set)
+        const name = nameByDefId.get(pv.definitionId)
+        if (name) collect(name, propertyValueStrings(pv))
       }
     }
+
     const out: Record<string, string[]> = {}
-    for (const [name, set] of sets) {
+    for (const [name, set] of valuesByName) {
       out[name] = [...set].sort((a, b) => a.localeCompare(b))
     }
     return out
   })
 
+  // Dispatch to the first mode whose trigger matches the token under the
+  // cursor. `folder:`/`under:` is hierarchical vs flat; each builder owns the
+  // shape of its own suggestions. Add a mode by writing a builder and slotting
+  // it into this chain.
   function parseQueryForAutoCompl(query: string, cursor: number): AcResult | null {
-    const { token, colonToken, range } = tokenAtCursor(query, cursor)
-    const tl = token.toLowerCase()
-    const ctl = colonToken.toLowerCase()
-
-    // ── # or tag: → Tags
-    if (token.startsWith('#') || ctl.startsWith('tag:')) {
-      const isHash = token.startsWith('#')
-      const filter = (isHash ? token.slice(1) : colonToken.slice(4)).toLowerCase()
-      const prefix = isHash ? '#' : 'tag:'
-      const items: AcItem[] = allTags.value
-        .filter((t) => !filter || t.name.toLowerCase().includes(filter))
-        .map((t) => ({
-          key: t.name,
-          label: t.name,
-          insert: prefix + t.name,
-          type: 'tag',
-          color: t.color,
-          filter,
-        }))
-      return { mode: 'tag', label: 'tags', items, range }
-    }
-
-    // ── folder: / under: → Folders. Same source, different operator: `under:`
-    // is hierarchical (matches subfolders), `folder:` is a flat name match.
-    const folderOp = (['folder', 'under'] as const).find((op) => ctl.startsWith(op + ':'))
-    if (folderOp) {
-      const filter = colonToken.slice(folderOp.length + 1).toLowerCase()
-      const items: AcItem[] = allFolders.value
-        .filter((f) => !filter || f.toLowerCase().includes(filter))
-        .map((f) => ({ key: f, label: f, insert: folderOp + ':' + f, type: folderOp, filter }))
-      return { mode: folderOp, label: 'folders', items, range }
-    }
-
-    // ── property: → keys or values
-    if (ctl.startsWith('property:')) {
-      const rest = colonToken.slice(9)
-      const eqIdx = rest.indexOf('=')
-      if (eqIdx === -1) {
-        const filter = rest.toLowerCase()
-        const items: AcItem[] = allPropKeys.value
-          .filter((k) => !filter || k.toLowerCase().includes(filter))
-          .map((k) => ({
-            key: k,
-            label: k,
-            insert: 'property:' + k + '=',
-            type: 'prop-key',
-            hint: 'hintValue',
-            filter,
-          }))
-        return { mode: 'prop-key', label: 'properties', items, range }
-      }
-      const propKey = rest.slice(0, eqIdx)
-      const valFilter = rest.slice(eqIdx + 1).toLowerCase()
-      const vals = allPropVals.value[propKey.toLowerCase()] ?? []
-      const items: AcItem[] = vals
-        .filter((v) => !valFilter || v.toLowerCase().includes(valFilter))
-        .map((v) => ({
-          key: v,
-          label: v,
-          insert: 'property:' + propKey + '=' + v,
-          type: 'prop-val',
-          propKey,
-          filter: valFilter,
-        }))
-      return { mode: 'prop-val', label: propKey, items, range }
-    }
-
-    // ── Operator discovery: "fo", "ta", "prop" …
-    if (token.length >= 2 && !token.includes(':')) {
-      const matched = OPS.filter((op) => op.trigger.startsWith(tl) && tl !== op.trigger)
-      if (matched.length) {
-        return {
-          mode: 'operator',
-          label: 'operators',
-          items: matched.map((op) => ({
-            key: op.full,
-            label: op.full,
-            insert: op.full,
-            type: 'operator',
-            hint: op.hintKey,
-            filter: token,
-          })),
-          range,
-        }
-      }
-    }
-
-    return null
+    const ctx = tokenAtCursor(query, cursor)
+    return (
+      tagSuggestions(ctx, allTags.value) ??
+      folderSuggestions(ctx, allFolders.value) ??
+      propertySuggestions(ctx, allPropKeys.value, allPropVals.value) ??
+      operatorSuggestions(ctx)
+    )
   }
 
   return { parseQueryForAutoCompl }

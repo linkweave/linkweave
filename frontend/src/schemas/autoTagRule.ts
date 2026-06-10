@@ -5,7 +5,7 @@ import type { TFunction } from './types'
  * Validates that a string is a valid JavaScript regex.
  * Invalid patterns (e.g. unclosed groups) produce a clear error.
  */
-export const regexPatternSchema = (t: TFunction) =>
+const regexPatternSchema = (t: TFunction) =>
   z
     .string()
     .min(1, t('validation.required', { field: 'Pattern' }))
@@ -26,7 +26,7 @@ export const regexPatternSchema = (t: TFunction) =>
  * - Max 8 tags
  * - Each tag max 50 chars
  */
-export const tagNamesSchema = (t: TFunction) =>
+const tagNamesSchema = (t: TFunction) =>
   z
     .string()
     .min(1, t('validation.required', { field: 'Tags' }))
@@ -60,5 +60,3 @@ export const autoTagRuleSaveSchema = (t: TFunction) =>
       .transform((val) => val || undefined),
     enabled: z.boolean(),
   })
-
-export type AutoTagRuleSaveInput = z.infer<ReturnType<typeof autoTagRuleSaveSchema>>
