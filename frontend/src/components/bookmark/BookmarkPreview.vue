@@ -13,6 +13,9 @@ const props = defineProps<{
   variant: Variant
   // Bumped by the parent on refresh to retrigger the image load.
   nonce?: number
+  // UC-074 selected treatment: the capture shrinks inside its fixed frame
+  // (inset shrink) — the frame itself never resizes, so no reflow.
+  selected?: boolean
 }>()
 
 const { t } = useI18n()
@@ -86,58 +89,79 @@ function onImgError() { status.value = 'fallback' }
   <div class="relative" :data-testid="`bookmark-preview-${variant}`">
     <div
       class="relative aspect-[16/9] overflow-hidden"
-      :class="variant === 'list' ? 'rounded-md border border-border' : 'rounded-none'"
+      :class="[
+        variant === 'list' ? 'rounded-md border' : 'rounded-none',
+        variant === 'list'
+          ? (selected
+            ? 'border-primary shadow-[0_0_0_1px_color-mix(in_oklab,var(--color-primary)_53%,transparent)]'
+            : 'border-border')
+          : '',
+      ]"
     >
       <!-- Placeholder backdrop. Sits behind every state so the frame never
-           flashes the card background even while the <img> swaps. -->
-      <div class="absolute inset-0 bg-[#0e1014]" aria-hidden="true" />
-
-      <!-- The capture itself. Always rendered (when we have a URL) so the
-           browser can begin fetching immediately; it's just invisible
-           until @load fires. Hidden again on error so the fallback tile
-           shows through. -->
-      <img
-        v-if="screenshotSrc"
-        :key="screenshotSrc"
-        :src="screenshotSrc"
-        :alt="t('bookmark.previewAlt', { title: bookmark.data.title })"
-        loading="lazy"
-        decoding="async"
-        class="absolute inset-0 h-full w-full object-cover object-top transition-opacity duration-150"
-        :class="status === 'ok' ? 'opacity-100' : 'opacity-0'"
-        @load="onImgLoad"
-        @error="onImgError"
+           flashes the card background even while the <img> swaps. It also
+           shows through the gap when the selected capture insets, so it
+           follows the theme via light-dark() (resolved off `color-scheme`,
+           like the fallback tile). The light value carries a slight primary
+           tint and extra depth so the gap reads as selection next to white
+           captures (in dark the near-black token contrasts on its own). -->
+      <div
+        class="absolute inset-0 bg-[light-dark(color-mix(in_oklab,var(--color-primary)_9%,#dde2e9),#0e1014)]"
+        aria-hidden="true"
       />
 
-      <!-- Fallback tile: radial gradient + favicon + monospace domain.
-           Only renders once we know the capture failed, so a slow-loading
-           image never shows this state by accident. -->
+      <!-- Capture wrapper: animates the inset shrink when selected. -->
       <div
-        v-if="status === 'fallback'"
-        class="absolute inset-0 flex flex-col items-center justify-center gap-2 px-3 text-center"
-        :style="{ background: fallbackGradient }"
-        aria-hidden="true"
+        class="capture-wrap"
+        :class="[`capture-wrap--${variant}`, { 'is-inset': selected }]"
       >
-        <BookmarkFavicon
-          :bookmark-id="bookmark.id"
-          :url="bookmark.data.url"
-          :size="faviconSize"
+        <!-- The capture itself. Always rendered (when we have a URL) so the
+             browser can begin fetching immediately; it's just invisible
+             until @load fires. Hidden again on error so the fallback tile
+             shows through. -->
+        <img
+          v-if="screenshotSrc"
+          :key="screenshotSrc"
+          :src="screenshotSrc"
+          :alt="t('bookmark.previewAlt', { title: bookmark.data.title })"
+          loading="lazy"
+          decoding="async"
+          class="absolute inset-0 h-full w-full object-cover object-top transition-opacity duration-150"
+          :class="status === 'ok' ? 'opacity-100' : 'opacity-0'"
+          @load="onImgLoad"
+          @error="onImgError"
         />
-        <span
-          v-if="showDomain && host"
-          class="font-mono text-[11px] tracking-tight text-muted-foreground truncate max-w-full"
-        >
-          {{ host }}
-        </span>
-      </div>
 
-      <!-- Shimmer overlay while loading. The keyframes are inline so this
-           component is self-contained — no global stylesheet edits. -->
-      <div
-        v-if="status === 'loading'"
-        class="absolute inset-0 preview-shimmer"
-        aria-hidden="true"
-      />
+        <!-- Fallback tile: radial gradient + favicon + monospace domain.
+             Only renders once we know the capture failed, so a slow-loading
+             image never shows this state by accident. -->
+        <div
+          v-if="status === 'fallback'"
+          class="absolute inset-0 flex flex-col items-center justify-center gap-2 px-3 text-center"
+          :style="{ background: fallbackGradient }"
+          aria-hidden="true"
+        >
+          <BookmarkFavicon
+            :bookmark-id="bookmark.id"
+            :url="bookmark.data.url"
+            :size="faviconSize"
+          />
+          <span
+            v-if="showDomain && host"
+            class="font-mono text-[11px] tracking-tight text-muted-foreground truncate max-w-full"
+          >
+            {{ host }}
+          </span>
+        </div>
+
+        <!-- Shimmer overlay while loading. The keyframes are inline so this
+             component is self-contained — no global stylesheet edits. -->
+        <div
+          v-if="status === 'loading'"
+          class="absolute inset-0 preview-shimmer"
+          aria-hidden="true"
+        />
+      </div>
     </div>
 
     <!-- Favicon chip overlay (grid only). Lives *outside* the clipped
@@ -157,6 +181,54 @@ function onImgError() { status.value = 'fallback' }
 </template>
 
 <style scoped>
+.capture-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  transition: inset 0.15s cubic-bezier(0.2, 0.7, 0.3, 1), border-radius 0.15s;
+}
+
+/* Hairline edge on the inset capture: light screenshots would otherwise
+   melt into the light-theme gap (in dark theme the near-black gap provides
+   the contrast by itself, so the edge stays barely-there). */
+.capture-wrap.is-inset {
+  box-shadow: 0 0 0 1px light-dark(rgba(15, 23, 42, 0.14), rgba(255, 255, 255, 0.07));
+}
+
+/* Resting corner radii are concentric with each clipping container:
+   inner radius = outer radius − container border − the 1px inset.
+   Grid cover sits in the card (rounded-lg 8px, 1px border → 6px, top
+   corners only — the cover's bottom edge is mid-card). List thumb has its
+   own rounded-md 6px / 1px-border frame (→ 4px, all corners). The zoom
+   popup clips at 10px with no border (→ 9px, top corners). */
+.capture-wrap--grid {
+  border-radius: 6px 6px 0 0;
+}
+
+.capture-wrap--list {
+  border-radius: 4px;
+}
+
+.capture-wrap--zoom {
+  border-radius: 9px 9px 0 0;
+}
+
+.capture-wrap--grid.is-inset {
+  inset: 10px 10px 4px;
+  border-radius: 6px;
+}
+
+.capture-wrap--list.is-inset {
+  inset: 5px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .capture-wrap {
+    transition: none;
+  }
+}
+
 .preview-shimmer {
   background: linear-gradient(
     100deg,

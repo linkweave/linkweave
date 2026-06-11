@@ -27,11 +27,14 @@ onMounted(async () => {
   await store.refresh(collectionId)
 })
 
-watch(() => store.thresholdMonths, async () => {
-  if (collectionId) {
-    await store.refresh(collectionId)
-  }
-})
+watch(
+  () => store.thresholdMonths,
+  async () => {
+    if (collectionId) {
+      await store.refresh(collectionId)
+    }
+  },
+)
 
 function formatDate(value: Date | string | null | undefined): string {
   if (!value) return ''
@@ -92,13 +95,9 @@ function goBack() {
             :model-value="store.thresholdMonths"
             class="w-auto"
             :aria-label="$t('cleanupSuggestions.thresholdLabel')"
-            @update:model-value="(v) => (store.thresholdMonths = Number(v))"
+            @update:model-value="(v: string) => (store.thresholdMonths = Number(v))"
           >
-            <option
-              v-for="m in store.thresholds"
-              :key="m"
-              :value="m"
-            >
+            <option v-for="m in store.thresholds" :key="m" :value="m">
               {{ formatRelativeMonths(m) }}
             </option>
           </SelectCl>
@@ -132,7 +131,11 @@ function goBack() {
             size="sm"
             @click="store.allSelected ? store.clearSelection() : store.selectAll()"
           >
-            {{ store.allSelected ? $t('cleanupSuggestions.deselectAll') : $t('cleanupSuggestions.selectAll') }}
+            {{
+              store.allSelected
+                ? $t('cleanupSuggestions.deselectAll')
+                : $t('cleanupSuggestions.selectAll')
+            }}
           </ButtonCl>
           <span class="text-sm text-muted-foreground">
             {{ store.suggestions.length }} {{ $t('cleanupSuggestions.suggestions') }}
@@ -156,18 +159,25 @@ function goBack() {
             <div class="min-w-0 flex-1">
               <div class="truncate font-medium">{{ suggestion.title }}</div>
               <div class="truncate text-sm text-muted-foreground">{{ suggestion.url }}</div>
-              <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <div
+                class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
+              >
                 <span v-if="suggestion.folderName" class="inline-flex items-center gap-1">
                   <FolderIcon class="h-3 w-3" />
                   {{ suggestion.folderName }}
                 </span>
                 <span>
-                  {{ suggestion.neverClicked
-                    ? $t('cleanupSuggestions.neverClicked')
-                    : $t('cleanupSuggestions.lastClicked', { date: formatDate(suggestion.lastClickedAt) })
+                  {{
+                    suggestion.neverClicked
+                      ? $t('cleanupSuggestions.neverClicked')
+                      : $t('cleanupSuggestions.lastClicked', {
+                          date: formatDate(suggestion.lastClickedAt),
+                        })
                   }}
                 </span>
-                <span>{{ $t('cleanupSuggestions.clickCount', { count: suggestion.clickCount }) }}</span>
+                <span>{{
+                  $t('cleanupSuggestions.clickCount', { count: suggestion.clickCount })
+                }}</span>
               </div>
             </div>
 

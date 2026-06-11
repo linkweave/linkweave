@@ -515,5 +515,36 @@
       "leastVisited": "Am wenigsten besucht zuerst",
       "mostVisited": "Am häufigsten besucht zuerst"
     }
+  },
+  "batch": {
+    "select": "Auswählen",
+    "cancel": "Abbrechen",
+    "toolbarLabel": "Stapelaktionen",
+    "selected": "{count} ausgewählt",
+    "selectAll": "Alle {count} auswählen",
+    "clearSelection": "Auswahl aufheben",
+    "move": "Verschieben",
+    "addTag": "Tag hinzufügen",
+    "addTagHeader": "Tag hinzufügen",
+    "noTags": "Keine Tags in dieser Sammlung.",
+    "copyUrls": "URLs kopieren",
+    "delete": "Löschen",
+    "moveTitle": "{count} Lesezeichen verschieben",
+    "moveSubtitle": "Wähle einen Zielordner in dieser Sammlung.",
+    "noFolderRoot": "Kein Ordner (Sammlungs-Stammordner)",
+    "moveHere": "Hierhin verschieben",
+    "deleteTitle": "{count} Lesezeichen in den Papierkorb verschieben?",
+    "deleteBody": "Sie können aus dem Papierkorb wiederhergestellt werden. Nichts wird endgültig gelöscht.",
+    "deleteConfirm": "In den Papierkorb",
+    "movedToast": "{count} Lesezeichen nach {folder} verschoben.",
+    "movedToastRoot": "{count} Lesezeichen in den Sammlungs-Stammordner verschoben.",
+    "deletedToast": "{count} Lesezeichen in den Papierkorb verschoben.",
+    "copiedToast": "{count} URLs in die Zwischenablage kopiert.",
+    "taggedToast": "{count} Lesezeichen mit \"{tag}\" getaggt.",
+    "moveError": "Lesezeichen konnten nicht verschoben werden. Es wurden keine Änderungen vorgenommen.",
+    "deleteError": "Lesezeichen konnten nicht gelöscht werden. Es wurden keine Änderungen vorgenommen.",
+    "tagError": "Lesezeichen konnten nicht getaggt werden. Es wurden keine Änderungen vorgenommen.",
+    "copyError": "URLs konnten nicht in die Zwischenablage kopiert werden.",
+    "toggleSelection": "Auswahl umschalten"
   }
 }

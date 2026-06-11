@@ -15,7 +15,6 @@ Verify that your changes don't break any existing tests.
 **Always add tests for new features and bug fixes** — backend integration tests for new endpoints/services, frontend component or E2E tests as appropriate.
 The web app is running at https://local-chainlink.localhost:5173 the quarkus is at 8443
 
-
 ```bash
 cd api && ./mvnw package            # Build
 cd api && ./mvnw verify             # All tests (unit + integration)
@@ -27,7 +26,6 @@ cd frontend && pnpm run lint       # frontend linting (oxlint + eslint)
 pnpm exec playwright test --project=chromium  
 
 ```
-
 ## Architecture
 
 Adhere to the layering model: **Entities → Repository → Service → (Mapper) → Resource**.  
@@ -71,7 +69,6 @@ The project uses custom types like `ID<T>` and `EmailAddress`. Use their `fromSt
 ### Security in Tests
 - Most entities extend `AbstractEntity`, which has an `AbstractEntityListener` that automatically sets `userErstellt` and `userMutiert` using `CurrentUserService`
 - To test persistence/services that depend on current user, provide a security context, use `@TestSecurity`
-
 
 ### Test Naming
 - Unit tests: `ClassNameTest`

@@ -4,6 +4,7 @@ import { DialogCl, DialogFooterCl, FolderSelectCl, FormFieldCl } from '@/compone
 import { useFormDialog } from '@/composables/useFormDialog'
 import { bookmarkMoveSchema } from '@/schemas/bookmark'
 import { useBookmarkStore } from '@/stores/bookmark'
+import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { useNotificationStore } from '@/stores/notification'
 import { toTypedSchema } from '@vee-validate/zod'
@@ -14,10 +15,14 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 const bookmarkStore = useBookmarkStore()
 const folderStore = useFolderStore()
+const collectionStore = useCollectionStore()
 const notification = useNotificationStore()
 
+// Same dialog for the single-bookmark move and the batch move:
+// pass `bookmark` for single, `bookmarkIds` (without `bookmark`) for batch.
 interface Props {
   bookmark: BookmarkJson | null
+  bookmarkIds?: string[]
   open?: boolean
 }
 
@@ -25,8 +30,10 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
-  moved: []
+  moved: [folderId?: string | null]
 }>()
+
+const isBatchMode = computed(() => !props.bookmark)
 
 const { defineField, handleSubmit, resetForm, isSubmitting } = useForm({
   validationSchema: toTypedSchema(bookmarkMoveSchema(t)),
@@ -35,43 +42,61 @@ const { defineField, handleSubmit, resetForm, isSubmitting } = useForm({
 
 const [folderId] = defineField('folderId')
 
-const folders = computed(() => folderStore.folders)
-
 useFormDialog(toRef(props, 'open'), () => {
-  if (props.bookmark) {
-    resetForm({
-      values: {
-        collectionId: props.bookmark.data.collectionId,
-        folderId: props.bookmark.data.folderId ?? undefined,
-      },
-    })
-  }
+  resetForm({
+    values: props.bookmark
+      ? {
+          collectionId: props.bookmark.data.collectionId,
+          folderId: props.bookmark.data.folderId ?? undefined,
+        }
+      : {
+          collectionId: collectionStore.currentCollectionId ?? '',
+          folderId: undefined,
+        },
+  })
 })
 
 const onSubmit = handleSubmit(async (values) => {
-  if (!props.bookmark) return
+  const bookmark = props.bookmark
+  if (bookmark) {
+    try {
+      await bookmarkStore.moveBookmarkToFolder(bookmark.id, values)
+      emit('update:open', false)
+      emit('moved', values.folderId ?? null)
+    } catch (err) {
+      notification.handleApiError(err, t('bookmark.moveError'))
+    }
+    return
+  }
 
+  if (!props.bookmarkIds?.length) return
   try {
-    await bookmarkStore.moveBookmarkToFolder(props.bookmark.id, values)
+    await bookmarkStore.batchMove(props.bookmarkIds, values.folderId ?? null)
     emit('update:open', false)
-    emit('moved')
-  } catch (err) {
-    notification.handleApiError(err, t('bookmark.moveError'))
+    emit('moved', values.folderId ?? null)
+  } catch {
+    // Atomic rollback on the backend (BR-097): toast, close the dialog; the
+    // selection stays untouched so the user can retry.
+    notification.error(t('batch.moveError'))
+    emit('update:open', false)
   }
 })
 </script>
 
 <template>
   <DialogCl :open="open" @update:open="emit('update:open', $event)">
-    <template #title>{{ t('bookmark.moveToFolder') }}</template>
+    <template #title>
+      {{ isBatchMode ? t('batch.moveTitle', { count: bookmarkIds?.length ?? 0 }) : t('bookmark.moveToFolder') }}
+    </template>
+    <template v-if="isBatchMode" #description>{{ t('batch.moveSubtitle') }}</template>
 
     <form id="move-bookmark-form" @submit.prevent="onSubmit" class="space-y-4">
       <FormFieldCl :label="t('bookmark.folder')" for-id="move-bookmark-folder">
         <FolderSelectCl
           id="move-bookmark-folder"
           v-model="folderId"
-          :folders="folders"
-          :placeholder="t('bookmark.noFolder')"
+          :folders="folderStore.folders"
+          :placeholder="isBatchMode ? t('batch.noFolderRoot') : t('bookmark.noFolder')"
           direction="down"
         />
       </FormFieldCl>
@@ -80,7 +105,7 @@ const onSubmit = handleSubmit(async (values) => {
     <template #footer>
       <DialogFooterCl
         submit-form="move-bookmark-form"
-        :submit-label="t('common.save')"
+        :submit-label="isBatchMode ? t('batch.moveHere') : t('common.save')"
         :submitting="isSubmitting"
         @cancel="emit('update:open', false)"
       />

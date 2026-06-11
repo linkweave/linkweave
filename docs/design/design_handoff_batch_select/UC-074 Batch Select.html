@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chainlink — UC-074 Batch Move &amp; Delete</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #14161a; }
+  @keyframes uc-pop { from { opacity: 0; transform: scale(.96) translateY(4px); } to { opacity: 1; transform: none; } }
+  @keyframes uc-toast { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  ::-webkit-scrollbar { height: 10px; width: 10px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); border-radius: 6px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#1e2028"></rect>
+    <rect x="30" y="32" width="40" height="26" rx="3" fill="#3b82f6"></rect>
+    <circle cx="36" cy="38" r="6" fill="#ffffff"></circle>
+    <path d="M33 38l2.2 2.2L40 35.5" stroke="#3b82f6" stroke-width="1.8" fill="none" stroke-linecap="round"></path>
+    <rect x="30" y="63" width="28" height="4" rx="2" fill="#a3a3a3"></rect>
+    <rect x="30" y="71" width="38" height="4" rx="2" fill="#4a505c"></rect>
+  </svg>
+</template>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" data-presets="react">
+// @ds-adherence-ignore -- omelette starter scaffold (raw elements/hex/px by design)
+
+/* BEGIN USAGE */
+// tweaks-panel.jsx
+// Reusable Tweaks shell + form-control helpers.
+// Exports (to window): useTweaks, TweaksPanel, TweakSection, TweakRow, TweakSlider,
+//   TweakToggle, TweakRadio, TweakSelect, TweakText, TweakNumber, TweakColor, TweakButton.
+//
+// Owns the host protocol (listens for __activate_edit_mode / __deactivate_edit_mode,
+// posts __edit_mode_available / __edit_mode_set_keys / __edit_mode_dismissed) so
+// individual prototypes don't re-roll it. Ships a consistent set of controls so you
+// don't hand-draw <input type="range">, segmented radios, steppers, etc.
+//
+// Usage (in an HTML file that loads React + Babel):
+//
+//   const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+//     "primaryColor": "#D97757",
+//     "palette": ["#D97757", "#29261b", "#f6f4ef"],
+//     "fontSize": 16,
+//     "density": "regular",
+//     "dark": false
+//   }/*EDITMODE-END*/;
+//
+//   function App() {
+//     const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+//     return (
+//       <div style={{ fontSize: t.fontSize, color: t.primaryColor }}>
+//         Hello
+//         <TweaksPanel>
+//           <TweakSection label="Typography" />
+//           <TweakSlider label="Font size" value={t.fontSize} min={10} max={32} unit="px"
+//                        onChange={(v) => setTweak('fontSize', v)} />
+//           <TweakRadio  label="Density" value={t.density}
+//                        options={['compact', 'regular', 'comfy']}
+//                        onChange={(v) => setTweak('density', v)} />
+//           <TweakSection label="Theme" />
+//           <TweakColor  label="Primary" value={t.primaryColor}
+//                        options={['#D97757', '#2A6FDB', '#1F8A5B', '#7A5AE0']}
+//                        onChange={(v) => setTweak('primaryColor', v)} />
+//           <TweakColor  label="Palette" value={t.palette}
+//                        options={[['#D97757', '#29261b', '#f6f4ef'],
+//                                  ['#475569', '#0f172a', '#f1f5f9']]}
+//                        onChange={(v) => setTweak('palette', v)} />
+//           <TweakToggle label="Dark mode" value={t.dark}
+//                        onChange={(v) => setTweak('dark', v)} />
+//         </TweaksPanel>
+//       </div>
+//     );
+//   }
+//
+// TweakRadio is the segmented control for 2–3 short options (auto-falls-back to
+// TweakSelect past ~16/~10 chars per label); reach for TweakSelect directly when
+// options are many or long. For color tweaks always curate 3-4 options rather than
+// a free picker; an option can also be a whole 2–5 color palette (the stored value
+// is the array). The Tweak* controls are a floor, not a ceiling — build custom
+// controls inside the panel if a tweak calls for UI they don't cover.
+/* END USAGE */
+// ─────────────────────────────────────────────────────────────────────────────
+
+const __TWEAKS_STYLE = `
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
+    max-height:calc(100vh - 32px);display:flex;flex-direction:column;
+    transform:scale(var(--dc-inv-zoom,1));transform-origin:bottom right;
+    background:rgba(250,249,247,.78);color:#29261b;
+    -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+    border:.5px solid rgba(255,255,255,.6);border-radius:14px;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
+    font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 8px 10px 14px;cursor:move;user-select:none}
+  .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
+    width:22px;height:22px;border-radius:6px;cursor:default;font-size:13px;line-height:1}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
+    overflow-y:auto;overflow-x:hidden;min-height:0;
+    scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.15) transparent}
+  .twk-body::-webkit-scrollbar{width:8px}
+  .twk-body::-webkit-scrollbar-track{background:transparent;margin:2px}
+  .twk-body::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:4px;
+    border:2px solid transparent;background-clip:content-box}
+  .twk-body::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.25);
+    border:2px solid transparent;background-clip:content-box}
+  .twk-row{display:flex;flex-direction:column;gap:5px}
+  .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;
+    color:rgba(41,38,27,.72)}
+  .twk-lbl>span:first-child{font-weight:500}
+  .twk-val{color:rgba(41,38,27,.5);font-variant-numeric:tabular-nums}
+
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(41,38,27,.45);padding:10px 0 0}
+  .twk-sect:first-child{padding-top:0}
+
+  .twk-field{appearance:none;box-sizing:border-box;width:100%;min-width:0;height:26px;padding:0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;
+    background:rgba(255,255,255,.6);color:inherit;font:inherit;outline:none}
+  .twk-field:focus{border-color:rgba(0,0,0,.25);background:rgba(255,255,255,.85)}
+  select.twk-field{padding-right:22px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='rgba(0,0,0,.5)' d='M0 0h10L5 6z'/></svg>");
+    background-repeat:no-repeat;background-position:right 8px center}
+
+  .twk-slider{appearance:none;-webkit-appearance:none;width:100%;height:4px;margin:6px 0;
+    border-radius:999px;background:rgba(0,0,0,.12);outline:none}
+  .twk-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+    width:14px;height:14px;border-radius:50%;background:#fff;
+    border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+  .twk-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
+    background:#fff;border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+
+  .twk-seg{position:relative;display:flex;padding:2px;border-radius:8px;
+    background:rgba(0,0,0,.06);user-select:none}
+  .twk-seg-thumb{position:absolute;top:2px;bottom:2px;border-radius:6px;
+    background:rgba(255,255,255,.9);box-shadow:0 1px 2px rgba(0,0,0,.12);
+    transition:left .15s cubic-bezier(.3,.7,.4,1),width .15s}
+  .twk-seg.dragging .twk-seg-thumb{transition:none}
+  .twk-seg button{appearance:none;position:relative;z-index:1;flex:1;border:0;
+    background:transparent;color:inherit;font:inherit;font-weight:500;min-height:22px;
+    border-radius:6px;cursor:default;padding:4px 6px;line-height:1.2;
+    overflow-wrap:anywhere}
+
+  .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;
+    background:rgba(0,0,0,.15);transition:background .15s;cursor:default;padding:0}
+  .twk-toggle[data-on="1"]{background:#34c759}
+  .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+  .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+
+  .twk-num{display:flex;align-items:center;box-sizing:border-box;min-width:0;height:26px;padding:0 0 0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;background:rgba(255,255,255,.6)}
+  .twk-num-lbl{font-weight:500;color:rgba(41,38,27,.6);cursor:ew-resize;
+    user-select:none;padding-right:8px}
+  .twk-num input{flex:1;min-width:0;height:100%;border:0;background:transparent;
+    font:inherit;font-variant-numeric:tabular-nums;text-align:right;padding:0 8px 0 0;
+    outline:none;color:inherit;-moz-appearance:textfield}
+  .twk-num input::-webkit-inner-spin-button,.twk-num input::-webkit-outer-spin-button{
+    -webkit-appearance:none;margin:0}
+  .twk-num-unit{padding-right:8px;color:rgba(41,38,27,.45)}
+
+  .twk-btn{appearance:none;height:26px;padding:0 12px;border:0;border-radius:7px;
+    background:rgba(0,0,0,.78);color:#fff;font:inherit;font-weight:500;cursor:default}
+  .twk-btn:hover{background:rgba(0,0,0,.88)}
+  .twk-btn.secondary{background:rgba(0,0,0,.06);color:inherit}
+  .twk-btn.secondary:hover{background:rgba(0,0,0,.1)}
+
+  .twk-swatch{appearance:none;-webkit-appearance:none;width:56px;height:22px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:6px;padding:0;cursor:default;
+    background:transparent;flex-shrink:0}
+  .twk-swatch::-webkit-color-swatch-wrapper{padding:0}
+  .twk-swatch::-webkit-color-swatch{border:0;border-radius:5.5px}
+  .twk-swatch::-moz-color-swatch{border:0;border-radius:5.5px}
+
+  .twk-chips{display:flex;gap:6px}
+  .twk-chip{position:relative;appearance:none;flex:1;min-width:0;height:46px;
+    padding:0;border:0;border-radius:6px;overflow:hidden;cursor:default;
+    box-shadow:0 0 0 .5px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.06);
+    transition:transform .12s cubic-bezier(.3,.7,.4,1),box-shadow .12s}
+  .twk-chip:hover{transform:translateY(-1px);
+    box-shadow:0 0 0 .5px rgba(0,0,0,.18),0 4px 10px rgba(0,0,0,.12)}
+  .twk-chip[data-on="1"]{box-shadow:0 0 0 1.5px rgba(0,0,0,.85),
+    0 2px 6px rgba(0,0,0,.15)}
+  .twk-chip>span{position:absolute;top:0;bottom:0;right:0;width:34%;
+    display:flex;flex-direction:column;box-shadow:-1px 0 0 rgba(0,0,0,.1)}
+  .twk-chip>span>i{flex:1;box-shadow:0 -1px 0 rgba(0,0,0,.1)}
+  .twk-chip>span>i:first-child{box-shadow:none}
+  .twk-chip svg{position:absolute;top:6px;left:6px;width:13px;height:13px;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+`;
+
+// ── useTweaks ───────────────────────────────────────────────────────────────
+// Single source of truth for tweak values. setTweak persists via the host
+// (__edit_mode_set_keys → host rewrites the EDITMODE block on disk).
+function useTweaks(defaults) {
+  const [values, setValues] = React.useState(defaults);
+  // Accepts either setTweak('key', value) or setTweak({ key: value, ... }) so a
+  // useState-style call doesn't write a "[object Object]" key into the persisted
+  // JSON block.
+  const setTweak = React.useCallback((keyOrEdits, val) => {
+    const edits = typeof keyOrEdits === 'object' && keyOrEdits !== null
+      ? keyOrEdits : { [keyOrEdits]: val };
+    setValues((prev) => ({ ...prev, ...edits }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits }, '*');
+    // Same-window signal so in-page listeners (deck-stage rail thumbnails)
+    // can react — the parent message only reaches the host, not peers.
+    window.dispatchEvent(new CustomEvent('tweakchange', { detail: edits }));
+  }, []);
+  return [values, setTweak];
+}
+
+// ── TweaksPanel ─────────────────────────────────────────────────────────────
+// Floating shell. Registers the protocol listener BEFORE announcing
+// availability — if the announce ran first, the host's activate could land
+// before our handler exists and the toolbar toggle would silently no-op.
+// The close button posts __edit_mode_dismissed so the host's toolbar toggle
+// flips off in lockstep; the host echoes __deactivate_edit_mode back which
+// is what actually hides the panel.
+function TweaksPanel({ title = 'Tweaks', children }) {
+  const [open, setOpen] = React.useState(false);
+  const dragRef = React.useRef(null);
+  const offsetRef = React.useRef({ x: 16, y: 16 });
+  const PAD = 16;
+
+  const clampToViewport = React.useCallback(() => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const w = panel.offsetWidth, h = panel.offsetHeight;
+    const maxRight = Math.max(PAD, window.innerWidth - w - PAD);
+    const maxBottom = Math.max(PAD, window.innerHeight - h - PAD);
+    offsetRef.current = {
+      x: Math.min(maxRight, Math.max(PAD, offsetRef.current.x)),
+      y: Math.min(maxBottom, Math.max(PAD, offsetRef.current.y)),
+    };
+    panel.style.right = offsetRef.current.x + 'px';
+    panel.style.bottom = offsetRef.current.y + 'px';
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    clampToViewport();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', clampToViewport);
+      return () => window.removeEventListener('resize', clampToViewport);
+    }
+    const ro = new ResizeObserver(clampToViewport);
+    ro.observe(document.documentElement);
+    return () => ro.disconnect();
+  }, [open, clampToViewport]);
+
+  React.useEffect(() => {
+    const onMsg = (e) => {
+      const t = e?.data?.type;
+      if (t === '__activate_edit_mode') setOpen(true);
+      else if (t === '__deactivate_edit_mode') setOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const dismiss = () => {
+    setOpen(false);
+    window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
+  };
+
+  const onDragStart = (e) => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const r = panel.getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY;
+    const startRight = window.innerWidth - r.right;
+    const startBottom = window.innerHeight - r.bottom;
+    const move = (ev) => {
+      offsetRef.current = {
+        x: startRight - (ev.clientX - sx),
+        y: startBottom - (ev.clientY - sy),
+      };
+      clampToViewport();
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+
+  if (!open) return null;
+  return (
+    <>
+      <style>{__TWEAKS_STYLE}</style>
+      <div ref={dragRef} className="twk-panel" data-omelette-chrome=""
+           style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+        <div className="twk-hd" onMouseDown={onDragStart}>
+          <b>{title}</b>
+          <button className="twk-x" aria-label="Close tweaks"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={dismiss}>✕</button>
+        </div>
+        <div className="twk-body">
+          {children}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Layout helpers ──────────────────────────────────────────────────────────
+
+function TweakSection({ label, children }) {
+  return (
+    <>
+      <div className="twk-sect">{label}</div>
+      {children}
+    </>
+  );
+}
+
+function TweakRow({ label, value, children, inline = false }) {
+  return (
+    <div className={inline ? 'twk-row twk-row-h' : 'twk-row'}>
+      <div className="twk-lbl">
+        <span>{label}</span>
+        {value != null && <span className="twk-val">{value}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ── Controls ────────────────────────────────────────────────────────────────
+
+function TweakSlider({ label, value, min = 0, max = 100, step = 1, unit = '', onChange }) {
+  return (
+    <TweakRow label={label} value={`${value}${unit}`}>
+      <input type="range" className="twk-slider" min={min} max={max} step={step}
+             value={value} onChange={(e) => onChange(Number(e.target.value))} />
+    </TweakRow>
+  );
+}
+
+function TweakToggle({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <button type="button" className="twk-toggle" data-on={value ? '1' : '0'}
+              role="switch" aria-checked={!!value}
+              onClick={() => onChange(!value)}><i /></button>
+    </div>
+  );
+}
+
+function TweakRadio({ label, value, options, onChange }) {
+  const trackRef = React.useRef(null);
+  const [dragging, setDragging] = React.useState(false);
+  // The active value is read by pointer-move handlers attached for the lifetime
+  // of a drag — ref it so a stale closure doesn't fire onChange for every move.
+  const valueRef = React.useRef(value);
+  valueRef.current = value;
+
+  // Segments wrap mid-word once per-segment width runs out. The track is
+  // ~248px (280 panel − 28 body pad − 4 seg pad), each button loses 12px
+  // to its own padding, and 11.5px system-ui averages ~6.3px/char — so 2
+  // options fit ~16 chars each, 3 fit ~10. Past that (or >3 options), fall
+  // back to a dropdown rather than wrap.
+  const labelLen = (o) => String(typeof o === 'object' ? o.label : o).length;
+  const maxLen = options.reduce((m, o) => Math.max(m, labelLen(o)), 0);
+  const fitsAsSegments = maxLen <= ({ 2: 16, 3: 10 }[options.length] ?? 0);
+  if (!fitsAsSegments) {
+    // <select> emits strings — map back to the original option value so the
+    // fallback stays type-preserving (numbers, booleans) like the segment path.
+    const resolve = (s) => {
+      const m = options.find((o) => String(typeof o === 'object' ? o.value : o) === s);
+      return m === undefined ? s : typeof m === 'object' ? m.value : m;
+    };
+    return <TweakSelect label={label} value={value} options={options}
+                        onChange={(s) => onChange(resolve(s))} />;
+  }
+  const opts = options.map((o) => (typeof o === 'object' ? o : { value: o, label: o }));
+  const idx = Math.max(0, opts.findIndex((o) => o.value === value));
+  const n = opts.length;
+
+  const segAt = (clientX) => {
+    const r = trackRef.current.getBoundingClientRect();
+    const inner = r.width - 4;
+    const i = Math.floor(((clientX - r.left - 2) / inner) * n);
+    return opts[Math.max(0, Math.min(n - 1, i))].value;
+  };
+
+  const onPointerDown = (e) => {
+    setDragging(true);
+    const v0 = segAt(e.clientX);
+    if (v0 !== valueRef.current) onChange(v0);
+    const move = (ev) => {
+      if (!trackRef.current) return;
+      const v = segAt(ev.clientX);
+      if (v !== valueRef.current) onChange(v);
+    };
+    const up = () => {
+      setDragging(false);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  return (
+    <TweakRow label={label}>
+      <div ref={trackRef} role="radiogroup" onPointerDown={onPointerDown}
+           className={dragging ? 'twk-seg dragging' : 'twk-seg'}>
+        <div className="twk-seg-thumb"
+             style={{ left: `calc(2px + ${idx} * (100% - 4px) / ${n})`,
+                      width: `calc((100% - 4px) / ${n})` }} />
+        {opts.map((o) => (
+          <button key={o.value} type="button" role="radio" aria-checked={o.value === value}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </TweakRow>
+  );
+}
+
+function TweakSelect({ label, value, options, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <select className="twk-field" value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map((o) => {
+          const v = typeof o === 'object' ? o.value : o;
+          const l = typeof o === 'object' ? o.label : o;
+          return <option key={v} value={v}>{l}</option>;
+        })}
+      </select>
+    </TweakRow>
+  );
+}
+
+function TweakText({ label, value, placeholder, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <input className="twk-field" type="text" value={value} placeholder={placeholder}
+             onChange={(e) => onChange(e.target.value)} />
+    </TweakRow>
+  );
+}
+
+function TweakNumber({ label, value, min, max, step = 1, unit = '', onChange }) {
+  const clamp = (n) => {
+    if (min != null && n < min) return min;
+    if (max != null && n > max) return max;
+    return n;
+  };
+  const startRef = React.useRef({ x: 0, val: 0 });
+  const onScrubStart = (e) => {
+    e.preventDefault();
+    startRef.current = { x: e.clientX, val: value };
+    const decimals = (String(step).split('.')[1] || '').length;
+    const move = (ev) => {
+      const dx = ev.clientX - startRef.current.x;
+      const raw = startRef.current.val + dx * step;
+      const snapped = Math.round(raw / step) * step;
+      onChange(clamp(Number(snapped.toFixed(decimals))));
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+  return (
+    <div className="twk-num">
+      <span className="twk-num-lbl" onPointerDown={onScrubStart}>{label}</span>
+      <input type="number" value={value} min={min} max={max} step={step}
+             onChange={(e) => onChange(clamp(Number(e.target.value)))} />
+      {unit && <span className="twk-num-unit">{unit}</span>}
+    </div>
+  );
+}
+
+// Relative-luminance contrast pick — checkmarks drawn over a swatch need to
+// read on both #111 and #fafafa without per-option configuration. Hex input
+// only (#rgb / #rrggbb); named or rgb()/hsl() colors fall through to "light".
+function __twkIsLight(hex) {
+  const h = String(hex).replace('#', '');
+  const x = h.length === 3 ? h.replace(/./g, (c) => c + c) : h.padEnd(6, '0');
+  const n = parseInt(x.slice(0, 6), 16);
+  if (Number.isNaN(n)) return true;
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return r * 299 + g * 587 + b * 114 > 148000;
+}
+
+const __TwkCheck = ({ light }) => (
+  <svg viewBox="0 0 14 14" aria-hidden="true">
+    <path d="M3 7.2 5.8 10 11 4.2" fill="none" strokeWidth="2.2"
+          strokeLinecap="round" strokeLinejoin="round"
+          stroke={light ? 'rgba(0,0,0,.78)' : '#fff'} />
+  </svg>
+);
+
+// TweakColor — curated color/palette picker. Each option is either a single
+// hex string or an array of 1-5 hex strings; the card adapts — a lone color
+// renders solid, a palette renders colors[0] as the hero (left ~2/3) with the
+// rest stacked in a sharp column on the right. onChange emits the
+// option in the shape it was passed (string stays string, array stays array).
+// Without options it falls back to the native color input for back-compat.
+function TweakColor({ label, value, options, onChange }) {
+  if (!options || !options.length) {
+    return (
+      <div className="twk-row twk-row-h">
+        <div className="twk-lbl"><span>{label}</span></div>
+        <input type="color" className="twk-swatch" value={value}
+               onChange={(e) => onChange(e.target.value)} />
+      </div>
+    );
+  }
+  // Native <input type=color> emits lowercase hex per the HTML spec, so
+  // compare case-insensitively. String() guards JSON.stringify(undefined),
+  // which returns the primitive undefined (no .toLowerCase).
+  const key = (o) => String(JSON.stringify(o)).toLowerCase();
+  const cur = key(value);
+  return (
+    <TweakRow label={label}>
+      <div className="twk-chips" role="radiogroup">
+        {options.map((o, i) => {
+          const colors = Array.isArray(o) ? o : [o];
+          const [hero, ...rest] = colors;
+          const sup = rest.slice(0, 4);
+          const on = key(o) === cur;
+          return (
+            <button key={i} type="button" className="twk-chip" role="radio"
+                    aria-checked={on} data-on={on ? '1' : '0'}
+                    aria-label={colors.join(', ')} title={colors.join(' · ')}
+                    style={{ background: hero }}
+                    onClick={() => onChange(o)}>
+              {sup.length > 0 && (
+                <span>
+                  {sup.map((c, j) => <i key={j} style={{ background: c }} />)}
+                </span>
+              )}
+              {on && <__TwkCheck light={__twkIsLight(hero)} />}
+            </button>
+          );
+        })}
+      </div>
+    </TweakRow>
+  );
+}
+
+function TweakButton({ label, onClick, secondary = false }) {
+  return (
+    <button type="button" className={secondary ? 'twk-btn secondary' : 'twk-btn'}
+            onClick={onClick}>{label}</button>
+  );
+}
+
+Object.assign(window, {
+  useTweaks, TweaksPanel, TweakSection, TweakRow,
+  TweakSlider, TweakToggle, TweakRadio, TweakSelect,
+  TweakText, TweakNumber, TweakColor, TweakButton,
+});
+
+</script>
+<script type="text/babel" data-presets="react">
+/* UC-074 shared primitives — theme, icons, faux page renderer, sample data.
+   Lifted from Screenshot Previews.html so the batch-select prototype matches the app. */
+const T = {
+  bg:'#14161a', card:'#1e2028', pri:'#3b82f6', sec:'#252a32', mfg:'#a3a3a3',
+  fg:'#ededed', bdr:'#363d49',
+  font:'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif',
+  mono:'ui-monospace, SFMono-Regular, Menlo, monospace',
+};
+
+function shade(hex, pct){
+  const n = parseInt(hex.slice(1),16);
+  const r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  const f=c=>Math.max(0,Math.min(255,Math.round(c+(pct/100)*255)));
+  return '#'+[f(r),f(g),f(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+function Icon({ d, size=14, sw=2, fill='none', style }){
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor"
+      strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" style={style}>
+      {(Array.isArray(d)?d:[d]).map((p,i)=><path key={i} d={p} />)}
+    </svg>
+  );
+}
+const IC = {
+  external:'M15 3h6v6 M10 14 21 3 M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6',
+  grid:['M3 3h7v7H3z','M14 3h7v7h-7z','M14 14h7v7h-7z','M3 14h7v7H3z'],
+  list:['M8 6h13','M8 12h13','M8 18h13','M3 6h.01','M3 12h.01','M3 18h.01'],
+  more:['M12 12h.01','M19 12h.01','M5 12h.01'],
+  eye:['M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z','M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z'],
+  check:'M20 6 9 17l-5-5',
+  x:['M18 6 6 18','M6 6l12 12'],
+  search:['M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z','M21 21l-4.3-4.3'],
+  folder:'M4 5h5l2 2.5h9a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z',
+  folderMove:['M4 5h5l2 2.5h9a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z','M9 13.5h6','M12.5 11l2.5 2.5-2.5 2.5'],
+  tag:['M12 2H6a2 2 0 0 0-2 2v6l9.3 9.3a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8L12 2z','M8.5 7.5h.01'],
+  trash:['M3 6h18','M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2','M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6','M10 11v6','M14 11v6'],
+  copy:['M9 9h11v11H9z','M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'],
+  plus:['M12 5v14','M5 12h14'],
+  chevD:'M6 9l6 6 6-6',
+  chevR:'M9 6l6 6-6 6',
+  sortD:['M12 5v14','M6 13l6 6 6-6'],
+  bookmark:'M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z',
+  alert:['M12 9v4','M12 17h.01','M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z'],
+  gear:['M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z','M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'],
+  filter:'M22 3H2l8 9.46V19l4 2v-8.54L22 3',
+  diamond:'M12 2l10 10-10 10L2 12 12 2z',
+};
+
+function Fav({ site, size=18, radius=4 }){
+  return (
+    <div style={{ width:size, height:size, borderRadius:radius, flexShrink:0, background:site.fav,
+      color:'#fff', display:'grid', placeItems:'center', fontFamily:T.font, fontWeight:700,
+      fontSize:size*0.5, lineHeight:1 }}>{site.letter}</div>
+  );
+}
+function Tag({ name, color }){
+  return (
+    <span style={{ display:'inline-flex', alignItems:'center', borderRadius:9999, padding:'2px 8px',
+      fontSize:11, color:'#fff', background:color, fontFamily:T.font, lineHeight:1.4, whiteSpace:'nowrap' }}>{name}</span>
+  );
+}
+
+/* faux webpage "screenshot" */
+function fpBar(w,h=6,c='#d7dbe2',mt=6){ return { width:w, height:h, borderRadius:3, background:c, marginTop:mt }; }
+function FauxPage({ site }){
+  const a = site.accent;
+  const pg = { position:'absolute', inset:0, overflow:'hidden', background:'#fff' };
+  if (site.kind === 'docs') return (
+    <div style={pg}><div style={{ position:'absolute', inset:0, display:'flex' }}>
+      <div style={{ width:'30%', background:'#f3f4f7', padding:'14px 9px', borderRight:'1px solid #e7e9ee' }}>
+        <div style={fpBar('70%',7,a,0)} /><div style={fpBar('90%',5,'#d7dbe2',11)} /><div style={fpBar('80%',5)} />
+        <div style={fpBar('88%',5)} /><div style={fpBar('60%',5)} /><div style={fpBar('84%',5,'#cfd4dd',11)} /><div style={fpBar('72%',5)} />
+      </div>
+      <div style={{ flex:1, padding:'16px 14px' }}>
+        <div style={fpBar('55%',11,'#2a2f3a',0)} /><div style={fpBar('100%',5,'#dde1e8',13)} /><div style={fpBar('96%',5)} /><div style={fpBar('92%',5)} />
+        <div style={{ ...fpBar('100%',26,'#eef0f4',13), border:'1px solid #e1e4ea' }} /><div style={fpBar('90%',5,'#dde1e8',13)} /><div style={fpBar('70%',5)} />
+      </div></div></div>
+  );
+  if (site.kind === 'app') return (
+    <div style={pg}>
+      <div style={{ height:'22%', background:'#fbfcfd', borderBottom:'1px solid #eceef2', display:'flex', alignItems:'center', padding:'0 14px', gap:8 }}>
+        <div style={{ width:12, height:12, borderRadius:4, background:a }} /><div style={fpBar('64px',5,'#c9cdd6',0)} />
+        <div style={{ marginLeft:'auto', display:'flex', gap:7, alignItems:'center' }}>
+          <div style={fpBar('30px',5,'#d7dbe2',0)} /><div style={fpBar('30px',5,'#d7dbe2',0)} /><div style={{ width:42, height:14, borderRadius:5, background:a }} />
+        </div>
+      </div>
+      <div style={{ padding:'20px 11% 0', textAlign:'center' }}>
+        <div style={{ ...fpBar('72%',12,'#222732',0), margin:'0 auto' }} /><div style={{ ...fpBar('52%',12,'#222732',7), margin:'0 auto' }} />
+        <div style={{ ...fpBar('40%',5,'#c9cdd6',12), margin:'0 auto' }} />
+        <div style={{ display:'flex', gap:9, justifyContent:'center', marginTop:14 }}>
+          {[0,1,2].map(i=><div key={i} style={{ width:52, height:34, borderRadius:6, background:'#f1f3f6', border:'1px solid #e7e9ee' }} />)}
+        </div>
+      </div>
+    </div>
+  );
+  if (site.kind === 'news') return (
+    <div style={pg}>
+      <div style={{ height:'20%', background:a, display:'flex', alignItems:'center', padding:'0 12px' }}><div style={fpBar('40%',7,'rgba(255,255,255,.9)',0)} /></div>
+      <div style={{ padding:'12px', display:'flex', gap:12 }}>
+        <div style={{ flex:1 }}>
+          <div style={fpBar('90%',7,'#2a2f3a',0)} /><div style={fpBar('100%',4,'#dde1e8',9)} /><div style={fpBar('95%',4)} /><div style={fpBar('80%',4)} />
+          <div style={fpBar('85%',7,'#2a2f3a',12)} /><div style={fpBar('100%',4,'#dde1e8',9)} /><div style={fpBar('70%',4)} />
+        </div>
+        <div style={{ width:'38%' }}>
+          <div style={{ width:'100%', height:38, borderRadius:5, background:'#eceef2' }} /><div style={fpBar('100%',4,'#dde1e8',10)} /><div style={fpBar('90%',4)} /><div style={fpBar('60%',4)} />
+        </div>
+      </div>
+    </div>
+  );
+  if (site.kind === 'shop') return (
+    <div style={pg}>
+      <div style={{ height:'18%', background:'#fff', borderBottom:'1px solid #eceef2', display:'flex', alignItems:'center', padding:'0 12px', gap:8 }}>
+        <div style={{ width:11, height:11, borderRadius:'50%', background:a }} /><div style={fpBar('50px',5,'#c9cdd6',0)} />
+      </div>
+      <div style={{ padding:'12px', display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+        {[0,1,2,3].map(i=>(
+          <div key={i} style={{ borderRadius:6, overflow:'hidden', border:'1px solid #eceef2' }}>
+            <div style={{ height:30, background:i%2?'#eef0f4':'#e7eaf0' }} />
+            <div style={{ padding:5 }}><div style={fpBar('80%',4,'#d7dbe2',0)} /><div style={{ ...fpBar('30px',8,a,5) }} /></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+  if (site.kind === 'fallback') return (
+    <div style={{ position:'absolute', inset:0, background:`radial-gradient(120% 120% at 30% 20%, ${shade(site.fav,-10)}, ${shade(site.fav,-48)})`, display:'grid', placeItems:'center' }}>
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:9 }}>
+        <Fav site={site} size={38} radius={9} />
+        <span style={{ fontFamily:T.mono, fontSize:11, color:'rgba(255,255,255,.85)' }}>{site.url.split('/')[0]}</span>
+      </div>
+    </div>
+  );
+  return ( /* article */
+    <div style={pg}>
+      <div style={{ height:'46%', background:`linear-gradient(135deg, ${a}, ${shade(a,-22)})` }} />
+      <div style={{ padding:'12px 11% 0' }}>
+        <div style={fpBar('86%',11,'#222732',0)} /><div style={fpBar('60%',11,'#222732',7)} />
+        <div style={fpBar('100%',5,'#dde1e8',13)} /><div style={fpBar('95%',5)} /><div style={fpBar('70%',5)} />
+      </div>
+    </div>
+  );
+}
+
+/* ── sample bookmarks ── */
+const BOOKMARKS = [
+  { id:'b1', letter:'Q', fav:'#4695eb', accent:'#4695eb', kind:'docs',
+    title:'Quarkus — Supersonic Subatomic Java', url:'quarkus.io/guides/getting-started',
+    tags:[{name:'java',color:'#b45309'},{name:'backend',color:'#0e7490'}] },
+  { id:'b2', letter:'L', fav:'#5e6ad2', accent:'#5e6ad2', kind:'app',
+    title:'Linear — Plan and build products', url:'linear.app',
+    tags:[{name:'tools',color:'#7c3aed'}] },
+  { id:'b3', letter:'A', fav:'#e96d3f', accent:'#e96d3f', kind:'fallback',
+    title:'ARGO-DEV-NEW', url:'argocd-server-kis.apps.mercury.ocp.dvbern.ch',
+    tags:[{name:'in kis',color:'#374151',folder:true},{name:'red',color:'#be123c'}] },
+  { id:'b4', letter:'Y', fav:'#ff6600', accent:'#ff6600', kind:'news',
+    title:'Hacker News', url:'news.ycombinator.com',
+    tags:[{name:'daily',color:'#be123c'}] },
+  { id:'b5', letter:'S', fav:'#635bff', accent:'#635bff', kind:'docs',
+    title:'Stripe Docs — Payments API', url:'stripe.com/docs/api',
+    tags:[{name:'payments',color:'#6d28d9'}] },
+  { id:'b6', letter:'O', fav:'#c0353a', accent:'#c0353a', kind:'fallback',
+    title:'Openshift Apollo', url:'oauth-openshift.apps.apollo.ocp.dvbern.ch',
+    tags:[{name:'in kis',color:'#374151',folder:true}] },
+  { id:'b7', letter:'S', fav:'#5a8f3c', accent:'#5a8f3c', kind:'shop',
+    title:'Shopify Theme Store', url:'themes.shopify.com',
+    tags:[{name:'design',color:'#0e7490'}] },
+  { id:'b8', letter:'P', fav:'#d4663a', accent:'#d4663a', kind:'article',
+    title:'The Pragmatic Engineer Newsletter', url:'newsletter.pragmaticengineer.com',
+    tags:[{name:'reading',color:'#475569'}] },
+  { id:'b9', letter:'G', fav:'#e0653a', accent:'#e0653a', kind:'app',
+    title:'Grafana — KIS Prod Dashboards', url:'grafana.apps.mercury.ocp.dvbern.ch',
+    tags:[{name:'in kis',color:'#374151',folder:true},{name:'ops',color:'#0e7490'}] },
+  { id:'b10', letter:'M', fav:'#2563b0', accent:'#2563b0', kind:'docs',
+    title:'MDN — CSS Grid Layout', url:'developer.mozilla.org/docs/Web/CSS/grid',
+    tags:[{name:'frontend',color:'#7c3aed'}] },
+  { id:'b11', letter:'J', fav:'#2666c8', accent:'#2666c8', kind:'app',
+    title:'HEMED Produkt-Board — Agile Board', url:'support.dvbern.ch/secure/RapidBoard.jspa',
+    tags:[{name:'in kis',color:'#374151',folder:true}] },
+  { id:'b12', letter:'T', fav:'#8458b3', accent:'#8458b3', kind:'article',
+    title:'Temporal — Durable Execution', url:'temporal.apps.mercury.ocp.dvbern.ch',
+    tags:[{name:'red',color:'#be123c'}] },
+];
+
+const FOLDERS = [
+  { id:null, name:'No folder (collection root)', depth:0, root:true },
+  { id:'kis', name:'kis', depth:0 },
+  { id:'semreg', name:'semreg', depth:0 },
+  { id:'semreg-prod', name:'prod', depth:1 },
+  { id:'semreg-uat', name:'uat', depth:1 },
+  { id:'dvbern', name:'dvbern', depth:0 },
+];
+
+Object.assign(window, { T, shade, Icon, IC, Fav, Tag, FauxPage, BOOKMARKS, FOLDERS });
+
+</script>
+<script type="text/babel" data-presets="react">
+/* UC-074 Batch Move & Delete — interactive prototype */
+const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "entry": "button",
+  "selStyle": "inset",
+  "toolbarSelect": true,
+  "simulateFailure": false
+}/*EDITMODE-END*/;
+
+/* ════════ small ui bits ════════ */
+function ToolBtn({ children, on, danger, onClick, title, style }){
+  const [h,setH]=useState(false);
+  return (
+    <button onClick={onClick} title={title} aria-pressed={on}
+      onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)}
+      style={{ display:'inline-flex', alignItems:'center', gap:6, height:30, padding:'0 10px',
+        borderRadius:7, fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:T.font,
+        border:`1px solid ${on?'#2f66c4':T.bdr}`,
+        background: on?'rgba(59,130,246,.13)' : h?T.sec:'transparent',
+        color: danger?'#f87171' : on?'#9cc0ff':T.mfg, transition:'background .12s, border-color .12s', ...style }}>
+      {children}
+    </button>
+  );
+}
+function Seg({ items, active, onChange }){
+  return (
+    <div style={{ display:'inline-flex', border:`1px solid ${T.bdr}`, borderRadius:7, overflow:'hidden' }}>
+      {items.map((it,i)=>(
+        <button key={i} onClick={()=>onChange && onChange(i)} style={{ width:34, height:28, border:0, display:'grid', placeItems:'center', cursor:'pointer',
+          background: i===active?T.sec:'transparent', color: i===active?T.fg:T.mfg }}>
+          <Icon d={it} size={14} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ════════ sidebar (static context) ════════ */
+function SideRow({ icon, label, depth=0, active, count, muted }){
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:7, height:28, padding:`0 10px 0 ${12+depth*18}px`,
+      borderRadius:7, fontSize:13, cursor:'default',
+      background: active?T.sec:'transparent', color: active?T.fg : muted?'#7d828c':T.mfg }}>
+      <Icon d={icon} size={13} style={{ flexShrink:0, opacity:.85 }} />
+      <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{label}</span>
+      {count!=null && count>0 ? (
+        <span key={count} style={{ fontSize:11, fontWeight:700, color:'#9cc0ff', background:'rgba(59,130,246,.14)',
+          border:'1px solid #2f66c4', borderRadius:9999, padding:'0 7px', lineHeight:'16px' }}>{count}</span>
+      ) : null}
+    </div>
+  );
+}
+function SideHead({ children }){
+  return <div style={{ display:'flex', alignItems:'center', gap:6, padding:'14px 12px 5px', fontSize:10.5,
+    fontWeight:700, letterSpacing:'.08em', color:'#6e7480' }}>{children}</div>;
+}
+function Sidebar({ trashCount }){
+  return (
+    <aside data-screen-label="Sidebar" style={{ width:230, flexShrink:0, borderRight:`1px solid #232730`,
+      background:'#171a1f', display:'flex', flexDirection:'column', overflow:'hidden auto', padding:'10px 8px' }}>
+      <SideRow icon={IC.folder} label="My Bookmarks" active />
+      <SideRow icon={IC.folder} label="vacme-be" depth={1} />
+      <SideRow icon={IC.folder} label="kis" depth={1} />
+      <SideRow icon={IC.folder} label="semreg" depth={1} />
+      <SideRow icon={IC.folder} label="prod" depth={2} />
+      <SideRow icon={IC.folder} label="uat" depth={2} />
+      <SideRow icon={IC.folder} label="dvbern" depth={1} />
+      <SideHead><Icon d={IC.diamond} size={11} /> PROPERTIES</SideHead>
+      <SideRow icon={IC.diamond} label="first" muted />
+      <SideRow icon={IC.diamond} label="se" muted />
+      <SideHead><Icon d={IC.filter} size={11} /> SMART COLLECTIONS</SideHead>
+      <SideRow icon={IC.filter} label="namechange" muted />
+      <SideRow icon={IC.filter} label="red" muted />
+      <SideHead><Icon d={IC.tag} size={11} /> TAGS</SideHead>
+      <SideRow icon={IC.tag} label="blue" muted />
+      <SideRow icon={IC.tag} label="red" muted />
+      <div style={{ flex:1, minHeight:18 }}></div>
+      <div style={{ borderTop:`1px solid #232730`, paddingTop:8 }}>
+        <SideRow icon={IC.trash} label="Trashbin" count={trashCount} muted={!trashCount} />
+      </div>
+    </aside>
+  );
+}
+
+/* ════════ header ════════ */
+function Header(){
+  return (
+    <header style={{ display:'flex', alignItems:'center', gap:16, height:56, padding:'0 18px',
+      borderBottom:'1px solid #232730', background:'#171a1f', flexShrink:0 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:9 }}>
+        <div style={{ width:26, height:26, borderRadius:7, background:T.pri, display:'grid', placeItems:'center', color:'#fff' }}>
+          <Icon d={IC.bookmark} size={14} sw={2.2} />
+        </div>
+        <span style={{ fontSize:15.5, fontWeight:700, color:T.fg }}>My Bookmarks</span>
+        <Icon d={IC.chevD} size={13} style={{ color:T.mfg }} />
+      </div>
+      <div style={{ flex:1, maxWidth:560, margin:'0 auto', display:'flex', alignItems:'center', gap:8, height:34,
+        padding:'0 12px', borderRadius:8, border:`1px solid ${T.bdr}`, background:T.bg, color:'#7d828c', fontSize:13 }}>
+        <Icon d={IC.search} size={13} />
+        <span style={{ flex:1 }}>Search bookmarks…</span>
+        <span style={{ fontFamily:T.mono, fontSize:10.5, border:`1px solid ${T.bdr}`, borderRadius:4, padding:'1px 5px' }}>⌘K</span>
+      </div>
+      <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+        <button style={{ display:'inline-flex', alignItems:'center', gap:7, height:32, padding:'0 13px', borderRadius:8,
+          border:0, background:T.pri, color:'#fff', fontSize:12.5, fontWeight:600, cursor:'pointer', fontFamily:T.font }}>
+          <Icon d={IC.bookmark} size={13} /> Add Bookmark
+        </button>
+        <span style={{ display:'inline-flex', alignItems:'center', gap:5, color:T.fg, fontSize:13 }}>
+          Alice User <Icon d={IC.chevD} size={12} style={{ color:T.mfg }} />
+        </span>
+      </div>
+    </header>
+  );
+}
+
+/* ════════ checkbox ════════ */
+function SelCheck({ checked, visible, onClick, small }){
+  const ckSize = small?19:22, ckOff = small?6:8;
+  return (
+    <button onClick={onClick} aria-checked={checked} role="checkbox" title={checked?'Deselect':'Select'}
+      style={{ position:'absolute', top:ckOff, left:ckOff, zIndex:3, width:ckSize, height:ckSize, borderRadius:'50%',
+        display:'grid', placeItems:'center', cursor:'pointer', padding:0,
+        border: checked?`1px solid ${shade(T.pri,8)}`:'1.5px solid rgba(255,255,255,.85)',
+        background: checked?T.pri:'rgba(14,16,20,.45)',
+        color:'#fff', boxShadow:'0 1px 5px rgba(0,0,0,.45)',
+        opacity: visible?1:0, transform: visible?'scale(1)':'scale(.7)',
+        transition:'opacity .13s, transform .13s, background .13s', pointerEvents: visible?'auto':'none' }}>
+      {checked ? <Icon d={IC.check} size={small?11:13} sw={3} /> : null}
+    </button>
+  );
+}
+
+/* ════════ favicon ⇄ checkbox swap (previews off) ════════ */
+function SwapCheck({ site, size=22, checked, showCheck, onClick }){
+  return (
+    <div style={{ position:'relative', width:size, height:size, flexShrink:0 }}>
+      <div aria-hidden={showCheck} style={{ position:'absolute', inset:0,
+        opacity: showCheck?0:1, transform: showCheck?'scale(.6) rotate(-30deg)':'scale(1)',
+        transition:'opacity .13s, transform .15s', pointerEvents:'none' }}>
+        <Fav site={site} size={size} radius={5} />
+      </div>
+      <button onClick={onClick} role="checkbox" aria-checked={checked} title={checked?'Deselect':'Select'}
+        style={{ position:'absolute', inset:0, width:size, height:size, borderRadius:'50%',
+          display:'grid', placeItems:'center', padding:0, cursor:'pointer', color:'#fff',
+          border: checked?`1px solid ${shade(T.pri,8)}`:'1.5px solid #6e7480',
+          background: checked?T.pri:'transparent',
+          opacity: showCheck?1:0, transform: showCheck?'scale(1)':'scale(.6) rotate(30deg)',
+          transition:'opacity .13s, transform .15s, background .13s',
+          pointerEvents: showCheck?'auto':'none' }}>
+        {checked ? <Icon d={IC.check} size={Math.round(size*0.55)} sw={3} /> : null}
+      </button>
+    </div>
+  );
+}
+
+/* ════════ bookmark card ════════ */
+function Card({ site, idx, checked, anySelected, entry, selectMode, selStyle, leaving, previews, onCardClick, onCheck }){
+  const [h,setH]=useState(false);
+  const showCheck =
+    checked || anySelected || selectMode ? true :
+    entry==='always' ? true :
+    entry==='hover' ? h : false;
+  const inset = selStyle==='inset' && checked;
+  const ring = checked;
+  if(!previews) return (
+    <div onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)}
+      onClick={(e)=>onCardClick(e, idx)}
+      data-comment-anchor={'card-'+site.id}
+      style={{ border:`1px solid ${ring?shade(T.pri,-5):(h?'#434b59':T.bdr)}`, borderRadius:8,
+        background: checked?'color-mix(in oklab, #3b82f6 8%, #1e2028)':T.card,
+        overflow:'hidden', fontFamily:T.font, color:T.mfg, cursor:'pointer', userSelect:'none',
+        boxShadow: ring?`0 0 0 1px ${T.pri}88`:'none',
+        opacity: leaving?0:1, transform: leaving?'scale(.92)':'scale(1)',
+        transition:'border-color .13s, box-shadow .13s, background .13s, opacity .22s, transform .22s' }}>
+      <div style={{ padding:'14px' }}>
+        <div style={{ display:'flex', alignItems:'flex-start', gap:8 }}>
+          <SwapCheck site={site} size={22} checked={checked} showCheck={showCheck}
+            onClick={(e)=>{ e.stopPropagation(); onCheck(e, idx); }} />
+          <h3 style={{ margin:0, color:T.fg, fontSize:14, fontWeight:600, lineHeight:1.3, flex:1,
+            display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{site.title}</h3>
+          <button onClick={(e)=>e.stopPropagation()} style={{ width:26, height:26, flexShrink:0, borderRadius:6, border:0,
+            background:'transparent', color:T.mfg, display:'grid', placeItems:'center', cursor:'pointer' }}><Icon d={IC.more} size={15} /></button>
+        </div>
+        <div style={{ paddingLeft:30 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:4, color:T.mfg, fontSize:12.5, marginTop:2, minWidth:0 }}>
+            <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{site.url}</span>
+            <Icon d={IC.external} size={11} style={{ flexShrink:0, opacity:.8 }} />
+          </div>
+          {site.tags && site.tags.length ? (
+            <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginTop:10 }}>
+              {site.tags.map(tg=> tg.folder
+                ? <span key={tg.name} style={{ display:'inline-flex', alignItems:'center', gap:4, borderRadius:9999, padding:'2px 8px',
+                    fontSize:11, color:T.mfg, border:`1px solid ${T.bdr}`, lineHeight:1.4 }}><Icon d={IC.folder} size={10} />{tg.name}</span>
+                : <Tag key={tg.name} {...tg} />)}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+  return (
+    <div onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)}
+      onClick={(e)=>onCardClick(e, idx)}
+      data-comment-anchor={'card-'+site.id}
+      style={{ border:`1px solid ${ring?shade(T.pri,-5):(h?'#434b59':T.bdr)}`, background:T.card, borderRadius:8,
+        overflow:'hidden', fontFamily:T.font, color:T.mfg, cursor:'pointer', userSelect:'none',
+        boxShadow: ring?`0 0 0 1px ${T.pri}88`:'none',
+        opacity: leaving?0:1, transform: leaving?'scale(.92)':'scale(1)',
+        transition:'border-color .13s, box-shadow .13s, opacity .22s, transform .22s' }}>
+      <div style={{ position:'relative', width:'100%', aspectRatio:'16 / 9', background:'#0e1014' }}>
+        <div style={{ position:'absolute', inset: inset?'10px 10px 4px':'0', borderRadius: inset?6:0, overflow:'hidden',
+          transition:'inset .15s cubic-bezier(.2,.7,.3,1), border-radius .15s' }}>
+          <FauxPage site={site} />
+        </div>
+        {/* contrast scrim behind the checkbox */}
+        <div style={{ position:'absolute', inset:0, zIndex:2, pointerEvents:'none',
+          background:'linear-gradient(160deg, rgba(10,12,16,.42), transparent 38%)',
+          opacity: showCheck && !inset ? 1 : 0, transition:'opacity .13s' }}></div>
+        <SelCheck checked={checked} visible={showCheck} onClick={(e)=>{ e.stopPropagation(); onCheck(e, idx); }} />
+        <div style={{ position:'absolute', left:10, bottom:-12, zIndex:2, padding:4, borderRadius:8, background:T.card, boxShadow:'0 2px 8px rgba(0,0,0,.4)' }}>
+          <Fav site={site} size={22} radius={5} />
+        </div>
+      </div>
+      <div style={{ padding:'18px 14px 14px' }}>
+        <div style={{ display:'flex', alignItems:'flex-start', gap:6 }}>
+          <h3 style={{ margin:0, color:T.fg, fontSize:14, fontWeight:600, lineHeight:1.3, flex:1,
+            display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{site.title}</h3>
+          <button onClick={(e)=>e.stopPropagation()} style={{ width:26, height:26, flexShrink:0, borderRadius:6, border:0,
+            background:'transparent', color:T.mfg, display:'grid', placeItems:'center', cursor:'pointer' }}><Icon d={IC.more} size={15} /></button>
+        </div>
+        <div style={{ display:'flex', alignItems:'center', gap:4, color:T.mfg, fontSize:12.5, marginTop:2, minWidth:0 }}>
+          <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{site.url}</span>
+          <Icon d={IC.external} size={11} style={{ flexShrink:0, opacity:.8 }} />
+        </div>
+        {site.tags && site.tags.length ? (
+          <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginTop:10 }}>
+            {site.tags.map(t=> t.folder
+              ? <span key={t.name} style={{ display:'inline-flex', alignItems:'center', gap:4, borderRadius:9999, padding:'2px 8px',
+                  fontSize:11, color:T.mfg, border:`1px solid ${T.bdr}`, lineHeight:1.4 }}><Icon d={IC.folder} size={10} />{t.name}</span>
+              : <Tag key={t.name} {...t} />)}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/* ════════ bookmark list row ════════ */
+function Row({ site, idx, checked, anySelected, entry, selectMode, selStyle, leaving, previews, onCardClick, onCheck, last }){
+  const [h,setH]=useState(false);
+  const showCheck =
+    checked || anySelected || selectMode ? true :
+    entry==='always' ? true :
+    entry==='hover' ? h : false;
+  const inset = selStyle==='inset' && checked;
+  return (
+    <div onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)}
+      onClick={(e)=>onCardClick(e, idx)}
+      data-comment-anchor={'row-'+site.id}
+      style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px',
+        borderBottom: last?0:`1px solid #2a2f39`,
+        background: checked?'rgba(59,130,246,.09)': h?'rgba(255,255,255,.025)':'transparent',
+        cursor:'pointer', userSelect:'none',
+        opacity: leaving?0:1, transform: leaving?'translateX(-12px)':'none',
+        transition:'background .12s, opacity .22s, transform .22s' }}>
+      {previews ? (
+      <div style={{ width:124, aspectRatio:'16 / 9', flexShrink:0, borderRadius:6, overflow:'hidden', position:'relative',
+        background:'#0e1014', border:`1px solid ${checked?shade(T.pri,-5):T.bdr}`,
+        boxShadow: checked?`0 0 0 1px ${T.pri}88`:'none', transition:'border-color .13s, box-shadow .13s' }}>
+        <div style={{ position:'absolute', inset: inset?'5px':'0', borderRadius: inset?4:0, overflow:'hidden',
+          transition:'inset .15s cubic-bezier(.2,.7,.3,1), border-radius .15s' }}>
+          <FauxPage site={site} />
+        </div>
+        <div style={{ position:'absolute', inset:0, zIndex:2, pointerEvents:'none',
+          background:'linear-gradient(160deg, rgba(10,12,16,.5), transparent 55%)',
+          opacity: showCheck && !inset ? 1 : 0, transition:'opacity .13s' }}></div>
+        <SelCheck small checked={checked} visible={showCheck} onClick={(e)=>{ e.stopPropagation(); onCheck(e, idx); }} />
+      </div>
+      ) : null}
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+          {previews
+            ? <Fav site={site} size={16} />
+            : <SwapCheck site={site} size={18} checked={checked} showCheck={showCheck}
+                onClick={(e)=>{ e.stopPropagation(); onCheck(e, idx); }} />}
+          <h3 style={{ margin:0, color:T.fg, fontSize:13.5, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{site.title}</h3>
+        </div>
+        <div style={{ display:'flex', alignItems:'center', gap:4, color:T.mfg, fontSize:12, marginTop:3, minWidth:0, paddingLeft: previews?0:25 }}>
+          <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{site.url}</span>
+          <Icon d={IC.external} size={11} style={{ flexShrink:0, opacity:.8 }} />
+        </div>
+      </div>
+      {site.tags && site.tags.length ? (
+        <div style={{ display:'flex', gap:5, flexShrink:0 }}>
+          {site.tags.map(tg=> tg.folder
+            ? <span key={tg.name} style={{ display:'inline-flex', alignItems:'center', gap:4, borderRadius:9999, padding:'2px 8px',
+                fontSize:11, color:T.mfg, border:`1px solid ${T.bdr}`, lineHeight:1.4 }}><Icon d={IC.folder} size={10} />{tg.name}</span>
+            : <Tag key={tg.name} {...tg} />)}
+        </div>
+      ) : null}
+      <button onClick={(e)=>e.stopPropagation()} style={{ width:26, height:26, flexShrink:0, borderRadius:6, border:0,
+        background:'transparent', color:T.mfg, display:'grid', placeItems:'center', cursor:'pointer' }}><Icon d={IC.more} size={15} /></button>
+    </div>
+  );
+}
+
+/* ════════ batch action bar ════════ */
+function BatchBar({ count, total, onClear, onSelectAll, onMove, onTag, onCopy, onDelete, tagBtnRef }){
+  const open = count>0;
+  return (
+    <div data-screen-label="Batch action bar" aria-hidden={!open}
+      style={{ overflow:'hidden', maxHeight: open?52:0, transition:'max-height .18s cubic-bezier(.2,.7,.3,1)', flexShrink:0 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8, height:46, padding:'0 18px',
+        background:'color-mix(in oklab, #3b82f6 9%, #171a1f)', borderBottom:'1px solid #2f66c4' }}>
+        <button onClick={onClear} title="Clear selection (Esc)" style={{ width:26, height:26, borderRadius:6, border:0,
+          background:'transparent', color:T.fg, display:'grid', placeItems:'center', cursor:'pointer' }}>
+          <Icon d={IC.x} size={15} />
+        </button>
+        <span style={{ fontSize:13, fontWeight:700, color:T.fg, fontVariantNumeric:'tabular-nums' }}>{count} selected</span>
+        {count<total ? (
+          <button onClick={onSelectAll} style={{ border:0, background:'transparent', color:'#9cc0ff', fontSize:12.5,
+            fontWeight:600, cursor:'pointer', padding:'2px 4px', fontFamily:T.font }}>Select all {total}</button>
+        ) : null}
+        <span style={{ marginLeft:4, fontFamily:T.mono, fontSize:10.5, color:'#7d828c', border:`1px solid ${T.bdr}`,
+          borderRadius:4, padding:'1px 5px' }}>esc</span>
+        <div style={{ flex:1 }}></div>
+        <ToolBtn onClick={onMove}><Icon d={IC.folderMove} size={14} /> Move</ToolBtn>
+        <span ref={tagBtnRef} style={{ display:'inline-flex' }}>
+          <ToolBtn onClick={onTag}><Icon d={IC.tag} size={13} /> Add tag</ToolBtn>
+        </span>
+        <ToolBtn onClick={onCopy}><Icon d={IC.copy} size={13} /> Copy URLs</ToolBtn>
+        <div style={{ width:1, height:20, background:T.bdr, margin:'0 4px' }}></div>
+        <ToolBtn danger onClick={onDelete}><Icon d={IC.trash} size={13} /> Delete</ToolBtn>
+      </div>
+    </div>
+  );
+}
+
+/* ════════ dialogs ════════ */
+function Modal({ children, onClose, width=400, label }){
+  useEffect(()=>{
+    const fn = e=>{ if(e.key==='Escape'){ e.stopPropagation(); onClose(); } };
+    window.addEventListener('keydown', fn, true);
+    return ()=>window.removeEventListener('keydown', fn, true);
+  },[]);
+  return (
+    <div data-screen-label={label} onClick={onClose} style={{ position:'fixed', inset:0, zIndex:60, background:'rgba(8,9,12,.6)',
+      display:'grid', placeItems:'center', backdropFilter:'blur(2px)' }}>
+      <div onClick={e=>e.stopPropagation()} style={{ width, maxWidth:'calc(100vw - 40px)', borderRadius:12,
+        border:`1px solid ${T.bdr}`, background:T.card, boxShadow:'0 24px 70px rgba(0,0,0,.6)',
+        fontFamily:T.font, color:T.mfg, animation:'uc-pop .16s cubic-bezier(.2,.7,.3,1)' }}>{children}</div>
+    </div>
+  );
+}
+function DlgBtn({ children, primary, danger, onClick, autoFocus }){
+  return (
+    <button onClick={onClick} autoFocus={autoFocus} style={{ height:32, padding:'0 14px', borderRadius:7, fontSize:12.5,
+      fontWeight:600, cursor:'pointer', fontFamily:T.font,
+      border: primary||danger?0:`1px solid ${T.bdr}`,
+      background: danger?'#c93838' : primary?T.pri:'transparent',
+      color: primary||danger?'#fff':T.fg }}>{children}</button>
+  );
+}
+
+function MoveDialog({ count, onCancel, onConfirm }){
+  const [sel, setSel] = useState('kis');
+  return (
+    <Modal onClose={onCancel} label="Move dialog">
+      <div style={{ padding:'16px 18px 4px' }}>
+        <h2 style={{ margin:0, fontSize:15, fontWeight:700, color:T.fg }}>Move {count} bookmark{count>1?'s':''}</h2>
+        <p style={{ margin:'4px 0 12px', fontSize:12.5, color:T.mfg }}>Choose a destination folder in this collection.</p>
+      </div>
+      <div style={{ padding:'0 12px', display:'flex', flexDirection:'column', gap:2, maxHeight:260, overflowY:'auto' }}>
+        {FOLDERS.map(f=>{
+          const on = sel===f.id;
+          return (
+            <button key={String(f.id)} onClick={()=>setSel(f.id)} aria-checked={on} role="radio"
+              style={{ display:'flex', alignItems:'center', gap:8, height:34, padding:`0 10px 0 ${10+f.depth*18}px`,
+                borderRadius:7, cursor:'pointer', textAlign:'left', fontFamily:T.font, fontSize:13,
+                border:`1px solid ${on?'#2f66c4':'transparent'}`,
+                background: on?'rgba(59,130,246,.12)':'transparent',
+                color: on?'#bcd5ff':T.fg }}>
+              <Icon d={IC.folder} size={13} style={{ opacity: f.root ? 0.55 : 0.85 }} />
+              <span style={{ flex:1, fontStyle:f.root?'italic':'normal', opacity: f.root ? 0.75 : 1 }}>{f.name}</span>
+              {on ? <Icon d={IC.check} size={13} style={{ color:T.pri }} /> : null}
+            </button>
+          );
+        })}
+      </div>
+      <div style={{ display:'flex', justifyContent:'flex-end', gap:8, padding:'14px 18px 16px' }}>
+        <DlgBtn onClick={onCancel}>Cancel</DlgBtn>
+        <DlgBtn primary autoFocus onClick={()=>onConfirm(sel)}>Move here</DlgBtn>
+      </div>
+    </Modal>
+  );
+}
+
+function DeleteDialog({ count, onCancel, onConfirm }){
+  return (
+    <Modal onClose={onCancel} width={380} label="Delete confirmation">
+      <div style={{ padding:'16px 18px 6px', display:'flex', gap:12 }}>
+        <div style={{ width:34, height:34, flexShrink:0, borderRadius:9, background:'rgba(201,56,56,.14)',
+          border:'1px solid rgba(201,56,56,.4)', display:'grid', placeItems:'center', color:'#f87171' }}>
+          <Icon d={IC.trash} size={15} />
+        </div>
+        <div>
+          <h2 style={{ margin:0, fontSize:15, fontWeight:700, color:T.fg }}>Move {count} bookmark{count>1?'s':''} to trashbin?</h2>
+          <p style={{ margin:'5px 0 0', fontSize:12.5, lineHeight:1.55, color:T.mfg }}>
+            They can be restored from the trashbin. Nothing is permanently deleted.</p>
+        </div>
+      </div>
+      <div style={{ display:'flex', justifyContent:'flex-end', gap:8, padding:'14px 18px 16px' }}>
+        <DlgBtn onClick={onCancel}>Cancel</DlgBtn>
+        <DlgBtn danger autoFocus onClick={onConfirm}>Move to trashbin</DlgBtn>
+      </div>
+    </Modal>
+  );
+}
+
+function TagPopover({ anchorRef, onClose, onPick }){
+  const [pos,setPos]=useState(null);
+  useEffect(()=>{
+    const r = anchorRef.current?.getBoundingClientRect();
+    if(r) setPos({ top:r.bottom+6, left:Math.min(r.left, window.innerWidth-200) });
+    const fn = ()=>onClose();
+    window.addEventListener('mousedown', fn);
+    return ()=>window.removeEventListener('mousedown', fn);
+  },[]);
+  if(!pos) return null;
+  const tags = [{name:'blue',color:'#2563b0'},{name:'red',color:'#be123c'},{name:'daily',color:'#be123c'},{name:'ops',color:'#0e7490'}];
+  return (
+    <div onMouseDown={e=>e.stopPropagation()} style={{ position:'fixed', top:pos.top, left:pos.left, zIndex:70, width:186,
+      borderRadius:9, border:`1px solid ${T.bdr}`, background:T.card, boxShadow:'0 14px 40px rgba(0,0,0,.55)',
+      padding:6, fontFamily:T.font, animation:'uc-pop .14s cubic-bezier(.2,.7,.3,1)' }}>
+      <div style={{ padding:'4px 8px 6px', fontSize:11, fontWeight:700, letterSpacing:'.05em', color:'#7d828c' }}>ADD TAG</div>
+      {tags.map(t=>(
+        <button key={t.name} onClick={()=>onPick(t.name)} style={{ display:'flex', alignItems:'center', gap:8, width:'100%',
+          height:30, padding:'0 8px', borderRadius:6, border:0, background:'transparent', color:T.fg, fontSize:12.5,
+          cursor:'pointer', fontFamily:T.font, textAlign:'left' }}
+          onMouseEnter={e=>e.currentTarget.style.background=T.sec}
+          onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+          <span style={{ width:9, height:9, borderRadius:'50%', background:t.color }}></span>{t.name}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ════════ toasts ════════ */
+function Toasts({ list }){
+  return (
+    <div style={{ position:'fixed', bottom:22, left:'50%', transform:'translateX(-50%)', zIndex:80,
+      display:'flex', flexDirection:'column', alignItems:'center', gap:8, pointerEvents:'none' }}>
+      {list.map(t=>(
+        <div key={t.id} style={{ display:'flex', alignItems:'center', gap:9, padding:'10px 16px', borderRadius:9,
+          background:'#22252e', border:`1px solid ${t.kind==='error'?'rgba(201,56,56,.55)':T.bdr}`,
+          boxShadow:'0 10px 34px rgba(0,0,0,.5)', color:T.fg, fontSize:13, fontFamily:T.font,
+          animation:'uc-toast .2s cubic-bezier(.2,.7,.3,1)' }}>
+          <span style={{ color: t.kind==='error'?'#f87171':'#4ade80', display:'grid', placeItems:'center' }}>
+            <Icon d={t.kind==='error'?IC.alert:IC.check} size={14} sw={2.5} />
+          </span>
+          {t.msg}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ════════ app ════════ */
+function App(){
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [items, setItems] = useState(BOOKMARKS);
+  const [selected, setSelected] = useState(()=>new Set());
+  const [selectMode, setSelectMode] = useState(false);
+  const [anchor, setAnchor] = useState(null);
+  const [dialog, setDialog] = useState(null); // 'move' | 'delete' | 'tag'
+  const [leaving, setLeaving] = useState(()=>new Set());
+  const [trashCount, setTrashCount] = useState(0);
+  const [toasts, setToasts] = useState([]);
+  const tagBtnRef = useRef(null);
+  const [layout, setLayout] = useState('list');
+  const [previews, setPreviews] = useState(true);
+
+  const anySelected = selected.size>0;
+  const selecting = anySelected || selectMode;
+
+  const toast = useCallback((msg, kind='ok')=>{
+    const id = Math.random().toString(36).slice(2);
+    setToasts(ts=>[...ts, {id, msg, kind}]);
+    setTimeout(()=>setToasts(ts=>ts.filter(x=>x.id!==id)), 4000);
+  },[]);
+
+  const clearSel = useCallback(()=>{ setSelected(new Set()); setSelectMode(false); setAnchor(null); },[]);
+
+  const toggle = useCallback((idx)=>{
+    setSelected(prev=>{
+      const next = new Set(prev);
+      const id = items[idx].id;
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+    setAnchor(idx);
+  },[items]);
+
+  const rangeTo = useCallback((idx)=>{
+    if(anchor==null){ toggle(idx); return; }
+    setSelected(prev=>{
+      const next = new Set(prev);
+      const [a,b] = anchor<idx ? [anchor,idx] : [idx,anchor];
+      for(let i=a;i<=b;i++) next.add(items[i].id);
+      return next;
+    });
+  },[anchor, items, toggle]);
+
+  const onCardClick = useCallback((e, idx)=>{
+    if(e.shiftKey && selecting){ e.preventDefault(); rangeTo(idx); return; }
+    if(e.metaKey || e.ctrlKey){ toggle(idx); return; }
+    if(selecting){ toggle(idx); return; }
+    toast(`Opening ${items[idx].url.split('/')[0]} ↗`);
+  },[selecting, rangeTo, toggle, items, toast]);
+
+  const onCheck = useCallback((e, idx)=>{
+    if(e.shiftKey && selecting){ rangeTo(idx); return; }
+    toggle(idx);
+  },[selecting, rangeTo, toggle]);
+
+  /* keyboard: esc clears, cmd+a selects all while selecting */
+  useEffect(()=>{
+    const fn = (e)=>{
+      if(e.key==='Escape' && !dialog) clearSel();
+      if((e.metaKey||e.ctrlKey) && e.key==='a' && selecting && !dialog){
+        e.preventDefault();
+        setSelected(new Set(items.map(b=>b.id)));
+      }
+    };
+    window.addEventListener('keydown', fn);
+    return ()=>window.removeEventListener('keydown', fn);
+  },[selecting, items, dialog, clearSel]);
+
+  /* ── batch actions ── */
+  const n = selected.size;
+  const doMove = (folderId)=>{
+    setDialog(null);
+    if(t.simulateFailure){ toast('Failed to move bookmarks. No changes were made.', 'error'); return; }
+    const name = folderId==null ? 'collection root' : FOLDERS.find(f=>f.id===folderId).name;
+    toast(`Moved ${n} bookmark${n>1?'s':''} to ${name}.`);
+    clearSel();
+  };
+  const doDelete = ()=>{
+    setDialog(null);
+    if(t.simulateFailure){ toast('Failed to delete bookmarks. No changes were made.', 'error'); return; }
+    const ids = new Set(selected);
+    setLeaving(ids);
+    setTimeout(()=>{
+      setItems(prev=>prev.filter(b=>!ids.has(b.id)));
+      setLeaving(new Set());
+      setTrashCount(c=>c+ids.size);
+      toast(`${ids.size} bookmark${ids.size>1?'s':''} moved to trashbin.`);
+    }, 240);
+    clearSel();
+  };
+  const doCopy = ()=>{
+    const urls = items.filter(b=>selected.has(b.id)).map(b=>'https://'+b.url).join('\n');
+    try { navigator.clipboard && navigator.clipboard.writeText(urls); } catch(_e){}
+    toast(`Copied ${n} URL${n>1?'s':''} to clipboard.`);
+  };
+  const doTag = (name)=>{
+    setDialog(null);
+    toast(`Tagged ${n} bookmark${n>1?'s':''} with “${name}”.`);
+    clearSel();
+  };
+
+  return (
+    <div style={{ display:'flex', height:'100vh', background:T.bg, color:T.fg, fontFamily:T.font, overflow:'hidden' }}>
+      <Sidebar trashCount={trashCount} />
+      <main data-screen-label={layout==='grid'?'Bookmark grid':'Bookmark list'} style={{ flex:1, minWidth:0, display:'flex', flexDirection:'column' }}>
+        <Header />
+        {/* toolbar */}
+        <div style={{ display:'flex', alignItems:'center', gap:8, height:50, padding:'0 18px', flexShrink:0 }}>
+          <span style={{ fontSize:12.5, color:'#7d828c' }}>{items.length} bookmarks</span>
+          <div style={{ flex:1 }}></div>
+          {t.toolbarSelect || t.entry==='button' ? (
+            <ToolBtn on={selecting} onClick={()=> selecting ? clearSel() : setSelectMode(true)}>
+              <Icon d={selecting?IC.x:IC.check} size={13} /> {selecting?'Cancel':'Select'}
+            </ToolBtn>
+          ) : null}
+          <ToolBtn on={previews} onClick={()=>setPreviews(p=>!p)}><Icon d={IC.eye} size={13} /> Previews</ToolBtn>
+          <Seg items={[IC.grid, IC.list]} active={layout==='grid'?0:1} onChange={(i)=>setLayout(i===0?'grid':'list')} />
+          <ToolBtn><Icon d={IC.sortD} size={13} /> Date added <Icon d={IC.chevD} size={11} /></ToolBtn>
+          <button style={{ width:30, height:30, borderRadius:7, border:0, background:'transparent', color:T.mfg,
+            display:'grid', placeItems:'center', cursor:'pointer' }}><Icon d={IC.gear} size={15} /></button>
+        </div>
+        <BatchBar count={n} total={items.length} tagBtnRef={tagBtnRef}
+          onClear={clearSel}
+          onSelectAll={()=>setSelected(new Set(items.map(b=>b.id)))}
+          onMove={()=>setDialog('move')}
+          onTag={()=>setDialog(dialog==='tag'?null:'tag')}
+          onCopy={doCopy}
+          onDelete={()=>setDialog('delete')} />
+        {/* grid */}
+        <div style={{ flex:1, overflowY:'auto', padding:'14px 18px 30px' }}>
+          {layout==='grid' ? (
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(252px, 1fr))', gap:16 }}>
+              {items.map((b,i)=>(
+                <Card key={b.id} site={b} idx={i} previews={previews}
+                  checked={selected.has(b.id)} anySelected={anySelected}
+                  entry={t.entry} selectMode={selectMode} selStyle={t.selStyle}
+                  leaving={leaving.has(b.id)}
+                  onCardClick={onCardClick} onCheck={onCheck} />
+              ))}
+            </div>
+          ) : (
+            <div style={{ border:`1px solid ${T.bdr}`, borderRadius:8, background:T.card, overflow:'hidden' }}>
+              {items.map((b,i)=>(
+                <Row key={b.id} site={b} idx={i} last={i===items.length-1} previews={previews}
+                  checked={selected.has(b.id)} anySelected={anySelected}
+                  entry={t.entry} selectMode={selectMode} selStyle={t.selStyle}
+                  leaving={leaving.has(b.id)}
+                  onCardClick={onCardClick} onCheck={onCheck} />
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+
+      {dialog==='move' ? <MoveDialog count={n} onCancel={()=>setDialog(null)} onConfirm={doMove} /> : null}
+      {dialog==='delete' ? <DeleteDialog count={n} onCancel={()=>setDialog(null)} onConfirm={doDelete} /> : null}
+      {dialog==='tag' ? <TagPopover anchorRef={tagBtnRef} onClose={()=>setDialog(null)} onPick={doTag} /> : null}
+      <Toasts list={toasts} />
+
+      <TweaksPanel>
+        <TweakSection label="Selection" />
+        <TweakRadio label="Entry mechanic" value={t.entry} options={['hover','always','button']}
+          onChange={v=>{ setTweak('entry', v); }} />
+        <TweakRadio label="Selected style" value={t.selStyle} options={['inset','ring']}
+          onChange={v=>setTweak('selStyle', v)} />
+        <TweakToggle label="Select button in toolbar" value={t.toolbarSelect}
+          onChange={v=>setTweak('toolbarSelect', v)} />
+        <TweakSection label="Edge cases" />
+        <TweakToggle label="Simulate batch failure" value={t.simulateFailure}
+          onChange={v=>setTweak('simulateFailure', v)} />
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+</script>
+</body>
+</html>

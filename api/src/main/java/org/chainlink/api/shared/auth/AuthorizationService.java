@@ -37,6 +37,22 @@ public class AuthorizationService {
     }
 
     /**
+     * Batch variant of {@link #requireSameCollection(BelongsToCollection, ID)}:
+     * every submitted entity must belong to the already-authorized collection,
+     * otherwise access to one collection would allow mutating entities of any
+     * other (IDOR). Batch endpoints must call this instead of hand-rolling the
+     * loop so the guard cannot be forgotten.
+     */
+    public void requireSameCollection(
+        @NonNull Iterable<? extends BelongsToCollection> entities,
+        @NonNull ID<Collection> expectedCollectionId
+    ) {
+        for (BelongsToCollection entity : entities) {
+            requireSameCollection(entity, expectedCollectionId);
+        }
+    }
+
+    /**
      * Rejects attempts to associate an entity with a collection other than its own.
      * Prevents privilege escalation when a user has access to both the source and
      * target collections (e.g. updating a saved search and silently re-homing it

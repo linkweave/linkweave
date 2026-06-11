@@ -84,6 +84,24 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             .fetch();
     }
 
+    /**
+     * Bulk lookup for batch operations. Tags are fetch-joined because the
+     * batch endpoints map every loaded bookmark to JSON (avoids N+1 lazy
+     * loads). Unknown ids are simply absent from the result — completeness
+     * is the caller's concern.
+     */
+    @NonNull
+    public List<Bookmark> findByIdsWithTags(@NonNull List<ID<Bookmark>> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        var uuids = ids.stream().map(ID::getUUID).toList();
+        return db.selectFrom(QBookmark.bookmark)
+            .leftJoin(QBookmark.bookmark.tags).fetchJoin()
+            .where(QBookmark.bookmark.id.in(uuids))
+            .fetch();
+    }
+
     @NonNull
     public List<Bookmark> findByCollection(@NonNull ID<Collection> collectionId) {
         return db.selectFrom(QBookmark.bookmark)
@@ -161,6 +179,15 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             .from(QBookmark.bookmark)
             .where(QBookmark.bookmark.id.eq(bookmarkId.getUUID()))
             .fetchOne();
+    }
+
+    @NonNull
+    public Optional<ID<Collection>> findCollectionIdById(@NonNull ID<Bookmark> bookmarkId) {
+        return db.select(QBookmark.bookmark.collection.id)
+            .from(QBookmark.bookmark)
+            .where(QBookmark.bookmark.id.eq(bookmarkId.getUUID()))
+            .fetchOne()
+            .map(uuid -> ID.of(uuid, Collection.class));
     }
 
     @NonNull

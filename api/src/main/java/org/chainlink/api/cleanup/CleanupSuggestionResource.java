@@ -1,6 +1,7 @@
 package org.chainlink.api.cleanup;
 
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.Authenticated;
@@ -84,6 +85,8 @@ public class CleanupSuggestionResource {
     @Authenticated
     public void moveToTrash(@NotNull @Valid @NonNull MoveToTrashJson json) {
         authorizationService.requireCollectionAccess(json.getCollectionId());
-        cleanupSuggestionService.moveToTrash(json.getBookmarkIds());
+        List<Bookmark> bookmarks = bookmarkService.getBookmarks(json.getBookmarkIds());
+        authorizationService.requireSameCollection(bookmarks, json.getCollectionId());
+        bookmarkService.batchRemove(bookmarks);
     }
 }
