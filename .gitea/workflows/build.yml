@@ -55,33 +55,47 @@ jobs:
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
+      # Log in via the docker CLI (not docker/login-action) so auth goes through
+      # the host daemon's /auth endpoint over IPv6, and to avoid the Node action
+      # crashing under this runner.
       - name: Log in to Docker Registry
-        uses: docker/login-action@v3
-        with:
-          registry: git.markushofstetter.com
-          username: ${{ gitea.actor }}
-          password: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
+        env:
+          REGISTRY: git.markushofstetter.com
+          REGISTRY_USER: ${{ gitea.actor }}
+          REGISTRY_TOKEN: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
+        run: |
+          if [[ -z "$REGISTRY_TOKEN" ]]; then
+            echo "DOCKER_REGISTRY_TOKEN secret is empty — cannot log in" >&2
+            exit 1
+          fi
+          echo "$REGISTRY_TOKEN" | docker login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin
 
+      # Build + push on the host docker daemon (no docker-container buildx
+      # builder): the host has IPv6 and reaches the registry via the AAAA
+      # record, avoiding the IPv4-only netiter timeout. See ci-registry handoff.
       - name: Build and push API Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: |
-            git.markushofstetter.com/dividbzero/chainlink-api:latest
-            git.markushofstetter.com/dividbzero/chainlink-api:${{ steps.commit-hash.outputs.COMMIT_HASH }}
-            ${{ startsWith(gitea.ref, 'refs/tags/v') && format('git.markushofstetter.com/dividbzero/chainlink-api:{0}', gitea.ref_name) || '' }}
-          file: api/src/main/docker/Dockerfile.jvm
-          build-args: |
-            COMMIT_HASH=${{ steps.commit-hash.outputs.COMMIT_HASH }}
-            VERSION=${{ steps.version.outputs.VERSION }}
-          labels: |
-            org.opencontainers.image.commit=${{ steps.commit-hash.outputs.COMMIT_HASH }}
-            org.opencontainers.image.title=Chainlink API
-            org.opencontainers.image.description=Quarkus-based Java backend for Chainlink
+        working-directory: .
+        env:
+          DOCKER_BUILDKIT: "1"
+          IMAGE: git.markushofstetter.com/dividbzero/chainlink-api
+          COMMIT_HASH: ${{ steps.commit-hash.outputs.COMMIT_HASH }}
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          tags=("${IMAGE}:latest" "${IMAGE}:${COMMIT_HASH}")
+          if [[ "${{ gitea.ref }}" == refs/tags/v* ]]; then
+            tags+=("${IMAGE}:${{ gitea.ref_name }}")
+          fi
+          tag_args=()
+          for t in "${tags[@]}"; do tag_args+=(-t "$t"); done
+          docker build "${tag_args[@]}" \
+            -f api/src/main/docker/Dockerfile.jvm \
+            --build-arg COMMIT_HASH="${COMMIT_HASH}" \
+            --build-arg VERSION="${VERSION}" \
+            --label org.opencontainers.image.commit="${COMMIT_HASH}" \
+            --label org.opencontainers.image.title="Chainlink API" \
+            --label org.opencontainers.image.description="Quarkus-based Java backend for Chainlink" \
+            .
+          for t in "${tags[@]}"; do docker push "$t"; done
 
   test-frontend:
     runs-on: ubuntu-latest
@@ -136,36 +150,49 @@ jobs:
         run: |
           echo "Commit hash output: ${{ steps.commit-hash.outputs.COMMIT_HASH }}"
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
+      # Log in via the docker CLI (not docker/login-action) so auth goes through
+      # the host daemon's /auth endpoint over IPv6, and to avoid the Node action
+      # crashing under this runner.
       - name: Log in to Docker Registry
-        uses: docker/login-action@v3
-        with:
-          registry: git.markushofstetter.com
-          username: ${{ gitea.actor }}
-          password: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
+        env:
+          REGISTRY: git.markushofstetter.com
+          REGISTRY_USER: ${{ gitea.actor }}
+          REGISTRY_TOKEN: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
+        run: |
+          if [[ -z "$REGISTRY_TOKEN" ]]; then
+            echo "DOCKER_REGISTRY_TOKEN secret is empty — cannot log in" >&2
+            exit 1
+          fi
+          echo "$REGISTRY_TOKEN" | docker login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin
 
+      # Build + push on the host docker daemon (no docker-container buildx
+      # builder): the host has IPv6 and reaches the registry via the AAAA
+      # record, avoiding the IPv4-only netiter timeout. See ci-registry handoff.
       - name: Build and push frontend Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: frontend
-          push: true
-          tags: |
-            git.markushofstetter.com/dividbzero/chainlink-frontend:latest
-            git.markushofstetter.com/dividbzero/chainlink-frontend:${{ steps.commit-hash.outputs.COMMIT_HASH }}
-            ${{ startsWith(gitea.ref, 'refs/tags/v') && format('git.markushofstetter.com/dividbzero/chainlink-frontend:{0}', gitea.ref_name) || '' }}
-          file: frontend/Dockerfile
-          build-args: |
-            COMMIT_HASH=${{ steps.commit-hash.outputs.COMMIT_HASH }}
-            VERSION=${{ steps.version.outputs.VERSION }}
-            VITE_SENTRY_DSN=https://dd086e579810c04e75f2e37463ac7378@o4509425614520320.ingest.de.sentry.io/4511463699120208
-          secrets: |
-            sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
-          labels: |
-            org.opencontainers.image.commit=${{ steps.commit-hash.outputs.COMMIT_HASH }}
-            org.opencontainers.image.title=Chainlink Frontend
-            org.opencontainers.image.description=Vue.js frontend for Chainlink
+        working-directory: frontend
+        env:
+          DOCKER_BUILDKIT: "1"
+          IMAGE: git.markushofstetter.com/dividbzero/chainlink-frontend
+          COMMIT_HASH: ${{ steps.commit-hash.outputs.COMMIT_HASH }}
+          VERSION: ${{ steps.version.outputs.VERSION }}
+          sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          tags=("${IMAGE}:latest" "${IMAGE}:${COMMIT_HASH}")
+          if [[ "${{ gitea.ref }}" == refs/tags/v* ]]; then
+            tags+=("${IMAGE}:${{ gitea.ref_name }}")
+          fi
+          tag_args=()
+          for t in "${tags[@]}"; do tag_args+=(-t "$t"); done
+          docker build "${tag_args[@]}" \
+            --build-arg COMMIT_HASH="${COMMIT_HASH}" \
+            --build-arg VERSION="${VERSION}" \
+            --build-arg VITE_SENTRY_DSN="https://dd086e579810c04e75f2e37463ac7378@o4509425614520320.ingest.de.sentry.io/4511463699120208" \
+            --secret id=sentry_auth_token,env=sentry_auth_token \
+            --label org.opencontainers.image.commit="${COMMIT_HASH}" \
+            --label org.opencontainers.image.title="Chainlink Frontend" \
+            --label org.opencontainers.image.description="Vue.js frontend for Chainlink" \
+            .
+          for t in "${tags[@]}"; do docker push "$t"; done
 
   build-screenshot-sidecar:
     runs-on: ubuntu-latest
@@ -178,30 +205,41 @@ jobs:
           hash="${{ gitea.sha }}"
           echo "COMMIT_HASH=${hash::7}" >> $GITEA_OUTPUT
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
+      # Log in via the docker CLI (not docker/login-action) so auth goes through
+      # the host daemon's /auth endpoint over IPv6, and to avoid the Node action
+      # crashing under this runner.
       - name: Log in to Docker Registry
-        uses: docker/login-action@v3
-        with:
-          registry: git.markushofstetter.com
-          username: ${{ gitea.actor }}
-          password: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
+        env:
+          REGISTRY: git.markushofstetter.com
+          REGISTRY_USER: ${{ gitea.actor }}
+          REGISTRY_TOKEN: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
+        run: |
+          if [[ -z "$REGISTRY_TOKEN" ]]; then
+            echo "DOCKER_REGISTRY_TOKEN secret is empty — cannot log in" >&2
+            exit 1
+          fi
+          echo "$REGISTRY_TOKEN" | docker login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin
 
+      # Build + push on the host docker daemon (no docker-container buildx
+      # builder): the host has IPv6 and reaches the registry via the AAAA
+      # record, avoiding the IPv4-only netiter timeout. The type=gha cache was
+      # dropped because it requires the docker-container driver. See handoff.
       - name: Build and push screenshot service image
-        uses: docker/build-push-action@v6
-        with:
-          context: screenshot-service
-          push: true
-          tags: |
-            git.markushofstetter.com/dividbzero/chainlink-screenshot-service:latest
-            git.markushofstetter.com/dividbzero/chainlink-screenshot-service:${{ steps.commit-hash.outputs.COMMIT_HASH }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          labels: |
-            org.opencontainers.image.commit=${{ steps.commit-hash.outputs.COMMIT_HASH }}
-            org.opencontainers.image.title=Chainlink Screenshot Service
-            org.opencontainers.image.description=Playwright-based screenshot sidecar for Chainlink
+        working-directory: screenshot-service
+        env:
+          DOCKER_BUILDKIT: "1"
+          IMAGE: git.markushofstetter.com/dividbzero/chainlink-screenshot-service
+          COMMIT_HASH: ${{ steps.commit-hash.outputs.COMMIT_HASH }}
+        run: |
+          docker build \
+            -t "${IMAGE}:latest" \
+            -t "${IMAGE}:${COMMIT_HASH}" \
+            --label org.opencontainers.image.commit="${COMMIT_HASH}" \
+            --label org.opencontainers.image.title="Chainlink Screenshot Service" \
+            --label org.opencontainers.image.description="Playwright-based screenshot sidecar for Chainlink" \
+            .
+          docker push "${IMAGE}:latest"
+          docker push "${IMAGE}:${COMMIT_HASH}"
 
   build-extension:
     runs-on: ubuntu-latest
