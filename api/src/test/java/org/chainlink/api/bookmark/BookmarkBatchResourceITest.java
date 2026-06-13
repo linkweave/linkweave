@@ -291,7 +291,7 @@ class BookmarkBatchResourceITest {
             .body(body)
             .post("/bookmarks/batch-tag")
             .then()
-            .statusCode(greaterThanOrEqualTo(400));
+            .statusCode(403);
 
         RestAssured.given()
             .queryParam("collectionId", collection.getId().getUUID().toString())
@@ -318,7 +318,87 @@ class BookmarkBatchResourceITest {
             .statusCode(400);
     }
 
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldReturn400_whenBatchMoveExceedsMaxSize() {
+        Collection collection = fixtureService.createTestCollection();
+        String ids = java.util.stream.IntStream.range(0, 501)
+            .mapToObj(_ -> "\"" + java.util.UUID.randomUUID() + "\"")
+            .collect(Collectors.joining(","));
+
+        String body = """
+            {"collectionId":"%s","folderId":null,"bookmarkIds":[%s]}
+            """.formatted(collection.getId().getUUID(), ids);
+
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/bookmarks/batch-move")
+            .then()
+            .statusCode(400);
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldReturn403_whenMovingBookmarkOfOtherCollection() {
+        Collection collection = fixtureService.createTestCollection();
+        Collection otherCollection = fixtureService.createTestCollection();
+        Bookmark foreign = persistBookmark(otherCollection, "foreign");
+
+        String body = """
+            {"collectionId":"%s","folderId":null}
+            """.formatted(collection.getId().getUUID());
+
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .patch("/bookmarks/" + foreign.getId().getUUID() + "/move")
+            .then()
+            .statusCode(403);
+    }
+
     private static final int BATCH_LOAD_SIZE = 500;
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldNotDuplicateBookmarkInResponse_whenBookmarkHasMultipleTags() {
+        Collection collection = fixtureService.createTestCollection();
+        Folder folder = fixtureService.persistFolder(b -> b
+            .withCollection(collection)
+            .withName("Target")
+        );
+        Tag tag1 = fixtureService.persistTag(b -> b
+            .withCollection(collection)
+            .withName("Tag One")
+            .withColor("#FF0000")
+        );
+        Tag tag2 = fixtureService.persistTag(b -> b
+            .withCollection(collection)
+            .withName("Tag Two")
+            .withColor("#00FF00")
+        );
+        Bookmark bookmark = fixtureService.persistBookmark(b -> b
+            .withCollection(collection)
+            .withTitle("multi-tagged")
+            .withUrl("https://example.com/multi-tagged")
+            .withTags(new java.util.HashSet<>(java.util.Set.of(tag1, tag2)))
+        );
+
+        String body = """
+            {"collectionId":"%s","folderId":"%s","bookmarkIds":["%s"]}
+            """.formatted(
+            collection.getId().getUUID(),
+            folder.getId().getUUID(),
+            bookmark.getId().getUUID());
+
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/bookmarks/batch-move")
+            .then()
+            .statusCode(200)
+            .body("bookmarkList", hasSize(1));
+    }
 
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})

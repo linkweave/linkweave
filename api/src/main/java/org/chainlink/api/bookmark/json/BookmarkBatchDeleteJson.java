@@ -5,6 +5,7 @@ import java.util.List;
 import ch.dvbern.dvbstarter.types.id.ID;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.chainlink.api.bookmark.Bookmark;
@@ -25,6 +26,7 @@ public class BookmarkBatchDeleteJson {
 
     @NotNull
     @NotEmpty
+    @Size(max = 500)
     @NonNull
     @Schema(required = true)
     List<ID<Bookmark>> bookmarkIds;

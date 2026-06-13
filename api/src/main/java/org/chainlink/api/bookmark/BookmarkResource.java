@@ -92,7 +92,9 @@ public class BookmarkResource {
         @NotNull @Valid @NonNull BookmarkMoveJson json
     ) {
         authorizationService.requireCollectionAccess(json.getCollectionId());
-        Bookmark bookmark = bookmarkService.moveBookmarkToFolder(bookmarkId, json);
+        Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
+        authorizationService.requireSameCollection(bookmark, json.getCollectionId());
+        bookmarkService.batchMoveToFolder(List.of(bookmark), json.getFolderId(), json.getCollectionId());
         return BookmarkMapper.toJson(bookmark);
     }
 

@@ -15,10 +15,11 @@ import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.bookmark.folder.FolderRepo;
-import org.chainlink.api.bookmark.json.BookmarkMoveJson;
 import org.chainlink.api.bookmark.json.BookmarkSaveJson;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.collection.CollectionRepo;
+import ch.dvbern.oss.commons.i18nl10n.I18nMessage;
+import org.chainlink.infrastructure.errorhandling.AppAuthorizationException;
 import org.chainlink.infrastructure.errorhandling.AppFailureException;
 import org.chainlink.infrastructure.errorhandling.AppFailureMessage;
 import org.chainlink.infrastructure.stereotypes.Service;
@@ -219,25 +220,22 @@ public class BookmarkService {
         }
     }
 
-    @NonNull
-    public Bookmark moveBookmarkToFolder(@NonNull ID<Bookmark> bookmarkId, @NonNull BookmarkMoveJson json) {
-        Bookmark bookmark = bookmarkRepo.getById(bookmarkId);
-        batchMoveToFolder(List.of(bookmark), json.getFolderId(), json.getCollectionId());
-        return bookmark;
-    }
-
     private void requireFolderBelongsToCollection(@NonNull Folder folder, @NonNull ID<Collection> collectionId) {
         if (!folder.getCollection().getId().equals(collectionId)) {
-            throw new AppFailureException(
-                AppFailureMessage.internalError("Folder does not belong to the specified collection")
+            throw new AppAuthorizationException(
+                I18nMessage.of("AppAuthorization.FOLDER_COLLECTION_MISMATCH",
+                    "folderId", folder.getId().getUUID().toString(),
+                    "collectionId", collectionId.getUUID().toString())
             );
         }
     }
 
     private void requireTagBelongsToCollection(@NonNull Tag tag, @NonNull ID<Collection> collectionId) {
         if (!tag.getCollectionId().equals(collectionId)) {
-            throw new AppFailureException(
-                AppFailureMessage.internalError("Tag does not belong to the specified collection")
+            throw new AppAuthorizationException(
+                I18nMessage.of("AppAuthorization.TAG_COLLECTION_MISMATCH",
+                    "tagId", tag.getId().getUUID().toString(),
+                    "collectionId", collectionId.getUUID().toString())
             );
         }
     }
