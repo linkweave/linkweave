@@ -3,13 +3,12 @@ package org.chainlink.api.screenshot;
 import io.quarkus.scheduler.Scheduled;
 import io.quarkus.scheduler.ScheduledExecution;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.chainlink.api.bookmark.BookmarkRepo;
 import org.chainlink.api.collection.favicon.BackendFetchPolicy;
 import org.chainlink.api.shared.config.ConfigService;
-import org.chainlink.infrastructure.stereotypes.Service;
+import org.chainlink.infrastructure.stereotypes.NoTransactionService;
 import org.jspecify.annotations.NonNull;
 
 /**
@@ -26,8 +25,16 @@ import org.jspecify.annotations.NonNull;
  * permanent "done" flag: a bookmark re-enters the pending set once its capture
  * is older than the success TTL, so an expired (or evicted) cached image gets
  * regenerated rather than silently disappearing.
+ *
+ * <p>Non-transactional by design ({@link NoTransactionService}): the capture
+ * loop makes blocking sidecar HTTP calls and delegates each DB write to
+ * {@code captureNow}'s own short transaction. Running the loop inside a single
+ * transaction (as a proxied caller — e.g. a test — would otherwise trigger via
+ * the {@code @Service} stereotype) keeps a DB connection enlisted across the
+ * REST calls and lets a rest-client thread stay associated at commit, which
+ * Narayana aborts with "committing with N threads active".
  */
-@Service
+@NoTransactionService
 @ApplicationScoped
 @RequiredArgsConstructor
 @Slf4j
@@ -44,7 +51,6 @@ public class ScreenshotCaptureJobService {
         skipExecutionIf = DisabledPredicate.class,
         identity = "screenshot-capture"
     )
-    @Transactional(Transactional.TxType.NOT_SUPPORTED)
     public void scheduledRun() {
         run();
     }
