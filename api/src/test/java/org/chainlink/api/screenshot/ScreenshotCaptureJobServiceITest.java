@@ -123,7 +123,7 @@ class ScreenshotCaptureJobServiceITest {
      */
     private void blockAllExistingPendingBookmarks() {
         bookmarkRepo.findPendingScreenshotCaptures(Integer.MAX_VALUE, 0)
-            .forEach(b -> cache.putNegative(ScreenshotCacheService.keyFor(b.getUrl())));
+            .forEach(c -> cache.putNegative(ScreenshotCacheService.keyFor(c.url())));
     }
 
     @Test
@@ -191,6 +191,46 @@ class ScreenshotCaptureJobServiceITest {
         // Both bookmarks were attempted (sidecar unreachable → failed) and the loop
         // stopped without spinning — captured + failed == 2, not 5.
         Assertions.assertThat(result.captured() + result.failed()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldSkipBookmarkWhoseHostMatchesCollectionAllowlist() {
+        // Host is in the collection's favicon allowlist → the backend can't reach
+        // it (the browser loads it directly). The job must not attempt capture and
+        // must not leave a negative cache entry that would re-trigger every TTL.
+        Collection allowlisted = fixtureService.createTestCollection(b -> b
+            .withScreenshotEnabled(true)
+            .withFaviconAllowlist("intranet.local"));
+        Bookmark bookmark = fixtureService.persistBookmark(builder -> builder
+            .withCollection(allowlisted)
+            .withUrl("https://intranet.local/page-" + UUID.randomUUID()));
+        String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
+
+        job.run(50);
+
+        Assertions.assertThat(cache.get(key))
+            .as("allowlisted host must not be captured nor negatively cached")
+            .isEmpty();
+    }
+
+    @Test
+    void shouldStillCaptureBookmarkWhoseHostIsNotInCollectionAllowlist() {
+        // Same collection has an allowlist, but this bookmark's host is not in it
+        // → the job proceeds and a cache entry appears (success or negative
+        // depending on sidecar availability), which is proof a capture was tried.
+        Collection withList = fixtureService.createTestCollection(b -> b
+            .withScreenshotEnabled(true)
+            .withFaviconAllowlist("intranet.local"));
+        Bookmark bookmark = fixtureService.persistBookmark(builder -> builder
+            .withCollection(withList)
+            .withUrl("https://example.com/not-listed-" + UUID.randomUUID()));
+        String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
+
+        job.run(50);
+
+        Assertions.assertThat(cache.get(key))
+            .as("non-allowlisted host must still be attempted")
+            .isPresent();
     }
 
     @Test

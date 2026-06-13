@@ -41,6 +41,12 @@ public class CollectionBuilder {
     }
 
     @NonNull
+    public CollectionBuilder withFaviconAllowlist(String faviconAllowlist) {
+        collection.setFaviconAllowlist(faviconAllowlist);
+        return this;
+    }
+
+    @NonNull
     public static Collection build(Consumer<CollectionBuilder> block) {
         CollectionBuilder builder = new CollectionBuilder();
         block.accept(builder);

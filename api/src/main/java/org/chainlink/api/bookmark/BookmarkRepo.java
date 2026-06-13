@@ -17,6 +17,7 @@ import com.querydsl.core.types.dsl.Expressions;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.collection.Collection;
+import org.chainlink.api.collection.QCollection;
 import org.chainlink.infrastructure.db.BaseRepo;
 import org.chainlink.infrastructure.stereotypes.Repository;
 import org.jspecify.annotations.NonNull;
@@ -143,23 +144,45 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             .fetch();
     }
 
+    /** A bookmark awaiting screenshot capture, with the bits the capture job needs
+     * to decide whether to fetch: its id, URL, and the owning collection's favicon
+     * allowlist (hosts the backend must not reach — see {@link PendingScreenshotCapture}). */
+    public record PendingScreenshotCapture(
+        @NonNull ID<Bookmark> bookmarkId,
+        @NonNull URL url,
+        @Nullable String collectionFaviconAllowlist
+    ) {}
+
     /**
      * Uncaptured bookmarks in screenshot-enabled collections, newest-modified
      * first. The DB filter ensures every returned row is pending work; {@code
      * offset} lets the job page past rows blocked by a negative cache entry
      * without re-scanning them.
+     *
+     * <p>Projects scalars only (no entity load, so no timestamp extraction via
+     * Hibernate's shared UTC calendar — see {@link #findUrlById}) and carries
+     * the collection's favicon allowlist so the job can skip hosts the backend
+     * cannot reach without burning capture budget or writing negative entries.
      */
     @NonNull
-    public List<Bookmark> findPendingScreenshotCaptures(int limit, int offset) {
-        return db.selectFrom(QBookmark.bookmark)
+    public List<PendingScreenshotCapture> findPendingScreenshotCaptures(int limit, int offset) {
+        var b = QBookmark.bookmark;
+        return db.select(b.id, b.url, b.collection.faviconAllowlist)
+            .from(b)
             .where(notDeleted()
-                .and(QBookmark.bookmark.collection.screenshotEnabled.isTrue())
-                .and(QBookmark.bookmark.screenshotCapturedAt.isNull()))
-            .orderBy(QBookmark.bookmark.timestampMutiert.desc().nullsLast())
-            .orderBy(QBookmark.bookmark.timestampErstellt.desc())
+                .and(b.collection.screenshotEnabled.isTrue())
+                .and(b.screenshotCapturedAt.isNull()))
+            .orderBy(b.timestampMutiert.desc().nullsLast())
+            .orderBy(b.timestampErstellt.desc())
             .offset(offset)
             .limit(limit)
-            .fetch();
+            .fetch()
+            .stream()
+            .map(t -> new PendingScreenshotCapture(
+                ID.of(Objects.requireNonNull(t.get(b.id)), Bookmark.class),
+                Objects.requireNonNull(t.get(b.url)),
+                t.get(b.collection.faviconAllowlist)))
+            .toList();
     }
 
     /**
@@ -179,6 +202,30 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             .from(QBookmark.bookmark)
             .where(QBookmark.bookmark.id.eq(bookmarkId.getUUID()))
             .fetchOne();
+    }
+
+    /** A bookmark's URL paired with its collection's favicon allowlist. */
+    public record FaviconContext(@NonNull URL url, @Nullable String collectionFaviconAllowlist) {}
+
+    /**
+     * Scalar projection for the favicon read path: the URL plus the owning
+     * collection's allowlist, so the service can skip server-side fetches for
+     * hosts the browser loads directly. Like {@link #findUrlById} this avoids an
+     * entity load (and its timestamp extraction). Left join so an uncollected
+     * bookmark still yields its URL with a {@code null} allowlist.
+     */
+    @NonNull
+    public Optional<FaviconContext> findFaviconContextById(@NonNull ID<Bookmark> bookmarkId) {
+        var b = QBookmark.bookmark;
+        var c = QCollection.collection;
+        return db.select(b.url, c.faviconAllowlist)
+            .from(b)
+            .leftJoin(b.collection, c)
+            .where(b.id.eq(bookmarkId.getUUID()))
+            .fetchOne()
+            .map(t -> new FaviconContext(
+                Objects.requireNonNull(t.get(b.url)),
+                t.get(c.faviconAllowlist)));
     }
 
     @NonNull

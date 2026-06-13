@@ -6,8 +6,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.chainlink.api.bookmark.Bookmark;
 import org.chainlink.api.bookmark.BookmarkRepo;
+import org.chainlink.api.collection.favicon.FaviconAllowlist;
 import org.chainlink.api.shared.config.ConfigService;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
@@ -63,17 +63,20 @@ public class ScreenshotCaptureJobService {
             var page = bookmarkRepo.findPendingScreenshotCaptures(limitForRun, offset);
             if (page.isEmpty()) break;
             int capturedInPage = 0;
-            for (Bookmark b : page) {
+            for (BookmarkRepo.PendingScreenshotCapture b : page) {
                 scanned++;
-                String key = ScreenshotCacheService.keyFor(b.getUrl());
+                String key = ScreenshotCacheService.keyFor(b.url());
                 if (cache.get(key).isPresent()) {
                     continue; // negative cache still active; skip but keep budget free
                 }
+                if (shouldSkipCapture(b)) {
+                    continue; // unreachable host (global skip list / collection allowlist) — keep budget free
+                }
                 boolean ok;
                 try {
-                    ok = screenshotService.captureNow(b.getId());
+                    ok = screenshotService.captureNow(b.bookmarkId());
                 } catch (Exception e) {
-                    LOG.warn("Screenshot capture failed for bookmark {}: {}", b.getId(), e.getMessage());
+                    LOG.warn("Screenshot capture failed for bookmark {}: {}", b.bookmarkId(), e.getMessage());
                     failed++;
                     if (captured + failed >= limitForRun) break outer;
                     continue;
@@ -91,6 +94,18 @@ public class ScreenshotCaptureJobService {
                 scanned, captured, failed, limitForRun);
         }
         return new Result(captured, failed, scanned);
+    }
+
+    /**
+     * Skip hosts the backend cannot or should not reach: the operator-wide
+     * {@code chainlink.fetch.skip-domains} list, and the bookmark's own
+     * collection favicon allowlist (those hosts are loaded directly by the
+     * user's browser)
+     */
+    private boolean shouldSkipCapture(BookmarkRepo.@NonNull PendingScreenshotCapture candidate) {
+        String host = candidate.url().getHost();
+        return configService.getFetchSkipList().matches(host)
+            || FaviconAllowlist.parse(candidate.collectionFaviconAllowlist()).matches(host);
     }
 
     record Result(int captured, int failed, int scanned) {}

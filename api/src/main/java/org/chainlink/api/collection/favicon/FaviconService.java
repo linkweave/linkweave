@@ -21,11 +21,22 @@ public class FaviconService {
     private final FaviconFetcherService fetcher;
 
     public @NonNull Optional<FaviconCacheService.CachedFavicon> getFavicon(@NonNull ID<Bookmark> bookmarkId) {
-        // Scalar URL projection (not the entity): one favicon request per
-        // visible bookmark, and concurrent entity loads race in Hibernate's
-        // shared UTC calendar (HHH-20355, see BookmarkRepo#findUrlById).
-        URL url = bookmarkRepo.findUrlById(bookmarkId)
-            .orElseGet(() -> bookmarkRepo.getById(bookmarkId).getUrl()); // throws the canonical not-found
+        // Scalar projection (not the entity): one favicon request per visible
+        // bookmark, and concurrent entity loads race in Hibernate's shared UTC
+        // calendar (HHH-20355, see BookmarkRepo#findUrlById). The projection also
+        // carries the collection's allowlist so we can short-circuit below.
+        BookmarkRepo.FaviconContext ctx = bookmarkRepo.findFaviconContextById(bookmarkId)
+            .orElseGet(() -> new BookmarkRepo.FaviconContext(
+                bookmarkRepo.getById(bookmarkId).getUrl(), null)); // throws the canonical not-found
+        URL url = ctx.url();
+
+        // Hosts a collection lists in its favicon allowlist are loaded directly
+        // by the user's browser (the backend can't reach them); never fetch or
+        // cache server-side — it would only ever produce negative entries.
+        if (FaviconAllowlist.parse(ctx.collectionFaviconAllowlist()).matches(url.getHost())) {
+            return Optional.empty();
+        }
+
         String origin = FaviconFetcherService.canonicalOrigin(url);
 
         Optional<FaviconCacheService.CachedFavicon> cached = cache.get(origin);
