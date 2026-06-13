@@ -17,11 +17,15 @@ import org.jspecify.annotations.NonNull;
  * most {@code batch-size} missing entries, letting backfills of large
  * collections (toggle-on) drain gradually instead of hammering the sidecar.
  *
- * <p>State is cache-only — there is no per-bookmark "needs capture" column.
- * The job iterates bookmarks of screenshot-enabled collections newest-first,
+ * <p>The job iterates bookmarks of screenshot-enabled collections newest-first,
  * asks the cache whether a fresh entry exists, and captures on misses until
- * the per-run budget is exhausted. Negative cache entries (default 12h TTL)
- * keep the job from re-trying URLs that just failed.
+ * the per-run budget is exhausted. Negative cache entries (default 12h TTL,
+ * with exponential backoff) keep the job from re-trying URLs that just failed.
+ *
+ * <p>The DB filter ({@code screenshotCapturedAt}) is a coarse pre-filter, not a
+ * permanent "done" flag: a bookmark re-enters the pending set once its capture
+ * is older than the success TTL, so an expired (or evicted) cached image gets
+ * regenerated rather than silently disappearing.
  */
 @Service
 @ApplicationScoped
@@ -60,7 +64,8 @@ public class ScreenshotCaptureJobService {
         int offset = 0;
         outer:
         while (captured + failed < limitForRun) {
-            var page = bookmarkRepo.findPendingScreenshotCaptures(limitForRun, offset);
+            var page = bookmarkRepo.findPendingScreenshotCaptures(
+                limitForRun, offset, configService.getScreenshotSuccessTtl());
             if (page.isEmpty()) break;
             int capturedInPage = 0;
             for (BookmarkRepo.PendingScreenshotCapture b : page) {
@@ -85,7 +90,8 @@ public class ScreenshotCaptureJobService {
                 if (captured + failed >= limitForRun) break outer;
             }
             // Advance past the rows that are still pending (skipped + failed);
-            // captured rows have screenshotCapturedAt set and will leave the result set.
+            // captured rows get a fresh screenshotCapturedAt and drop out of the
+            // result set until they age past the success TTL again.
             offset += page.size() - capturedInPage;
             if (page.size() < limitForRun) break; // last page — no more pending captures
         }

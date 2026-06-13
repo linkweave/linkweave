@@ -1,6 +1,7 @@
 package org.chainlink.api.bookmark;
 
 import java.net.URL;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -154,10 +155,13 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
     ) {}
 
     /**
-     * Uncaptured bookmarks in screenshot-enabled collections, newest-modified
-     * first. The DB filter ensures every returned row is pending work; {@code
-     * offset} lets the job page past rows blocked by a negative cache entry
-     * without re-scanning them.
+     * Bookmarks in screenshot-enabled collections that need a (re)capture,
+     * newest-modified first. A row is pending when it has never been captured
+     * <em>or</em> its last capture is older than {@code recaptureAfter} — so a
+     * screenshot whose cached image has expired is regenerated instead of
+     * silently vanishing. Freshly-captured rows are excluded by the DB filter,
+     * keeping the steady-state result set small; {@code offset} lets the job
+     * page past rows blocked by a negative cache entry without re-scanning them.
      *
      * <p>Projects scalars only (no entity load, so no timestamp extraction via
      * Hibernate's shared UTC calendar — see {@link #findUrlById}) and carries
@@ -165,13 +169,18 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
      * cannot reach without burning capture budget or writing negative entries.
      */
     @NonNull
-    public List<PendingScreenshotCapture> findPendingScreenshotCaptures(int limit, int offset) {
+    public List<PendingScreenshotCapture> findPendingScreenshotCaptures(int limit, int offset, @NonNull Duration recaptureAfter) {
         var b = QBookmark.bookmark;
+        var recaptureCutoff = appClock.offsetDateTime().now().minus(recaptureAfter);
+        DateTimeExpression<OffsetDateTime> cutoffExpr = Expressions.dateTimeTemplate(
+            OffsetDateTime.class, "({0})", recaptureCutoff);
+        BooleanExpression needsCapture = b.screenshotCapturedAt.isNull()
+            .or(b.screenshotCapturedAt.lt(cutoffExpr));
         return db.select(b.id, b.url, b.collection.faviconAllowlist)
             .from(b)
             .where(notDeleted()
                 .and(b.collection.screenshotEnabled.isTrue())
-                .and(b.screenshotCapturedAt.isNull()))
+                .and(needsCapture))
             .orderBy(b.timestampMutiert.desc().nullsLast())
             .orderBy(b.timestampErstellt.desc())
             .offset(offset)

@@ -23,7 +23,7 @@ jobs:
           token: ${{ secrets.CL_REPO_TOKEN }}
 
       - name: Run Pi code review
-        uses: https://git.markushofstetter.com/dividbzero/pi-review@v10
+        uses: https://git.markushofstetter.com/dividbzero/pi-review@v11
         with:
           api_key: ${{ secrets.ZAI_API_KEY }}
           provider: zai
