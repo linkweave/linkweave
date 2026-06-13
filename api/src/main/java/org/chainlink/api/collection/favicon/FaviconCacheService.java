@@ -33,6 +33,7 @@ public class FaviconCacheService {
             Path.of(configService.getFaviconCacheDir()),
             configService.getFaviconSuccessTtl(),
             configService.getFaviconNegativeTtl(),
+            configService.getFaviconNegativeTtlMax(),
             appClock, "favicon", LOG);
     }
 

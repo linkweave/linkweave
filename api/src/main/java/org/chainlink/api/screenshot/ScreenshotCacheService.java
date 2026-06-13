@@ -38,6 +38,7 @@ public class ScreenshotCacheService {
             Path.of(configService.getScreenshotCacheDir()),
             configService.getScreenshotSuccessTtl(),
             configService.getScreenshotNegativeTtl(),
+            configService.getScreenshotNegativeTtlMax(),
             appClock, "screenshot", LOG);
     }
 

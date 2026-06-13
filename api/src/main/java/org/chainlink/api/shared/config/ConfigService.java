@@ -131,6 +131,12 @@ public class ConfigService {
     @ConfigProperty(name = "chainlink.favicon.negative-ttl", defaultValue = "6H")
     Duration faviconNegativeTtl;
 
+    // Backoff ceiling: each consecutive favicon fetch failure doubles the
+    // negative TTL from negative-ttl up to this cap, so permanently-unreachable
+    // hosts stop being re-fetched every 6h.
+    @ConfigProperty(name = "chainlink.favicon.negative-ttl-max", defaultValue = "30D")
+    Duration faviconNegativeTtlMax;
+
     @ConfigProperty(name = "chainlink.favicon.timeout", defaultValue = "5S")
     Duration faviconTimeout;
 
@@ -174,6 +180,12 @@ public class ConfigService {
 
     @ConfigProperty(name = "chainlink.screenshot.negative-ttl", defaultValue = "12H")
     Duration screenshotNegativeTtl;
+
+    // Backoff ceiling: each consecutive screenshot capture failure doubles the
+    // negative TTL from negative-ttl up to this cap, so permanently-unreachable
+    // pages stop being re-attempted (and re-hit) every 12h.
+    @ConfigProperty(name = "chainlink.screenshot.negative-ttl-max", defaultValue = "30D")
+    Duration screenshotNegativeTtlMax;
 
     @ConfigProperty(name = "chainlink.screenshot.cache-cleanup.enabled", defaultValue = "true")
     boolean screenshotCacheCleanupEnabled;
