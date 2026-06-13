@@ -26,12 +26,16 @@ jobs:
 
       - name: Determine version
         id: version
+        env:
+          GIT_REF: ${{ gitea.ref }}
+          GIT_REF_NAME: ${{ gitea.ref_name }}
+          COMMIT_HASH: ${{ steps.commit-hash.outputs.COMMIT_HASH }}
         run: |
-          if [[ "${{ gitea.ref }}" == refs/tags/v* ]]; then
-            VERSION="${{ gitea.ref_name }}"
-            VERSION="${VERSION#v}"
+          set -euo pipefail
+          if [[ "$GIT_REF" == refs/tags/v* ]]; then
+            VERSION="${GIT_REF_NAME#v}"
           else
-            VERSION="${{ steps.commit-hash.outputs.COMMIT_HASH }}"
+            VERSION="$COMMIT_HASH"
           fi
           echo "VERSION=$VERSION" >> $GITEA_OUTPUT
           echo "Version: $VERSION"
@@ -80,10 +84,13 @@ jobs:
           IMAGE: git.markushofstetter.com/dividbzero/chainlink-api
           COMMIT_HASH: ${{ steps.commit-hash.outputs.COMMIT_HASH }}
           VERSION: ${{ steps.version.outputs.VERSION }}
+          GIT_REF: ${{ gitea.ref }}
+          GIT_REF_NAME: ${{ gitea.ref_name }}
         run: |
+          set -euo pipefail
           tags=("${IMAGE}:latest" "${IMAGE}:${COMMIT_HASH}")
-          if [[ "${{ gitea.ref }}" == refs/tags/v* ]]; then
-            tags+=("${IMAGE}:${{ gitea.ref_name }}")
+          if [[ "$GIT_REF" == refs/tags/v* ]]; then
+            tags+=("${IMAGE}:${GIT_REF_NAME}")
           fi
           tag_args=()
           for t in "${tags[@]}"; do tag_args+=(-t "$t"); done
@@ -136,12 +143,16 @@ jobs:
 
       - name: Get version
         id: version
+        env:
+          GIT_REF: ${{ gitea.ref }}
+          GIT_REF_NAME: ${{ gitea.ref_name }}
+          COMMIT_HASH: ${{ steps.commit-hash.outputs.COMMIT_HASH }}
         run: |
-          if [[ "${{ gitea.ref }}" == refs/tags/v* ]]; then
-            VERSION="${{ gitea.ref_name }}"
-            VERSION="${VERSION#v}"
+          set -euo pipefail
+          if [[ "$GIT_REF" == refs/tags/v* ]]; then
+            VERSION="${GIT_REF_NAME#v}"
           else
-            VERSION="${{ steps.commit-hash.outputs.COMMIT_HASH }}"
+            VERSION="$COMMIT_HASH"
           fi
           echo "VERSION=$VERSION" >> $GITEA_OUTPUT
           echo "Version: $VERSION"
@@ -176,10 +187,13 @@ jobs:
           COMMIT_HASH: ${{ steps.commit-hash.outputs.COMMIT_HASH }}
           VERSION: ${{ steps.version.outputs.VERSION }}
           sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          GIT_REF: ${{ gitea.ref }}
+          GIT_REF_NAME: ${{ gitea.ref_name }}
         run: |
+          set -euo pipefail
           tags=("${IMAGE}:latest" "${IMAGE}:${COMMIT_HASH}")
-          if [[ "${{ gitea.ref }}" == refs/tags/v* ]]; then
-            tags+=("${IMAGE}:${{ gitea.ref_name }}")
+          if [[ "$GIT_REF" == refs/tags/v* ]]; then
+            tags+=("${IMAGE}:${GIT_REF_NAME}")
           fi
           tag_args=()
           for t in "${tags[@]}"; do tag_args+=(-t "$t"); done
@@ -231,6 +245,7 @@ jobs:
           IMAGE: git.markushofstetter.com/dividbzero/chainlink-screenshot-service
           COMMIT_HASH: ${{ steps.commit-hash.outputs.COMMIT_HASH }}
         run: |
+          set -euo pipefail
           docker build \
             -t "${IMAGE}:latest" \
             -t "${IMAGE}:${COMMIT_HASH}" \
@@ -250,11 +265,14 @@ jobs:
 
       - name: Generate version
         id: version
+        env:
+          GIT_REF: ${{ gitea.ref }}
+          GIT_REF_NAME: ${{ gitea.ref_name }}
         run: |
-          if [[ "${{ gitea.ref }}" == refs/tags/v* ]]; then
+          set -euo pipefail
+          if [[ "$GIT_REF" == refs/tags/v* ]]; then
             # Strip leading 'v' from tag → e.g. v1.2.3 → 1.2.3
-            VERSION="${{ gitea.ref_name }}"
-            VERSION="${VERSION#v}"
+            VERSION="${GIT_REF_NAME#v}"
           else
             # Format: YYYY.MMDD.HHMM as three integers — always increasing, fits
             # Chrome Web Store constraints. Each component is normalized to a
@@ -370,9 +388,10 @@ jobs:
       - name: Create Gitea release and upload asset
         env:
           GITEA_TOKEN: ${{ secrets.ESC_REPO_TOKEN }}
+          GIT_REF_NAME: ${{ gitea.ref_name }}
         run: |
           set -x
-          TAG="${{ gitea.ref_name }}"
+          TAG="${GIT_REF_NAME}"
           RESPONSE=$(curl -sf -w "\nHTTP_CODE:%{http_code}" -X POST \
             "${GITEA_API}/releases" \
             -H "Authorization: token ${GITEA_TOKEN}" \
