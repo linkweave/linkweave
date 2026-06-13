@@ -14,7 +14,7 @@ import org.chainlink.api.bookmark.SavedSearchService;
 import org.chainlink.api.bookmark.TagService;
 import org.chainlink.api.bookmark.folder.FolderService;
 import org.chainlink.api.bookmark.property.PropertyDefinitionService;
-import org.chainlink.api.collection.favicon.FaviconAllowlist;
+import org.chainlink.api.collection.favicon.BrowserFetchAllowlist;
 import org.chainlink.api.shared.user.CurrentUserService;
 import org.chainlink.api.shared.user.User;
 import org.chainlink.infrastructure.errorhandling.AppValidationException;
@@ -107,13 +107,13 @@ public class CollectionService {
     public CollectionSummaryJson updateCollection(
         @NonNull ID<Collection> collectionId,
         @NonNull String name,
-        @Nullable String faviconAllowlist,
+        @Nullable String browserFetchAllowlist,
         boolean screenshotEnabled,
         @NonNull User user) {
         Collection collection = collectionRepo.getById(collectionId);
         collection.setName(name);
-        FaviconAllowlist parsed = FaviconAllowlist.parse(faviconAllowlist);
-        collection.setFaviconAllowlist(parsed.patterns().isEmpty() ? null : String.join("\n", parsed.patterns()));
+        BrowserFetchAllowlist parsed = BrowserFetchAllowlist.parse(browserFetchAllowlist);
+        collection.setBrowserFetchAllowlist(parsed.patterns().isEmpty() ? null : String.join("\n", parsed.patterns()));
         collection.setScreenshotEnabled(screenshotEnabled);
         collectionRepo.persistAndFlush(collection);
 

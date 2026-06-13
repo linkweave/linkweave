@@ -6,8 +6,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.chainlink.api.bookmark.Bookmark;
 import org.chainlink.api.bookmark.BookmarkRepo;
+import org.chainlink.api.collection.favicon.BackendFetchPolicy;
 import org.chainlink.api.shared.config.ConfigService;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
@@ -17,11 +17,15 @@ import org.jspecify.annotations.NonNull;
  * most {@code batch-size} missing entries, letting backfills of large
  * collections (toggle-on) drain gradually instead of hammering the sidecar.
  *
- * <p>State is cache-only — there is no per-bookmark "needs capture" column.
- * The job iterates bookmarks of screenshot-enabled collections newest-first,
+ * <p>The job iterates bookmarks of screenshot-enabled collections newest-first,
  * asks the cache whether a fresh entry exists, and captures on misses until
- * the per-run budget is exhausted. Negative cache entries (default 12h TTL)
- * keep the job from re-trying URLs that just failed.
+ * the per-run budget is exhausted. Negative cache entries (default 12h TTL,
+ * with exponential backoff) keep the job from re-trying URLs that just failed.
+ *
+ * <p>The DB filter ({@code screenshotCapturedAt}) is a coarse pre-filter, not a
+ * permanent "done" flag: a bookmark re-enters the pending set once its capture
+ * is older than the success TTL, so an expired (or evicted) cached image gets
+ * regenerated rather than silently disappearing.
  */
 @Service
 @ApplicationScoped
@@ -32,6 +36,7 @@ public class ScreenshotCaptureJobService {
     private final BookmarkRepo bookmarkRepo;
     private final ScreenshotCacheService cache;
     private final ScreenshotService screenshotService;
+    private final BackendFetchPolicy fetchPolicy;
     private final ConfigService configService;
 
     @Scheduled(
@@ -60,20 +65,24 @@ public class ScreenshotCaptureJobService {
         int offset = 0;
         outer:
         while (captured + failed < limitForRun) {
-            var page = bookmarkRepo.findPendingScreenshotCaptures(limitForRun, offset);
+            var page = bookmarkRepo.findPendingScreenshotCaptures(
+                limitForRun, offset, configService.getScreenshotSuccessTtl());
             if (page.isEmpty()) break;
             int capturedInPage = 0;
-            for (Bookmark b : page) {
+            for (BookmarkRepo.PendingScreenshotCapture b : page) {
                 scanned++;
-                String key = ScreenshotCacheService.keyFor(b.getUrl());
+                String key = ScreenshotCacheService.keyFor(b.url());
                 if (cache.get(key).isPresent()) {
                     continue; // negative cache still active; skip but keep budget free
                 }
+                if (shouldSkipCapture(b)) {
+                    continue; // unreachable host (global skip list / collection allowlist) — keep budget free
+                }
                 boolean ok;
                 try {
-                    ok = screenshotService.captureNow(b.getId());
+                    ok = screenshotService.captureNow(b.bookmarkId());
                 } catch (Exception e) {
-                    LOG.warn("Screenshot capture failed for bookmark {}: {}", b.getId(), e.getMessage());
+                    LOG.warn("Screenshot capture failed for bookmark {}: {}", b.bookmarkId(), e.getMessage());
                     failed++;
                     if (captured + failed >= limitForRun) break outer;
                     continue;
@@ -82,7 +91,8 @@ public class ScreenshotCaptureJobService {
                 if (captured + failed >= limitForRun) break outer;
             }
             // Advance past the rows that are still pending (skipped + failed);
-            // captured rows have screenshotCapturedAt set and will leave the result set.
+            // captured rows get a fresh screenshotCapturedAt and drop out of the
+            // result set until they age past the success TTL again.
             offset += page.size() - capturedInPage;
             if (page.size() < limitForRun) break; // last page — no more pending captures
         }
@@ -91,6 +101,17 @@ public class ScreenshotCaptureJobService {
                 scanned, captured, failed, limitForRun);
         }
         return new Result(captured, failed, scanned);
+    }
+
+    /**
+     * Pre-filter over {@link BackendFetchPolicy}: skip hosts the backend cannot
+     * reach <em>before</em> calling {@code captureNow}, so they neither consume
+     * capture budget nor load the bookmark entity. {@code captureNow} applies the
+     * same policy again as the safety net for non-job callers (e.g. the refresh
+     * endpoint).
+     */
+    private boolean shouldSkipCapture(BookmarkRepo.@NonNull PendingScreenshotCapture candidate) {
+        return fetchPolicy.blocks(candidate.url().getHost(), candidate.collectionBrowserAllowlist());
     }
 
     record Result(int captured, int failed, int scanned) {}

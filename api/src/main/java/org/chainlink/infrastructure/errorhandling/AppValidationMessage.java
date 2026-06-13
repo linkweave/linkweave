@@ -248,10 +248,10 @@ public class AppValidationMessage {
         );
     }
 
-    public static @NonNull AppValidationMessage faviconAllowlistInvalidPattern(@NonNull String pattern) {
+    public static @NonNull AppValidationMessage browserFetchAllowlistInvalidPattern(@NonNull String pattern) {
         return of(
-            "FaviconAllowlistInvalidPattern",
-            I18nMessage.of("AppValidation.FAVICON_ALLOWLIST_INVALID_PATTERN", "pattern", pattern)
+            "BrowserFetchAllowlistInvalidPattern",
+            I18nMessage.of("AppValidation.BROWSER_FETCH_ALLOWLIST_INVALID_PATTERN", "pattern", pattern)
         );
     }
 

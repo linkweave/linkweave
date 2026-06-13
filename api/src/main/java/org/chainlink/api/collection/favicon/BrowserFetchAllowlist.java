@@ -1,40 +1,41 @@
 package org.chainlink.api.collection.favicon;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.chainlink.api.shared.net.HostPatternSet;
 import org.chainlink.infrastructure.errorhandling.AppValidationException;
 import org.chainlink.infrastructure.errorhandling.AppValidationMessage;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public final class FaviconAllowlist {
+/**
+ * A collection's <em>browser fetch allowlist</em>: hosts whose favicon the
+ * user's browser loads directly (e.g. {@code intranet.local},
+ * {@code *.mycompany.domain}) because the backend can't reach them. The same
+ * list doubles as a backend suppression rule — the server skips favicon and
+ * screenshot fetches for these hosts entirely.
+ *
+ * <p>This is user input, so it validates strictly on top of the shared
+ * {@link HostPatternSet} matching primitive; malformed patterns are rejected
+ * with {@link AppValidationException}.
+ */
+public final class BrowserFetchAllowlist {
 
     private static final Pattern VALID_PATTERN = Pattern.compile(
         "^(\\*\\.)?[a-z0-9]([a-z0-9\\-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9\\-]*[a-z0-9])?)*$"
     );
 
-    private final List<String> patterns;
+    private final HostPatternSet patterns;
 
-    private FaviconAllowlist(@NonNull List<String> patterns) {
+    private BrowserFetchAllowlist(@NonNull HostPatternSet patterns) {
         this.patterns = patterns;
     }
 
-    public static @NonNull FaviconAllowlist parse(@Nullable String raw) {
-        if (raw == null || raw.isBlank()) {
-            return new FaviconAllowlist(List.of());
-        }
-        List<String> normalized = Arrays.stream(raw.split("[\\r\\n,]"))
-            .map(String::trim)
-            .map(String::toLowerCase)
-            .filter(s -> !s.isEmpty())
-            .distinct()
-            .toList();
-        for (String p : normalized) {
-            validatePattern(p);
-        }
-        return new FaviconAllowlist(normalized);
+    public static @NonNull BrowserFetchAllowlist parse(@Nullable String raw) {
+        HostPatternSet set = HostPatternSet.parse(raw);
+        set.patterns().forEach(BrowserFetchAllowlist::validatePattern);
+        return new BrowserFetchAllowlist(set);
     }
 
     private static void validatePattern(@NonNull String pattern) {
@@ -44,7 +45,7 @@ public final class FaviconAllowlist {
             || pattern.contains("://")
             || !VALID_PATTERN.matcher(pattern).matches()
             || isBareIpv4(pattern)) {
-            throw new AppValidationException(AppValidationMessage.faviconAllowlistInvalidPattern(pattern));
+            throw new AppValidationException(AppValidationMessage.browserFetchAllowlistInvalidPattern(pattern));
         }
     }
 
@@ -62,19 +63,10 @@ public final class FaviconAllowlist {
     }
 
     public boolean matches(@NonNull String host) {
-        String h = host.toLowerCase();
-        return patterns.stream().anyMatch(p -> matchesPattern(p, h));
-    }
-
-    private static boolean matchesPattern(@NonNull String pattern, @NonNull String host) {
-        if (pattern.startsWith("*.")) {
-            String suffix = pattern.substring(1);
-            return host.endsWith(suffix) || host.equals(pattern.substring(2));
-        }
-        return host.equals(pattern);
+        return patterns.matches(host);
     }
 
     public @NonNull List<String> patterns() {
-        return patterns;
+        return patterns.patterns();
     }
 }

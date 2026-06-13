@@ -10,6 +10,7 @@ import org.assertj.core.api.Assertions;
 import org.chainlink.api.bookmark.Bookmark;
 import org.chainlink.api.bookmark.BookmarkRepo;
 import org.chainlink.api.collection.Collection;
+import org.chainlink.api.shared.config.ConfigService;
 import org.chainlink.api.testutil.fixture.FixtureService;
 import org.junit.jupiter.api.Test;
 
@@ -39,6 +40,9 @@ class ScreenshotCaptureJobServiceITest {
 
     @Inject
     BookmarkRepo bookmarkRepo;
+
+    @Inject
+    ConfigService configService;
 
     @Test
     void shouldSkipBookmarksFromCollectionsWithScreenshotsDisabled() {
@@ -122,8 +126,11 @@ class ScreenshotCaptureJobServiceITest {
      * assertions about the target be made in isolation despite the shared DB.
      */
     private void blockAllExistingPendingBookmarks() {
-        bookmarkRepo.findPendingScreenshotCaptures(Integer.MAX_VALUE, 0)
-            .forEach(b -> cache.putNegative(ScreenshotCacheService.keyFor(b.getUrl())));
+        // Enumerate exactly what the job would consider (same recapture threshold)
+        // so only the bookmark created by the caller is left uncached.
+        bookmarkRepo.findPendingScreenshotCaptures(
+                Integer.MAX_VALUE, 0, configService.getScreenshotSuccessTtl())
+            .forEach(c -> cache.putNegative(ScreenshotCacheService.keyFor(c.url())));
     }
 
     @Test
@@ -191,6 +198,69 @@ class ScreenshotCaptureJobServiceITest {
         // Both bookmarks were attempted (sidecar unreachable → failed) and the loop
         // stopped without spinning — captured + failed == 2, not 5.
         Assertions.assertThat(result.captured() + result.failed()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldSkipBookmarkWhoseHostMatchesCollectionAllowlist() {
+        // Host is in the collection's favicon allowlist → the backend can't reach
+        // it (the browser loads it directly). The job must not attempt capture and
+        // must not leave a negative cache entry that would re-trigger every TTL.
+        Collection allowlisted = fixtureService.createTestCollection(b -> b
+            .withScreenshotEnabled(true)
+            .withBrowserFetchAllowlist("intranet.local"));
+        Bookmark bookmark = fixtureService.persistBookmark(builder -> builder
+            .withCollection(allowlisted)
+            .withUrl("https://intranet.local/page-" + UUID.randomUUID()));
+        String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
+
+        job.run(50);
+
+        Assertions.assertThat(cache.get(key))
+            .as("allowlisted host must not be captured nor negatively cached")
+            .isEmpty();
+    }
+
+    @Test
+    void shouldStillCaptureBookmarkWhoseHostIsNotInCollectionAllowlist() {
+        // Same collection has an allowlist, but this bookmark's host is not in it
+        // → the job proceeds and a cache entry appears (success or negative
+        // depending on sidecar availability), which is proof a capture was tried.
+        Collection withList = fixtureService.createTestCollection(b -> b
+            .withScreenshotEnabled(true)
+            .withBrowserFetchAllowlist("intranet.local"));
+        Bookmark bookmark = fixtureService.persistBookmark(builder -> builder
+            .withCollection(withList)
+            .withUrl("https://example.com/not-listed-" + UUID.randomUUID()));
+        String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
+
+        job.run(50);
+
+        Assertions.assertThat(cache.get(key))
+            .as("non-allowlisted host must still be attempted")
+            .isPresent();
+    }
+
+    @Test
+    void shouldRecaptureWhenPreviousCaptureIsOlderThanSuccessTtl() {
+        blockAllExistingPendingBookmarks();
+
+        Collection enabled = fixtureService.createTestCollection(b -> b.withScreenshotEnabled(true));
+        // Captured long enough ago that its cached image would have expired → the
+        // bookmark must re-enter the pending set and be attempted again.
+        OffsetDateTime stale = OffsetDateTime.now()
+            .minus(configService.getScreenshotSuccessTtl())
+            .minusDays(1);
+        Bookmark bookmark = fixtureService.persistBookmark(builder -> builder
+            .withCollection(enabled)
+            .withUrl("https://example.com/stale-capture-" + UUID.randomUUID())
+            .withScreenshotCapturedAt(stale));
+        String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
+
+        job.run(50);
+
+        Assertions.assertThat(cache.get(key))
+            .as("a capture older than the success TTL must be re-attempted")
+            .isPresent();
     }
 
     @Test

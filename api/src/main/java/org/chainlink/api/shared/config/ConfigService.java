@@ -29,9 +29,11 @@ import jakarta.transaction.Transactional.TxType;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.chainlink.api.shared.net.HostPatternSet;
 import org.chainlink.infrastructure.deployment.DeploymentEnvironment;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jspecify.annotations.NonNull;
 
 @Slf4j
 @ApplicationScoped
@@ -106,6 +108,16 @@ public class ConfigService {
     @ConfigProperty(name = "chainlink.cleanup.available-thresholds", defaultValue = "3,6,12")
     List<Integer> cleanupAvailableThresholds;
 
+    // Operator-facing global backend fetch denylist: hostnames (or *.wildcards)
+    // the backend must never fetch favicons or screenshots for. Use for domains
+    // the server cannot reach (internal CDNs) or should not hammer (rate-limiting
+    // hosts). Comma- or newline-separated. Parsed once and cached; see
+    // getBackendFetchDenylist. (Config key kept as skip-domains for compatibility.)
+    @ConfigProperty(name = "chainlink.fetch.skip-domains")
+    Optional<String> backendFetchDenylistRaw;
+
+    private HostPatternSet backendFetchDenylist;
+
     @ConfigProperty(name = "chainlink.favicon.cache-dir", defaultValue = "developer-local-settings/favicon-cache")
     String faviconCacheDir;
 
@@ -119,6 +131,12 @@ public class ConfigService {
 
     @ConfigProperty(name = "chainlink.favicon.negative-ttl", defaultValue = "6H")
     Duration faviconNegativeTtl;
+
+    // Backoff ceiling: each consecutive favicon fetch failure doubles the
+    // negative TTL from negative-ttl up to this cap, so permanently-unreachable
+    // hosts stop being re-fetched every 6h.
+    @ConfigProperty(name = "chainlink.favicon.negative-ttl-max", defaultValue = "30D")
+    Duration faviconNegativeTtlMax;
 
     @ConfigProperty(name = "chainlink.favicon.timeout", defaultValue = "5S")
     Duration faviconTimeout;
@@ -164,6 +182,12 @@ public class ConfigService {
     @ConfigProperty(name = "chainlink.screenshot.negative-ttl", defaultValue = "12H")
     Duration screenshotNegativeTtl;
 
+    // Backoff ceiling: each consecutive screenshot capture failure doubles the
+    // negative TTL from negative-ttl up to this cap, so permanently-unreachable
+    // pages stop being re-attempted (and re-hit) every 12h.
+    @ConfigProperty(name = "chainlink.screenshot.negative-ttl-max", defaultValue = "30D")
+    Duration screenshotNegativeTtlMax;
+
     @ConfigProperty(name = "chainlink.screenshot.cache-cleanup.enabled", defaultValue = "true")
     boolean screenshotCacheCleanupEnabled;
 
@@ -188,6 +212,20 @@ public class ConfigService {
     public boolean isStufeProd() {
         var env = getEnvironment();
         return env.isProd();
+    }
+
+    /**
+     * The parsed global backend fetch denylist, cached after first access. Both
+     * the favicon and screenshot fetchers consult this before any DNS/network work.
+     */
+    @NonNull
+    public HostPatternSet getBackendFetchDenylist() {
+        HostPatternSet local = backendFetchDenylist;
+        if (local == null) {
+            local = HostPatternSet.parse(backendFetchDenylistRaw.orElse(null));
+            backendFetchDenylist = local;
+        }
+        return local;
     }
 
 

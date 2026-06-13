@@ -144,13 +144,13 @@ export const useCollectionStore = defineStore('collection', () => {
   async function updateCollection(
     collectionId: string,
     name: string,
-    faviconAllowlist?: string,
+    browserFetchAllowlist?: string,
     screenshotEnabled = false,
   ): Promise<boolean> {
     try {
       await collectionApi.apiCollectionsIdPut({
         id: collectionId,
-        collectionUpdateJson: { name, faviconAllowlist, screenshotEnabled },
+        collectionUpdateJson: { name, browserFetchAllowlist, screenshotEnabled },
       })
       await fetchCollections()
       if (currentCollectionId.value === collectionId) {

@@ -30,6 +30,10 @@ public class FaviconFetcherService {
     private final ConfigService configService;
 
     public @NonNull Optional<FetchedFavicon> fetchFor(@NonNull URL bookmarkUrl) {
+        if (configService.getBackendFetchDenylist().matches(bookmarkUrl.getHost())) {
+            LOG.debug("Favicon fetch skipped for {} (matches backend fetch denylist)", bookmarkUrl.getHost());
+            return Optional.empty();
+        }
         try {
             int maxRedirects = configService.getFaviconMaxRedirects();
             URI origin = URI.create(canonicalOrigin(bookmarkUrl));
@@ -60,7 +64,7 @@ public class FaviconFetcherService {
     private @NonNull Optional<Resolved<String>> discoverHtml(@NonNull URI origin, int maxRedirects) {
         try {
             return fetchHtml(origin, maxRedirects);
-        } catch (IOException e) {
+        } catch (IOException _) {
             return Optional.empty();
         }
     }
@@ -240,7 +244,7 @@ public class FaviconFetcherService {
     private static @Nullable URI resolveSafely(@NonNull URI base, @NonNull String href) {
         try {
             return base.resolve(href);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             return null;
         }
     }

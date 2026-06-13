@@ -107,6 +107,75 @@ class ScreenshotCacheServiceITest {
     }
 
     @Test
+    void shouldEscalateNegativeTtlOnConsecutiveFailures() throws Exception {
+        URL url = URI.create("https://example.com/escalate-" + UUID.randomUUID()).toURL();
+        String key = ScreenshotCacheService.keyFor(url);
+        long baseSeconds = configService.getScreenshotNegativeTtl().toSeconds();
+
+        try {
+            // First failure: entry lives for the base TTL and expires just past it.
+            Instant t0 = Instant.now();
+            clockProvider.resetUsing(t0);
+            cache.putNegative(key);
+            clockProvider.resetUsing(t0.plusSeconds(baseSeconds + 60));
+            Assertions.assertThat(cache.get(key))
+                .as("first failure expires at the base negative TTL")
+                .isEmpty();
+
+            // Second failure (recorded after the first expired): TTL must double,
+            // so an age just over the base TTL is now still within the window.
+            Instant t1 = t0.plusSeconds(baseSeconds + 60);
+            clockProvider.resetUsing(t1);
+            cache.putNegative(key);
+            clockProvider.resetUsing(t1.plusSeconds(baseSeconds + 60));
+            Assertions.assertThat(cache.get(key))
+                .as("second failure doubled the TTL → still cached past the base window")
+                .isPresent();
+            Assertions.assertThat(cache.get(key).get().negative()).isTrue();
+
+            // Past the doubled window it finally expires.
+            clockProvider.resetUsing(t1.plusSeconds(2 * baseSeconds + 120));
+            Assertions.assertThat(cache.get(key))
+                .as("escalated entry expires once the doubled TTL elapses")
+                .isEmpty();
+        } finally {
+            cache.deleteForKey(key);
+        }
+    }
+
+    @Test
+    void shouldResetBackoffAfterSuccess() throws Exception {
+        URL url = URI.create("https://example.com/reset-backoff-" + UUID.randomUUID()).toURL();
+        String key = ScreenshotCacheService.keyFor(url);
+        long baseSeconds = configService.getScreenshotNegativeTtl().toSeconds();
+
+        try {
+            Instant t0 = Instant.now();
+            clockProvider.resetUsing(t0);
+            cache.putNegative(key); // failure 1
+            clockProvider.resetUsing(t0.plusSeconds(baseSeconds + 60));
+            cache.putNegative(key); // failure 2 → TTL doubled
+
+            // A success clears the failure streak (its meta is non-negative, so
+            // the next putNegative reads no prior failure count).
+            Instant tSuccess = t0.plusSeconds(baseSeconds + 120);
+            clockProvider.resetUsing(tSuccess);
+            cache.putSuccess(key, new byte[]{1}, "image/jpeg");
+
+            // The next failure starts over at the base TTL, not the escalated one.
+            Instant t1 = tSuccess.plusSeconds(10);
+            clockProvider.resetUsing(t1);
+            cache.putNegative(key);
+            clockProvider.resetUsing(t1.plusSeconds(baseSeconds + 60));
+            Assertions.assertThat(cache.get(key))
+                .as("after a success, backoff resets to the base TTL")
+                .isEmpty();
+        } finally {
+            cache.deleteForKey(key);
+        }
+    }
+
+    @Test
     void shouldKeyTheSameForUrlsThatDifferOnlyInFragment() throws Exception {
         URL withFragment = URI.create("https://example.com/page?q=1#section").toURL();
         URL withoutFragment = URI.create("https://example.com/page?q=1").toURL();

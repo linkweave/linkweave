@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 
+import org.chainlink.api.shared.config.ConfigService;
+import org.chainlink.api.shared.net.HostPatternSet;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -58,5 +61,24 @@ class FaviconFetcherServiceTest {
         String html = "<head><link rel=\"stylesheet\" href=\"/site.css\"></head>";
 
         assertThat(FaviconFetcherService.parseIconLink(html, base)).isNull();
+    }
+
+    @Test
+    void shouldSkipFetchForHostOnBackendFetchDenylist() throws Exception {
+        // Skip check runs before any DNS/network, so a never-resolving host
+        // returns empty without touching the wire.
+        FaviconFetcherService svc = new FaviconFetcherService(denylistConfig("*.internal.example"));
+
+        assertThat(svc.fetchFor(URI.create("https://wiki.internal.example/").toURL())).isEmpty();
+    }
+
+    private static ConfigService denylistConfig(String denyDomains) {
+        return new ConfigService() {
+            @Override
+            @NonNull
+            public HostPatternSet getBackendFetchDenylist() {
+                return HostPatternSet.parse(denyDomains);
+            }
+        };
     }
 }

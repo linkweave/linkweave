@@ -72,7 +72,7 @@ export interface CollectionInfoJson {
      * @type {string}
      * @memberof CollectionInfoJson
      */
-    faviconAllowlist?: string;
+    browserFetchAllowlist?: string;
     /**
      * 
      * @type {boolean}
@@ -138,7 +138,7 @@ export function CollectionInfoJsonFromJSONTyped(json: any, ignoreDiscriminator: 
         
         'id': json['id'],
         'name': json['name'],
-        'faviconAllowlist': json['faviconAllowlist'] == null ? undefined : json['faviconAllowlist'],
+        'browserFetchAllowlist': json['browserFetchAllowlist'] == null ? undefined : json['browserFetchAllowlist'],
         'screenshotEnabled': json['screenshotEnabled'],
         'bookmarks': ((json['bookmarks'] as Array<any>).map(BookmarkJsonFromJSON)),
         'tags': ((json['tags'] as Array<any>).map(TagJsonFromJSON)),
@@ -161,7 +161,7 @@ export function CollectionInfoJsonToJSONTyped(value?: CollectionInfoJson | null,
         
         'id': value['id'],
         'name': value['name'],
-        'faviconAllowlist': value['faviconAllowlist'],
+        'browserFetchAllowlist': value['browserFetchAllowlist'],
         'screenshotEnabled': value['screenshotEnabled'],
         'bookmarks': ((value['bookmarks'] as Array<any>).map(BookmarkJsonToJSON)),
         'tags': ((value['tags'] as Array<any>).map(TagJsonToJSON)),

@@ -1,6 +1,7 @@
 package org.chainlink.api.bookmark;
 
 import java.net.URL;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,7 @@ import com.querydsl.core.types.dsl.Expressions;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.collection.Collection;
+import org.chainlink.api.collection.QCollection;
 import org.chainlink.infrastructure.db.BaseRepo;
 import org.chainlink.infrastructure.stereotypes.Repository;
 import org.jspecify.annotations.NonNull;
@@ -143,23 +145,53 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             .fetch();
     }
 
+    /** A bookmark awaiting screenshot capture, with the bits the capture job needs
+     * to decide whether to fetch: its id, URL, and the owning collection's browser
+     * fetch allowlist (hosts the backend must not reach — see {@link PendingScreenshotCapture}). */
+    public record PendingScreenshotCapture(
+        @NonNull ID<Bookmark> bookmarkId,
+        @NonNull URL url,
+        @Nullable String collectionBrowserAllowlist
+    ) {}
+
     /**
-     * Uncaptured bookmarks in screenshot-enabled collections, newest-modified
-     * first. The DB filter ensures every returned row is pending work; {@code
-     * offset} lets the job page past rows blocked by a negative cache entry
-     * without re-scanning them.
+     * Bookmarks in screenshot-enabled collections that need a (re)capture,
+     * newest-modified first. A row is pending when it has never been captured
+     * <em>or</em> its last capture is older than {@code recaptureAfter} — so a
+     * screenshot whose cached image has expired is regenerated instead of
+     * silently vanishing. Freshly-captured rows are excluded by the DB filter,
+     * keeping the steady-state result set small; {@code offset} lets the job
+     * page past rows blocked by a negative cache entry without re-scanning them.
+     *
+     * <p>Projects scalars only (no entity load, so no timestamp extraction via
+     * Hibernate's shared UTC calendar — see {@link #findUrlById}) and carries
+     * the collection's browser fetch allowlist so the job can skip hosts the
+     * backend cannot reach without burning capture budget or writing negatives.
      */
     @NonNull
-    public List<Bookmark> findPendingScreenshotCaptures(int limit, int offset) {
-        return db.selectFrom(QBookmark.bookmark)
+    public List<PendingScreenshotCapture> findPendingScreenshotCaptures(int limit, int offset, @NonNull Duration recaptureAfter) {
+        var b = QBookmark.bookmark;
+        var recaptureCutoff = appClock.offsetDateTime().now().minus(recaptureAfter);
+        DateTimeExpression<OffsetDateTime> cutoffExpr = Expressions.dateTimeTemplate(
+            OffsetDateTime.class, "({0})", recaptureCutoff);
+        BooleanExpression needsCapture = b.screenshotCapturedAt.isNull()
+            .or(b.screenshotCapturedAt.lt(cutoffExpr));
+        return db.select(b.id, b.url, b.collection.browserFetchAllowlist)
+            .from(b)
             .where(notDeleted()
-                .and(QBookmark.bookmark.collection.screenshotEnabled.isTrue())
-                .and(QBookmark.bookmark.screenshotCapturedAt.isNull()))
-            .orderBy(QBookmark.bookmark.timestampMutiert.desc().nullsLast())
-            .orderBy(QBookmark.bookmark.timestampErstellt.desc())
+                .and(b.collection.screenshotEnabled.isTrue())
+                .and(needsCapture))
+            .orderBy(b.timestampMutiert.desc().nullsLast())
+            .orderBy(b.timestampErstellt.desc())
             .offset(offset)
             .limit(limit)
-            .fetch();
+            .fetch()
+            .stream()
+            .map(t -> new PendingScreenshotCapture(
+                ID.of(Objects.requireNonNull(t.get(b.id)), Bookmark.class),
+                Objects.requireNonNull(t.get(b.url)),
+                t.get(b.collection.browserFetchAllowlist)))
+            .toList();
     }
 
     /**
@@ -179,6 +211,30 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             .from(QBookmark.bookmark)
             .where(QBookmark.bookmark.id.eq(bookmarkId.getUUID()))
             .fetchOne();
+    }
+
+    /** A bookmark's URL paired with its collection's browser fetch allowlist. */
+    public record FaviconContext(@NonNull URL url, @Nullable String collectionBrowserAllowlist) {}
+
+    /**
+     * Scalar projection for the favicon read path: the URL plus the owning
+     * collection's allowlist, so the service can skip server-side fetches for
+     * hosts the browser loads directly. Like {@link #findUrlById} this avoids an
+     * entity load (and its timestamp extraction). Left join so an uncollected
+     * bookmark still yields its URL with a {@code null} allowlist.
+     */
+    @NonNull
+    public Optional<FaviconContext> findFaviconContextById(@NonNull ID<Bookmark> bookmarkId) {
+        var b = QBookmark.bookmark;
+        var c = QCollection.collection;
+        return db.select(b.url, c.browserFetchAllowlist)
+            .from(b)
+            .leftJoin(b.collection, c)
+            .where(b.id.eq(bookmarkId.getUUID()))
+            .fetchOne()
+            .map(t -> new FaviconContext(
+                Objects.requireNonNull(t.get(b.url)),
+                t.get(c.browserFetchAllowlist)));
     }
 
     @NonNull

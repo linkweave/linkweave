@@ -7,6 +7,7 @@ import jakarta.ws.rs.WebApplicationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.chainlink.api.collection.favicon.FaviconFetcherService;
+import org.chainlink.api.shared.config.ConfigService;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jspecify.annotations.NonNull;
@@ -20,10 +21,16 @@ public class ScreenshotFetcherService {
     private static final int VIEWPORT_HEIGHT = 800;
     private static final int JPEG_QUALITY = 60;
 
+    private final ConfigService configService;
+
     @RestClient
     ScreenshotSidecarClient screenshotSidecarClient;
 
     public @NonNull Optional<FetchedScreenshot> fetchFor(@NonNull URL pageUrl) {
+        if (configService.getBackendFetchDenylist().matches(pageUrl.getHost())) {
+            LOG.debug("Screenshot capture skipped for {} (matches backend fetch denylist)", pageUrl.getHost());
+            return Optional.empty();
+        }
         if (!FaviconFetcherService.isAllowedScheme(pageUrl.getProtocol())
             || !FaviconFetcherService.isPublicHost(pageUrl.getHost())) {
             return Optional.empty();

@@ -8,6 +8,7 @@ import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.Bookmark;
 import org.chainlink.api.bookmark.BookmarkRepo;
+import org.chainlink.api.collection.favicon.BackendFetchPolicy;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
 
@@ -18,6 +19,7 @@ public class ScreenshotService {
     private final BookmarkRepo bookmarkRepo;
     private final ScreenshotCacheService cache;
     private final ScreenshotFetcherService fetcher;
+    private final BackendFetchPolicy fetchPolicy;
     private final AppClock appClock;
 
     public @NonNull Optional<ScreenshotCacheService.CachedScreenshot> getScreenshot(@NonNull ID<Bookmark> bookmarkId) {
@@ -38,6 +40,14 @@ public class ScreenshotService {
         Bookmark bookmark = bookmarkRepo.getById(bookmarkId);
         URL url = bookmark.getUrl();
         String key = ScreenshotCacheService.keyFor(url);
+        var collection = bookmark.getCollection();
+        if (fetchPolicy.blocks(url.getHost(), collection.getBrowserFetchAllowlist())) {
+            // Host the backend can't reach (operator denylist / collection browser
+            // allowlist): don't attempt and don't poison the cache with a negative
+            // entry. Enforced here so it holds on both the scheduled job and the
+            // user-initiated refresh path.
+            return false;
+        }
         Optional<ScreenshotFetcherService.FetchedScreenshot> fetched = fetcher.fetchFor(url);
         if (fetched.isPresent()) {
             cache.putSuccess(key, fetched.get().bytes(), fetched.get().contentType());

@@ -20,7 +20,7 @@ public class CollectionUpdateJson {
     String name;
 
     @Size(max = DbConst.DB_TEXTAREA_MAX_LENGTH_2000) @Nullable
-    String faviconAllowlist;
+    String browserFetchAllowlist;
 
     @Schema(required = true) boolean screenshotEnabled;
 }
