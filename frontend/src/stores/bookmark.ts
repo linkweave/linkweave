@@ -6,6 +6,7 @@ import type {
   BookmarkSaveJson,
 } from '@/api/generated'
 import { BookmarkPropertyValueResourceApi, BookmarkResourceApi } from '@/api/generated'
+import { requireValue } from '@/lib/nullish'
 import {
   type AncestorSets,
   buildAncestorSets,
@@ -140,13 +141,19 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     return applyUpdatedBookmark(updated)
   }
 
-  async function deleteBookmark(bookmarkId: string): Promise<void> {
-    await bookmarkApi.apiBookmarksBookmarkIdDelete({ bookmarkId })
-    patchBookmarks((list) => list.filter((b) => b.id !== bookmarkId))
+  /** Drops soft-deleted bookmarks from the in-memory list and refreshes the trashbin badge. */
+  async function applyTrashed(bookmarkIds: string[]): Promise<void> {
+    const trashed = new Set(bookmarkIds)
+    patchBookmarks((list) => list.filter((b) => !trashed.has(b.id)))
     const { useTrashbinStore } = await import('@/stores/trashbin')
     useTrashbinStore()
       .refreshCount()
       .catch(() => {})
+  }
+
+  async function deleteBookmark(bookmarkId: string): Promise<void> {
+    await bookmarkApi.apiBookmarksBookmarkIdDelete({ bookmarkId })
+    await applyTrashed([bookmarkId])
   }
 
   async function moveBookmarkToFolder(
@@ -158,6 +165,48 @@ export const useBookmarkStore = defineStore('bookmark', () => {
       bookmarkMoveJson: data,
     })
     return applyUpdatedBookmark(updated)
+  }
+
+  // ---------------------------------------------------------------------------
+  // Batch actions (UC-074) — single atomic request per action (NFR-018);
+  // the backend rolls back entirely on failure, so on error the in-memory
+  // list is left untouched.
+  // ---------------------------------------------------------------------------
+
+  function requireCollectionId(): string {
+    return requireValue(collectionStore.currentCollectionId, 'No collection selected')
+  }
+
+  async function batchMove(bookmarkIds: string[], folderId: string | null): Promise<void> {
+    const result = await bookmarkApi.apiBookmarksBatchMovePost({
+      bookmarkBatchMoveJson: {
+        collectionId: requireCollectionId(),
+        folderId: folderId ?? undefined,
+        bookmarkIds,
+      },
+    })
+    result.bookmarkList.forEach(applyUpdatedBookmark)
+  }
+
+  async function batchDelete(bookmarkIds: string[]): Promise<void> {
+    await bookmarkApi.apiBookmarksBatchDeletePost({
+      bookmarkBatchDeleteJson: {
+        collectionId: requireCollectionId(),
+        bookmarkIds,
+      },
+    })
+    await applyTrashed(bookmarkIds)
+  }
+
+  async function batchAddTag(bookmarkIds: string[], tagId: string): Promise<void> {
+    const result = await bookmarkApi.apiBookmarksBatchTagPost({
+      bookmarkBatchTagJson: {
+        collectionId: requireCollectionId(),
+        tagId,
+        bookmarkIds,
+      },
+    })
+    result.bookmarkList.forEach(applyUpdatedBookmark)
   }
 
   /**
@@ -201,6 +250,10 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     deleteBookmark,
     moveBookmarkToFolder,
     updateProperties,
+    // batch actions
+    batchMove,
+    batchDelete,
+    batchAddTag,
     // telemetry
     trackClick,
   }

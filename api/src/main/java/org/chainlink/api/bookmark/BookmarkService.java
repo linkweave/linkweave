@@ -7,16 +7,19 @@ import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import ch.dvbern.dvbstarter.clock.AppClock;
 import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.folder.Folder;
 import org.chainlink.api.bookmark.folder.FolderRepo;
-import org.chainlink.api.bookmark.json.BookmarkMoveJson;
 import org.chainlink.api.bookmark.json.BookmarkSaveJson;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.collection.CollectionRepo;
+import ch.dvbern.oss.commons.i18nl10n.I18nMessage;
+import org.chainlink.infrastructure.errorhandling.AppAuthorizationException;
 import org.chainlink.infrastructure.errorhandling.AppFailureException;
 import org.chainlink.infrastructure.errorhandling.AppFailureMessage;
 import org.chainlink.infrastructure.stereotypes.Service;
@@ -55,6 +58,18 @@ public class BookmarkService {
     @NonNull
     public Bookmark getBookmark(@NonNull ID<Bookmark> id) {
         return bookmarkRepo.getById(id);
+    }
+
+    /**
+     * Owning collection id without loading the entity — for the per-bookmark
+     * read endpoints (favicon/screenshot) whose fan-out makes the entity
+     * load's timestamp extraction race (HHH-20355, see
+     * {@link BookmarkRepo#findCollectionIdById}).
+     */
+    @NonNull
+    public ID<Collection> getBookmarkCollectionId(@NonNull ID<Bookmark> bookmarkId) {
+        return bookmarkRepo.findCollectionIdById(bookmarkId)
+            .orElseGet(() -> bookmarkRepo.getById(bookmarkId).getCollectionId()); // throws the canonical not-found
     }
 
     @NonNull
@@ -112,9 +127,7 @@ public class BookmarkService {
     }
 
     public void removeBookmark(@NonNull ID<Bookmark> id) {
-        Bookmark bookmark = bookmarkRepo.getById(id);
-        bookmark.setDeletedAt(appClock.offsetDateTime().now());
-        bookmarkRepo.persist(bookmark);
+        batchRemove(List.of(bookmarkRepo.getById(id)));
     }
 
     @NonNull
@@ -151,27 +164,78 @@ public class BookmarkService {
         }
     }
 
+    /**
+     * Bulk-loads a batch in one query (tags fetch-joined for the JSON mapping).
+     * A single unknown id aborts the whole batch with the canonical not-found
+     * error — callers run inside one transaction, which keeps batch operations
+     * atomic.
+     */
     @NonNull
-    public Bookmark moveBookmarkToFolder(@NonNull ID<Bookmark> bookmarkId, @NonNull BookmarkMoveJson json) {
-        Bookmark bookmark = bookmarkRepo.getById(bookmarkId);
-        ID<Folder> folderId = json.getFolderId();
+    public List<Bookmark> getBookmarks(@NonNull List<ID<Bookmark>> bookmarkIds) {
+        List<Bookmark> bookmarks = bookmarkRepo.findByIdsWithTags(bookmarkIds);
+        Set<UUID> found = bookmarks.stream()
+            .map(b -> b.getId().getUUID())
+            .collect(Collectors.toSet());
+        bookmarkIds.stream()
+            .filter(id -> !found.contains(id.getUUID()))
+            .findFirst()
+            .ifPresent(bookmarkRepo::getById); // throws the canonical not-found
+        return bookmarks;
+    }
 
+    public void batchMoveToFolder(
+        @NonNull List<Bookmark> bookmarks,
+        @Nullable ID<Folder> folderId,
+        @NonNull ID<Collection> collectionId
+    ) {
+        Folder folder = null;
         if (folderId != null) {
-            Folder folder = folderRepo.getById(folderId);
-            requireFolderBelongsToCollection(folder, json.getCollectionId());
-            bookmark.setFolder(folder);
-        } else {
-            bookmark.setFolder(null);
+            folder = folderRepo.getById(folderId);
+            requireFolderBelongsToCollection(folder, collectionId);
         }
+        for (Bookmark bookmark : bookmarks) {
+            bookmark.setFolder(folder);
+            bookmarkRepo.persist(bookmark);
+        }
+    }
 
-        bookmarkRepo.persist(bookmark);
-        return bookmark;
+    public void batchRemove(@NonNull List<Bookmark> bookmarks) {
+        OffsetDateTime now = appClock.offsetDateTime().now();
+        for (Bookmark bookmark : bookmarks) {
+            bookmark.setDeletedAt(now);
+            bookmarkRepo.persist(bookmark);
+        }
+    }
+
+    public void batchAddTag(
+        @NonNull List<Bookmark> bookmarks,
+        @NonNull ID<Tag> tagId,
+        @NonNull ID<Collection> collectionId
+    ) {
+        Tag tag = tagRepo.getById(tagId);
+        requireTagBelongsToCollection(tag, collectionId);
+        for (Bookmark bookmark : bookmarks) {
+            bookmark.getTags().add(tag);
+            bookmarkRepo.persist(bookmark);
+        }
     }
 
     private void requireFolderBelongsToCollection(@NonNull Folder folder, @NonNull ID<Collection> collectionId) {
         if (!folder.getCollection().getId().equals(collectionId)) {
-            throw new AppFailureException(
-                AppFailureMessage.internalError("Folder does not belong to the specified collection")
+            throw new AppAuthorizationException(
+                I18nMessage.of("AppAuthorization.FOLDER_COLLECTION_MISMATCH",
+                    "folderId", folder.getId().getUUID().toString(),
+                    "collectionId", collectionId.getUUID().toString())
+            );
+        }
+    }
+
+    private void requireTagBelongsToCollection(@NonNull Tag tag, @NonNull ID<Collection> collectionId) {
+        if (!tag.getCollectionId().equals(collectionId)) {
+            throw new AppAuthorizationException(
+                I18nMessage.of("AppAuthorization.TAG_COLLECTION_MISMATCH",
+                    "tagId", tag.getId().getUUID().toString(),
+                    "collectionId", collectionId.getUUID().toString())
             );
         }
     }

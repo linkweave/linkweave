@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useEffectiveLayout } from '@/composables/useEffectiveLayout'
 import { useBookmarkStore } from '@/stores/bookmark'
-import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
-import { useUiStore } from '@/stores/ui'
 import BookmarkCard from './BookmarkCard.vue'
 import BookmarkGroupedLayout from './BookmarkGroupedLayout.vue'
 import BookmarkDialog from './BookmarkDialog.vue'
@@ -23,9 +22,7 @@ const previewHover = provideBookmarkPreviewHover()
 const { t } = useI18n()
 const bookmarkStore = useBookmarkStore()
 const notification = useNotificationStore()
-const ui = useUiStore()
-const collectionStore = useCollectionStore()
-const effectiveLayout = computed(() => collectionStore.settingsLayout ?? ui.bookmarkLayout)
+const effectiveLayout = useEffectiveLayout()
 
 // List and grid layouts render the same `<BookmarkCard>` children — only the
 // container class and the `show-stats` flag differ.
@@ -43,6 +40,25 @@ const neverOpenedDividerAt = computed(() => {
   const n = bookmarkStore.neverOpenedCount
   if (n === 0) return -1
   return bookmarkStore.filteredBookmarks.length - n
+})
+
+// for the TransitionGroup we need to have a way to add bookmarks
+// and the 'never-opened' divider in one single list. Hence this types
+// gets exactly one keyed element per iteration — fragment children
+// (template v-for with multiple roots) are not supported there.
+type RenderItem =
+  | { key: string; kind: 'divider' }
+  | { key: string; kind: 'bookmark'; bookmark: BookmarkJson }
+
+const renderItems = computed<RenderItem[]>(() => {
+  const items: RenderItem[] = []
+  bookmarkStore.filteredBookmarks.forEach((bookmark, idx) => {
+    if (idx === neverOpenedDividerAt.value) {
+      items.push({ key: 'never-opened-divider', kind: 'divider' })
+    }
+    items.push({ key: bookmark.id, kind: 'bookmark', bookmark })
+  })
+  return items
 })
 
 const editingBookmark = ref<BookmarkJson | null>(null)
@@ -104,14 +120,22 @@ async function confirmDelete() {
     <p class="text-muted-foreground">{{ t('bookmarkList.empty') }}</p>
   </div>
 
-  <div v-else-if="effectiveLayout !== 'grouped'" :class="classForCards">
-    <template v-for="(bookmark, idx) in bookmarkStore.filteredBookmarks" :key="bookmark.id">
+  <!-- TransitionGroup animates batch/single removals out (UC-074: grid
+       fade + scale, list fade + slide-left, ~240ms). -->
+  <TransitionGroup
+    v-else-if="effectiveLayout !== 'grouped'"
+    tag="div"
+    :class="classForCards"
+    :name="effectiveLayout === 'grid' ? 'bm-grid' : 'bm-list'"
+  >
+    <template v-for="item in renderItems" :key="item.key">
       <NeverOpenedDivider
-        v-if="idx === neverOpenedDividerAt"
+        v-if="item.kind === 'divider'"
         :count="bookmarkStore.neverOpenedCount"
       />
       <BookmarkCard
-        :bookmark="bookmark"
+        v-else
+        :bookmark="item.bookmark"
         :layout="effectiveLayout === 'list' ? 'list' : 'grid'"
         :show-stats="showStats"
         @edit="handleEdit"
@@ -119,7 +143,7 @@ async function confirmDelete() {
         @move="handleMove"
       />
     </template>
-  </div>
+  </TransitionGroup>
 
   <BookmarkGroupedLayout
     v-else
@@ -153,3 +177,34 @@ async function confirmDelete() {
 
   <BookmarkPreviewPopup :controller="previewHover" />
 </template>
+
+<style scoped>
+.bm-grid-leave-active,
+.bm-list-leave-active {
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.bm-grid-leave-to {
+  opacity: 0;
+  transform: scale(0.92);
+}
+
+.bm-list-leave-to {
+  opacity: 0;
+  transform: translateX(-12px);
+}
+
+.bm-grid-move,
+.bm-list-move {
+  transition: transform 0.24s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bm-grid-leave-active,
+  .bm-list-leave-active,
+  .bm-grid-move,
+  .bm-list-move {
+    transition: none;
+  }
+}
+</style>

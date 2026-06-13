@@ -15,12 +15,21 @@
 
 import * as runtime from '../runtime';
 import type {
+  BookmarkBatchDeleteJson,
+  BookmarkBatchMoveJson,
+  BookmarkBatchTagJson,
   BookmarkJson,
   BookmarkListJson,
   BookmarkMoveJson,
   BookmarkSaveJson,
 } from '../models/index';
 import {
+    BookmarkBatchDeleteJsonFromJSON,
+    BookmarkBatchDeleteJsonToJSON,
+    BookmarkBatchMoveJsonFromJSON,
+    BookmarkBatchMoveJsonToJSON,
+    BookmarkBatchTagJsonFromJSON,
+    BookmarkBatchTagJsonToJSON,
     BookmarkJsonFromJSON,
     BookmarkJsonToJSON,
     BookmarkListJsonFromJSON,
@@ -30,6 +39,18 @@ import {
     BookmarkSaveJsonFromJSON,
     BookmarkSaveJsonToJSON,
 } from '../models/index';
+
+export interface BookmarkResourceApiApiBookmarksBatchDeletePostRequest {
+    bookmarkBatchDeleteJson: BookmarkBatchDeleteJson;
+}
+
+export interface BookmarkResourceApiApiBookmarksBatchMovePostRequest {
+    bookmarkBatchMoveJson: BookmarkBatchMoveJson;
+}
+
+export interface BookmarkResourceApiApiBookmarksBatchTagPostRequest {
+    bookmarkBatchTagJson: BookmarkBatchTagJson;
+}
 
 export interface BookmarkResourceApiApiBookmarksBookmarkIdDeleteRequest {
     bookmarkId: string;
@@ -61,6 +82,146 @@ export interface BookmarkResourceApiApiBookmarksPostRequest {
  * 
  */
 export class BookmarkResourceApi extends runtime.BaseAPI {
+
+    /**
+     * Creates request options for apiBookmarksBatchDeletePost without sending the request
+     */
+    async apiBookmarksBatchDeletePostRequestOpts(requestParameters: BookmarkResourceApiApiBookmarksBatchDeletePostRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['bookmarkBatchDeleteJson'] == null) {
+            throw new runtime.RequiredError(
+                'bookmarkBatchDeleteJson',
+                'Required parameter "bookmarkBatchDeleteJson" was null or undefined when calling apiBookmarksBatchDeletePost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/bookmarks/batch-delete`;
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: BookmarkBatchDeleteJsonToJSON(requestParameters['bookmarkBatchDeleteJson']),
+        };
+    }
+
+    /**
+     * Batch Delete
+     */
+    async apiBookmarksBatchDeletePostRaw(requestParameters: BookmarkResourceApiApiBookmarksBatchDeletePostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.apiBookmarksBatchDeletePostRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Batch Delete
+     */
+    async apiBookmarksBatchDeletePost(requestParameters: BookmarkResourceApiApiBookmarksBatchDeletePostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiBookmarksBatchDeletePostRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Creates request options for apiBookmarksBatchMovePost without sending the request
+     */
+    async apiBookmarksBatchMovePostRequestOpts(requestParameters: BookmarkResourceApiApiBookmarksBatchMovePostRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['bookmarkBatchMoveJson'] == null) {
+            throw new runtime.RequiredError(
+                'bookmarkBatchMoveJson',
+                'Required parameter "bookmarkBatchMoveJson" was null or undefined when calling apiBookmarksBatchMovePost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/bookmarks/batch-move`;
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: BookmarkBatchMoveJsonToJSON(requestParameters['bookmarkBatchMoveJson']),
+        };
+    }
+
+    /**
+     * Batch Move
+     */
+    async apiBookmarksBatchMovePostRaw(requestParameters: BookmarkResourceApiApiBookmarksBatchMovePostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BookmarkListJson>> {
+        const requestOptions = await this.apiBookmarksBatchMovePostRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BookmarkListJsonFromJSON(jsonValue));
+    }
+
+    /**
+     * Batch Move
+     */
+    async apiBookmarksBatchMovePost(requestParameters: BookmarkResourceApiApiBookmarksBatchMovePostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BookmarkListJson> {
+        const response = await this.apiBookmarksBatchMovePostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for apiBookmarksBatchTagPost without sending the request
+     */
+    async apiBookmarksBatchTagPostRequestOpts(requestParameters: BookmarkResourceApiApiBookmarksBatchTagPostRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['bookmarkBatchTagJson'] == null) {
+            throw new runtime.RequiredError(
+                'bookmarkBatchTagJson',
+                'Required parameter "bookmarkBatchTagJson" was null or undefined when calling apiBookmarksBatchTagPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/bookmarks/batch-tag`;
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: BookmarkBatchTagJsonToJSON(requestParameters['bookmarkBatchTagJson']),
+        };
+    }
+
+    /**
+     * Batch Tag
+     */
+    async apiBookmarksBatchTagPostRaw(requestParameters: BookmarkResourceApiApiBookmarksBatchTagPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BookmarkListJson>> {
+        const requestOptions = await this.apiBookmarksBatchTagPostRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BookmarkListJsonFromJSON(jsonValue));
+    }
+
+    /**
+     * Batch Tag
+     */
+    async apiBookmarksBatchTagPost(requestParameters: BookmarkResourceApiApiBookmarksBatchTagPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BookmarkListJson> {
+        const response = await this.apiBookmarksBatchTagPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Creates request options for apiBookmarksBookmarkIdDelete without sending the request

@@ -8,7 +8,6 @@ import ch.dvbern.dvbstarter.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.chainlink.api.bookmark.Bookmark;
 import org.chainlink.api.bookmark.BookmarkRepo;
-import org.chainlink.api.bookmark.BookmarkService;
 import org.chainlink.api.cleanup.json.CleanupSuggestionJson;
 import org.chainlink.api.collection.Collection;
 import org.chainlink.api.shared.config.ConfigService;
@@ -20,7 +19,6 @@ import org.jspecify.annotations.NonNull;
 public class CleanupSuggestionService {
 
     private final BookmarkRepo bookmarkRepo;
-    private final BookmarkService bookmarkService;
     private final ConfigService configService;
     private final AppClock appClock;
 
@@ -51,12 +49,6 @@ public class CleanupSuggestionService {
         Bookmark bookmark = bookmarkRepo.getById(bookmarkId);
         bookmark.setSuggestionDismissedAt(appClock.offsetDateTime().now());
         bookmarkRepo.persist(bookmark);
-    }
-
-    public void moveToTrash(@NonNull List<ID<Bookmark>> bookmarkIds) {
-        for (ID<Bookmark> id : bookmarkIds) {
-            bookmarkService.removeBookmark(id);
-        }
     }
 
     @NonNull

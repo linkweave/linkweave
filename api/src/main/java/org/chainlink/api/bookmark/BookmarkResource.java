@@ -1,6 +1,7 @@
 package org.chainlink.api.bookmark;
 
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.Authenticated;
@@ -18,6 +19,9 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import lombok.RequiredArgsConstructor;
+import org.chainlink.api.bookmark.json.BookmarkBatchDeleteJson;
+import org.chainlink.api.bookmark.json.BookmarkBatchMoveJson;
+import org.chainlink.api.bookmark.json.BookmarkBatchTagJson;
 import org.chainlink.api.bookmark.json.BookmarkJson;
 import org.chainlink.api.bookmark.json.BookmarkListJson;
 import org.chainlink.api.bookmark.json.BookmarkMoveJson;
@@ -88,7 +92,9 @@ public class BookmarkResource {
         @NotNull @Valid @NonNull BookmarkMoveJson json
     ) {
         authorizationService.requireCollectionAccess(json.getCollectionId());
-        Bookmark bookmark = bookmarkService.moveBookmarkToFolder(bookmarkId, json);
+        Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
+        authorizationService.requireSameCollection(bookmark, json.getCollectionId());
+        bookmarkService.batchMoveToFolder(List.of(bookmark), json.getFolderId(), json.getCollectionId());
         return BookmarkMapper.toJson(bookmark);
     }
 
@@ -101,6 +107,60 @@ public class BookmarkResource {
         Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
         authorizationService.requireAccessTo(bookmark);
         bookmarkService.removeBookmark(bookmarkId);
+    }
+
+    @POST
+    @Path("/batch-move")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @NonNull
+    @Authenticated
+    public BookmarkListJson batchMove(@NotNull @Valid @NonNull BookmarkBatchMoveJson json) {
+        List<Bookmark> bookmarks = authorizeAndLoad(json.getCollectionId(), json.getBookmarkIds());
+        bookmarkService.batchMoveToFolder(bookmarks, json.getFolderId(), json.getCollectionId());
+        return toListJson(bookmarks);
+    }
+
+    @POST
+    @Path("/batch-delete")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Authenticated
+    public void batchDelete(@NotNull @Valid @NonNull BookmarkBatchDeleteJson json) {
+        List<Bookmark> bookmarks = authorizeAndLoad(json.getCollectionId(), json.getBookmarkIds());
+        bookmarkService.batchRemove(bookmarks);
+    }
+
+    @POST
+    @Path("/batch-tag")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @NonNull
+    @Authenticated
+    public BookmarkListJson batchTag(@NotNull @Valid @NonNull BookmarkBatchTagJson json) {
+        List<Bookmark> bookmarks = authorizeAndLoad(json.getCollectionId(), json.getBookmarkIds());
+        bookmarkService.batchAddTag(bookmarks, json.getTagId(), json.getCollectionId());
+        return toListJson(bookmarks);
+    }
+
+    /**
+     * Shared batch guard: collection access plus the every-bookmark-belongs-to-it
+     * check (without it, access to one collection would allow mutating bookmarks
+     * of any other).
+     */
+    @NonNull
+    private List<Bookmark> authorizeAndLoad(
+        @NonNull ID<Collection> collectionId,
+        @NonNull List<ID<Bookmark>> bookmarkIds
+    ) {
+        authorizationService.requireCollectionAccess(collectionId);
+        List<Bookmark> bookmarks = bookmarkService.getBookmarks(bookmarkIds);
+        authorizationService.requireSameCollection(bookmarks, collectionId);
+        return bookmarks;
+    }
+
+    @NonNull
+    private static BookmarkListJson toListJson(@NonNull List<Bookmark> bookmarks) {
+        return new BookmarkListJson(bookmarks.stream().map(BookmarkMapper::toJson).toList());
     }
 
     @POST

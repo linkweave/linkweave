@@ -91,7 +91,7 @@ test.describe('UC-091 collapsible properties section', () => {
 
     // Open edit dialog via the three-dot menu
     const card = page.locator('[data-testid^="bookmark-card-"]').first()
-    await card.locator('button').click()
+    await card.getByTestId('bookmark-menu-button').click()
     await page.getByRole('menuitem', { name: /edit/i }).click()
 
     const dialog = page.locator('[role="dialog"]')
@@ -114,7 +114,7 @@ test.describe('UC-091 collapsible properties section', () => {
     })
 
     const card = page.locator('[data-testid^="bookmark-card-"]').first()
-    await card.locator('button').click()
+    await card.getByTestId('bookmark-menu-button').click()
     await page.getByRole('menuitem', { name: /edit/i }).click()
 
     const dialog = page.locator('[role="dialog"]')
@@ -134,7 +134,7 @@ test.describe('UC-091 collapsible properties section', () => {
     await dialog.getByRole('button', { name: /cancel/i }).click()
     await expect(dialog).not.toBeVisible()
 
-    await card.locator('button').click()
+    await card.getByTestId('bookmark-menu-button').click()
     await page.getByRole('menuitem', { name: /edit/i }).click()
 
     const dialog2 = page.locator('[role="dialog"]')
@@ -151,7 +151,7 @@ test.describe('UC-091 collapsible properties section', () => {
     })
 
     const card = page.locator('[data-testid^="bookmark-card-"]').first()
-    await card.locator('button').click()
+    await card.getByTestId('bookmark-menu-button').click()
     await page.getByRole('menuitem', { name: /edit/i }).click()
 
     const dialog = page.locator('[role="dialog"]')

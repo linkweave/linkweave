@@ -9,12 +9,14 @@ import { useShowPropertyBadges, useShowPreviewPopup } from '@/composables/usePro
 import { useRelativeTime } from '@/composables/useRelativeTime'
 import { decodePropertyValue } from '@/lib/propertyValueMapper'
 import { matchesPropertyToken, parsePropertyValue } from '@/lib/searchQueryProperty'
+import SelectionCheckbox from '@/components/bookmark/SelectionCheckbox.vue'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { useNotificationStore } from '@/stores/notification'
 import { usePropertyStore } from '@/stores/property'
 import { useSearchQueryStore } from '@/stores/searchQuery'
+import { useSelectionStore } from '@/stores/selection'
 import { useTagStore } from '@/stores/tag'
 import { useUiStore } from '@/stores/ui'
 import { Clock, ExternalLink, Folder, MoreHorizontal, MousePointerClick } from '@lucide/vue'
@@ -86,9 +88,45 @@ function onBookmarkDragEnd() {
   }, 0)
 }
 
+// --- Batch selection (UC-074) ----------------------------------------------
+
+const selection = useSelectionStore()
+const isSelected = computed(() => selection.isSelected(props.bookmark.id))
+
+// Shift-click extends the range from the anchor (adds, never removes);
+// every other click/checkbox toggle moves the anchor to this card.
+function handleSelectionClick(event: MouseEvent) {
+  if (event.shiftKey) {
+    selection.rangeSelectTo(props.bookmark.id)
+  } else {
+    selection.toggle(props.bookmark.id)
+  }
+}
+
+const selectedCardClass = computed(() => {
+  if (!isSelected.value) return ''
+  if (props.layout === 'list') {
+    // Row tint; the thumbnail ring is applied inside BookmarkPreview.
+    return 'bg-[color-mix(in_oklab,var(--color-primary)_9%,transparent)]'
+  }
+  const ring =
+    'border-primary shadow-[0_0_0_1px_color-mix(in_oklab,var(--color-primary)_53%,transparent)]'
+  // Without a capture to inset, selection reads as ring + background tint.
+  return previewsVisible.value
+    ? ring
+    : `${ring} bg-[color-mix(in_oklab,var(--color-primary)_8%,var(--color-card))]`
+})
+
 function onCardLinkClick(event: MouseEvent) {
   if (didDrag) {
     event.preventDefault()
+    return
+  }
+  // In selection mode a click toggles instead of opening the link;
+  // ⌘/Ctrl-click toggles and implicitly enters selection mode.
+  if (selection.selecting || event.metaKey || event.ctrlKey) {
+    event.preventDefault()
+    handleSelectionClick(event)
     return
   }
   bookmarkStore.trackClick(props.bookmark.id)
@@ -100,6 +138,7 @@ function getFolderName(): string | null {
   const folder = folderStore.folders.find((f) => f.id === folderId)
   return folder?.data.name ?? null
 }
+
 
 // Note: we don't render an "excluded" state here. A bookmark tagged `#draft`
 // is filtered out by `-#draft`, so a card chip never reaches that state. The
@@ -261,7 +300,9 @@ const hoverPreviewActive = computed(
     props.layout === 'list' &&
     !isTouch.value &&
     !!previewHover &&
-    showPreviewPopup.value,
+    showPreviewPopup.value &&
+    // No zoom popup while selecting — it would fight the checkbox/toggle UX.
+    !selection.selecting,
 )
 
 function onRowEnter() {
@@ -278,12 +319,17 @@ function onRowLeave() {
 <template>
   <div
     ref="rowEl"
-    :draggable="!isTouch"
+    :draggable="!isTouch && !selection.selecting"
     :data-testid="`bookmark-card-${props.bookmark.id}`"
     :data-bookmark-title="props.bookmark.data.title"
     :data-layout="props.layout"
-    class="group relative rounded-lg border border-border bg-card hover:ring-2 hover:ring-primary/50 hover:border-primary/30 focus-within:ring-2 focus-within:ring-primary transition-[box-shadow,border-color,color] duration-150 text-muted-foreground hover:text-accent-foreground cursor-grab active:cursor-grabbing"
-    :class="props.layout === 'grid' ? 'overflow-hidden' : ''"
+    :aria-selected="selection.selecting ? isSelected : undefined"
+    class="group relative rounded-lg border border-border bg-card hover:ring-2 hover:ring-primary/50 focus-within:ring-2 focus-within:ring-primary transition-[box-shadow,border-color,color,background-color] duration-150 text-muted-foreground hover:text-accent-foreground after:pointer-events-none after:absolute after:inset-0 after:z-[4] after:rounded-[inherit] after:border after:border-transparent hover:after:border-primary/30 after:transition-colors after:duration-150"
+    :class="[
+      props.layout === 'grid' ? 'overflow-hidden' : '',
+      selection.selecting ? 'cursor-pointer select-none' : 'cursor-grab active:cursor-grabbing',
+      selectedCardClass,
+    ]"
     @dragstart="onBookmarkDragStart"
     @dragend="onBookmarkDragEnd"
     @mouseenter="onRowEnter"
@@ -303,14 +349,38 @@ function onRowLeave() {
 
     <!-- Grid mode preview: 16:9 cover at the top with a favicon chip
          overlapping the bottom edge. The body wrapper below adds extra
-         padding-top to clear the −12px overhang. -->
-    <BookmarkPreview
+         padding-top to clear the −12px overhang. The relative wrapper
+         hosts the selection checkbox + contrast scrim over the cover; it
+         must be pointer-transparent so cover clicks fall through to the
+         stretched link (the checkbox opts back in via its own CSS). -->
+    <div
       v-if="previewsVisible && props.layout === 'grid'"
-      :bookmark="props.bookmark"
-      variant="grid"
-      :nonce="previewNonce"
-      class="block pointer-events-none"
-    />
+      class="relative pointer-events-none"
+    >
+      <BookmarkPreview
+        :bookmark="props.bookmark"
+        variant="grid"
+        :nonce="previewNonce"
+        :selected="isSelected"
+        class="block pointer-events-none"
+      />
+      <!-- Contrast scrim so the white circle survives light screenshots;
+           skipped when selected (the inset gap provides contrast). -->
+      <div
+        class="sel-scrim"
+        :class="{ 'is-visible': selection.selecting && !isSelected }"
+        aria-hidden="true"
+      />
+      <SelectionCheckbox
+        class="sel-overlay-check sel-overlay-check--grid"
+        variant="overlay"
+        :size="22"
+        :check-size="13"
+        :visible="selection.selecting"
+        :checked="isSelected"
+        @toggle="handleSelectionClick"
+      />
+    </div>
 
     <div
       class="relative flex items-start gap-3 pointer-events-none p-4"
@@ -319,25 +389,63 @@ function onRowLeave() {
       <!-- List mode preview: leading 124px thumb. Sits as the first flex
            child; the favicon then moves *inline* into the title row (see
            below), which is what makes the row feel like a single text
-           block beside the thumb rather than two stacked columns. -->
-      <BookmarkPreview
+           block beside the thumb rather than two stacked columns. The
+           selection checkbox overlays the thumbnail — a leading checkbox
+           column would shift text on mode entry. -->
+      <div
         v-if="previewsVisible && props.layout === 'list'"
-        :bookmark="props.bookmark"
-        variant="list"
-        :nonce="previewNonce"
-        class="w-[124px] shrink-0 mt-0.5"
-      />
+        class="relative w-[124px] shrink-0 mt-0.5"
+      >
+        <BookmarkPreview
+          :bookmark="props.bookmark"
+          variant="list"
+          :nonce="previewNonce"
+          :selected="isSelected"
+          class="block"
+        />
+        <div
+          class="sel-scrim sel-scrim--list"
+          :class="{ 'is-visible': selection.selecting && !isSelected }"
+          aria-hidden="true"
+        />
+        <SelectionCheckbox
+          class="sel-overlay-check sel-overlay-check--list"
+          variant="overlay"
+          :size="19"
+          :check-size="11"
+          :visible="selection.selecting"
+          :checked="isSelected"
+          @toggle="handleSelectionClick"
+        />
+      </div>
       <!-- Favicon-as-own-column only when previews aren't carrying the
            identity. With previews on:
              - grid: the chip overlay handles identity (no favicon here)
-             - list: the favicon moves inline into the title row -->
-      <BookmarkFavicon
+             - list: the favicon moves inline into the title row
+           With previews OFF there is no capture frame to host a checkbox,
+           so the favicon flips in place into the checkbox (avatar-flip
+           pattern) — the checkbox inherits the favicon's box, no reflow. -->
+      <div
         v-if="!previewsVisible"
-        :bookmark-id="props.bookmark.id"
-        :url="props.bookmark.data.url"
-        :size="20"
-        class="mt-0.5"
-      />
+        class="sel-swap mt-0.5"
+        :class="{ 'is-checking': selection.selecting }"
+      >
+        <BookmarkFavicon
+          :bookmark-id="props.bookmark.id"
+          :url="props.bookmark.data.url"
+          :size="20"
+          class="sel-swap-favicon"
+        />
+        <SelectionCheckbox
+          class="sel-swap-check"
+          variant="muted"
+          :size="20"
+          :check-size="11"
+          :visible="selection.selecting"
+          :checked="isSelected"
+          @toggle="handleSelectionClick"
+        />
+      </div>
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2">
           <BookmarkFavicon
@@ -353,6 +461,7 @@ function onRowLeave() {
           <!-- Lazy radix mount: see `menuActivated` in script -->
           <button
             v-if="!menuActivated"
+            data-testid="bookmark-menu-button"
             class="ml-auto h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-md transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground pointer-events-auto relative z-10"
             @click.stop="menuActivated = true"
           >
@@ -361,6 +470,7 @@ function onRowLeave() {
           <DropdownMenuRoot v-else :default-open="true">
             <DropdownMenuTrigger as-child>
               <button
+                data-testid="bookmark-menu-button"
                 class="ml-auto h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-md transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground pointer-events-auto relative z-10"
                 @click.stop
               >
@@ -490,3 +600,85 @@ function onRowLeave() {
          controller; this row only reports enter/leave. -->
   </div>
 </template>
+
+<style scoped>
+/* Overlay checkbox pinned to the capture's top-left corner (UC-074:
+   22px at 8/8 on the grid cover, 19px at 6/6 on the list thumbnail).
+   Scoped CSS rather than Tailwind utilities: the checkbox's own scoped
+   styles are unlayered and would beat layered utility classes. */
+.sel-overlay-check {
+  position: absolute;
+  z-index: 3;
+}
+
+.sel-overlay-check--grid {
+  top: 8px;
+  left: 8px;
+}
+
+.sel-overlay-check--list {
+  top: 6px;
+  left: 6px;
+}
+
+/* Contrast scrim over the capture while an unchecked checkbox is visible. */
+.sel-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(160deg, rgba(10, 12, 16, 0.42), transparent 38%);
+  opacity: 0;
+  transition: opacity 0.13s;
+}
+
+.sel-scrim--list {
+  /* match the list thumb's rounded-md frame */
+  border-radius: 0.375rem;
+}
+
+.sel-scrim.is-visible {
+  opacity: 1;
+}
+
+/* Previews-off favicon ⇄ checkbox swap: both elements share the favicon's
+   exact box; the counter-rotation (favicon out at −30°, checkbox in from
+   +30°) sells the flip. */
+.sel-swap {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  pointer-events: auto;
+}
+
+.sel-swap :deep(.sel-swap-favicon) {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.13s, transform 0.15s;
+}
+
+.sel-swap.is-checking :deep(.sel-swap-favicon) {
+  opacity: 0;
+  transform: scale(0.6) rotate(-30deg);
+}
+
+.sel-swap :deep(.sel-swap-check) {
+  position: absolute;
+  inset: 0;
+  transform: scale(0.6) rotate(30deg);
+}
+
+.sel-swap :deep(.sel-swap-check.is-visible) {
+  transform: scale(1) rotate(0deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sel-scrim,
+  .sel-swap :deep(.sel-swap-favicon),
+  .sel-swap :deep(.sel-swap-check) {
+    transition: opacity 0.13s;
+    transform: none;
+  }
+}
+</style>

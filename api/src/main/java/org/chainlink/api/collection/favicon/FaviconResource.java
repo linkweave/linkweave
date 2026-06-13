@@ -35,9 +35,12 @@ public class FaviconResource {
         @PathParam("collectionId") ID<Collection> collectionId,
         @PathParam("bookmarkId") ID<Bookmark> bookmarkId
     ) {
-        Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
-        authorizationService.requireAccessTo(bookmark);
-        authorizationService.requireSameCollection(bookmark, collectionId);
+        // Scalar collection-id lookup instead of loading the entity: this
+        // endpoint fans out once per visible bookmark, and concurrent entity
+        // loads race in Hibernate's shared UTC calendar (HHH-20355).
+        ID<Collection> owningCollectionId = bookmarkService.getBookmarkCollectionId(bookmarkId);
+        authorizationService.requireCollectionAccess(owningCollectionId);
+        authorizationService.requireSameCollection(owningCollectionId, collectionId);
         return faviconService.getFavicon(bookmarkId)
             .map(c -> Response.ok(c.bytes()).header("Content-Type", c.contentType())
                 .header("Cache-Control", "private, max-age=86400")

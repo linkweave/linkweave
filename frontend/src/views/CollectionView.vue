@@ -6,25 +6,27 @@ import {
   CollectionSettingsModal,
   SearchActiveChip,
 } from '@/components/bookmark'
+import BatchActionBar from '@/components/bookmark/BatchActionBar.vue'
 import BookmarkDialog from '@/components/bookmark/BookmarkDialog.vue'
 import { MainLayout } from '@/components/layout'
 import { ResponsiveButton, SearchBar } from '@/components/ui'
 import HeaderSearchMobile from '@/components/ui/HeaderSearchMobile.vue'
+import { useEffectiveLayout } from '@/composables/useEffectiveLayout'
 import { useMediaQuery } from '@/composables/useMediaQuery'
+import { useSelectionShortcuts } from '@/composables/useSelectionShortcuts'
 import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { useOfflineStore } from '@/stores/offline'
-import { useUiStore } from '@/stores/ui'
+import { useSelectionStore } from '@/stores/selection'
 import { BookmarkPlus, Settings } from '@lucide/vue'
-import { computed, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
 const searchQueryStore = useSearchQueryStore()
 const folderStore = useFolderStore()
-const ui = useUiStore()
 const offline = useOfflineStore()
 const isAddingBookmark = ref(false)
 const isSettingsOpen = ref(false)
@@ -33,7 +35,13 @@ const searchPlaceholder = computed(() =>
   isDesktop.value ? t('search.placeholder') : t('search.placeholderShort'),
 )
 
-const effectiveLayout = computed(() => collectionStore.settingsLayout ?? ui.bookmarkLayout)
+const effectiveLayout = useEffectiveLayout()
+
+// Selection is transient view state (UC-074): keyboard shortcuts live for
+// the lifetime of this view, and leaving the route clears any selection.
+const selection = useSelectionStore()
+useSelectionShortcuts()
+onUnmounted(() => selection.clearAndExit())
 const containerClass = computed(() => {
   const l = effectiveLayout.value
   return l === 'grouped' || l === 'grid' ? 'max-w-7xl' : 'max-w-4xl'
@@ -82,6 +90,7 @@ const containerClass = computed(() => {
           </button>
         </template>
       </BookmarkListToolbar>
+      <BatchActionBar v-if="effectiveLayout !== 'grouped'" />
     </template>
     <div :class="[containerClass, 'mx-auto space-y-4']">
       <SearchActiveChip />
