@@ -4,6 +4,8 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'https://local-chainlink.loca
 
 export default defineConfig({
   testDir: './e2e',
+  // Clears stale coverage before the run (no-op unless E2E_COVERAGE is set).
+  globalSetup: './e2e/coverage/global-setup.ts',
   fullyParallel: true,
   // Per-test timeout — bumped from the default 30s because each spec now
   // registers a dedicated test user via the form-auth flow, and under heavy

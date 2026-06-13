@@ -13,7 +13,9 @@ dist
 dist-ssr
 dist-extension
 chainlink-extension.zip
-coverage
+/coverage
+/coverage-e2e
+/.nyc_output
 *.local
 
 # Editor directories and files

@@ -8,9 +8,14 @@ import {defineConfig} from 'vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import {VitePWA} from 'vite-plugin-pwa'
 import {sentryVitePlugin} from '@sentry/vite-plugin'
+import istanbul from 'vite-plugin-istanbul'
 
 export default defineConfig(({ command }) => {
   const isDev = command === 'serve' && !process.env.VITEST
+  // Instrument app source for e2e coverage only when explicitly requested, so
+  // normal dev/build output is never touched. The Playwright webServer inherits
+  // this env var, so `E2E_COVERAGE=1 playwright test` instruments the dev server.
+  const coverage = process.env.E2E_COVERAGE === 'true' || process.env.E2E_COVERAGE === '1'
 
   const certsDir = path.resolve(__dirname, '../developer-local-settings/config/certs')
   // Hostname Vite serves under. Override via VITE_DEV_HOST (e.g. CI uses
@@ -25,6 +30,16 @@ export default defineConfig(({ command }) => {
       vue(),
       vueDevTools(),
       tailwindcss(),
+      ...(coverage
+        ? [
+            istanbul({
+              include: 'src/**/*',
+              extension: ['.ts', '.js', '.vue'],
+              exclude: ['node_modules', 'e2e/**', '**/*.spec.ts', '**/*.test.ts'],
+              requireEnv: false,
+            }),
+          ]
+        : []),
       sentryVitePlugin({
         org: 'mh03r932',
         project: 'chainlink-vue',

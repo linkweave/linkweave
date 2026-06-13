@@ -1,4 +1,4 @@
-import { expect, test, type APIRequestContext, type Browser } from '@playwright/test'
+import { expect, test, type APIRequestContext, type Browser } from './fixtures'
 import {
   deleteTestUserCleanup,
   loginViaApi,

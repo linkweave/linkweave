@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from './fixtures'
 import { api, createBookmarkViaApi, type Created } from './helpers/api'
 import { loginViaApi } from './models/TestUser'
 import { useTestCollectionWithCleanup } from './helpers/testCollection'

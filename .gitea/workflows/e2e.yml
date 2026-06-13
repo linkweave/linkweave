@@ -42,6 +42,9 @@ jobs:
       # SAN list includes 'localhost', so TLS verification works even though
       # the browser-facing hostname is e2e-chainlink.localhost.
       VITE_API_TARGET: https://localhost:8443
+      # Instrument the dev server (vite-plugin-istanbul) and harvest per-test
+      # coverage. The Playwright-started webServer inherits this. Report-only.
+      E2E_COVERAGE: "1"
 
     steps:
       - uses: actions/checkout@v5
@@ -158,6 +161,19 @@ jobs:
         # and waits for it on :5173.
         run: pnpm exec playwright test --project=chromium
 
+      # Merge the per-test istanbul JSON harvested into .nyc_output into an HTML
+      # + text-summary report. Runs even if some e2e tests failed; report-only,
+      # so a low number never fails the build.
+      - name: Generate e2e coverage report
+        if: always()
+        working-directory: frontend
+        run: |
+          if [ -d .nyc_output ]; then
+            pnpm run coverage:e2e:report
+          else
+            echo "No coverage data collected (.nyc_output missing) — skipping report"
+          fi
+
       - name: Stop API
         if: always()
         run: |
@@ -171,6 +187,14 @@ jobs:
         with:
           name: playwright-report
           path: frontend/playwright-report
+          retention-days: 14
+
+      - name: Upload e2e coverage report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: e2e-coverage-report
+          path: frontend/coverage-e2e
           retention-days: 14
 
       - name: Upload API log on failure

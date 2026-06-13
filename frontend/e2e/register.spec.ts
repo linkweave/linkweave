@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 import { AppPageObject } from './models/AppPageObject'
 import { LoginPageObject } from './models/LoginPageObject'
 import { RegisterPageObject } from './models/RegisterPageObject'

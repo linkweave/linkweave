@@ -1,0 +1,6 @@
+{
+  "all": false,
+  "temp-dir": ".nyc_output",
+  "report-dir": "coverage-e2e",
+  "reporter": ["html", "text-summary"]
+}

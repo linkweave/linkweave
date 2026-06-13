@@ -1,4 +1,4 @@
-import { type APIRequestContext, expect, test } from '@playwright/test'
+import { type APIRequestContext, expect, test } from './fixtures'
 import { BASE } from './helpers/api'
 import {
   deleteTestUserCleanup,
@@ -49,7 +49,7 @@ test.describe('Sort preferences', () => {
 
   test.use({ storageState: async ({}, use) => { await use(storageState) } })
 
-  async function visibleTitles(page: import('@playwright/test').Page): Promise<string[]> {
+  async function visibleTitles(page: import('./fixtures').Page): Promise<string[]> {
     // Wait for at least one bookmark card to render before reading the list,
     // otherwise we race the SPA bootstrap on freshly-loaded pages.
     await page.locator('h3').first().waitFor({ state: 'visible' })

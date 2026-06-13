@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test'
+import { expect, type Page, test } from './fixtures'
 import { createBookmarkViaUi } from './helpers/bookmarks'
 import { gotoCollection, useTestCollectionWithCleanup } from './helpers/testCollection'
 

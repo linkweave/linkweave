@@ -3,7 +3,7 @@ import {
   test,
   type APIRequestContext,
   type Page,
-} from '@playwright/test'
+} from './fixtures'
 import { api, type Created } from './helpers/api'
 import {
   deleteTestUserCleanup,
