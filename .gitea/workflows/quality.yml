@@ -28,7 +28,7 @@ jobs:
 
       - name: CPD check
         working-directory: api
-        run: ./mvnw -B -ntp pmd:cpd-check
+        run: ./mvnw --batch-mode --no-transfer-progress pmd:cpd-check
 
   # Frontend CSS linting (stylelint, enforced) plus fallow dead code,
   # duplication and health/complexity (report-only via continue-on-error).

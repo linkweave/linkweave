@@ -98,7 +98,7 @@ jobs:
 
       - name: Build API
         working-directory: api
-        run: ./mvnw -B -DskipTests package -Dquarkus.package.jar.type=fast-jar -Dquarkus.profile=dev
+        run: ./mvnw --batch-mode --no-transfer-progress -DskipTests package -Dquarkus.package.jar.type=fast-jar -Dquarkus.profile=dev
 
       - name: Start API (dev profile, background)
         working-directory: api
