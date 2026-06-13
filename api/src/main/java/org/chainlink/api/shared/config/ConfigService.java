@@ -29,9 +29,11 @@ import jakarta.transaction.Transactional.TxType;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.chainlink.api.shared.net.HostSkipList;
 import org.chainlink.infrastructure.deployment.DeploymentEnvironment;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jspecify.annotations.NonNull;
 
 @Slf4j
 @ApplicationScoped
@@ -105,6 +107,15 @@ public class ConfigService {
 
     @ConfigProperty(name = "chainlink.cleanup.available-thresholds", defaultValue = "3,6,12")
     List<Integer> cleanupAvailableThresholds;
+
+    // Operator-facing global skip list: hostnames (or *.wildcards) the backend
+    // must never fetch favicons or screenshots for. Use for domains the server
+    // cannot reach (internal CDNs) or should not hammer (rate-limiting hosts).
+    // Comma- or newline-separated. Parsed once and cached; see getFetchSkipList.
+    @ConfigProperty(name = "chainlink.fetch.skip-domains")
+    Optional<String> fetchSkipDomains;
+
+    private HostSkipList fetchSkipList;
 
     @ConfigProperty(name = "chainlink.favicon.cache-dir", defaultValue = "developer-local-settings/favicon-cache")
     String faviconCacheDir;
@@ -188,6 +199,20 @@ public class ConfigService {
     public boolean isStufeProd() {
         var env = getEnvironment();
         return env.isProd();
+    }
+
+    /**
+     * The parsed global fetch skip list, cached after first access. Both the
+     * favicon and screenshot fetchers consult this before any DNS/network work.
+     */
+    @NonNull
+    public HostSkipList getFetchSkipList() {
+        HostSkipList local = fetchSkipList;
+        if (local == null) {
+            local = HostSkipList.parse(fetchSkipDomains.orElse(null));
+            fetchSkipList = local;
+        }
+        return local;
     }
 
 
