@@ -146,12 +146,12 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
     }
 
     /** A bookmark awaiting screenshot capture, with the bits the capture job needs
-     * to decide whether to fetch: its id, URL, and the owning collection's favicon
-     * allowlist (hosts the backend must not reach — see {@link PendingScreenshotCapture}). */
+     * to decide whether to fetch: its id, URL, and the owning collection's browser
+     * fetch allowlist (hosts the backend must not reach — see {@link PendingScreenshotCapture}). */
     public record PendingScreenshotCapture(
         @NonNull ID<Bookmark> bookmarkId,
         @NonNull URL url,
-        @Nullable String collectionFaviconAllowlist
+        @Nullable String collectionBrowserAllowlist
     ) {}
 
     /**
@@ -213,8 +213,8 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             .fetchOne();
     }
 
-    /** A bookmark's URL paired with its collection's favicon allowlist. */
-    public record FaviconContext(@NonNull URL url, @Nullable String collectionFaviconAllowlist) {}
+    /** A bookmark's URL paired with its collection's browser fetch allowlist. */
+    public record FaviconContext(@NonNull URL url, @Nullable String collectionBrowserAllowlist) {}
 
     /**
      * Scalar projection for the favicon read path: the URL plus the owning

@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.URI;
 
 import org.chainlink.api.shared.config.ConfigService;
-import org.chainlink.api.shared.net.HostSkipList;
+import org.chainlink.api.shared.net.HostPatternSet;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 
@@ -64,20 +64,20 @@ class FaviconFetcherServiceTest {
     }
 
     @Test
-    void shouldSkipFetchForHostOnGlobalSkipList() throws Exception {
+    void shouldSkipFetchForHostOnBackendFetchDenylist() throws Exception {
         // Skip check runs before any DNS/network, so a never-resolving host
         // returns empty without touching the wire.
-        FaviconFetcherService svc = new FaviconFetcherService(skipListConfig("*.internal.example"));
+        FaviconFetcherService svc = new FaviconFetcherService(denylistConfig("*.internal.example"));
 
         assertThat(svc.fetchFor(URI.create("https://wiki.internal.example/").toURL())).isEmpty();
     }
 
-    private static ConfigService skipListConfig(String skipDomains) {
+    private static ConfigService denylistConfig(String denyDomains) {
         return new ConfigService() {
             @Override
             @NonNull
-            public HostSkipList getFetchSkipList() {
-                return HostSkipList.parse(skipDomains);
+            public HostPatternSet getBackendFetchDenylist() {
+                return HostPatternSet.parse(denyDomains);
             }
         };
     }

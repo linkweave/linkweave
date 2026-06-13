@@ -19,6 +19,7 @@ public class FaviconService {
     private final BookmarkRepo bookmarkRepo;
     private final FaviconCacheService cache;
     private final FaviconFetcherService fetcher;
+    private final BackendFetchPolicy fetchPolicy;
 
     public @NonNull Optional<FaviconCacheService.CachedFavicon> getFavicon(@NonNull ID<Bookmark> bookmarkId) {
         // Scalar projection (not the entity): one favicon request per visible
@@ -30,10 +31,11 @@ public class FaviconService {
                 bookmarkRepo.getById(bookmarkId).getUrl(), null)); // throws the canonical not-found
         URL url = ctx.url();
 
-        // Hosts a collection lists in its favicon allowlist are loaded directly
-        // by the user's browser (the backend can't reach them); never fetch or
-        // cache server-side — it would only ever produce negative entries.
-        if (FaviconAllowlist.parse(ctx.collectionFaviconAllowlist()).matches(url.getHost())) {
+        // Hosts the backend must not reach (operator denylist, or this
+        // collection's browser allowlist — loaded directly by the user's
+        // browser): never fetch or cache server-side, since it would only ever
+        // produce negative entries.
+        if (fetchPolicy.blocks(url.getHost(), ctx.collectionBrowserAllowlist())) {
             return Optional.empty();
         }
 

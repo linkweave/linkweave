@@ -4,19 +4,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-class HostSkipListTest {
+class HostPatternSetTest {
 
     @Test
     void shouldMatchNothingWhenEmpty() {
-        HostSkipList list = HostSkipList.parse(null);
+        HostPatternSet list = HostPatternSet.parse(null);
         assertThat(list.isEmpty()).isTrue();
         assertThat(list.matches("example.com")).isFalse();
-        assertThat(HostSkipList.parse("  ").isEmpty()).isTrue();
+        assertThat(HostPatternSet.parse("  ").isEmpty()).isTrue();
     }
 
     @Test
     void shouldMatchExactHostCaseInsensitively() {
-        HostSkipList list = HostSkipList.parse("intranet.local");
+        HostPatternSet list = HostPatternSet.parse("intranet.local");
         assertThat(list.matches("intranet.local")).isTrue();
         assertThat(list.matches("INTRANET.LOCAL")).isTrue();
         assertThat(list.matches("other.local")).isFalse();
@@ -25,7 +25,7 @@ class HostSkipListTest {
 
     @Test
     void shouldMatchWildcardSubdomainsAndApex() {
-        HostSkipList list = HostSkipList.parse("*.mycompany.domain");
+        HostPatternSet list = HostPatternSet.parse("*.mycompany.domain");
         assertThat(list.matches("wiki.mycompany.domain")).isTrue();
         assertThat(list.matches("a.b.mycompany.domain")).isTrue();
         assertThat(list.matches("mycompany.domain")).isTrue(); // bare apex
@@ -35,7 +35,7 @@ class HostSkipListTest {
 
     @Test
     void shouldParseCommaAndNewlineSeparatedAndNormalize() {
-        HostSkipList list = HostSkipList.parse("  Foo.Example , bar.example\n*.baz.example\nfoo.example");
+        HostPatternSet list = HostPatternSet.parse("  Foo.Example , bar.example\n*.baz.example\nfoo.example");
         assertThat(list.patterns()).containsExactly("foo.example", "bar.example", "*.baz.example");
         assertThat(list.matches("foo.example")).isTrue();
         assertThat(list.matches("x.baz.example")).isTrue();
@@ -43,7 +43,7 @@ class HostSkipListTest {
 
     @Test
     void shouldNotMatchBlankHost() {
-        HostSkipList list = HostSkipList.parse("example.com");
+        HostPatternSet list = HostPatternSet.parse("example.com");
         assertThat(list.matches(null)).isFalse();
         assertThat(list.matches("")).isFalse();
         assertThat(list.matches("  ")).isFalse();

@@ -29,7 +29,7 @@ import jakarta.transaction.Transactional.TxType;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.chainlink.api.shared.net.HostSkipList;
+import org.chainlink.api.shared.net.HostPatternSet;
 import org.chainlink.infrastructure.deployment.DeploymentEnvironment;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -108,14 +108,15 @@ public class ConfigService {
     @ConfigProperty(name = "chainlink.cleanup.available-thresholds", defaultValue = "3,6,12")
     List<Integer> cleanupAvailableThresholds;
 
-    // Operator-facing global skip list: hostnames (or *.wildcards) the backend
-    // must never fetch favicons or screenshots for. Use for domains the server
-    // cannot reach (internal CDNs) or should not hammer (rate-limiting hosts).
-    // Comma- or newline-separated. Parsed once and cached; see getFetchSkipList.
+    // Operator-facing global backend fetch denylist: hostnames (or *.wildcards)
+    // the backend must never fetch favicons or screenshots for. Use for domains
+    // the server cannot reach (internal CDNs) or should not hammer (rate-limiting
+    // hosts). Comma- or newline-separated. Parsed once and cached; see
+    // getBackendFetchDenylist. (Config key kept as skip-domains for compatibility.)
     @ConfigProperty(name = "chainlink.fetch.skip-domains")
-    Optional<String> fetchSkipDomains;
+    Optional<String> backendFetchDenylistRaw;
 
-    private HostSkipList fetchSkipList;
+    private HostPatternSet backendFetchDenylist;
 
     @ConfigProperty(name = "chainlink.favicon.cache-dir", defaultValue = "developer-local-settings/favicon-cache")
     String faviconCacheDir;
@@ -214,15 +215,15 @@ public class ConfigService {
     }
 
     /**
-     * The parsed global fetch skip list, cached after first access. Both the
-     * favicon and screenshot fetchers consult this before any DNS/network work.
+     * The parsed global backend fetch denylist, cached after first access. Both
+     * the favicon and screenshot fetchers consult this before any DNS/network work.
      */
     @NonNull
-    public HostSkipList getFetchSkipList() {
-        HostSkipList local = fetchSkipList;
+    public HostPatternSet getBackendFetchDenylist() {
+        HostPatternSet local = backendFetchDenylist;
         if (local == null) {
-            local = HostSkipList.parse(fetchSkipDomains.orElse(null));
-            fetchSkipList = local;
+            local = HostPatternSet.parse(backendFetchDenylistRaw.orElse(null));
+            backendFetchDenylist = local;
         }
         return local;
     }

@@ -7,26 +7,33 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Operator-facing, global list of hostnames the backend must never fetch
- * (favicons or screenshots) over the network. Distinct from the user-facing
- * per-collection {@code FaviconAllowlist}
+ * A normalized set of host patterns with exact-host and single-level wildcard
+ * matching ({@code intranet.local}, {@code *.mycompany.domain} — the latter also
+ * matching the bare apex). Parsing is lenient: it splits on commas/newlines,
+ * trims, lowercases and de-duplicates, but does not validate.
  *
- * <p>Patterns are exact hostnames ({@code intranet.local}) or single-level
- * wildcards ({@code *.mycompany.domain}, which also matches the bare apex).
- * Parsing is lenient — this is operator config, not user input, so malformed
- * entries are simply normalized rather than rejected.
+ * <p>This is the shared matching primitive behind the two host lists that look
+ * structurally identical but mean opposite things:
+ * <ul>
+ *   <li>the per-collection <em>browser fetch allowlist</em>
+ *       ({@code BrowserFetchAllowlist}) — hosts the browser may load directly
+ *       and which add user-input validation on top of this set;</li>
+ *   <li>the global operator <em>backend fetch denylist</em>
+ *       ({@code ConfigService.getBackendFetchDenylist}) — hosts the backend is
+ *       forbidden to fetch, used as-is (no validation).</li>
+ * </ul>
  */
-public final class HostSkipList {
+public final class HostPatternSet {
 
-    private static final HostSkipList EMPTY = new HostSkipList(List.of());
+    private static final HostPatternSet EMPTY = new HostPatternSet(List.of());
 
     private final List<String> patterns;
 
-    private HostSkipList(@NonNull List<String> patterns) {
+    private HostPatternSet(@NonNull List<String> patterns) {
         this.patterns = patterns;
     }
 
-    public static @NonNull HostSkipList parse(@Nullable String raw) {
+    public static @NonNull HostPatternSet parse(@Nullable String raw) {
         if (raw == null || raw.isBlank()) {
             return EMPTY;
         }
@@ -36,7 +43,7 @@ public final class HostSkipList {
             .filter(s -> !s.isEmpty())
             .distinct()
             .toList();
-        return normalized.isEmpty() ? EMPTY : new HostSkipList(normalized);
+        return normalized.isEmpty() ? EMPTY : new HostPatternSet(normalized);
     }
 
     public boolean matches(@Nullable String host) {

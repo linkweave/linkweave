@@ -7,7 +7,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.chainlink.api.bookmark.BookmarkRepo;
-import org.chainlink.api.collection.favicon.FaviconAllowlist;
+import org.chainlink.api.collection.favicon.BackendFetchPolicy;
 import org.chainlink.api.shared.config.ConfigService;
 import org.chainlink.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
@@ -36,6 +36,7 @@ public class ScreenshotCaptureJobService {
     private final BookmarkRepo bookmarkRepo;
     private final ScreenshotCacheService cache;
     private final ScreenshotService screenshotService;
+    private final BackendFetchPolicy fetchPolicy;
     private final ConfigService configService;
 
     @Scheduled(
@@ -103,15 +104,14 @@ public class ScreenshotCaptureJobService {
     }
 
     /**
-     * Skip hosts the backend cannot or should not reach: the operator-wide
-     * {@code chainlink.fetch.skip-domains} list, and the bookmark's own
-     * collection favicon allowlist (those hosts are loaded directly by the
-     * user's browser)
+     * Pre-filter over {@link BackendFetchPolicy}: skip hosts the backend cannot
+     * reach <em>before</em> calling {@code captureNow}, so they neither consume
+     * capture budget nor load the bookmark entity. {@code captureNow} applies the
+     * same policy again as the safety net for non-job callers (e.g. the refresh
+     * endpoint).
      */
     private boolean shouldSkipCapture(BookmarkRepo.@NonNull PendingScreenshotCapture candidate) {
-        String host = candidate.url().getHost();
-        return configService.getFetchSkipList().matches(host)
-            || FaviconAllowlist.parse(candidate.collectionFaviconAllowlist()).matches(host);
+        return fetchPolicy.blocks(candidate.url().getHost(), candidate.collectionBrowserAllowlist());
     }
 
     record Result(int captured, int failed, int scanned) {}

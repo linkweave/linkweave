@@ -27,8 +27,8 @@ public class ScreenshotFetcherService {
     ScreenshotSidecarClient screenshotSidecarClient;
 
     public @NonNull Optional<FetchedScreenshot> fetchFor(@NonNull URL pageUrl) {
-        if (configService.getFetchSkipList().matches(pageUrl.getHost())) {
-            LOG.debug("Screenshot capture skipped for {} (matches fetch skip list)", pageUrl.getHost());
+        if (configService.getBackendFetchDenylist().matches(pageUrl.getHost())) {
+            LOG.debug("Screenshot capture skipped for {} (matches backend fetch denylist)", pageUrl.getHost());
             return Optional.empty();
         }
         if (!FaviconFetcherService.isAllowedScheme(pageUrl.getProtocol())

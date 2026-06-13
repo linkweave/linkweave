@@ -30,8 +30,8 @@ public class FaviconFetcherService {
     private final ConfigService configService;
 
     public @NonNull Optional<FetchedFavicon> fetchFor(@NonNull URL bookmarkUrl) {
-        if (configService.getFetchSkipList().matches(bookmarkUrl.getHost())) {
-            LOG.debug("Favicon fetch skipped for {} (matches fetch skip list)", bookmarkUrl.getHost());
+        if (configService.getBackendFetchDenylist().matches(bookmarkUrl.getHost())) {
+            LOG.debug("Favicon fetch skipped for {} (matches backend fetch denylist)", bookmarkUrl.getHost());
             return Optional.empty();
         }
         try {
