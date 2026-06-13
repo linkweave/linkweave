@@ -9,6 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
+  contents: read
   pull-requests: write
 
 jobs:
@@ -21,7 +22,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run Pi code review
-        uses: https://git.markushofstetter.com/dividbzero/pi-review@v9
+        uses: https://git.markushofstetter.com/dividbzero/pi-review@v10
         with:
           api_key: ${{ secrets.ZAI_API_KEY }}
           provider: zai
