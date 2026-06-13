@@ -62,12 +62,19 @@ public class AuthorizationService {
         @NonNull BelongsToCollection entity,
         @NonNull ID<Collection> expectedCollectionId
     ) {
-        if (!entity.getCollectionId().equals(expectedCollectionId)) {
+        requireSameCollection(entity.getCollectionId(), expectedCollectionId);
+    }
+
+    public void requireSameCollection(
+        @NonNull ID<Collection> actualCollectionId,
+        @NonNull ID<Collection> expectedCollectionId
+    ) {
+        if (!actualCollectionId.equals(expectedCollectionId)) {
             throw new AppAuthorizationException(
                 I18nMessage.of(
                     "AppAuthorization.COLLECTION_MISMATCH",
                     "expected", expectedCollectionId.getUUID().toString(),
-                    "actual", entity.getCollectionId().getUUID().toString()
+                    "actual", actualCollectionId.getUUID().toString()
                 )
             );
         }

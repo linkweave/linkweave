@@ -39,7 +39,7 @@ public class ScreenshotResource {
         // loads race in Hibernate's shared UTC calendar (HHH-20355).
         ID<Collection> owningCollectionId = bookmarkService.getBookmarkCollectionId(bookmarkId);
         authorizationService.requireCollectionAccess(owningCollectionId);
-        authorizationService.requireSameCollection(() -> owningCollectionId, collectionId);
+        authorizationService.requireSameCollection(owningCollectionId, collectionId);
         return screenshotService.getScreenshot(bookmarkId)
             .map(c -> Response.ok(c.bytes())
                 .header("Content-Type", c.contentType())
@@ -57,7 +57,7 @@ public class ScreenshotResource {
     ) {
         ID<Collection> owningCollectionId = bookmarkService.getBookmarkCollectionId(bookmarkId);
         authorizationService.requireCollectionAccess(owningCollectionId);
-        authorizationService.requireSameCollection(() -> owningCollectionId, collectionId);
+        authorizationService.requireSameCollection(owningCollectionId, collectionId);
         screenshotService.refreshScreenshot(bookmarkId);
         return Response.noContent().build();
     }
