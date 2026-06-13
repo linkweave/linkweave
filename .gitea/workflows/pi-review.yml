@@ -20,6 +20,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          token: ${{ secrets.CL_REPO_TOKEN }}
 
       - name: Run Pi code review
         uses: https://git.markushofstetter.com/dividbzero/pi-review@v10
