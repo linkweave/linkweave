@@ -256,8 +256,12 @@ jobs:
             VERSION="${{ gitea.ref_name }}"
             VERSION="${VERSION#v}"
           else
-            # Format: YYYY.MMDD.HHMM — always increasing, fits Chrome Web Store constraints
-            VERSION="$(date -u +'%Y.%-m%d.%-H%M')"
+            # Format: YYYY.MMDD.HHMM as three integers — always increasing, fits
+            # Chrome Web Store constraints. Each component is normalized to a
+            # base-10 integer (10#…) so it never carries a leading zero, which
+            # AMO/web-ext rejects (e.g. the 00:xx UTC hour would yield "0MM").
+            read -r Y MD HM <<< "$(date -u +'%Y %m%d %H%M')"
+            VERSION="${Y}.$((10#$MD)).$((10#$HM))"
           fi
           ARTIFACT_NAME="chainlink-extension-${VERSION}"
           echo "VERSION=$VERSION" >> $GITEA_OUTPUT
