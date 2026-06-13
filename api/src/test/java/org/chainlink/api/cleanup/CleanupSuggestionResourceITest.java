@@ -11,6 +11,7 @@ import org.chainlink.api.testutil.fixture.FixtureService;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
 
 @QuarkusTest
 class CleanupSuggestionResourceITest {
@@ -99,5 +100,64 @@ class CleanupSuggestionResourceITest {
             .then()
             .statusCode(200)
             .body("bookmarkList", hasSize(1));
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldReturnAvailableThresholds() {
+        RestAssured.given()
+            .get("/cleanup-suggestions/thresholds")
+            .then()
+            .statusCode(200)
+            .body("thresholds", notNullValue());
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldReturnEmptySuggestions_whenNoStaleBookmarks() {
+        Collection collection = fixtureService.createTestCollection();
+        persistBookmark(collection, "fresh");
+
+        RestAssured.given()
+            .queryParam("collectionId", collection.getId().getUUID().toString())
+            .get("/cleanup-suggestions")
+            .then()
+            .statusCode(200)
+            .body("suggestions", hasSize(0));
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldUseDefaultThreshold_whenInvalidThresholdProvided() {
+        Collection collection = fixtureService.createTestCollection();
+
+        RestAssured.given()
+            .queryParam("collectionId", collection.getId().getUUID().toString())
+            .queryParam("thresholdMonths", 999)
+            .get("/cleanup-suggestions")
+            .then()
+            .statusCode(200)
+            .body("suggestions", hasSize(0));
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldDismissSuggestion() {
+        Collection collection = fixtureService.createTestCollection();
+        Bookmark bookmark = persistBookmark(collection, "to-dismiss");
+
+        RestAssured.given()
+            .post("/cleanup-suggestions/{bookmarkId}/dismiss", bookmark.getId().getUUID().toString())
+            .then()
+            .statusCode(204);
+    }
+
+    @Test
+    void shouldReturn401_whenListNotAuthenticated() {
+        RestAssured.given()
+            .queryParam("collectionId", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+            .get("/cleanup-suggestions")
+            .then()
+            .statusCode(401);
     }
 }

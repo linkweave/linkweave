@@ -48,14 +48,32 @@ jobs:
           distribution: temurin
           cache: maven
 
-      - name: Build
+      # Runs the full test suite with JaCoCo coverage (quarkus-jacoco extension +
+      # jacoco-maven-plugin). 'package' already executes every test class — they
+      # all match surefire's *Test pattern — and writes target/jacoco-quarkus.exec
+      # plus the HTML/XML report under target/jacoco-report/.
+      - name: Build & test with coverage
         working-directory: api
-        run: ./mvnw package -B
+        run: ./mvnw package --batch-mode --no-transfer-progress
+
+      - name: Upload JaCoCo report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: api/target/jacoco-report/
+          retention-days: 14
+
+      # Quality gate: reads the exec data produced above (no rebuild) and fails
+      # the build — and thus the Docker push/deploy below — on a coverage regression.
+      - name: Coverage quality gate (≥ 70% line coverage)
+        working-directory: api
+        run: ./mvnw jacoco:check --batch-mode --no-transfer-progress
 
       - name: Upload Sentry source bundle
         if: gitea.ref == 'refs/heads/main' || startsWith(gitea.ref, 'refs/tags/v')
         working-directory: api
-        run: ./mvnw sentry:uploadSourceBundle -Psentry-upload
+        run: ./mvnw sentry:uploadSourceBundle --batch-mode --no-transfer-progress -Psentry-upload
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 

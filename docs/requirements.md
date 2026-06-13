@@ -142,6 +142,7 @@
 | NFR-024 | Metrics Cardinality Budget | The total number of unique metric time series (tag combinations) emitted by FR-088 must not exceed 500 per application instance. High-cardinality dimensions (e.g., bookmark IDs, user emails) must not be used as metric tags. Only low-cardinality dimensions (HTTP method, status code class, endpoint path template, job name) are permitted. Exceeding the cardinality budget must log a warning at startup. | Scalability | Medium | Done |
 | NFR-025 | Metrics Endpoint Response Time | The metrics export endpoint (FR-089) must respond within 500 ms under normal load. Metric collection and serialization must not block or degrade the latency of business API endpoints. | Performance | High | Done |
 | NFR-026 | Metrics Collection Overhead | Enabling metrics collection (FR-088) must add no more than 5% overhead to the p99 latency of any API endpoint, as measured by a load test with 10 concurrent users. | Performance | High | Done |
+| NFR-027 | Test Structure (Arrange/Act/Assert) | Every test method (backend unit and integration tests, frontend unit tests) must be organized into three clearly delimited sections marked with the comments `// ARRANGE`, `// ACT`, and `// ASSERT` (in that order). The ACT section must contain exactly one statement — the invocation under test. No test logic may appear outside these three sections. Compliance is verified by code review and an automated check that rejects any test method missing one or more of the three section markers. | Maintainability | High | Open |
 
 ---
 
