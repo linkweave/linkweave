@@ -27,7 +27,7 @@ class FaviconServiceITest {
     @Test
     void shouldSuppressFetchAndNotCacheWhenHostMatchesCollectionAllowlist() {
         Collection allowlisted = fixtureService.createTestCollection(b -> b
-            .withFaviconAllowlist("intranet.local"));
+            .withBrowserFetchAllowlist("intranet.local"));
         Bookmark bookmark = fixtureService.persistBookmark(builder -> builder
             .withCollection(allowlisted)
             .withUrl("https://intranet.local/page-" + UUID.randomUUID()));
@@ -44,7 +44,7 @@ class FaviconServiceITest {
     @Test
     void shouldMatchAllowlistWildcardSubdomain() {
         Collection allowlisted = fixtureService.createTestCollection(b -> b
-            .withFaviconAllowlist("*.mycompany.domain"));
+            .withBrowserFetchAllowlist("*.mycompany.domain"));
         Bookmark bookmark = fixtureService.persistBookmark(builder -> builder
             .withCollection(allowlisted)
             .withUrl("https://wiki.mycompany.domain/x-" + UUID.randomUUID()));

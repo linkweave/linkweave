@@ -45,7 +45,7 @@ public final class BrowserFetchAllowlist {
             || pattern.contains("://")
             || !VALID_PATTERN.matcher(pattern).matches()
             || isBareIpv4(pattern)) {
-            throw new AppValidationException(AppValidationMessage.faviconAllowlistInvalidPattern(pattern));
+            throw new AppValidationException(AppValidationMessage.browserFetchAllowlistInvalidPattern(pattern));
         }
     }
 

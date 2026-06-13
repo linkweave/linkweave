@@ -59,100 +59,100 @@ describe('collectionShareSchema', () => {
 describe('collectionUpdateSchema', () => {
   it('should accept valid name with empty allowlist', () => {
     expect(
-      collectionUpdateSchema(t).parse({ name: 'My Collection', faviconAllowlist: '', screenshotEnabled: true }),
-    ).toEqual({ name: 'My Collection', faviconAllowlist: '', screenshotEnabled: true })
+      collectionUpdateSchema(t).parse({ name: 'My Collection', browserFetchAllowlist: '', screenshotEnabled: true }),
+    ).toEqual({ name: 'My Collection', browserFetchAllowlist: '', screenshotEnabled: true })
   })
 
   it('should accept valid name with valid allowlist patterns', () => {
     expect(
       collectionUpdateSchema(t).parse({
         name: 'My Collection',
-        faviconAllowlist: '*.mycompany.domain\nintranet.local',
+        browserFetchAllowlist: '*.mycompany.domain\nintranet.local',
         screenshotEnabled: true,
       }),
-    ).toEqual({ name: 'My Collection', faviconAllowlist: '*.mycompany.domain\nintranet.local', screenshotEnabled: true })
+    ).toEqual({ name: 'My Collection', browserFetchAllowlist: '*.mycompany.domain\nintranet.local', screenshotEnabled: true })
   })
 
   it('should accept allowlist with mixed-case input (validated as lowercase)', () => {
     expect(
       collectionUpdateSchema(t).parse({
         name: 'My Collection',
-        faviconAllowlist: 'Intranet.Local',
+        browserFetchAllowlist: 'Intranet.Local',
         screenshotEnabled: false,
-      }).faviconAllowlist,
+      }).browserFetchAllowlist,
     ).toBe('Intranet.Local')
   })
 
   it('should reject empty name', () => {
     expect(() =>
-      collectionUpdateSchema(t).parse({ name: '', faviconAllowlist: '', screenshotEnabled: false }),
+      collectionUpdateSchema(t).parse({ name: '', browserFetchAllowlist: '', screenshotEnabled: false }),
     ).toThrow()
   })
 
   it('should reject name over 255 chars', () => {
     expect(() =>
-      collectionUpdateSchema(t).parse({ name: 'a'.repeat(256), faviconAllowlist: '', screenshotEnabled: false }),
+      collectionUpdateSchema(t).parse({ name: 'a'.repeat(256), browserFetchAllowlist: '', screenshotEnabled: false }),
     ).toThrow()
   })
 
   it('should reject allowlist over 2000 chars', () => {
     expect(() =>
-      collectionUpdateSchema(t).parse({ name: 'Valid', faviconAllowlist: 'a'.repeat(2001), screenshotEnabled: false }),
+      collectionUpdateSchema(t).parse({ name: 'Valid', browserFetchAllowlist: 'a'.repeat(2001), screenshotEnabled: false }),
     ).toThrow()
   })
 
   it('should reject bare wildcard *', () => {
     expect(() =>
-      collectionUpdateSchema(t).parse({ name: 'Valid', faviconAllowlist: '*', screenshotEnabled: false }),
+      collectionUpdateSchema(t).parse({ name: 'Valid', browserFetchAllowlist: '*', screenshotEnabled: false }),
     ).toThrow()
   })
 
   it('should reject bare IPv4 addresses', () => {
     expect(() =>
-      collectionUpdateSchema(t).parse({ name: 'Valid', faviconAllowlist: '192.168.1.1', screenshotEnabled: false }),
+      collectionUpdateSchema(t).parse({ name: 'Valid', browserFetchAllowlist: '192.168.1.1', screenshotEnabled: false }),
     ).toThrow()
   })
 
   it('should reject patterns containing scheme', () => {
     expect(() =>
-      collectionUpdateSchema(t).parse({ name: 'Valid', faviconAllowlist: 'https://example.com', screenshotEnabled: false }),
+      collectionUpdateSchema(t).parse({ name: 'Valid', browserFetchAllowlist: 'https://example.com', screenshotEnabled: false }),
     ).toThrow()
   })
 
   it('should reject patterns containing path', () => {
     expect(() =>
-      collectionUpdateSchema(t).parse({ name: 'Valid', faviconAllowlist: 'example.com/path', screenshotEnabled: false }),
+      collectionUpdateSchema(t).parse({ name: 'Valid', browserFetchAllowlist: 'example.com/path', screenshotEnabled: false }),
     ).toThrow()
   })
 
   it('should reject patterns containing colon (port)', () => {
     expect(() =>
-      collectionUpdateSchema(t).parse({ name: 'Valid', faviconAllowlist: 'example.com:8080', screenshotEnabled: false }),
+      collectionUpdateSchema(t).parse({ name: 'Valid', browserFetchAllowlist: 'example.com:8080', screenshotEnabled: false }),
     ).toThrow()
   })
 
   it('should accept wildcard subdomain pattern', () => {
     expect(
-      collectionUpdateSchema(t).parse({ name: 'Valid', faviconAllowlist: '*.example.com', screenshotEnabled: true }),
-    ).toEqual({ name: 'Valid', faviconAllowlist: '*.example.com', screenshotEnabled: true })
+      collectionUpdateSchema(t).parse({ name: 'Valid', browserFetchAllowlist: '*.example.com', screenshotEnabled: true }),
+    ).toEqual({ name: 'Valid', browserFetchAllowlist: '*.example.com', screenshotEnabled: true })
   })
 
   it('should accept plain domain pattern', () => {
     expect(
-      collectionUpdateSchema(t).parse({ name: 'Valid', faviconAllowlist: 'intranet.local', screenshotEnabled: true }),
-    ).toEqual({ name: 'Valid', faviconAllowlist: 'intranet.local', screenshotEnabled: true })
+      collectionUpdateSchema(t).parse({ name: 'Valid', browserFetchAllowlist: 'intranet.local', screenshotEnabled: true }),
+    ).toEqual({ name: 'Valid', browserFetchAllowlist: 'intranet.local', screenshotEnabled: true })
   })
 
   it('should accept multiple valid patterns on separate lines', () => {
     const allowlist = '*.mycompany.domain\nintranet.local\nstaging.internal'
     expect(
-      collectionUpdateSchema(t).parse({ name: 'Valid', faviconAllowlist: allowlist, screenshotEnabled: true }),
-    ).toEqual({ name: 'Valid', faviconAllowlist: allowlist, screenshotEnabled: true })
+      collectionUpdateSchema(t).parse({ name: 'Valid', browserFetchAllowlist: allowlist, screenshotEnabled: true }),
+    ).toEqual({ name: 'Valid', browserFetchAllowlist: allowlist, screenshotEnabled: true })
   })
 
   it('should accept allowlist with only whitespace (treated as empty)', () => {
     expect(
-      collectionUpdateSchema(t).parse({ name: 'Valid', faviconAllowlist: '   ', screenshotEnabled: false }),
-    ).toEqual({ name: 'Valid', faviconAllowlist: '   ', screenshotEnabled: false })
+      collectionUpdateSchema(t).parse({ name: 'Valid', browserFetchAllowlist: '   ', screenshotEnabled: false }),
+    ).toEqual({ name: 'Valid', browserFetchAllowlist: '   ', screenshotEnabled: false })
   })
 })

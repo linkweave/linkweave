@@ -30,7 +30,7 @@ export interface CollectionUpdateJson {
      * @type {string}
      * @memberof CollectionUpdateJson
      */
-    faviconAllowlist?: string;
+    browserFetchAllowlist?: string;
     /**
      * 
      * @type {boolean}
@@ -59,7 +59,7 @@ export function CollectionUpdateJsonFromJSONTyped(json: any, ignoreDiscriminator
     return {
         
         'name': json['name'],
-        'faviconAllowlist': json['faviconAllowlist'] == null ? undefined : json['faviconAllowlist'],
+        'browserFetchAllowlist': json['browserFetchAllowlist'] == null ? undefined : json['browserFetchAllowlist'],
         'screenshotEnabled': json['screenshotEnabled'],
     };
 }
@@ -76,7 +76,7 @@ export function CollectionUpdateJsonToJSONTyped(value?: CollectionUpdateJson | n
     return {
         
         'name': value['name'],
-        'faviconAllowlist': value['faviconAllowlist'],
+        'browserFetchAllowlist': value['browserFetchAllowlist'],
         'screenshotEnabled': value['screenshotEnabled'],
     };
 }

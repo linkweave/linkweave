@@ -104,7 +104,7 @@ async function onToggleScreenshot(value: boolean) {
   const ok = await collectionStore.updateCollection(
     id,
     info.name,
-    info.faviconAllowlist ?? '',
+    info.browserFetchAllowlist ?? '',
     value,
   )
   if (!ok) screenshotEnabled.value = !value // revert on failure

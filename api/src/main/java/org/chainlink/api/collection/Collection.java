@@ -42,7 +42,7 @@ public class Collection extends AbstractEntity<Collection> {
     @Nullable
     @Size(max = DbConst.DB_TEXTAREA_MAX_LENGTH_2000)
     @Column(length = DbConst.DB_TEXTAREA_MAX_LENGTH_2000)
-    private String faviconAllowlist;
+    private String browserFetchAllowlist;
 
     @Column(nullable = false)
     private boolean screenshotEnabled;

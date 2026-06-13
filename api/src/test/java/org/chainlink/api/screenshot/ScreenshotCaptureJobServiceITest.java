@@ -207,7 +207,7 @@ class ScreenshotCaptureJobServiceITest {
         // must not leave a negative cache entry that would re-trigger every TTL.
         Collection allowlisted = fixtureService.createTestCollection(b -> b
             .withScreenshotEnabled(true)
-            .withFaviconAllowlist("intranet.local"));
+            .withBrowserFetchAllowlist("intranet.local"));
         Bookmark bookmark = fixtureService.persistBookmark(builder -> builder
             .withCollection(allowlisted)
             .withUrl("https://intranet.local/page-" + UUID.randomUUID()));
@@ -227,7 +227,7 @@ class ScreenshotCaptureJobServiceITest {
         // depending on sidecar availability), which is proof a capture was tried.
         Collection withList = fixtureService.createTestCollection(b -> b
             .withScreenshotEnabled(true)
-            .withFaviconAllowlist("intranet.local"));
+            .withBrowserFetchAllowlist("intranet.local"));
         Bookmark bookmark = fixtureService.persistBookmark(builder -> builder
             .withCollection(withList)
             .withUrl("https://example.com/not-listed-" + UUID.randomUUID()));

@@ -41,8 +41,8 @@ public class CollectionBuilder {
     }
 
     @NonNull
-    public CollectionBuilder withFaviconAllowlist(String faviconAllowlist) {
-        collection.setFaviconAllowlist(faviconAllowlist);
+    public CollectionBuilder withBrowserFetchAllowlist(String browserFetchAllowlist) {
+        collection.setBrowserFetchAllowlist(browserFetchAllowlist);
         return this;
     }
 

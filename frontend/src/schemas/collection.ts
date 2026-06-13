@@ -22,7 +22,7 @@ export const collectionUpdateSchema = (t: TFunction) =>
       .min(1, t('validation.required', { field: 'Name' }))
       .max(255, t('validation.maxLength', { field: 'Name', max: 255 }))
       .trim(),
-    faviconAllowlist: z
+    browserFetchAllowlist: z
       .string()
       .max(2000, t('validation.maxLength', { field: 'Allowlist', max: 2000 }))
       .refine(

@@ -165,8 +165,8 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
      *
      * <p>Projects scalars only (no entity load, so no timestamp extraction via
      * Hibernate's shared UTC calendar — see {@link #findUrlById}) and carries
-     * the collection's favicon allowlist so the job can skip hosts the backend
-     * cannot reach without burning capture budget or writing negative entries.
+     * the collection's browser fetch allowlist so the job can skip hosts the
+     * backend cannot reach without burning capture budget or writing negatives.
      */
     @NonNull
     public List<PendingScreenshotCapture> findPendingScreenshotCaptures(int limit, int offset, @NonNull Duration recaptureAfter) {
@@ -176,7 +176,7 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             OffsetDateTime.class, "({0})", recaptureCutoff);
         BooleanExpression needsCapture = b.screenshotCapturedAt.isNull()
             .or(b.screenshotCapturedAt.lt(cutoffExpr));
-        return db.select(b.id, b.url, b.collection.faviconAllowlist)
+        return db.select(b.id, b.url, b.collection.browserFetchAllowlist)
             .from(b)
             .where(notDeleted()
                 .and(b.collection.screenshotEnabled.isTrue())
@@ -190,7 +190,7 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             .map(t -> new PendingScreenshotCapture(
                 ID.of(Objects.requireNonNull(t.get(b.id)), Bookmark.class),
                 Objects.requireNonNull(t.get(b.url)),
-                t.get(b.collection.faviconAllowlist)))
+                t.get(b.collection.browserFetchAllowlist)))
             .toList();
     }
 
@@ -227,14 +227,14 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
     public Optional<FaviconContext> findFaviconContextById(@NonNull ID<Bookmark> bookmarkId) {
         var b = QBookmark.bookmark;
         var c = QCollection.collection;
-        return db.select(b.url, c.faviconAllowlist)
+        return db.select(b.url, c.browserFetchAllowlist)
             .from(b)
             .leftJoin(b.collection, c)
             .where(b.id.eq(bookmarkId.getUUID()))
             .fetchOne()
             .map(t -> new FaviconContext(
                 Objects.requireNonNull(t.get(b.url)),
-                t.get(c.faviconAllowlist)));
+                t.get(c.browserFetchAllowlist)));
     }
 
     @NonNull

@@ -41,7 +41,7 @@ public class ScreenshotService {
         URL url = bookmark.getUrl();
         String key = ScreenshotCacheService.keyFor(url);
         var collection = bookmark.getCollection();
-        if (fetchPolicy.blocks(url.getHost(), collection.getFaviconAllowlist())) {
+        if (fetchPolicy.blocks(url.getHost(), collection.getBrowserFetchAllowlist())) {
             // Host the backend can't reach (operator denylist / collection browser
             // allowlist): don't attempt and don't poison the cache with a negative
             // entry. Enforced here so it holds on both the scheduled job and the

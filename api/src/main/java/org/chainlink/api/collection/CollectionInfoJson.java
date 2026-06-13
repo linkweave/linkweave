@@ -21,7 +21,7 @@ public class CollectionInfoJson {
 
     @NotNull @NonNull ID<Collection> id;
     @NotNull @NonNull String name;
-    @Nullable String faviconAllowlist;
+    @Nullable String browserFetchAllowlist;
     @Schema(required = true) boolean screenshotEnabled;
     @NotNull @NonNull List<BookmarkJson> bookmarks;
     @NotNull @NonNull List<TagJson> tags;
@@ -32,7 +32,7 @@ public class CollectionInfoJson {
     public CollectionInfoJson(
         @NotNull @NonNull ID<Collection> id,
         @NotNull @NonNull String name,
-        @Nullable String faviconAllowlist,
+        @Nullable String browserFetchAllowlist,
         boolean screenshotEnabled,
         @NonNull List<BookmarkJson> bookmarks,
         @NonNull List<FolderJson> folders,
@@ -42,7 +42,7 @@ public class CollectionInfoJson {
 
         this.id = id;
         this.name = name;
-        this.faviconAllowlist = faviconAllowlist;
+        this.browserFetchAllowlist = browserFetchAllowlist;
         this.screenshotEnabled = screenshotEnabled;
         this.folders = folders;
         this.bookmarks = bookmarks;

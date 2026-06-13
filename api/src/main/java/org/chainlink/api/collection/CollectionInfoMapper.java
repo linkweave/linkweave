@@ -51,7 +51,7 @@ public class CollectionInfoMapper {
         return new CollectionInfoJson(
             collection.getId(),
             collection.getName(),
-            collection.getFaviconAllowlist(),
+            collection.getBrowserFetchAllowlist(),
             collection.isScreenshotEnabled(),
             bookmarks.stream()
                 .map(b -> BookmarkMapper.toJson(b, propsByBookmark.getOrDefault(b.getId(), List.of())))
@@ -95,7 +95,7 @@ public class CollectionInfoMapper {
         return new CollectionInfoJson(
             collection.getId(),
             collection.getName(),
-            collection.getFaviconAllowlist(),
+            collection.getBrowserFetchAllowlist(),
             collection.isScreenshotEnabled(),
             bookmarks.stream().map(BookmarkMapper::toJson).toList(),
             folders.stream().map(FolderMapper::toJson).toList(),

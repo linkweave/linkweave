@@ -15,7 +15,7 @@ const failed = ref(false)
 
 watch(() => [props.bookmarkId, props.url], () => { failed.value = false })
 
-const allowlist = computed(() => parseAllowlist(collectionStore.collectionInfo?.faviconAllowlist))
+const allowlist = computed(() => parseAllowlist(collectionStore.collectionInfo?.browserFetchAllowlist))
 
 const src = computed<string | null>(() => {
   const host = hostnameOf(props.url)

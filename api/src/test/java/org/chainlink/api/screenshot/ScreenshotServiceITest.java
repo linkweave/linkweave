@@ -31,7 +31,7 @@ class ScreenshotServiceITest {
         // would write the negative entry the allowlist is meant to prevent.
         Collection allowlisted = fixtureService.createTestCollection(b -> b
             .withScreenshotEnabled(true)
-            .withFaviconAllowlist("intranet.local"));
+            .withBrowserFetchAllowlist("intranet.local"));
         Bookmark bookmark = fixtureService.persistBookmark(builder -> builder
             .withCollection(allowlisted)
             .withUrl("https://intranet.local/page-" + UUID.randomUUID()));
@@ -51,7 +51,7 @@ class ScreenshotServiceITest {
     void shouldNotNegativelyCacheOnCaptureWhenHostMatchesAllowlist() {
         Collection allowlisted = fixtureService.createTestCollection(b -> b
             .withScreenshotEnabled(true)
-            .withFaviconAllowlist("*.corp.internal"));
+            .withBrowserFetchAllowlist("*.corp.internal"));
         Bookmark bookmark = fixtureService.persistBookmark(builder -> builder
             .withCollection(allowlisted)
             .withUrl("https://wiki.corp.internal/x-" + UUID.randomUUID()));

@@ -107,13 +107,13 @@ public class CollectionService {
     public CollectionSummaryJson updateCollection(
         @NonNull ID<Collection> collectionId,
         @NonNull String name,
-        @Nullable String faviconAllowlist,
+        @Nullable String browserFetchAllowlist,
         boolean screenshotEnabled,
         @NonNull User user) {
         Collection collection = collectionRepo.getById(collectionId);
         collection.setName(name);
-        BrowserFetchAllowlist parsed = BrowserFetchAllowlist.parse(faviconAllowlist);
-        collection.setFaviconAllowlist(parsed.patterns().isEmpty() ? null : String.join("\n", parsed.patterns()));
+        BrowserFetchAllowlist parsed = BrowserFetchAllowlist.parse(browserFetchAllowlist);
+        collection.setBrowserFetchAllowlist(parsed.patterns().isEmpty() ? null : String.join("\n", parsed.patterns()));
         collection.setScreenshotEnabled(screenshotEnabled);
         collectionRepo.persistAndFlush(collection);
 

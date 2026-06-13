@@ -14,7 +14,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 @QuarkusTest
-class CollectionFaviconAllowlistITest {
+class CollectionBrowserFetchAllowlistITest {
 
     @Inject
     FixtureService fixtureService;
@@ -26,7 +26,7 @@ class CollectionFaviconAllowlistITest {
         String colId = col.getId().getUUID().toString();
 
         String body = """
-            {"name":"With Allowlist","faviconAllowlist":"*.mycompany.domain\\nintranet.local"}
+            {"name":"With Allowlist","browserFetchAllowlist":"*.mycompany.domain\\nintranet.local"}
             """;
         RestAssured.given()
             .contentType("application/json")
@@ -41,8 +41,8 @@ class CollectionFaviconAllowlistITest {
             .get("/collections/{id}")
             .then()
             .statusCode(200)
-            .body("faviconAllowlist", notNullValue())
-            .body("faviconAllowlist", equalTo("*.mycompany.domain\nintranet.local"));
+            .body("browserFetchAllowlist", notNullValue())
+            .body("browserFetchAllowlist", equalTo("*.mycompany.domain\nintranet.local"));
     }
 
     @Test
@@ -52,7 +52,7 @@ class CollectionFaviconAllowlistITest {
         String colId = col.getId().getUUID().toString();
 
         String body = """
-            {"name":"Normalize","faviconAllowlist":"  *.MyCompany.Domain  \\n*.mycompany.domain\\nINTRANET.local\\n"}
+            {"name":"Normalize","browserFetchAllowlist":"  *.MyCompany.Domain  \\n*.mycompany.domain\\nINTRANET.local\\n"}
             """;
         RestAssured.given()
             .contentType("application/json")
@@ -67,7 +67,7 @@ class CollectionFaviconAllowlistITest {
             .get("/collections/{id}")
             .then()
             .statusCode(200)
-            .body("faviconAllowlist", equalTo("*.mycompany.domain\nintranet.local"));
+            .body("browserFetchAllowlist", equalTo("*.mycompany.domain\nintranet.local"));
     }
 
     @Test
@@ -80,7 +80,7 @@ class CollectionFaviconAllowlistITest {
         RestAssured.given()
             .contentType("application/json")
             .body("""
-                {"name":"X","faviconAllowlist":"*.example.com"}
+                {"name":"X","browserFetchAllowlist":"*.example.com"}
                 """)
             .pathParam("id", colId)
             .put("/collections/{id}")
@@ -91,7 +91,7 @@ class CollectionFaviconAllowlistITest {
         RestAssured.given()
             .contentType("application/json")
             .body("""
-                {"name":"X","faviconAllowlist":""}
+                {"name":"X","browserFetchAllowlist":""}
                 """)
             .pathParam("id", colId)
             .put("/collections/{id}")
@@ -103,7 +103,7 @@ class CollectionFaviconAllowlistITest {
             .get("/collections/{id}")
             .then()
             .statusCode(200)
-            .body("faviconAllowlist", nullValue());
+            .body("browserFetchAllowlist", nullValue());
     }
 
     @Test
@@ -111,7 +111,7 @@ class CollectionFaviconAllowlistITest {
     void shouldReturn400_whenAllowlistContainsBareWildcard() {
         var col = fixtureService.createTestCollection();
         String body = """
-            {"name":"X","faviconAllowlist":"*"}
+            {"name":"X","browserFetchAllowlist":"*"}
             """;
         RestAssured.given()
             .contentType("application/json")
@@ -127,7 +127,7 @@ class CollectionFaviconAllowlistITest {
     void shouldReturn400_whenAllowlistContainsScheme() {
         var col = fixtureService.createTestCollection();
         String body = """
-            {"name":"X","faviconAllowlist":"https://example.com"}
+            {"name":"X","browserFetchAllowlist":"https://example.com"}
             """;
         RestAssured.given()
             .contentType("application/json")
@@ -143,7 +143,7 @@ class CollectionFaviconAllowlistITest {
     void shouldReturn400_whenAllowlistContainsPath() {
         var col = fixtureService.createTestCollection();
         String body = """
-            {"name":"X","faviconAllowlist":"example.com/foo"}
+            {"name":"X","browserFetchAllowlist":"example.com/foo"}
             """;
         RestAssured.given()
             .contentType("application/json")
@@ -159,7 +159,7 @@ class CollectionFaviconAllowlistITest {
     void shouldReturn400_whenAllowlistContainsBareIp() {
         var col = fixtureService.createTestCollection();
         String body = """
-            {"name":"X","faviconAllowlist":"10.0.0.1"}
+            {"name":"X","browserFetchAllowlist":"10.0.0.1"}
             """;
         RestAssured.given()
             .contentType("application/json")
@@ -174,7 +174,7 @@ class CollectionFaviconAllowlistITest {
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn403_whenNonOwnerEditsAllowlist() {
         String body = """
-            {"name":"X","faviconAllowlist":"*.example.com"}
+            {"name":"X","browserFetchAllowlist":"*.example.com"}
             """;
         RestAssured.given()
             .contentType("application/json")
@@ -194,7 +194,7 @@ class CollectionFaviconAllowlistITest {
         RestAssured.given()
             .contentType("application/json")
             .body("""
-                {"name":"With List","faviconAllowlist":"*.mycompany.domain\\nintranet.local"}
+                {"name":"With List","browserFetchAllowlist":"*.mycompany.domain\\nintranet.local"}
                 """)
             .pathParam("id", colId)
             .put("/collections/{id}")
@@ -206,6 +206,6 @@ class CollectionFaviconAllowlistITest {
             .get("/collections/{id}")
             .then()
             .statusCode(200)
-            .body("faviconAllowlist", equalTo("*.mycompany.domain\nintranet.local"));
+            .body("browserFetchAllowlist", equalTo("*.mycompany.domain\nintranet.local"));
     }
 }
