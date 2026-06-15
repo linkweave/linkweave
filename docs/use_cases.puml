@@ -122,6 +122,7 @@ rectangle "Chainlink Bookmark Manager" {
     rectangle "Screenshot Previews" {
         usecase "UC-054\nView Bookmark\nScreenshot Previews" as UC054 <<implemented>>
         usecase "UC-055\nScreenshot Cache\nCleanup Job" as UC055 <<implemented>>
+        usecase "UC-093\nPrevent Preview Popup\nObscuring Row Actions" as UC093
     }
 
     rectangle "Architecture & Quality Control" {
@@ -281,6 +282,7 @@ user --> UC054
 owner --> UC054
 scheduler --> UC055
 operator --> UC055
+UC093 ..> UC054 : <<refine>>
 
 'Distribution
 user --> UC052

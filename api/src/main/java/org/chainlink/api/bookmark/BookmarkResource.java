@@ -5,6 +5,7 @@ import java.util.List;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.Authenticated;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
@@ -114,7 +115,7 @@ public class BookmarkResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
-    @Authenticated
+    @RolesAllowed("BOOKMARK_WRITE")
     public BookmarkListJson batchMove(@NotNull @Valid @NonNull BookmarkBatchMoveJson json) {
         List<Bookmark> bookmarks = authorizeAndLoad(json.getCollectionId(), json.getBookmarkIds());
         bookmarkService.batchMoveToFolder(bookmarks, json.getFolderId(), json.getCollectionId());
@@ -124,7 +125,7 @@ public class BookmarkResource {
     @POST
     @Path("/batch-delete")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Authenticated
+    @RolesAllowed("BOOKMARK_WRITE")
     public void batchDelete(@NotNull @Valid @NonNull BookmarkBatchDeleteJson json) {
         List<Bookmark> bookmarks = authorizeAndLoad(json.getCollectionId(), json.getBookmarkIds());
         bookmarkService.batchRemove(bookmarks);
@@ -135,7 +136,7 @@ public class BookmarkResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
-    @Authenticated
+    @RolesAllowed("BOOKMARK_WRITE")
     public BookmarkListJson batchTag(@NotNull @Valid @NonNull BookmarkBatchTagJson json) {
         List<Bookmark> bookmarks = authorizeAndLoad(json.getCollectionId(), json.getBookmarkIds());
         bookmarkService.batchAddTag(bookmarks, json.getTagId(), json.getCollectionId());

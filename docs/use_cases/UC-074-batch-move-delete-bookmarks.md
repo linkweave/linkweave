@@ -77,7 +77,7 @@
 **Trigger:** More than 500 bookmarks are selected (step 7 of Move or step 6 of Delete).
 **Flow:**
 
-1. System processes the batch in chunks of 500 with a progress indicator.
+1. System rejects the batch with a validation error (HTTP 400) indicating the 500-bookmark limit (C-017). The caller must reduce the selection and retry.
 
 ## Postconditions
 

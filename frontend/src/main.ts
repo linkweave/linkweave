@@ -48,7 +48,14 @@ async function initializeApp() {
   app.mount('#app')
 
   if ('serviceWorker' in navigator) {
+    // When a new service worker takes control (e.g. after a deploy), reload so
+    // the app picks up the new shell. Guard against re-entrancy: a single
+    // controllerchange must trigger at most one reload, otherwise repeated
+    // events (e.g. DevTools "Update on reload") can stack into a reload loop.
+    let refreshing = false
     navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return
+      refreshing = true
       window.location.reload()
     })
   }

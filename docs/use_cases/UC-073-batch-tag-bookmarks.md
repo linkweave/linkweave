@@ -35,15 +35,6 @@
 
 ## Alternative Flows
 
-### A1: Create New Tag Inline
-
-**Trigger:** User types a tag name that does not exist (step 5).
-**Flow:**
-
-1. System shows a "Create 'tagname'" option.
-2. User selects it.
-3. System creates the tag and adds it to the batch operation.
-
 ### A2: Partial Failure
 
 **Trigger:** One or more bookmarks fail to update (step 8).
@@ -59,7 +50,7 @@
 **Flow:**
 
 1. System selects all bookmarks currently visible (respecting active filters).
-2. If more than 500 bookmarks are selected, system shows a warning: "Large selection detected. Processing may take a moment."
+2. If the operation is submitted with more than 500 bookmarks selected, the system rejects it with an error indicating the 500-bookmark limit (C-017).
 3. Use case continues at step 2.
 
 ### A4: Deselect All
@@ -101,7 +92,7 @@ Toggling a tag ON adds it to all selected bookmarks that don't already have it. 
 
 ### BR-094: Batch Size Limit
 
-Up to 500 bookmarks may be processed in a single batch (C-017). Larger selections require chunked processing.
+Up to 500 bookmarks may be processed in a single batch (C-017). Larger selections are rejected with a validation error.
 
 ### BR-095: Selection Persistence
 

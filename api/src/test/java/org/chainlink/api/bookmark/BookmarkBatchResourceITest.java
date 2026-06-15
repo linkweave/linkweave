@@ -476,4 +476,230 @@ class BookmarkBatchResourceITest {
             .statusCode(200)
             .body("bookmarkList", hasSize(0));
     }
+
+    // -------------------------------------------------------------------------
+    // A5: a user with only BOOKMARK_READ must be rejected by the endpoint.
+    // -------------------------------------------------------------------------
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldReturn403_whenBatchMoveWithoutBookmarkWriteRole() {
+        Collection collection = fixtureService.createTestCollection();
+        Bookmark bookmark = persistBookmark(collection, "readonly");
+
+        String body = """
+            {"collectionId":"%s","folderId":null,"bookmarkIds":["%s"]}
+            """.formatted(collection.getId().getUUID(), bookmark.getId().getUUID());
+
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/bookmarks/batch-move")
+            .then()
+            .statusCode(403);
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldReturn403_whenBatchDeleteWithoutBookmarkWriteRole() {
+        Collection collection = fixtureService.createTestCollection();
+        Bookmark bookmark = persistBookmark(collection, "readonly");
+
+        String body = """
+            {"collectionId":"%s","bookmarkIds":["%s"]}
+            """.formatted(collection.getId().getUUID(), bookmark.getId().getUUID());
+
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/bookmarks/batch-delete")
+            .then()
+            .statusCode(403);
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldReturn403_whenBatchTagWithoutBookmarkWriteRole() {
+        Collection collection = fixtureService.createTestCollection();
+        Tag tag = fixtureService.persistTag(b -> b
+            .withCollection(collection)
+            .withName("Read Only Tag")
+            .withColor("#000000")
+        );
+        Bookmark bookmark = persistBookmark(collection, "readonly");
+
+        String body = """
+            {"collectionId":"%s","tagId":"%s","bookmarkIds":["%s"]}
+            """.formatted(
+            collection.getId().getUUID(),
+            tag.getId().getUUID(),
+            bookmark.getId().getUUID());
+
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/bookmarks/batch-tag")
+            .then()
+            .statusCode(403);
+    }
+
+    // -------------------------------------------------------------------------
+    // #7: 401 when not authenticated (batch-delete / batch-tag).
+    // -------------------------------------------------------------------------
+
+    @Test
+    void shouldReturn401_whenBatchDeleteNotAuthenticated() {
+        String body = """
+            {"collectionId":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","bookmarkIds":["bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"]}
+            """;
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/bookmarks/batch-delete")
+            .then()
+            .statusCode(401);
+    }
+
+    @Test
+    void shouldReturn401_whenBatchTagNotAuthenticated() {
+        String body = """
+            {"collectionId":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","tagId":"cccccccc-cccc-cccc-cccc-cccccccccccc","bookmarkIds":["bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"]}
+            """;
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/bookmarks/batch-tag")
+            .then()
+            .statusCode(401);
+    }
+
+    // -------------------------------------------------------------------------
+    // #8: @Size(max = 500) boundary for batch-delete / batch-tag.
+    // -------------------------------------------------------------------------
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldReturn400_whenBatchDeleteExceedsMaxSize() {
+        Collection collection = fixtureService.createTestCollection();
+        String ids = java.util.stream.IntStream.range(0, 501)
+            .mapToObj(_ -> "\"" + java.util.UUID.randomUUID() + "\"")
+            .collect(Collectors.joining(","));
+
+        String body = """
+            {"collectionId":"%s","bookmarkIds":[%s]}
+            """.formatted(collection.getId().getUUID(), ids);
+
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/bookmarks/batch-delete")
+            .then()
+            .statusCode(400);
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldReturn400_whenBatchTagExceedsMaxSize() {
+        Collection collection = fixtureService.createTestCollection();
+        Tag tag = fixtureService.persistTag(b -> b
+            .withCollection(collection)
+            .withName("Size Tag")
+            .withColor("#000000")
+        );
+        String ids = java.util.stream.IntStream.range(0, 501)
+            .mapToObj(_ -> "\"" + java.util.UUID.randomUUID() + "\"")
+            .collect(Collectors.joining(","));
+
+        String body = """
+            {"collectionId":"%s","tagId":"%s","bookmarkIds":[%s]}
+            """.formatted(collection.getId().getUUID(), tag.getId().getUUID(), ids);
+
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/bookmarks/batch-tag")
+            .then()
+            .statusCode(400);
+    }
+
+    // -------------------------------------------------------------------------
+    // #9: cross-collection folder target rejection (BR-100).
+    // -------------------------------------------------------------------------
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldReturn403AndMoveNothing_whenBatchMoveTargetsFolderOfOtherCollection() {
+        Collection collection = fixtureService.createTestCollection();
+        Collection otherCollection = fixtureService.createTestCollection();
+        Folder foreignFolder = fixtureService.persistFolder(b -> b
+            .withCollection(otherCollection)
+            .withName("Foreign Folder")
+        );
+        Bookmark own = persistBookmark(collection, "own");
+
+        String body = """
+            {"collectionId":"%s","folderId":"%s","bookmarkIds":["%s"]}
+            """.formatted(
+            collection.getId().getUUID(),
+            foreignFolder.getId().getUUID(),
+            own.getId().getUUID());
+
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/bookmarks/batch-move")
+            .then()
+            .statusCode(403);
+
+        // Atomic rollback: the own bookmark must still have no folder.
+        RestAssured.given()
+            .queryParam("collectionId", collection.getId().getUUID().toString())
+            .get("/bookmarks")
+            .then()
+            .statusCode(200)
+            .body("bookmarkList[0].data.folderId", nullValue());
+    }
+
+    // -------------------------------------------------------------------------
+    // #10: batch-deleted bookmarks appear in the trashbin and bump the count.
+    // -------------------------------------------------------------------------
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldMoveBookmarksToTrashbin_whenBatchDelete() {
+        Collection collection = fixtureService.createTestCollection();
+        Bookmark first = persistBookmark(collection, "trash-one");
+        Bookmark second = persistBookmark(collection, "trash-two");
+
+        String body = """
+            {"collectionId":"%s","bookmarkIds":["%s","%s"]}
+            """.formatted(
+            collection.getId().getUUID(),
+            first.getId().getUUID(),
+            second.getId().getUUID());
+
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/bookmarks/batch-delete")
+            .then()
+            .statusCode(204);
+
+        // The soft-deleted bookmarks appear in the trashbin with a deletedAt.
+        RestAssured.given()
+            .get("/trashbin")
+            .then()
+            .statusCode(200)
+            .body("bookmarks.id", hasItems(
+                first.getId().getUUID().toString(),
+                second.getId().getUUID().toString()))
+            .body("bookmarks.deletedAt", everyItem(notNullValue()));
+
+        // The trashbin count reflects at least the two soft-deleted bookmarks.
+        RestAssured.given()
+            .get("/trashbin/count")
+            .then()
+            .statusCode(200)
+            .body("count", greaterThanOrEqualTo(2));
+    }
 }

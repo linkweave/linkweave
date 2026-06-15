@@ -186,6 +186,22 @@ test.describe('Batch select (UC-074)', () => {
     ).toBeVisible()
   })
 
+  test('should batch move the selection back to the collection root (BR-101)', async ({ page }) => {
+    // After the previous test bm.one and bm.two are in the folder.
+    await selectByTitles(page, collection.collectionId, bm.one, bm.two)
+
+    await page.getByTestId('batch-move').click()
+    await expect(page.getByText('Move 2 bookmarks')).toBeVisible()
+    // Submit without picking a folder → moves to the collection root.
+    await page.getByRole('button', { name: 'Move here' }).click()
+
+    await expect(page.getByText('Moved 2 bookmarks to the collection root.')).toBeVisible()
+    await expect(batchBar(page)).not.toHaveClass(/is-open/)
+    // The folder chip must be gone from both cards.
+    await expect(cardByTitle(page, bm.one).locator(`[data-folder-id="${folderId}"]`)).toHaveCount(0)
+    await expect(cardByTitle(page, bm.two).locator(`[data-folder-id="${folderId}"]`)).toHaveCount(0)
+  })
+
   test('should batch delete the selection into the trashbin', async ({ page }) => {
     await selectByTitles(page, collection.collectionId, bm.three, bm.four)
 
@@ -231,5 +247,30 @@ test.describe('Batch select (UC-074)', () => {
 
     await page.getByRole('button', { name: 'Grid view' }).click()
     await expect(batchCount(page)).toHaveText('1 selected')
+  })
+
+  test('should retain the selection when a batch action fails (NFR-018)', async ({ page }) => {
+    await selectByTitles(page, collection.collectionId, bm.one)
+
+    // Intercept the batch-delete call and force a 500 so we can verify the
+    // selection survives the atomic rollback and the user can retry.
+    await page.route('**/api/bookmarks/batch-delete', (route) =>
+      route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: '{"message":"simulated failure"}',
+      }),
+    )
+
+    await page.getByTestId('batch-delete').click()
+    await page.getByTestId('confirm-dialog-submit').click()
+
+    // Error toast and selection retained for retry.
+    await expect(page.getByText('Failed to delete bookmarks. No changes were made.')).toBeVisible()
+    await expect(batchCount(page)).toHaveText('1 selected')
+    await expect(batchBar(page)).toHaveClass(/is-open/)
+    await expect(cardByTitle(page, bm.one)).toBeVisible()
+
+    await page.unroute('**/api/bookmarks/batch-delete')
   })
 })
