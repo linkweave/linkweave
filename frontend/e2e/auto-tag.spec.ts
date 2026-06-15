@@ -1,4 +1,4 @@
-import { expect, test, type APIRequestContext, type Browser } from '@playwright/test'
+import { expect, test, type APIRequestContext, type Browser } from './fixtures'
 import { BASE, createCollectionViaApi } from './helpers/api'
 import { login } from './helpers/auth'
 import { openAddBookmarkDialog } from './helpers/bookmarks'

@@ -1,4 +1,4 @@
-import { test } from '@playwright/test'
+import { test } from './fixtures'
 import { AppPageObject } from './models/AppPageObject'
 import { LoginPageObject } from './models/LoginPageObject'
 

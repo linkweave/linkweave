@@ -42,6 +42,9 @@ jobs:
       # SAN list includes 'localhost', so TLS verification works even though
       # the browser-facing hostname is e2e-chainlink.localhost.
       VITE_API_TARGET: https://localhost:8443
+      # Instrument the dev server (vite-plugin-istanbul) and harvest per-test
+      # coverage. The Playwright-started webServer inherits this. Report-only.
+      E2E_COVERAGE: "1"
 
     steps:
       - uses: actions/checkout@v5
@@ -158,6 +161,24 @@ jobs:
         # and waits for it on :5173.
         run: pnpm exec playwright test --project=chromium
 
+      # Run the Vitest unit suite with istanbul coverage on the SAME runner, so
+      # its coverage map sits next to the e2e .nyc_output and the two can be
+      # merged below. Kept separate from build.yml's gate run — this one only
+      # feeds the combined report. Always runs so the report has unit data even
+      # if the e2e suite failed.
+      - name: Unit coverage (istanbul)
+        if: always()
+        working-directory: frontend
+        run: pnpm run coverage:unit
+
+      # Merge the e2e (.nyc_output) and unit (coverage-unit) istanbul maps into a
+      # single HTML + text-summary report. Runs even if some tests failed;
+      # report-only, so a low number never fails the build.
+      - name: Generate combined coverage report
+        if: always()
+        working-directory: frontend
+        run: pnpm run coverage:combine
+
       - name: Stop API
         if: always()
         run: |
@@ -171,6 +192,18 @@ jobs:
         with:
           name: playwright-report
           path: frontend/playwright-report
+          retention-days: 14
+
+      - name: Upload combined coverage report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          # Tag with the head commit SHA so each run's artifact is unambiguous
+          # and can't be confused with (or served as) a cached older run. On a
+          # pull_request event github.sha is the merge commit, so prefer the PR
+          # head SHA — that matches the commit that was actually pushed.
+          name: combined-coverage-report-${{ github.event.pull_request.head.sha || github.sha }}
+          path: frontend/coverage-combined
           retention-days: 14
 
       - name: Upload API log on failure

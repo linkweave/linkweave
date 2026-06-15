@@ -1,12 +1,5 @@
 package org.chainlink.api.shared.archunit;
 
-import org.chainlink.infrastructure.stereotypes.JaxDTO;
-import org.chainlink.infrastructure.stereotypes.JaxMapper;
-import org.chainlink.infrastructure.stereotypes.JaxResource;
-import org.chainlink.infrastructure.stereotypes.NoTransactionService;
-import org.chainlink.infrastructure.stereotypes.Repository;
-import org.chainlink.infrastructure.stereotypes.Service;
-import org.chainlink.api.shared.auth.AuthorizationService;
 import com.querydsl.core.types.dsl.EntityPathBase;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -14,16 +7,18 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.Architectures;
 import com.tngtech.archunit.library.dependencies.Slice;
 import jakarta.persistence.Entity;
-import jakarta.ws.rs.Path;
+import org.chainlink.api.shared.auth.AuthorizationService;
+import org.chainlink.infrastructure.stereotypes.JaxDTO;
+import org.chainlink.infrastructure.stereotypes.JaxMapper;
+import org.chainlink.infrastructure.stereotypes.JaxResource;
+import org.chainlink.infrastructure.stereotypes.NoTransactionService;
+import org.chainlink.infrastructure.stereotypes.Repository;
+import org.chainlink.infrastructure.stereotypes.Service;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
 
-import static org.chainlink.api.shared.archunit.ArchConst.APP_CLASSES;
-import static org.chainlink.api.shared.archunit.ArchConst.APP_PACKAGE;
-import static org.chainlink.api.shared.archunit.ArchConst.STARTER_PACKAGE;
-import static org.chainlink.api.shared.archunit.predicates.ClassPredicates.interfaceWithSuffix;
 import static com.tngtech.archunit.base.DescribedPredicate.or;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.assignableTo;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
@@ -31,22 +26,23 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameSt
 import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.annotatedWith;
 import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.metaAnnotatedWith;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
-import static com.tngtech.archunit.lang.conditions.ArchPredicates.have;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.is;
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.codeUnits;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.constructors;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.chainlink.api.shared.archunit.ArchConst.APP_CLASSES;
+import static org.chainlink.api.shared.archunit.ArchConst.APP_PACKAGE;
+import static org.chainlink.api.shared.archunit.ArchConst.STARTER_PACKAGE;
+import static org.chainlink.api.shared.archunit.predicates.ClassPredicates.interfaceWithSuffix;
 
 @DisplayNameGeneration(ReplaceUnderscores.class)
 class LayeringTest {
-
     public static final DescribedPredicate<JavaClass> SERVICE =
-        is(interfaceWithSuffix("Service")).or(is(metaAnnotatedWith(Service.class)));
-
+        is(interfaceWithSuffix("Service")).or(is(metaAnnotatedWith(Service.class)).or(is(metaAnnotatedWith(
+            NoTransactionService.class))));
     public static final DescribedPredicate<JavaClass> UTIL =
         is(JavaClass.Predicates.simpleNameEndingWith("Util").or(is(interfaceWithSuffix("Util"))));
 

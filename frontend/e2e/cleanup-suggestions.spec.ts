@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test'
+import { expect, type Page, test } from './fixtures'
 import { BASE, createBookmarkViaApi } from './helpers/api'
 import { gotoCollection, useTestCollectionWithCleanup } from './helpers/testCollection'
 import { CleanupSuggestionsPageObject } from './models/CleanupSuggestionsPageObject'

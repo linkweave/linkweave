@@ -1,4 +1,4 @@
-import { type Browser, expect, test } from '@playwright/test'
+import { type Browser, expect, test } from './fixtures'
 import { BASE, createBookmarkViaApi, createCollectionViaApi } from './helpers/api'
 import { login } from './helpers/auth'
 import { openAddBookmarkDialog } from './helpers/bookmarks'
