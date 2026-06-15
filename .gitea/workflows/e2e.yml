@@ -198,7 +198,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: combined-coverage-report
+          # Tag with the head commit SHA so each run's artifact is unambiguous
+          # and can't be confused with (or served as) a cached older run. On a
+          # pull_request event github.sha is the merge commit, so prefer the PR
+          # head SHA — that matches the commit that was actually pushed.
+          name: combined-coverage-report-${{ github.event.pull_request.head.sha || github.sha }}
           path: frontend/coverage-combined
           retention-days: 14
 
