@@ -9,7 +9,8 @@
 // Report-only: this never sets an exit threshold, mirroring coverage:e2e. The
 // two datasets must be produced on the same machine (see e2e.yml) — their file
 // paths only line up within a single checkout.
-import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs'
+import { join } from 'node:path'
 import { execFileSync } from 'node:child_process'
 
 const TMP = '.nyc_output_combined'
@@ -22,10 +23,19 @@ mkdirSync(TMP, { recursive: true })
 
 let sources = 0
 
-// e2e: raw per-test istanbul JSON files.
+// e2e: raw per-test istanbul JSON files. Copy each one flat into TMP rather
+// than cpSync'ing the directory: copying a dir into an already-existing dir has
+// version-dependent merge-vs-nest semantics, and a nested layout would be
+// silently ignored by nyc (it reads --temp-dir non-recursively), dropping the
+// entire e2e contribution with no error. A flat copy is unambiguous.
 if (existsSync(E2E_OUTPUT)) {
-  cpSync(E2E_OUTPUT, TMP, { recursive: true })
-  sources++
+  const e2eFiles = readdirSync(E2E_OUTPUT).filter((f) => f.endsWith('.json'))
+  for (const f of e2eFiles) cpSync(join(E2E_OUTPUT, f), join(TMP, f))
+  if (e2eFiles.length > 0) {
+    sources++
+  } else {
+    console.warn(`${E2E_OUTPUT} has no .json files — combined report will omit e2e coverage.`)
+  }
 } else {
   console.warn(`No e2e coverage found at ${E2E_OUTPUT} — combined report will omit it.`)
 }
