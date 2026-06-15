@@ -206,21 +206,6 @@ jobs:
           path: frontend/coverage-combined
           retention-days: 14
 
-      # TEMPORARY DIAGNOSTIC — remove once the download.ts 0/23 outlier is
-      # understood. Uploads the raw vitest unit map plus the nyc-merge'd unit
-      # and e2e maps, so we can inspect download.ts at each stage and tell
-      # whether it's lost on the unit side or clobbered during the merge.
-      - name: Upload coverage diagnostics (temporary)
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: coverage-diagnostics-${{ github.event.pull_request.head.sha || github.sha }}
-          path: |
-            frontend/coverage-unit/coverage-final.json
-            frontend/.nyc_output_combined/unit.json
-            frontend/.nyc_output_combined/e2e.json
-          retention-days: 14
-
       - name: Upload API log on failure
         if: failure()
         uses: actions/upload-artifact@v3
