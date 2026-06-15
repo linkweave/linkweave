@@ -214,17 +214,17 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
     }
 
     /** A bookmark's URL paired with its collection's browser fetch allowlist. */
-    public record FaviconContext(@NonNull URL url, @Nullable String collectionBrowserAllowlist) {}
+    public record UrlFetchContext(@NonNull URL url, @Nullable String collectionBrowserAllowlist) {}
 
     /**
-     * Scalar projection for the favicon read path: the URL plus the owning
-     * collection's allowlist, so the service can skip server-side fetches for
-     * hosts the browser loads directly. Like {@link #findUrlById} this avoids an
-     * entity load (and its timestamp extraction). Left join so an uncollected
-     * bookmark still yields its URL with a {@code null} allowlist.
+     * Scalar projection for the server-side fetch paths (favicon, screenshot):
+     * the URL plus the owning collection's allowlist, so the service can skip
+     * fetches for hosts the browser loads directly. Like {@link #findUrlById}
+     * this avoids an entity load (and its timestamp extraction). Left join so an
+     * uncollected bookmark still yields its URL with a {@code null} allowlist.
      */
     @NonNull
-    public Optional<FaviconContext> findFaviconContextById(@NonNull ID<Bookmark> bookmarkId) {
+    public Optional<UrlFetchContext> findUrlFetchContextById(@NonNull ID<Bookmark> bookmarkId) {
         var b = QBookmark.bookmark;
         var c = QCollection.collection;
         return db.select(b.url, c.browserFetchAllowlist)
@@ -232,7 +232,7 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             .leftJoin(b.collection, c)
             .where(b.id.eq(bookmarkId.getUUID()))
             .fetchOne()
-            .map(t -> new FaviconContext(
+            .map(t -> new UrlFetchContext(
                 Objects.requireNonNull(t.get(b.url)),
                 t.get(c.browserFetchAllowlist)));
     }

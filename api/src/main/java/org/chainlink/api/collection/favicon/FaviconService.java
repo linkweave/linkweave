@@ -26,8 +26,8 @@ public class FaviconService {
         // bookmark, and concurrent entity loads race in Hibernate's shared UTC
         // calendar (HHH-20355, see BookmarkRepo#findUrlById). The projection also
         // carries the collection's allowlist so we can short-circuit below.
-        BookmarkRepo.FaviconContext ctx = bookmarkRepo.findFaviconContextById(bookmarkId)
-            .orElseGet(() -> new BookmarkRepo.FaviconContext(
+        BookmarkRepo.UrlFetchContext ctx = bookmarkRepo.findUrlFetchContextById(bookmarkId)
+            .orElseGet(() -> new BookmarkRepo.UrlFetchContext(
                 bookmarkRepo.getById(bookmarkId).getUrl(), null)); // throws the canonical not-found
         URL url = ctx.url();
 

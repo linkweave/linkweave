@@ -16,6 +16,11 @@ const NAV_TIMEOUT_MS = Number(process.env.NAV_TIMEOUT_MS ?? 10_000)
 const SETTLE_TIMEOUT_MS = Number(process.env.SETTLE_TIMEOUT_MS ?? 4_000)
 const POST_LOAD_DELAY_MS = Number(process.env.POST_LOAD_DELAY_MS ?? 800)
 const MAX_BODY_BYTES = 8 * 1024
+// Cap the description we hand back. It rides in a response header (base64 UTF-8),
+// and the Java side stores it in a 5000-char column; meta descriptions are almost
+// always < 320 chars, so this bound is generous while keeping the header small.
+const MAX_DESCRIPTION_CHARS = 2000
+const DESCRIPTION_HEADER = 'x-page-description'
 // A realistic browser User-Agent. Playwright's default carries a "HeadlessChrome"
 // token and a bespoke token like "Chrome/Chainlink-Screenshot" is not a valid
 // Chrome version — both are routinely rejected (HTTP 403) by WAF/CDN bot rules,
@@ -86,6 +91,29 @@ function validateRequest(body) {
   return { url: parsed.toString(), width, height, format, quality }
 }
 
+// The page is already fully loaded for the screenshot, so pulling its
+// description costs nothing extra. Prefer the curated og:description, then the
+// classic meta description, then twitter's. Returns null when none are present.
+async function extractDescription(page) {
+  try {
+    const raw = await page.evaluate(() => {
+      const pick = (selector) =>
+        document.querySelector(selector)?.getAttribute('content')?.trim() || null
+      return (
+        pick('meta[property="og:description"]') ||
+        pick('meta[name="description"]') ||
+        pick('meta[name="twitter:description"]') ||
+        null
+      )
+    })
+    return raw ? raw.slice(0, MAX_DESCRIPTION_CHARS) : null
+  } catch {
+    // A flaky evaluate must never fail the screenshot — the image is the
+    // primary product; the description is a best-effort backfill.
+    return null
+  }
+}
+
 async function capture({ url, width, height, format, quality }) {
   const context = await browser.newContext({
     viewport: { width, height },
@@ -102,9 +130,11 @@ async function capture({ url, width, height, format, quality }) {
     // Final paint settle — gives CSS transitions, async-decoded images, and
     // late hydration re-renders a frame or two to land before we snapshot.
     await page.waitForTimeout(POST_LOAD_DELAY_MS)
+    const description = await extractDescription(page)
     const screenshotOptions = { type: format, fullPage: false }
     if (format === 'jpeg') screenshotOptions.quality = quality
-    return await page.screenshot(screenshotOptions)
+    const bytes = await page.screenshot(screenshotOptions)
+    return { bytes, description }
   } finally {
     await context.close()
   }
@@ -126,11 +156,16 @@ const server = http.createServer(async (req, res) => {
     }
 
     try {
-      const bytes = await capture(params)
-      res.writeHead(200, {
+      const { bytes, description } = await capture(params)
+      const headers = {
         'content-type': params.format === 'png' ? 'image/png' : 'image/jpeg',
         'content-length': bytes.length,
-      })
+      }
+      // Base64 so arbitrary unicode / newlines in the description stay header-safe.
+      if (description) {
+        headers[DESCRIPTION_HEADER] = Buffer.from(description, 'utf-8').toString('base64')
+      }
+      res.writeHead(200, headers)
       return res.end(bytes)
     } catch (err) {
       console.warn(`capture failed for ${params.url}: ${err.message}`)

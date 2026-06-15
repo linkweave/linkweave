@@ -5,6 +5,7 @@ import io.quarkus.scheduler.ScheduledExecution;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.chainlink.api.bookmark.BookmarkRepo;
 import org.chainlink.api.collection.favicon.BackendFetchPolicy;
 import org.chainlink.api.shared.config.ConfigService;
@@ -88,7 +89,8 @@ public class ScreenshotCaptureJobService {
                 try {
                     ok = screenshotService.captureNow(b.bookmarkId());
                 } catch (Exception e) {
-                    LOG.warn("Screenshot capture failed for bookmark {}: {}", b.bookmarkId(), e.getMessage());
+                    LOG.warn("Screenshot capture failed for bookmark {}: {}",
+                        b.bookmarkId(), ExceptionUtils.getRootCauseMessage(e));
                     failed++;
                     if (captured + failed >= limitForRun) break outer;
                     continue;

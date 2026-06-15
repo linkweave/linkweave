@@ -1,6 +1,7 @@
 package org.chainlink.api.shared.archunit;
 
 import org.chainlink.infrastructure.stereotypes.JaxResource;
+import org.chainlink.infrastructure.stereotypes.NoTransactionService;
 import org.chainlink.infrastructure.stereotypes.Repository;
 import org.chainlink.infrastructure.stereotypes.Service;
 import com.tngtech.archunit.core.domain.JavaClass.Predicates;
@@ -68,7 +69,9 @@ class NamingTest {
                 .or(Predicates.simpleNameEndingWith("ServiceImpl"))
             )
             .should()
-            .beAnnotatedWith(Service.class);
+            .beAnnotatedWith(Service.class)
+            .orShould()
+            .beAnnotatedWith(NoTransactionService.class);
 
         rule.check(ArchConst.APP_CLASSES);
     }
