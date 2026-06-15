@@ -1,5 +1,5 @@
 import type { BookmarkJson } from '@/api/generated'
-import { sortBookmarks, type SortPref } from './bookmarkSort'
+import { isNeverOpened, sortBookmarks, SYSTEM_DEFAULT_SORT, type SortPref } from './bookmarkSort'
 
 function bm(opts: {
   id: string
@@ -105,5 +105,70 @@ describe('sortBookmarks neverOpenedCount', () => {
   it('counts zero-click bookmarks for CLICK_COUNT', () => {
     const list = [bm({ id: '1', clickCount: 0 }), bm({ id: '2', clickCount: 5 })]
     expect(sortBookmarks(list, DESC('CLICK_COUNT')).neverOpenedCount).toBe(1)
+  })
+})
+
+describe('isNeverOpened', () => {
+  it('is always false for non-click-based fields', () => {
+    const never = bm({ id: '1', lastClickedAt: null, clickCount: 0 })
+    expect(isNeverOpened(never, 'TITLE')).toBe(false)
+    expect(isNeverOpened(never, 'DATE_ADDED')).toBe(false)
+  })
+
+  it('LAST_CLICKED: true only when never clicked', () => {
+    expect(isNeverOpened(bm({ id: '1', lastClickedAt: null }), 'LAST_CLICKED')).toBe(true)
+    expect(isNeverOpened(bm({ id: '1', lastClickedAt: '2026-01-01T00:00:00Z' }), 'LAST_CLICKED')).toBe(false)
+  })
+
+  it('CLICK_COUNT: true when zero or missing clicks', () => {
+    expect(isNeverOpened(bm({ id: '1', clickCount: 0 }), 'CLICK_COUNT')).toBe(true)
+    expect(isNeverOpened(bm({ id: '1', clickCount: 4 }), 'CLICK_COUNT')).toBe(false)
+    expect(isNeverOpened({ ...bm({ id: '1' }), clickCount: undefined } as unknown as BookmarkJson, 'CLICK_COUNT')).toBe(
+      true,
+    )
+  })
+})
+
+describe('sortBookmarks edge cases', () => {
+  it('SYSTEM_DEFAULT_SORT is DATE_ADDED DESC', () => {
+    expect(SYSTEM_DEFAULT_SORT).toEqual({ field: 'DATE_ADDED', direction: 'DESC' })
+  })
+
+  it('returns an empty result for an empty list (click-based and not)', () => {
+    expect(sortBookmarks([], DESC('TITLE'))).toEqual({ items: [], neverOpenedCount: 0 })
+    expect(sortBookmarks([], DESC('CLICK_COUNT'))).toEqual({ items: [], neverOpenedCount: 0 })
+  })
+
+  it('sorts DATE_ADDED oldest first when ASC', () => {
+    const list = [
+      bm({ id: 'new', createdAt: '2026-03-01T00:00:00Z' }),
+      bm({ id: 'old', createdAt: '2026-01-01T00:00:00Z' }),
+    ]
+    expect(sortBookmarks(list, ASC('DATE_ADDED')).items.map((b) => b.id)).toEqual(['old', 'new'])
+  })
+
+  it('sorts clicked bookmarks ascending by CLICK_COUNT when ASC', () => {
+    const list = [bm({ id: 'lots', clickCount: 10 }), bm({ id: 'few', clickCount: 2 })]
+    expect(sortBookmarks(list, ASC('CLICK_COUNT')).items.map((b) => b.id)).toEqual(['few', 'lots'])
+  })
+
+  it('sorts clicked bookmarks ascending by LAST_CLICKED when ASC', () => {
+    const list = [
+      bm({ id: 'recent', lastClickedAt: '2026-04-01T00:00:00Z' }),
+      bm({ id: 'older', lastClickedAt: '2026-01-01T00:00:00Z' }),
+    ]
+    expect(sortBookmarks(list, ASC('LAST_CLICKED')).items.map((b) => b.id)).toEqual(['older', 'recent'])
+  })
+
+  it('treats a missing createdAt as the oldest (0)', () => {
+    const dated = bm({ id: 'dated', createdAt: '2026-01-01T00:00:00Z' })
+    const noDate = { ...bm({ id: 'nodate' }), entityInfo: undefined } as unknown as BookmarkJson
+    expect(sortBookmarks([noDate, dated], DESC('DATE_ADDED')).items.map((b) => b.id)).toEqual(['dated', 'nodate'])
+  })
+
+  it('treats a missing title as an empty string', () => {
+    const titled = bm({ id: 'titled', title: 'Apple' })
+    const untitled = { ...bm({ id: 'untitled' }), data: { url: 'https://x' } as BookmarkJson['data'] }
+    expect(sortBookmarks([titled, untitled], ASC('TITLE')).items.map((b) => b.id)).toEqual(['untitled', 'titled'])
   })
 })
