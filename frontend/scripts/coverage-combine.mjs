@@ -1,51 +1,53 @@
 // Combines unit (Vitest, istanbul) and e2e (vite-plugin-istanbul) coverage into
 // a single HTML + text-summary report.
 //
-// Both inputs are istanbul-format JSON, so nyc can merge them: e2e drops raw
-// per-test maps into .nyc_output, and `coverage:unit` writes one merged map to
-// coverage-unit/coverage-final.json. We gather both into one temp dir and let
-// `nyc report` merge everything it finds there.
+// The two sources are instrumented by different tools, so a given file's raw
+// statementMap differs between them (e.g. @vitest/coverage-istanbul remaps to
+// source with a null end column; vite-plugin-istanbul reports a real column),
+// and they carry different per-file hashes. Feeding the raw coverage-final.json
+// files straight to `nyc report --temp-dir` is NOT safe: on a hash mismatch
+// istanbul's merge clobbers rather than unions, so an all-zero copy of a file
+// (loaded-but-not-exercised in one suite) wipes out real coverage from the
+// other — a file covered only by unit tests then shows 0%.
 //
-// Report-only: this never sets an exit threshold, mirroring coverage:e2e. The
-// two datasets must be produced on the same machine (see e2e.yml) — their file
-// paths only line up within a single checkout.
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs'
-import { join } from 'node:path'
+// `nyc merge` normalizes each source (canonicalizes the statementMap, strips the
+// hash) before we report. After that the two maps line up by location and
+// `nyc report` unions them correctly. This is the documented "combining reports
+// from multiple runs" pipeline. See istanbuljs/nyc#combining-reports.
+//
+// Report-only: never sets an exit threshold, mirroring coverage:e2e. Both inputs
+// must be produced on the same machine (see e2e.yml) — file paths only line up
+// within a single checkout.
+import { existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 
 const TMP = '.nyc_output_combined'
 const REPORT_DIR = 'coverage-combined'
-const E2E_OUTPUT = '.nyc_output'
-const UNIT_FINAL = 'coverage-unit/coverage-final.json'
+const E2E_OUTPUT = '.nyc_output' // e2e: many raw per-test istanbul JSON files
+const UNIT_DIR = 'coverage-unit' // unit: vitest's coverage-final.json
+
+const nyc = (args) => execFileSync('nyc', args, { stdio: 'inherit' })
+const hasJson = (dir) => existsSync(dir) && readdirSync(dir).some((f) => f.endsWith('.json'))
 
 rmSync(TMP, { recursive: true, force: true })
 mkdirSync(TMP, { recursive: true })
 
 let sources = 0
 
-// e2e: raw per-test istanbul JSON files. Copy each one flat into TMP rather
-// than cpSync'ing the directory: copying a dir into an already-existing dir has
-// version-dependent merge-vs-nest semantics, and a nested layout would be
-// silently ignored by nyc (it reads --temp-dir non-recursively), dropping the
-// entire e2e contribution with no error. A flat copy is unambiguous.
-if (existsSync(E2E_OUTPUT)) {
-  const e2eFiles = readdirSync(E2E_OUTPUT).filter((f) => f.endsWith('.json'))
-  for (const f of e2eFiles) cpSync(join(E2E_OUTPUT, f), join(TMP, f))
-  if (e2eFiles.length > 0) {
-    sources++
-  } else {
-    console.warn(`${E2E_OUTPUT} has no .json files — combined report will omit e2e coverage.`)
-  }
-} else {
-  console.warn(`No e2e coverage found at ${E2E_OUTPUT} — combined report will omit it.`)
-}
-
-// unit: vitest's single merged map. Rename so it can't collide with an e2e file.
-if (existsSync(UNIT_FINAL)) {
-  cpSync(UNIT_FINAL, `${TMP}/unit-final.json`)
+// Merge each source into a single normalized file in TMP. The normalization
+// `nyc merge` performs is what makes the cross-tool report correct.
+if (hasJson(E2E_OUTPUT)) {
+  nyc(['merge', E2E_OUTPUT, `${TMP}/e2e.json`])
   sources++
 } else {
-  console.warn(`No unit coverage found at ${UNIT_FINAL} — combined report will omit it.`)
+  console.warn(`No e2e coverage found in ${E2E_OUTPUT} — combined report will omit it.`)
+}
+
+if (hasJson(UNIT_DIR)) {
+  nyc(['merge', UNIT_DIR, `${TMP}/unit.json`])
+  sources++
+} else {
+  console.warn(`No unit coverage found in ${UNIT_DIR} — combined report will omit it.`)
 }
 
 if (sources === 0) {
@@ -53,18 +55,14 @@ if (sources === 0) {
   process.exit(1)
 }
 
-execFileSync(
-  'nyc',
-  [
-    'report',
-    '--temp-dir',
-    TMP,
-    '--report-dir',
-    REPORT_DIR,
-    '--reporter',
-    'html',
-    '--reporter',
-    'text-summary',
-  ],
-  { stdio: 'inherit' },
-)
+nyc([
+  'report',
+  '--temp-dir',
+  TMP,
+  '--report-dir',
+  REPORT_DIR,
+  '--reporter',
+  'html',
+  '--reporter',
+  'text-summary',
+])
