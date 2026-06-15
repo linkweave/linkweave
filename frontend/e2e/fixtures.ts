@@ -19,12 +19,20 @@ export const test = base.extend<{ collectCoverage: void }>({
     async ({ page }, use) => {
       await use()
       if (!coverageEnabled) return
-      const coverage = await page.evaluate(
-        () => (globalThis as unknown as { __coverage__?: unknown }).__coverage__,
-      )
-      if (coverage) {
-        mkdirSync(nycDir, { recursive: true })
-        writeFileSync(path.join(nycDir, `${randomUUID()}.json`), JSON.stringify(coverage))
+      // Best-effort: never let coverage harvesting fail a test that passed. If
+      // the spec left the page closed/crashed (or on a context where evaluate
+      // rejects), or the write fails, swallow it — a missing fragment just means
+      // slightly lower reported coverage, not a broken run.
+      try {
+        const coverage = await page.evaluate(
+          () => (globalThis as unknown as { __coverage__?: unknown }).__coverage__,
+        )
+        if (coverage) {
+          mkdirSync(nycDir, { recursive: true })
+          writeFileSync(path.join(nycDir, `${randomUUID()}.json`), JSON.stringify(coverage))
+        }
+      } catch {
+        /* coverage is best-effort */
       }
     },
     { auto: true },
