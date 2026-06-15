@@ -161,18 +161,23 @@ jobs:
         # and waits for it on :5173.
         run: pnpm exec playwright test --project=chromium
 
-      # Merge the per-test istanbul JSON harvested into .nyc_output into an HTML
-      # + text-summary report. Runs even if some e2e tests failed; report-only,
-      # so a low number never fails the build.
-      - name: Generate e2e coverage report
+      # Run the Vitest unit suite with istanbul coverage on the SAME runner, so
+      # its coverage map sits next to the e2e .nyc_output and the two can be
+      # merged below. Kept separate from build.yml's gate run — this one only
+      # feeds the combined report. Always runs so the report has unit data even
+      # if the e2e suite failed.
+      - name: Unit coverage (istanbul)
         if: always()
         working-directory: frontend
-        run: |
-          if [ -d .nyc_output ]; then
-            pnpm run coverage:e2e:report
-          else
-            echo "No coverage data collected (.nyc_output missing) — skipping report"
-          fi
+        run: pnpm run coverage:unit
+
+      # Merge the e2e (.nyc_output) and unit (coverage-unit) istanbul maps into a
+      # single HTML + text-summary report. Runs even if some tests failed;
+      # report-only, so a low number never fails the build.
+      - name: Generate combined coverage report
+        if: always()
+        working-directory: frontend
+        run: pnpm run coverage:combine
 
       - name: Stop API
         if: always()
@@ -189,12 +194,12 @@ jobs:
           path: frontend/playwright-report
           retention-days: 14
 
-      - name: Upload e2e coverage report
+      - name: Upload combined coverage report
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: e2e-coverage-report
-          path: frontend/coverage-e2e
+          name: combined-coverage-report
+          path: frontend/coverage-combined
           retention-days: 14
 
       - name: Upload API log on failure

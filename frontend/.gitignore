@@ -15,7 +15,10 @@ dist-extension
 chainlink-extension.zip
 /coverage
 /coverage-e2e
+/coverage-unit
+/coverage-combined
 /.nyc_output
+/.nyc_output_combined
 *.local
 
 # Editor directories and files

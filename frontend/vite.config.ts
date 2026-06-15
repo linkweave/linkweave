@@ -131,6 +131,19 @@ export default defineConfig(({ command }) => {
       globals: true,
       environment: 'node',
       exclude: ['node_modules', 'dist', 'e2e/**'],
+      coverage: {
+        // Opt-in via `--coverage` (the coverage:unit script). Use the istanbul
+        // provider — not v8 — so the emitted map is binary-compatible with the
+        // e2e coverage from vite-plugin-istanbul and the two can be merged by
+        // nyc. Emit raw json only; HTML/text are produced by the combine step.
+        provider: 'istanbul',
+        reporter: ['json'],
+        reportsDirectory: 'coverage-unit',
+        // Scope to instrumentable source only — a bare src/** also matches
+        // .html/.css/.svg, which the "report uncovered files" pass then tries
+        // to parse as JS and chokes on (e.g. src/extension/options.html).
+        include: ['src/**/*.{ts,tsx,js,jsx,vue}'],
+      },
     },
   }
 })
