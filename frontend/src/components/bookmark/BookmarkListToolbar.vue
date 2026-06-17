@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { FolderBreadcrumbCl } from '@/components/folder'
 import { computed } from 'vue'
+import type { ComponentPublicInstance } from 'vue'
 import { useEffectiveLayout } from '@/composables/useEffectiveLayout'
+import { useStickyToolbar } from '@/composables/useStickyToolbar'
 import { useCollectionStore } from '@/stores/collection'
 import BookmarkLayoutToggle from './BookmarkLayoutToggle.vue'
 import BookmarkPreviewsToggle from './BookmarkPreviewsToggle.vue'
@@ -19,10 +21,19 @@ const previewsAvailable = computed(
 // Batch select (UC-074) is specified for the grid and list layouts only;
 // the grouped layout has its own row component without selection support.
 const selectAvailable = computed(() => effectiveLayout.value !== 'grouped')
+
+// Publish our root element so the preview popup can clamp below us
+// (UC-093 BR-093-6). The function ref is called with the element on mount and
+// null on unmount, so the shared ref always tracks the live toolbar.
+const stickyToolbar = useStickyToolbar()
+function setRoot(el: Element | ComponentPublicInstance | null) {
+  if (stickyToolbar) stickyToolbar.value = (el as HTMLElement | null)
+}
 </script>
 
 <template>
   <div
+    :ref="setRoot"
     class="sticky top-0 z-30 flex items-center gap-3 h-11 px-4 sm:px-6
            border-b border-border bg-background/80 backdrop-blur sm:bg-background
            before:absolute before:-top-px before:inset-x-0 before:h-px before:bg-background sm:before:hidden"

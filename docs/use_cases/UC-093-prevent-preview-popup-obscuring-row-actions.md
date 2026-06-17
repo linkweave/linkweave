@@ -5,8 +5,10 @@
 **Use Case ID:** UC-093
 **Use Case Name:** Prevent Preview Popup from Obscuring Row Actions
 **Primary Actor:** User
-**Goal:** Ensure the bookmark row's hover actions (the "⋯" menu that hosts Edit / Move / Refresh Preview / Delete) remain visible and reachable while the screenshot preview popup is open in the list layout.
-**Status:** Open
+**Goal:** Ensure the bookmark's row actions (Edit / Move / Refresh Preview / Delete) remain reachable while the screenshot preview popup is open in the list layout — even when the popup covers the row's own "⋯" menu.
+**Status:** Implemented
+
+> **Note on approach:** This use case was originally framed as "keep the row's ⋯ menu visible *beside* the popup". The shipped solution takes the opposite tack (BR-093-4): the popup deliberately covers the row's ⋯ and **hosts the same actions in its own footer**, so the covered control never needs to be reached. The business rules and scenarios below reflect that shipped design.
 
 ## Traceability
 
@@ -35,18 +37,18 @@
 
 so the user has no visible target and cannot discover the Edit / Move / Delete / Refresh Preview actions for the bookmark they are currently inspecting. The popup and the menu are mutually triggered by the same row hover, which is the root of the conflict.
 
-The chosen trade-off (documented in `BookmarkPreviewPopup.vue` lines 52–57) currently treats the menu/stats cells as the "least important" cells to sacrifice. The menu is in fact the **only** entry point to destructive and editing operations, so it must not be sacrificed.
+The original trade-off in `measure()` treated the menu/stats cells as the "least important" cells to sacrifice to the overlap. The menu is in fact the **only** entry point to destructive and editing operations, so it must not be sacrificed — which is why the shipped fix moves those actions into the popup itself rather than leaving them stranded under it.
 
 ---
 
 ## Main Success Scenario
 
 1. User hovers a bookmark row in list layout (previews enabled).
-2. The preview popup appears.
-3. The row's "⋯" menu button remains **fully visible** and **clickable** — it is not covered, clipped, or pushed off-screen by the popup.
-4. User moves the pointer onto the menu button without the popup disappearing (no flicker / no intent-cancellation).
-5. User opens the menu and selects Edit (or Move / Delete / Refresh Preview).
-6. The chosen action completes normally; the popup closes when the row is left.
+2. The preview popup appears, with its own action footer (favicon · host link · "⋯" menu).
+3. The bookmark's actions remain **reachable**: even where the popup covers the row's own "⋯", the same Edit / Move / Refresh Preview / Delete actions are present in the popup's footer.
+4. User moves the pointer down onto the footer without the popup disappearing or switching to an adjacent row (no flicker / no intent-cancellation — the solid overlay captures the pointer).
+5. User opens the footer menu and selects Edit (or Move / Delete / Refresh Preview).
+6. The chosen action completes normally; the popup closes when the pointer leaves it.
 
 ## Alternative Flows
 
@@ -70,7 +72,7 @@ The chosen trade-off (documented in `BookmarkPreviewPopup.vue` lines 52–57) cu
 
 ### A3: Touch / no-hover device
 
-**Trigger:** `@media(hover: none)` — previews are on but the hover popup never opens (see `BookmarkCard.vue` hover-intent gate, lines 293–315).
+**Trigger:** `@media(hover: none)` — previews are on but the hover popup never opens (see `BookmarkCard.vue`, the `hoverPreviewActive` gate).
 **Flow:**
 
 1. No popup is shown; the menu button is always visible on touch (no `opacity-0` gate).
@@ -82,22 +84,22 @@ The chosen trade-off (documented in `BookmarkPreviewPopup.vue` lines 52–57) cu
 
 ### Success Postconditions
 
-- The "⋯" menu button on a hovered list row is never visually obscured by the preview popup.
+- The previewed bookmark's actions (Edit / Move / Refresh Preview / Delete) are always reachable while the popup is open — via the popup's footer menu when the row's own "⋯" is covered.
 - The popup continues to anchor against the right edge of the content pane and never flips onto the fixed sidebar (left edge invariant preserved).
 - Wide-viewport behaviour (popup in the gutter, no overlap) is unchanged.
 - Touch/no-hover behaviour is unchanged.
 
 ### Failure Postconditions
 
-- The menu button remains hidden on hovered rows in cramped layouts; editing/deleting a bookmark whose preview is open is not discoverable without moving the pointer away.
+- The bookmark's actions are not reachable while its preview is open without moving the pointer away (which dismisses the preview).
 
 ---
 
 ## Business Rules
 
-### BR-093-1: Row Actions Are Never Obscured
+### BR-093-1: Row Actions Are Always Reachable
 
-While the preview popup is open for a hovered row, every interactive control that belongs to that row — specifically the "⋯" menu button (Edit / Move / Refresh Preview / Delete) — MUST remain visually unobstructed and within its normal hit target. Obscuring the menu in exchange for showing the popup is not an acceptable trade-off.
+While the preview popup is open for a hovered row, the bookmark's actions (Edit / Move / Refresh Preview / Delete) MUST remain reachable without dismissing the preview. The popup MAY cover the row's own "⋯" button, but only if it surfaces the same actions itself — in the shipped design, via the popup's footer menu. Stranding the actions under the popup (covered and with no in-popup substitute) is not acceptable.
 
 ### BR-093-2: Left-Edge Invariant Preserved
 
@@ -111,6 +113,16 @@ Moving the pointer from the row body onto the (now visible) menu button MUST NOT
 
 The fix may be implemented by any of (non-exhaustive): repositioning the popup so it leaves a clear corridor over the menu button; shrinking/reshaping the popup's overlap region; adding a non-overlapping hover-safe zone; deferring popup show until the pointer dwells outside the menu button's corridor; or making the popup dismissible on menu focus. The acceptance test (see below) is the source of truth, not the chosen technique.
 
+### BR-093-5: Click-to-Open on the Capture
+
+The popup is a solid `pointer-events: auto` overlay, so it owns the click on its capture surface: clicking anywhere on the screenshot opens the hovered bookmark (`window.open` + `trackClick`). This is consistent across the whole capture — unlike click-through, which only opened where the popup happened to overlap the row. Because the overlay captures the pointer, the rows beneath it never fire `mouseenter` while it is up, so the preview cannot be hijacked by an adjacent row as the user moves the pointer down to the footer.
+
+The footer host is additionally rendered as a real `<a target="_blank" rel="noopener noreferrer">` (`data-testid="bookmark-preview-popup-link"`) pointing at the bookmark URL, so it is keyboard-focusable and supports middle-click / right-click → copy link — the affordances a JS `window.open` can't offer — while still recording the open via `trackClick`. The clickable capture (mouse) and the footer link (keyboard / aux-click) are twin entry points to the same page.
+
+### BR-093-6: No Block on the Sticky Toolbar
+
+Because the popup is `pointer-events: auto`, it MUST NOT overlap the sticky `bookmark-list-toolbar` — otherwise it would block the toolbar's links (the original regression). The popup's vertical clamp uses the toolbar's bottom edge as its top bound, so the two never share screen space. (The batch action bar only appears during selection, which disables the popup, so it is not an additional bound.)
+
 ---
 
 ## Acceptance Test
@@ -119,15 +131,68 @@ A Playwright test in the **chromium** project (hover-capable) shall, with previe
 
 1. Hover a bookmark row.
 2. Assert the preview popup is visible (`[data-testid="bookmark-preview-popup"]`).
-3. Assert the row's menu button (`[data-testid="bookmark-menu-button"]`) is visible and its bounding box is **not** fully covered by the popup's bounding box (i.e. at least one corner/edge of the button lies outside the popup rect).
-4. Click the menu button and assert the dropdown with the "Edit" item appears.
+3. Move the pointer across the capture toward the footer (past the row's bottom edge) and assert the popup stays visible — the solid overlay's own `mouseenter` holds it open while the pointer is anywhere over it, and prevents an adjacent row from switching the preview mid-travel.
+4. Assert a sticky-toolbar control (e.g. `collection-settings-open`) remains the hit-test target (`document.elementFromPoint`) even while the popup is up — the popup is clamped below the toolbar, so it never covers it.
+5. Open the popup's footer menu (`[data-testid="bookmark-menu-button"]`) and assert the dropdown with the "Edit" item appears.
 
-The test must also cover A1 (wide viewport): the popup sits in the gutter and no overlap assertion is needed beyond "popup visible, menu visible".
+The test must also cover A1 (wide viewport): the popup sits in the gutter and no overlap assertion is needed beyond "popup visible, footer menu visible".
 
 ---
 
 ## Implementation Pointers
 
-- `frontend/src/components/bookmark/BookmarkPreviewPopup.vue` — `measure()` and the `POPUP_W` / overlap trade-off comment (lines 52–61).
-- `frontend/src/components/bookmark/BookmarkCard.vue` — the menu button (lines 462–497) and the hover-intent gate (lines 286–315).
-- `frontend/src/composables/useBookmarkPreviewHover.ts` — enter/leave intent timing relevant to BR-093-3.
+Chosen approach (BR-093-4): **make the popup own the actions**. Rather than
+repositioning the popup away from the row, the popup that already covers the
+row's `⋯` now hosts the same actions in a footer, so the covered control is no
+longer the one the user has to reach.
+
+Decomposed change set:
+
+1. **`frontend/src/components/bookmark/BookmarkRowMenu.vue`** (new) — the
+   inline lazy-mount radix dropdown that was duplicated in `BookmarkCard` and
+   `GroupedBookmarkRow` is extracted into a shared component. Props:
+   `bookmark`, `showRefreshPreview`, `triggerClass`, `iconClass`; emits
+   `edit`/`move`/`delete`/`refreshPreview`/`open-change`. Preserves the
+   `data-testid="bookmark-menu-button"` trigger.
+2. **`BookmarkCard.vue` / `GroupedBookmarkRow.vue`** — migrated to
+   `BookmarkRowMenu` (callers pass their own positioning + hover-reveal
+   `triggerClass`, which Tailwind still scans from each caller's source).
+3. **`frontend/src/composables/useScreenshotRefresh.ts`** (new) — the refresh
+   POST + error handling is shared by the card row menu and the popup footer.
+4. **`frontend/src/composables/useBookmarkPreviewHover.ts`** — extended with
+   popup keepalive: `onPopupEnter`/`onPopupLeave` (cancel/schedule the hide as
+   the pointer enters/leaves the solid overlay) and `pin`/`unpin` (hold the
+   popup open while the footer dropdown is open, UC-093 A2). `scheduleHide` is a
+   no-op while pinned; `dismiss` resets pinned. Because the overlay captures the
+   pointer, rows beneath it never fire `mouseenter` while it is up, so the
+   preview can't be hijacked by an adjacent row mid-travel to the footer.
+5. **`frontend/src/components/bookmark/BookmarkPreviewPopup.vue`** — renders the
+   action footer (favicon · host · `BookmarkRowMenu`) as a sibling below the
+   capture frame; removes the old full-URL caption (host replaces it) and
+   `aria-hidden` (the popup is now interactive). The whole popup is a solid
+   `pointer-events: auto` overlay (BR-093-5/6): the capture owns its click via
+   `onOpenBookmark` (`window.open` + `trackClick`), and the popup is clamped to
+   never overlap the sticky toolbar so it can't block toolbar links. Root
+   `@mouseenter`/`@mouseleave` drive the keepalive; `@open-change` pins/unpins.
+   Refresh is handled locally (bumps a popup-scoped nonce). Edit/Move/Delete are
+   emitted up to `BookmarkList` (each also schedules a hide so the popup clears
+   as the dialog opens).
+6. **`BookmarkList.vue`** — binds the popup's `edit`/`move`/`delete` to the
+   existing handlers that already serve the row menu.
+7. **`frontend/src/composables/useStickyToolbar.ts`** (new) +
+   **`CollectionView.vue`** / **`BookmarkListToolbar.vue`** — the toolbar shares
+   its root element with the popup via provide/inject (anchored in
+   CollectionView, which renders both the toolbar slot and the list) instead of
+   a `document.querySelector` on a test id, so the clamp can't silently regress.
+
+Invariants preserved: left-edge (sidebar) invariant (BR-093-2), wide-viewport
+gutter placement (A1), touch/no-hover path (A3), and click-to-open on the
+capture area (now an explicit handler — BR-093-5 — rather than click-through).
+
+- `frontend/src/components/bookmark/BookmarkPreviewPopup.vue` — `measure()`
+  right-alignment + toolbar clamp, and the `POPUP_W` / overlap trade-off (the
+  overlap is acceptable because the row's actions live in the popup's footer).
+- `frontend/src/components/bookmark/BookmarkCard.vue` — the `hoverPreviewActive`
+  gate that decides when the zoom popup is allowed.
+- `frontend/src/composables/useBookmarkPreviewHover.ts` — enter/leave/pin
+  timing relevant to BR-093-3.
