@@ -6,7 +6,7 @@
 **Use Case Name:** Search Bookmarks with Operators   
 **Primary Actor:** User   
 **Goal:** Perform precise bookmark searches using a structured operator syntax in the search bar so that I can filter by tag, property, date, and folder without navigating through separate filter dialogs.   
-**Status:** Open   
+**Status:** Done
 
 ## Traceability
 

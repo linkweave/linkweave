@@ -6,7 +6,7 @@
 **Use Case Name:** Save Search Query   
 **Primary Actor:** User   
 **Goal:** Save the current search query (including operators) with a name so that I can re-run it later without retyping.   
-**Status:** Open   
+**Status:** Done
 
 ## Traceability
 
