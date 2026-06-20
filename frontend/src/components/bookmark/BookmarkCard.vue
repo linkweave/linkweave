@@ -436,7 +436,10 @@ function onRowLeave() {
             :size="16"
             class="shrink-0 mt-0.5"
           />
-          <h3 class="font-medium text-foreground truncate leading-5">
+          <h3
+            class="font-medium text-foreground leading-5 line-clamp-2 [overflow-wrap:anywhere]"
+            :class="props.layout === 'grid' ? 'min-h-10' : ''"
+          >
             {{ props.bookmark.data.title }}
           </h3>
           <!-- Lazy radix mount row-action menu-popover
