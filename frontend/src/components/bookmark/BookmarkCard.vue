@@ -428,15 +428,15 @@ function onRowLeave() {
         />
       </div>
       <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2">
+        <div class="flex items-start gap-2">
           <BookmarkFavicon
             v-if="previewsVisible && props.layout === 'list'"
             :bookmark-id="props.bookmark.id"
             :url="props.bookmark.data.url"
             :size="16"
-            class="shrink-0"
+            class="shrink-0 mt-0.5"
           />
-          <h3 class="font-medium text-foreground truncate">
+          <h3 class="font-medium text-foreground truncate leading-5">
             {{ props.bookmark.data.title }}
           </h3>
           <!-- Lazy radix mount row-action menu-popover
@@ -444,7 +444,7 @@ function onRowLeave() {
           <BookmarkRowMenu
             :bookmark="props.bookmark"
             :show-refresh-preview="previewsVisible"
-            trigger-class="ml-auto h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-md transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground pointer-events-auto relative z-10"
+            trigger-class="ml-auto -mt-1 h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-md transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground pointer-events-auto relative z-10"
             @edit="emit('edit', $event)"
             @move="emit('move', $event)"
             @delete="emit('delete', $event)"
