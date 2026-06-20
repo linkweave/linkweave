@@ -6,7 +6,7 @@
 **Use Case Name:** Batch Move and Delete Bookmarks   
 **Primary Actor:** User   
 **Goal:** Move multiple bookmarks to a folder or delete them in one action so that I can reorganize or clean up efficiently.   
-**Status:** Open   
+**Status:** Done
 
 ## Traceability
 

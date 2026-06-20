@@ -2,8 +2,9 @@
 import type { BookmarkJson, PropertyDefinitionJson } from '@/api/generated'
 import BookmarkFavicon from '@/components/bookmark/BookmarkFavicon.vue'
 import BookmarkPreview from '@/components/bookmark/BookmarkPreview.vue'
-import { DropdownMenuContentCl, DropdownMenuItemCl } from '@/components/ui'
+import BookmarkRowMenu from '@/components/bookmark/BookmarkRowMenu.vue'
 import { DRAG_TYPE_BOOKMARK, setDraggingBookmark } from '@/composables/useDragState'
+import { useScreenshotRefresh } from '@/composables/useScreenshotRefresh'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import { useShowPropertyBadges, useShowPreviewPopup } from '@/composables/usePropertyDisplayPrefs'
 import { useRelativeTime } from '@/composables/useRelativeTime'
@@ -13,27 +14,22 @@ import SelectionCheckbox from '@/components/bookmark/SelectionCheckbox.vue'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
-import { useNotificationStore } from '@/stores/notification'
 import { usePropertyStore } from '@/stores/property'
 import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useSelectionStore } from '@/stores/selection'
 import { useTagStore } from '@/stores/tag'
 import { useUiStore } from '@/stores/ui'
-import { Clock, ExternalLink, Folder, MoreHorizontal, MousePointerClick } from '@lucide/vue'
-import { DropdownMenuRoot, DropdownMenuTrigger } from 'radix-vue'
+import { Clock, ExternalLink, Folder, MousePointerClick } from '@lucide/vue'
 import { computed, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
 import BookmarkPropertyBadge from './BookmarkPropertyBadge.vue'
 import { useBookmarkPreviewHover } from '@/composables/useBookmarkPreviewHover'
 
-const { t } = useI18n()
 const tagStore = useTagStore()
 const folderStore = useFolderStore()
 const bookmarkStore = useBookmarkStore()
 const searchQueryStore = useSearchQueryStore()
 const propertyStore = usePropertyStore()
 const collectionStore = useCollectionStore()
-const notification = useNotificationStore()
 const ui = useUiStore()
 const isTouch = useMediaQuery('(hover: none) and (pointer: coarse)')
 const { formatRelativeTime } = useRelativeTime()
@@ -260,28 +256,13 @@ function onToggleFolderFilter(event: MouseEvent) {
   }
 }
 
+const refreshScreenshot = useScreenshotRefresh()
+
 async function refreshPreview() {
-  const cid = collectionStore.currentCollectionId
-  if (!cid) return
-  try {
-    const response = await fetch(
-      `/api/collections/${encodeURIComponent(cid)}/bookmarks/${encodeURIComponent(props.bookmark.id)}/screenshot/refresh`,
-      { method: 'POST', credentials: 'include' },
-    )
-    if (!response.ok) throw new Error(`Refresh failed: ${response.status}`)
+  if (await refreshScreenshot(props.bookmark.id)) {
     previewNonce.value = Date.now()
-  } catch (err) {
-    void notification.handleApiError(err, t('bookmark.refreshPreviewError'))
   }
 }
-
-// Lazy mount of the radix DropdownMenu. With N cards on screen, mounting an
-// open-able menu per card (Portal context, popper, listeners) is the dominant
-// cost of rendering the bookmark list. Most cards never have their menu
-// opened, so we render a plain trigger button until first click and only then
-// swap in the full radix tree (auto-opened so the user sees the menu on that
-// very first click, just one tick later).
-const menuActivated = ref(false)
 
 // Hover-intent driver for the shared preview popup. The controller is
 // provided by BookmarkList; when the bookmark list isn't the parent (e.g.
@@ -447,54 +428,31 @@ function onRowLeave() {
         />
       </div>
       <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2">
+        <div class="flex items-start gap-2">
           <BookmarkFavicon
             v-if="previewsVisible && props.layout === 'list'"
             :bookmark-id="props.bookmark.id"
             :url="props.bookmark.data.url"
             :size="16"
-            class="shrink-0"
+            class="shrink-0 mt-0.5"
           />
-          <h3 class="font-medium text-foreground truncate">
+          <h3
+            class="font-medium text-foreground leading-5 line-clamp-2 [overflow-wrap:anywhere]"
+            :class="props.layout === 'grid' ? 'min-h-10' : ''"
+          >
             {{ props.bookmark.data.title }}
           </h3>
-          <!-- Lazy radix mount: see `menuActivated` in script -->
-          <button
-            v-if="!menuActivated"
-            data-testid="bookmark-menu-button"
-            class="ml-auto h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-md transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground pointer-events-auto relative z-10"
-            @click.stop="menuActivated = true"
-          >
-            <MoreHorizontal class="h-4 w-4" />
-          </button>
-          <DropdownMenuRoot v-else :default-open="true">
-            <DropdownMenuTrigger as-child>
-              <button
-                data-testid="bookmark-menu-button"
-                class="ml-auto h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-md transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground pointer-events-auto relative z-10"
-                @click.stop
-              >
-                <MoreHorizontal class="h-4 w-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContentCl class="min-w-[160px] z-50">
-              <DropdownMenuItemCl @select="emit('edit', props.bookmark)">
-                {{ $t('common.edit') }}
-              </DropdownMenuItemCl>
-              <DropdownMenuItemCl @select="emit('move', props.bookmark)">
-                {{ $t('bookmark.moveToFolder') }}
-              </DropdownMenuItemCl>
-              <DropdownMenuItemCl
-                v-if="previewsVisible"
-                @select="refreshPreview"
-              >
-                {{ $t('bookmark.refreshPreview') }}
-              </DropdownMenuItemCl>
-              <DropdownMenuItemCl variant="destructive" @select="emit('delete', props.bookmark)">
-                {{ $t('common.delete') }}
-              </DropdownMenuItemCl>
-            </DropdownMenuContentCl>
-          </DropdownMenuRoot>
+          <!-- Lazy radix mount row-action menu-popover
+               reveal and z-ordering above the stretched link are preserved. -->
+          <BookmarkRowMenu
+            :bookmark="props.bookmark"
+            :show-refresh-preview="previewsVisible"
+            trigger-class="ml-auto -mt-1 h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-md transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground pointer-events-auto relative z-10"
+            @edit="emit('edit', $event)"
+            @move="emit('move', $event)"
+            @delete="emit('delete', $event)"
+            @refresh-preview="refreshPreview"
+          />
         </div>
 
         <div class="flex items-center gap-1 text-sm text-muted-foreground mt-0.5">

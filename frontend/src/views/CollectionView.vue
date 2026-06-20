@@ -14,6 +14,7 @@ import HeaderSearchMobile from '@/components/ui/HeaderSearchMobile.vue'
 import { useEffectiveLayout } from '@/composables/useEffectiveLayout'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import { useSelectionShortcuts } from '@/composables/useSelectionShortcuts'
+import { provideStickyToolbar } from '@/composables/useStickyToolbar'
 import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
@@ -36,6 +37,11 @@ const searchPlaceholder = computed(() =>
 )
 
 const effectiveLayout = useEffectiveLayout()
+
+// Anchor here so both the toolbar slot and the bookmark list (in turn the
+// teleported preview popup) can reach the same element. The toolbar
+// self-registers; the popup clamps below it (UC-093 BR-093-6).
+provideStickyToolbar()
 
 // Selection is transient view state (UC-074): keyboard shortcuts live for
 // the lifetime of this view, and leaving the route clears any selection.

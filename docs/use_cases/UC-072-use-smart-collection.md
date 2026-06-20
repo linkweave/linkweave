@@ -6,7 +6,7 @@
 **Use Case Name:** Use Smart Collection   
 **Primary Actor:** User   
 **Goal:** Access a saved search pinned as a virtual folder in the sidebar so that I can quickly view its live results with a single click.   
-**Status:** Open   
+**Status:** Done
 
 ## Traceability
 

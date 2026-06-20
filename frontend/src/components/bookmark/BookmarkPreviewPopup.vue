@@ -1,11 +1,26 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import BookmarkPreview from './BookmarkPreview.vue'
+import BookmarkFavicon from './BookmarkFavicon.vue'
+import BookmarkRowMenu from './BookmarkRowMenu.vue'
+import { hostnameOf } from '@/lib/favicon-allowlist'
+import { useScreenshotRefresh } from '@/composables/useScreenshotRefresh'
+import { useStickyToolbar } from '@/composables/useStickyToolbar'
+import { useBookmarkStore } from '@/stores/bookmark'
 import type { PreviewHoverController } from '@/composables/useBookmarkPreviewHover'
+import type { BookmarkJson } from '@/api/generated'
 
 const props = defineProps<{ controller: PreviewHoverController }>()
 
-// Width is fixed; height derives from 16/9 + the caption.
+// Actions taken on the footer are delegated up to BookmarkList, which owns the
+// edit / move / delete dialogs. Refresh preview is handled in this component locally
+const emit = defineEmits<{
+  edit: [bookmark: BookmarkJson]
+  move: [bookmark: BookmarkJson]
+  delete: [bookmark: BookmarkJson]
+}>()
+
+// Width is fixed; height derives from 16/9 + the action footer.
 // 8px margins keep the popup off the edges of the content pane.
 const POPUP_W = 340
 const VIEWPORT_PAD = 8
@@ -17,11 +32,89 @@ const rootEl = ref<HTMLElement | null>(null)
 
 const active = computed(() => props.controller.active.value)
 
+// The sticky toolbar registers its own root element here (via CollectionView's
+// provide); the popup clamps below it so it never covers the toolbar's links.
+const stickyToolbar = useStickyToolbar()
+// One-shot dev warning: the popup only ever renders under CollectionView, which
+// always mounts the toolbar, this should warn if the 'anchor' is missing
+let warnedMissingToolbar = false
+function toolbarBottom(fallback: number): number {
+  const el = stickyToolbar?.value ?? null
+  if (el) return el.getBoundingClientRect().bottom
+  if (import.meta.env.DEV && !warnedMissingToolbar) {
+    warnedMissingToolbar = true
+    console.warn(
+      '[BookmarkPreviewPopup] sticky toolbar element not registered; the popup ' +
+        'may overlap and block the toolbar (UC-093 BR-093-6). Is provideStickyToolbar ' +
+        'mounted above both the toolbar and the list?',
+    )
+  }
+  return fallback
+}
+
+// Bumped after a successful refresh so the preview <img> reloads from the
+// server with a cache-busting query param.
+const popupNonce = ref<number | undefined>(undefined)
+const refreshScreenshot = useScreenshotRefresh()
+
+async function onRefreshPreview(bookmark: BookmarkJson) {
+  if (await refreshScreenshot(bookmark.id)) {
+    popupNonce.value = Date.now()
+  }
+}
+
+function onMenuOpenChange(open: boolean) {
+  // Keep the popup pinned open while the footer dropdown is open so moving
+  // from the trigger onto the (teleported) menu content doesn't dismiss it
+  // mid-interaction (UC-093 A2). On close we only unpin — whether the popup
+  // then hides is left to normal hover: closing via Escape/click-away or after
+  // a Refresh keeps it up while the pointer is still over it. The hide for the
+  // dialog-opening actions is scheduled explicitly in onEdit/onMove/onDelete.
+  if (open) {
+    props.controller.pin()
+  } else {
+    props.controller.unpin()
+  }
+}
+
+// Edit/Move/Delete each open a dialog in BookmarkList that takes over the
+// screen, so the popup should get out of the way. We unpin (the menu is
+// closing) and schedule a hide; the brief grace lets radix finish its
+// select→close before the popup unmounts.
+function onEdit(bookmark: BookmarkJson) {
+  emit('edit', bookmark)
+  props.controller.unpin()
+  props.controller.onPopupLeave()
+}
+function onMove(bookmark: BookmarkJson) {
+  emit('move', bookmark)
+  props.controller.unpin()
+  props.controller.onPopupLeave()
+}
+function onDelete(bookmark: BookmarkJson) {
+  emit('delete', bookmark)
+  props.controller.unpin()
+  props.controller.onPopupLeave()
+}
+
+const bookmarkStore = useBookmarkStore()
+
+// The popup is a solid pointer-events:auto overlay, so it owns the click on its
+// capture (the row's stretched open-link is covered by it). Open the bookmark
+// explicitly to preserve "click the screenshot to open the page" — consistently
+// across the whole capture, not just where it happens to overlap the row.
+function onOpenBookmark() {
+  const bookmark = active.value?.bookmark
+  if (!bookmark) return
+  window.open(bookmark.data.url, '_blank', 'noopener,noreferrer')
+  bookmarkStore.trackClick(bookmark.id)
+}
+
 // `popupHeight` is read off the rendered element after the first paint
-// (the preview frame is 16/9 plus the URL caption). Until then we use a
+// (the preview frame is 16/9 plus the action footer). Until then we use a
 // conservative estimate so the first clamp doesn't push the popup off-screen.
 function currentHeight(): number {
-  return rootEl.value?.offsetHeight ?? Math.ceil((POPUP_W * 9) / 16) + 22
+  return rootEl.value?.offsetHeight ?? Math.ceil((POPUP_W * 9) / 16) + 44
 }
 
 // The popup is teleported to <body>, so it must be clamped to the *content
@@ -49,21 +142,30 @@ function measure() {
   const vw = window.innerWidth
   const h = currentHeight()
 
+  // The sticky list toolbar lives at the top of the scroll container and the
+  // popup (taller than the row, centered on it) would otherwise overlap it —
+  // and since the popup is pointer-events:auto, overlapping the toolbar would
+  // block its links. Clamp the top below the toolbar's bottom edge so the two
+  // never share screen space. (The batch action bar only shows during
+  // selection, which disables the popup, so the toolbar alone is the bound.)
+  // The toolbar element is shared via provide/inject (useStickyToolbar), not a
+  // DOM query, so a rename can't silently reintroduce the overlap.
+  const topBound = toolbarBottom(cb.top)
+
   // A right-aligned column, pinned to the right edge of the content pane.
   // When the centered list leaves a real right gutter the popup sits beside
-  // the row; when it's cramped it overlaps the row's *right* side (menu /
-  // stats — the least important cells), which is the chosen trade-off. It
-  // never flips left onto the fixed sidebar. pointer-events:none keeps the
-  // row clickable underneath.
+  // the row; when it's cramped it overlaps the row's right side — but the
+  // row's actions now also live in this popup's footer (UC-093), so the
+  // overlap no longer hides them. It never flips left onto the fixed sidebar.
   const desiredLeft = cb.right - POPUP_W - VIEWPORT_PAD
   const minLeft = Math.max(VIEWPORT_PAD, cb.left + VIEWPORT_PAD)
   const maxLeft = Math.max(minLeft, Math.min(vw, cb.right) - POPUP_W - VIEWPORT_PAD)
   left.value = Math.round(Math.max(minLeft, Math.min(desiredLeft, maxLeft)))
 
-  // Vertical: track the row centered, clamped within the content area so the
-  // popup never rides up under the sticky header or past the pane bottom.
+  // Vertical: track the row centered, clamped to [below the toolbar, pane
+  // bottom] so the popup never rides up under the toolbar or past the bottom.
   const desiredTop = r.top + (r.height - h) / 2
-  const minTop = Math.max(VIEWPORT_PAD, cb.top + VIEWPORT_PAD)
+  const minTop = Math.max(VIEWPORT_PAD, topBound + VIEWPORT_PAD)
   const maxTop = Math.max(minTop, cb.bottom - h - VIEWPORT_PAD)
   top.value = Math.round(Math.max(minTop, Math.min(desiredTop, maxTop)))
 }
@@ -75,6 +177,8 @@ window.addEventListener('resize', onResize)
 onBeforeUnmount(() => window.removeEventListener('resize', onResize))
 
 watch(active, async (activeRow, previousRow) => {
+  popupNonce.value = undefined
+
   if (!activeRow) {
     // No row is active anymore — hide the popup.
     shown.value = false
@@ -104,6 +208,8 @@ watch(active, async (activeRow, previousRow) => {
     }),
   )
 })
+
+const host = computed(() => (active.value ? hostnameOf(active.value.bookmark.data.url) ?? '' : ''))
 </script>
 
 <template>
@@ -115,11 +221,54 @@ watch(active, async (activeRow, previousRow) => {
       :class="shown ? 'shown' : ''"
       :style="{ left: `${left}px`, top: `${top}px`, width: `${POPUP_W}px` }"
       data-testid="bookmark-preview-popup"
-      aria-hidden="true"
+      @mouseenter="props.controller.onPopupEnter"
+      @mouseleave="props.controller.onPopupLeave"
     >
-      <BookmarkPreview :bookmark="active.bookmark" variant="zoom" />
-      <div class="url-caption font-mono bg-card text-muted-foreground border-t border-border">
-        {{ active.bookmark.data.url }}
+      <!-- The capture is the popup's largest surface and is pointer-events:auto
+           (the whole popup is a solid overlay). A click opens the bookmark
+           (onOpenBookmark) consistently across the whole capture. The popup
+           never overlaps the sticky toolbar (see measure()), so it never blocks
+           toolbar links. -->
+      <div class="cursor-pointer" @click="onOpenBookmark">
+        <BookmarkPreview :bookmark="active.bookmark" variant="zoom" :nonce="popupNonce" />
+      </div>
+      <!-- Action footer (UC-093): the popup that already covers the row hosts
+           the row's actions, so the covered ⋯ never needs to be reached. -->
+      <div class="flex items-center gap-2 h-11 px-2.5 border-t border-border bg-card">
+        <BookmarkFavicon
+          :bookmark-id="active.bookmark.id"
+          :url="active.bookmark.data.url"
+          :size="16"
+        />
+        <!-- A real anchor, not a JS window.open, so middle-click, right-click →
+             copy/open, and keyboard focus all work; trackClick records the open.
+             (The capture's onOpenBookmark is the mouse-only twin for clicking
+             the screenshot itself.) -->
+        <a
+          v-if="host"
+          :href="active.bookmark.data.url"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="font-mono text-[11px] tracking-tight text-muted-foreground hover:text-foreground hover:underline truncate flex-1 min-w-0"
+          data-testid="bookmark-preview-popup-link"
+          @click="bookmarkStore.trackClick(active.bookmark.id)"
+        >
+          {{ host }}
+        </a>
+        <!-- spacer keeps actions hard-right even when host is empty -->
+        <span v-else class="flex-1" />
+        <div class="flex items-center gap-0.5 shrink-0">
+          <BookmarkRowMenu
+            :bookmark="active.bookmark"
+            :show-refresh-preview="true"
+            trigger-class="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-primary hover:text-primary-foreground"
+            @edit="onEdit"
+            @move="onMove"
+            @delete="onDelete"
+            @refresh-preview="onRefreshPreview"
+            @open-change="onMenuOpenChange"
+          />
+        </div>
       </div>
     </div>
   </Teleport>
@@ -132,7 +281,13 @@ watch(active, async (activeRow, previousRow) => {
 .zoom-pop {
   position: fixed;
   z-index: 50;
-  pointer-events: none;
+  /* Solid overlay: the popup owns clicks on its capture (click → open the
+   * bookmark via onOpenBookmark) and stays alive on hover across its whole
+   * area. Because it captures the pointer, the rows beneath never fire
+   * mouseenter while it's up, so the preview can't be hijacked by an adjacent
+   * row as the pointer travels to the footer. It is clamped to never overlap
+   * the sticky toolbar (see measure()), so it never blocks toolbar links. */
+  pointer-events: auto;
   opacity: 0;
   border-radius: 10px;
   overflow: hidden;
@@ -151,15 +306,6 @@ watch(active, async (activeRow, previousRow) => {
 .zoom-pop.shown {
   opacity: 1;
   transform: translateX(0) scale(1);
-}
-
-.url-caption {
-  font-size: 11px;
-  line-height: 1.2;
-  padding: 6px 8px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 @media (prefers-reduced-motion: reduce) {

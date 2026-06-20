@@ -175,7 +175,12 @@ async function confirmDelete() {
     @update:open="handleDeleteDialogUpdate"
   />
 
-  <BookmarkPreviewPopup :controller="previewHover" />
+  <BookmarkPreviewPopup
+    :controller="previewHover"
+    @edit="handleEdit"
+    @move="handleMove"
+    @delete="handleDelete"
+  />
 </template>
 
 <style scoped>

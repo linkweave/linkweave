@@ -77,7 +77,7 @@ rectangle "Chainlink Bookmark Manager" {
 
     rectangle "Batch Operations" {
         usecase "UC-073\nBatch Tag Bookmarks" as UC073
-        usecase "UC-074\nBatch Move/Delete\nBookmarks" as UC074
+        usecase "UC-074\nBatch Move/Delete\nBookmarks" as UC074 <<implemented>>
     }
 
     rectangle "Bookmark Enrichment" {
@@ -122,7 +122,7 @@ rectangle "Chainlink Bookmark Manager" {
     rectangle "Screenshot Previews" {
         usecase "UC-054\nView Bookmark\nScreenshot Previews" as UC054 <<implemented>>
         usecase "UC-055\nScreenshot Cache\nCleanup Job" as UC055 <<implemented>>
-        usecase "UC-093\nPrevent Preview Popup\nObscuring Row Actions" as UC093
+        usecase "UC-093\nPrevent Preview Popup\nObscuring Row Actions" as UC093 <<implemented>>
     }
 
     rectangle "Architecture & Quality Control" {
@@ -153,8 +153,8 @@ rectangle "Chainlink Bookmark Manager" {
     }
 
     rectangle "API Access" {
-        usecase "UC-077\nManage API Keys" as UC077
-        usecase "UC-078\nAuthenticate via\nAPI Key" as UC078
+        usecase "UC-077\nManage API Keys" as UC077 <<implemented>>
+        usecase "UC-078\nAuthenticate via\nAPI Key" as UC078 <<implemented>>
     }
 
     rectangle "CLI" {
