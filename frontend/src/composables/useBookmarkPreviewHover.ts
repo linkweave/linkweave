@@ -58,6 +58,13 @@ export function provideBookmarkPreviewHover(): PreviewHoverController {
   }
 
   function onRowEnter(bookmark: BookmarkJson, row: HTMLElement) {
+    // While pinned, the footer dropdown is open against the current bookmark.
+    // Radix dropdowns stay open on mouse-leave, so a pointer drifting onto an
+    // adjacent row must NOT retarget `active` — otherwise the still-open menu
+    // would silently list (and act on) a different bookmark than the one it was
+    // opened for (UC-093: wrong-item delete). Treat the open menu as a stable
+    // focus and ignore row enters until it closes (unpin).
+    if (pinned) return
     clearHide()
     if (showT) { clearTimeout(showT); showT = undefined }
     if (coolT) { clearTimeout(coolT); coolT = undefined }
