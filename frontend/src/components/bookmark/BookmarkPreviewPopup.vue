@@ -177,6 +177,8 @@ window.addEventListener('resize', onResize)
 onBeforeUnmount(() => window.removeEventListener('resize', onResize))
 
 watch(active, async (activeRow, previousRow) => {
+  popupNonce.value = undefined
+
   if (!activeRow) {
     // No row is active anymore — hide the popup.
     shown.value = false
