@@ -7,7 +7,7 @@ import {
   UserInfoJsonToJSON,
 } from '@/api/generated'
 
-const DB_NAME = 'chainlink-offline'
+const DB_NAME = 'linkweave-offline'
 // v3: collections/collection-info/saved-searches now stored in OpenAPI JSON
 // wire-shape (Sets→arrays). Pre-v3 entries were JSON.stringify'd runtime objects
 // where Sets serialized to "{}" — re-hydration with *FromJSON throws. Drop those.

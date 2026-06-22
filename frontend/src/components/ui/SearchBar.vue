@@ -136,10 +136,6 @@ function handleShortcut(e: KeyboardEvent) {
   }
 }
 
-function onFocusSearch() {
-  inputRef.value?.focus()
-}
-
 function clear() {
   emit('update:modelValue', '')
   inputRef.value?.focus()
@@ -147,11 +143,9 @@ function clear() {
 
 onMounted(() => {
   globalThis.addEventListener('keydown', handleShortcut)
-  globalThis.addEventListener('chainlink:focus-search', onFocusSearch)
 })
 onUnmounted(() => {
   globalThis.removeEventListener('keydown', handleShortcut)
-  globalThis.removeEventListener('chainlink:focus-search', onFocusSearch)
 })
 </script>
 
