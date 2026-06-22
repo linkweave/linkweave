@@ -51,17 +51,17 @@ Create `cli/` at the repo root (sibling of `api/` and `frontend/`). If the repo 
 `cli/package.json`:
 ```json
 {
-  "name": "@chainlink/cli",
+  "name": "@linkweave/cli",
   "version": "0.1.0",
   "description": "LinkWeave command-line interface",
   "type": "module",
-  "bin": { "chainlink": "./dist/main.js" },
+  "bin": { "linkweave": "./dist/main.js" },
   "files": ["dist"],
   "engines": { "node": ">=20" },
   "scripts": {
     "generate-api": "tsx scripts/generate-api.ts",
     "build": "tsup src/main.ts --format esm --target node20 --clean",
-    "build:binary": "bun build src/main.ts --compile --outfile dist/chainlink",
+    "build:binary": "bun build src/main.ts --compile --outfile dist/linkweave",
     "dev": "tsx src/main.ts",
     "type-check": "tsc --noEmit",
     "lint": "eslint .",
@@ -105,7 +105,7 @@ import { CliError } from './errors.js'
 
 const program = new Command()
 program
-  .name('chainlink')
+  .name('linkweave')
   .description('Manage LinkWeave bookmarks from the command line')
   .version(process.env.npm_package_version ?? '0.1.0', '-v, --version')
   .option('-s, --server <url>', 'LinkWeave API server URL')
@@ -139,7 +139,7 @@ Global flags are read inside commands via `command.optsWithGlobals()`.
 
 ## 3. Config management (`src/config.ts`) — UC-080
 
-Responsibilities: locate, read, write, and delete `~/.chainlink/config.json`, and resolve effective credentials with env-var precedence.
+Responsibilities: locate, read, write, and delete `~/.linkweave/config.json`, and resolve effective credentials with env-var precedence.
 
 ```ts
 export interface CliConfig {
@@ -151,14 +151,14 @@ export interface CliConfig {
 ```
 
 Rules (from UC-080 business rules):
-- **Location (BR-021):** `path.join(os.homedir(), '.chainlink', 'config.json')`. Create the dir if missing (`fs.mkdirSync(dir, { recursive: true })`). `os.homedir()` handles Windows `%USERPROFILE%`.
+- **Location (BR-021):** `path.join(os.homedir(), '.linkweave', 'config.json')`. Create the dir if missing (`fs.mkdirSync(dir, { recursive: true })`). `os.homedir()` handles Windows `%USERPROFILE%`.
 - **Permissions (BR-022):** after writing, `fs.chmodSync(file, 0o600)` on non-Windows (`process.platform !== 'win32'`).
-- **Env override (BR-023):** effective `apiKey = process.env.CHAINLINK_API_KEY ?? config.apiKey`; effective `server = flag --server ?? process.env.CHAINLINK_SERVER ?? config.server ?? DEFAULT_SERVER`. Precedence order: **flag > env > config file > built-in default**.
-- **Default server:** `https://chainlink.markushofstetter.com`.
+- **Env override (BR-023):** effective `apiKey = process.env.LINKWEAVE_API_KEY ?? config.apiKey`; effective `server = flag --server ?? process.env.LINKWEAVE_SERVER ?? config.server ?? DEFAULT_SERVER`. Precedence order: **flag > env > config file > built-in default**.
+- **Default server:** `https://linkweave.dev`.
 
 Functions to implement:
 - `readConfig(): CliConfig | null` — returns null if file absent or unreadable.
-- `writeConfig(cfg: CliConfig): void` — mkdir, write pretty JSON, chmod 600. On `EACCES`/`EPERM` throw `CliError('Error: Cannot write to ~/.chainlink/config.json. Check directory permissions.')` (A5).
+- `writeConfig(cfg: CliConfig): void` — mkdir, write pretty JSON, chmod 600. On `EACCES`/`EPERM` throw `CliError('Error: Cannot write to ~/.linkweave/config.json. Check directory permissions.')` (A5).
 - `deleteConfig(): void` — used by `logout` (BR-025).
 - `resolveCredentials(globalOpts): { server: string; apiKey: string | null; insecure: boolean }` — applies the precedence rules above. Used by every command except `login`.
 
@@ -174,7 +174,7 @@ Copy `frontend/scripts/generate-api.ts` to `cli/scripts/generate-api.ts` and cha
 - `--type-mappings entity-id=string,email=string,semantic-version=string,url=string`
 - `--openapi-normalizer KEEP_ONLY_FIRST_TAG_IN_OPERATION=true`
 
-Set `OUTPUT_DIR = 'src/api/generated'` and `OPENAPI_URL = 'https://local-chainlink.localhost:8443/q/openapi'` (the dev server; `rejectUnauthorized: false` is already in the script for the self-signed dev cert).
+Set `OUTPUT_DIR = 'src/api/generated'` and `OPENAPI_URL = 'https://local-linkweave.localhost:8443/q/openapi'` (the dev server; `rejectUnauthorized: false` is already in the script for the self-signed dev cert).
 
 Run it with the Quarkus dev server up:
 ```bash
@@ -233,8 +233,8 @@ export async function call<T>(fn: () => Promise<T>, ctx: { server: string }): Pr
   } catch (e: any) {
     // typescript-fetch throws ResponseError with a `.response` (Response) on non-2xx
     const status = e?.response?.status
-    if (status === 401) throw new CliError("Error: Authentication failed. Your API key may have been revoked. Run 'chainlink login' to reconfigure.")
-    if (status === 403) throw new CliError("Error: Collection not found or access denied. Use 'chainlink collections list' to see your collections.")
+    if (status === 401) throw new CliError("Error: Authentication failed. Your API key may have been revoked. Run 'linkweave login' to reconfigure.")
+    if (status === 403) throw new CliError("Error: Collection not found or access denied. Use 'linkweave collections list' to see your collections.")
     if (status === 404) throw new CliError('Error: Bookmark not found.')   // refine per-command with the id
     // network / TLS errors have no response
     const msg = String(e?.cause?.message ?? e?.message ?? '')
@@ -256,32 +256,32 @@ Each command file exports a `register*(program)` that adds itself. Pattern per c
 ```ts
 function requireAuth(globalOpts): { server; apiKey; insecure } {
   const c = resolveCredentials(globalOpts)
-  if (!c.apiKey) throw new CliError("Error: Not authenticated. Run 'chainlink login' to configure your API key.")
+  if (!c.apiKey) throw new CliError("Error: Not authenticated. Run 'linkweave login' to configure your API key.")
   return c as { server: string; apiKey: string; insecure: boolean }
 }
 ```
 
 ### 6.1 `login` (`src/commands/login.ts`) — UC-080
 Supports three modes from UC-080:
-1. **Non-interactive:** `chainlink login --api-key <k> --server <url>` — both provided as flags.
+1. **Non-interactive:** `linkweave login --api-key <k> --server <url>` — both provided as flags.
 2. **Interactive:** prompt for server (default shown) then API key. Use Node's `readline/promises`; for the key prompt, do **not** echo if feasible (acceptable to echo for v1 — note it).
-3. **Env-var:** if `CHAINLINK_API_KEY` is set, `login` is optional; other commands work directly.
+3. **Env-var:** if `LINKWEAVE_API_KEY` is set, `login` is optional; other commands work directly.
 
 Flow:
 1. Determine server (flag → prompt/default) and key (flag → prompt).
-2. **Validate format (A1/UC-080 step 6):** regex `^cl_[0-9a-f]{64}$`. On mismatch → interactive: reprompt; non-interactive: `CliError('Error: Invalid API key format. Expected: cl_ followed by 64 hex characters.', 2)`.
+2. **Validate format (A1/UC-080 step 6):** regex `^lw_[0-9a-f]{64}$`. On mismatch → interactive: reprompt; non-interactive: `CliError('Error: Invalid API key format. Expected: lw_ followed by 64 hex characters.', 2)`. **The `lw_` prefix must match the backend's `ApiKeyService.KEY_PREFIX` constant** (`api/src/main/java/org/linkweave/api/auth/apikey/ApiKeyService.java`); do not re-hardcode it as a magic string — if you introduce a shared constants module in the CLI, source the prefix from a single place and document the link to the backend constant so a future prefix change is caught.
 3. **Validate against server (BR-024):** `await call(() => auth.me(), {server})`. On 401 → `CliError('Error: API key rejected by server. The key may be invalid or revoked. Create a new key at ' + server + '/settings/api-keys')`; do not save.
 4. **Save (A4):** if a config already exists, print `⚠ Overwriting existing configuration for {oldEmail}.` to stderr, then overwrite. Persist `server`, `apiKey`, `userEmail` (and `defaultCollectionId` if `/me` returns it — §6.3).
-5. Print `✓ Logged in as {email}. Configuration saved to ~/.chainlink/config.json` to stdout.
+5. Print `✓ Logged in as {email}. Configuration saved to ~/.linkweave/config.json` to stdout.
 
 ### 6.2 `logout` (`src/commands/logout.ts`) — BR-025
-Delete the config file, print `✓ Configuration removed. Run 'chainlink login' to authenticate again.`. If no file exists, still succeed (idempotent).
+Delete the config file, print `✓ Configuration removed. Run 'linkweave login' to authenticate again.`. If no file exists, still succeed (idempotent).
 
 ### 6.3 Resolvers (`src/commands/resolve.ts`) — shared by bookmark commands
 - **`resolveCollectionId(api, opt): string`** (A8, BR for default collection):
   - No `--collection` → use `config.defaultCollectionId`. If not stored, call `GET /api/auth/me`; if that carries the default, use it; otherwise call `GET /api/collections` and if the user has exactly one collection use it, else `CliError` telling them to pass `--collection`.
   - Looks like a UUID → use as-is.
-  - Otherwise treat as a **name**: `GET /api/collections`, case-insensitive match. 0 matches → `Error: No collection found with name '{name}'. Use 'chainlink collections list' to see your collections.` >1 → `Error: Multiple collections match '{name}'. Use the collection ID instead.`
+  - Otherwise treat as a **name**: `GET /api/collections`, case-insensitive match. 0 matches → `Error: No collection found with name '{name}'. Use 'linkweave collections list' to see your collections.` >1 → `Error: Multiple collections match '{name}'. Use the collection ID instead.`
 - **`resolveTagIds(api, collectionId, names: string[]): string[]`** (BR-019, A6): `GET /api/tags?collectionId`, match by name (case-insensitive). For each unknown name, `POST /api/tags` to create it, collect the new id. Return all ids.
 - **`resolveFolderId(api, collectionId, path: string): string`** (BR-020): split on `/`. Walk/create each segment under its parent via `GET/POST /api/folders`. Return the leaf id.
 
@@ -351,9 +351,9 @@ cd cli && pnpm run type-check && pnpm run lint && pnpm test
 
 ## 9. Build & distribution (UC distribution / NFR-023)
 
-1. **npm:** `pnpm run build` (tsup → `dist/main.js`), publish `@chainlink/cli`. `bin.chainlink` makes `chainlink` available after `npm i -g`.
-2. **Single binary:** `pnpm run build:binary` (`bun build --compile`) produces a standalone `chainlink` executable with no Node runtime dependency. Cross-compile per platform with `bun build --compile --target=bun-<os>-<arch>`. Attach binaries to GitHub Releases; a Homebrew formula / Scoop manifest can wrap them.
-3. **README** in `cli/`: install instructions (npm + binary), `chainlink login`, examples, the `--insecure` dev note, and the env-var auth path for CI.
+1. **npm:** `pnpm run build` (tsup → `dist/main.js`), publish `@linkweave/cli`. `bin.linkweave` makes `linkweave` available after `npm i -g`.
+2. **Single binary:** `pnpm run build:binary` (`bun build --compile`) produces a standalone `linkweave` executable with no Node runtime dependency. Cross-compile per platform with `bun build --compile --target=bun-<os>-<arch>`. Attach binaries to GitHub Releases; a Homebrew formula / Scoop manifest can wrap them.
+3. **README** in `cli/`: install instructions (npm + binary), `linkweave login`, examples, the `--insecure` dev note, and the env-var auth path for CI.
 
 > The fetch-based generated client and the `commander`/Node-stdlib code are bun-compatible. If a dependency ever isn't, prefer replacing it over abandoning the binary path.
 
@@ -394,7 +394,7 @@ cd cli && pnpm run type-check && pnpm run lint && pnpm test
 - Every alternative flow produces the exact error message and exit code specified in the UCs (A1–A8 for UC-079; A1–A6 for UC-080).
 - BR-015 holds: the CLI calls only the HTTP API (no DB access).
 - BR-016 holds: every command runs non-interactively given flags/args (`login` may prompt only when run with no flags).
-- BR-017/BR-018 hold: correct exit codes; data on stdout, errors/warnings on stderr; `chainlink bookmarks list --format=json | jq '.[0].url'` works.
+- BR-017/BR-018 hold: correct exit codes; data on stdout, errors/warnings on stderr; `linkweave bookmarks list --format=json | jq '.[0].url'` works.
 - `pnpm run type-check`, `pnpm run lint`, and `pnpm test` all pass in `cli/`.
 - Both distribution artifacts build: npm package and single binary.
 

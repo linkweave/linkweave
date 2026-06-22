@@ -15,14 +15,14 @@ docker compose -f docker-compose.monitoring.yml up -d
   > ⚠️ **These are default credentials for local development only.** Change `GF_SECURITY_ADMIN_PASSWORD` in `docker-compose.monitoring.yml` before exposing Grafana to any network.
 - **VictoriaMetrics**: http://localhost:8428
 
-Import `grafana-provisioning/dashboards/chainlink-overview.json` via Grafana → Dashboards → Import, then select the VictoriaMetrics data source.
+Import `grafana-provisioning/dashboards/linkweave-overview.json` via Grafana → Dashboards → Import, then select the VictoriaMetrics data source.
 
 ## Metrics Endpoint
 
 The LinkWeave API exposes metrics at `GET /q/metrics` in Prometheus exposition format.
 
 ```bash
-curl -k https://local-chainlink.localhost:8443/q/metrics | grep chainlink
+curl -k https://local-linkweave.localhost:8443/q/metrics | grep linkweave
 ```
 
 ## Files
@@ -31,7 +31,7 @@ curl -k https://local-chainlink.localhost:8443/q/metrics | grep chainlink
 |---|---|
 | `prometheus.yml` | Scraper configuration for VictoriaMetrics vmagent or Prometheus |
 | `docker-compose.monitoring.yml` | Optional local stack: VictoriaMetrics + Grafana |
-| `grafana-provisioning/dashboards/chainlink-overview.json` | Grafana dashboard (HTTP, JVM, DB pool, business metrics, jobs) |
+| `grafana-provisioning/dashboards/linkweave-overview.json` | Grafana dashboard (HTTP, JVM, DB pool, business metrics, jobs) |
 
 ## Available Metrics
 
@@ -41,9 +41,9 @@ Key custom metrics:
 
 | Metric | Type | Description |
 |---|---|---|
-| `chainlink_collections_total` | Gauge | Total collections |
-| `chainlink_collections_shared` | Gauge | Collections shared with ≥1 other user |
-| `chainlink_bookmarks_total{collection_id}` | Gauge | Bookmarks per collection |
+| `linkweave_collections_total` | Gauge | Total collections |
+| `linkweave_collections_shared` | Gauge | Collections shared with ≥1 other user |
+| `linkweave_bookmarks_total{collection_id}` | Gauge | Bookmarks per collection |
 
 ## Configuration
 

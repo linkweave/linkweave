@@ -193,7 +193,7 @@ const resultCount = computed(() => bookmarkStore.filteredBookmarks.length)
 
 function reopen() {
   // Focus desktop input or open mobile sheet — both listen for this event.
-  window.dispatchEvent(new CustomEvent('chainlink:focus-search'))
+  window.dispatchEvent(new CustomEvent('linkweave:focus-search'))
 }
 function clear() {
   bookmarkStore.searchQuery = ''
@@ -229,7 +229,7 @@ function clear() {
 </template>
 ```
 
-Wire the `chainlink:focus-search` listener in both `SearchBar.vue` (desktop, calls `inputRef.value?.focus()`) and `HeaderSearchMobile.vue` (mobile, sets `open = true`). Cheaper than a Pinia field and scoped per-page automatically.
+Wire the `linkweave:focus-search` listener in both `SearchBar.vue` (desktop, calls `inputRef.value?.focus()`) and `HeaderSearchMobile.vue` (mobile, sets `open = true`). Cheaper than a Pinia field and scoped per-page automatically.
 
 Add locale entries:
 

@@ -6,7 +6,7 @@ See global [README.md](../../../README.md) for more information.
 
 add to host file Windows:(C:\Windows\System32\drivers\etc) or Linux/Mac:(/etc/hosts):
    ```
-127.0.0.1 local-chainlink.localhost
+127.0.0.1 local-linkweave.localhost
 
    ```
 
@@ -22,5 +22,5 @@ The scripts are located in the [scripts/certs](../../../scripts/certs) directory
   ```
   # make sure you are at the right location e.g. 
   cd  developer-local-settings/config
-  mkcert -key-file certs/local-chainlink.localhost.key -cert-file certs/local-esc-bs.localhost.pem local-esc-bs.localhost
+  mkcert -key-file certs/local-linkweave.localhost.key -cert-file certs/local-linkweave.localhost.pem local-linkweave.localhost
   ```

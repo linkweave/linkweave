@@ -1,6 +1,6 @@
 # LinkWeave Frontend
 
-Vue.js frontend and browser extension for [LinkWeave](https://chainlink.markushofstetter.com), a self-hosted bookmark manager.
+Vue.js frontend and browser extension for [LinkWeave](https://linkweave.dev), a self-hosted bookmark manager.
 
 ## Prerequisites
 
@@ -90,7 +90,7 @@ Output is written to `dist-extension/`.
 npm run package:extension
 ```
 
-This runs the production build and creates a timestamped ZIP using `web-ext build` (e.g. `chainlink-ext-20260504-133855.zip`), suitable for uploading to AMO or Chrome Web Store.
+This runs the production build and creates a timestamped ZIP using `web-ext build` (e.g. `linkweave-ext-20260504-133855.zip`), suitable for uploading to AMO or Chrome Web Store.
 
 ### Lint Extension
 
@@ -102,7 +102,7 @@ npx web-ext lint --source-dir dist-extension
 
 On first use, configure the extension via the options page (right-click the extension icon → Options). Set:
 
-- **API URL** — Base URL of your LinkWeave API instance (e.g. `https://chainlink.example.com`)
+- **API URL** — Base URL of your LinkWeave API instance (e.g. `https://linkweave.example.com`)
 - **Web App URL** — URL of the LinkWeave web app (used for the sign-in link)
 
 These are stored in `chrome.storage.sync` and can be changed at any time.

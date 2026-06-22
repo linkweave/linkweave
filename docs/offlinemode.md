@@ -30,7 +30,7 @@ Offline mode enables read-only access to cached bookmarks, folders, and tags whe
 │                                                              │
 │  ┌──────────────────────┐   ┌─────────────────────────────┐ │
 │  │   Service Worker      │   │   IndexedDB                  │ │
-│  │   (vite-plugin-pwa)   │   │   chainlink-offline          │ │
+│  │   (vite-plugin-pwa)   │   │   linkweave-offline          │ │
 │  │                       │   │                              │ │
 │  │  • App shell cache    │   │  {email}:user-info           │ │
 │  │  • Static assets      │   │  {email}:collections         │ │
@@ -226,7 +226,7 @@ VitePWA({
       {
         urlPattern: /^https:\/\/.*\.(js|css|png|svg|ico|woff2)$/,
         handler: 'CacheFirst',
-        options: { cacheName: 'chainlink-assets' },
+        options: { cacheName: 'linkweave-assets' },
       },
     ],
   },
@@ -243,7 +243,7 @@ VitePWA({
 
 **Responsibility:** Read/write data to IndexedDB with user-scoped keys.
 
-**Database:** `chainlink-offline` (version 1)
+**Database:** `linkweave-offline` (version 1)
 
 **Object Stores and Key Format:**
 
@@ -422,7 +422,7 @@ Shows:
 
 ## IndexedDB Schema
 
-**Database:** `chainlink-offline` (version 1)
+**Database:** `linkweave-offline` (version 1)
 
 ```
 Object Store: user-info

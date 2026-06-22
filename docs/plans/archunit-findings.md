@@ -3,16 +3,16 @@
 Implements **UC-035** (FR-039). Tests live under
 `api/src/test/java/org/linkweave/api/shared/archunit/`.
 
-Ported 1:1 from the `esc` reference project, adapted to chainlink's package
-layout. Three esc-only suites were dropped (no analog in chainlink): `MetricsTest`
+Ported 1:1 from the `esc` reference project, adapted to linkweave's package
+layout. Three esc-only suites were dropped (no analog in linkweave): `MetricsTest`
 (no micrometer), `OptimisticLockingArchRulesTest` (no optimistic-locking infra),
-and the `RequireTenantClaimMatcherDecision` predicate (chainlink isn't multi-tenant).
+and the `RequireTenantClaimMatcherDecision` predicate (linkweave isn't multi-tenant).
 
 ## Test status
 
 | Test                                | Result   | Failing rules | Real findings                                                                                |
 |-------------------------------------|----------|---------------|----------------------------------------------------------------------------------------------|
-| `ArchConst`, `ArchUtil`             | helper   | —             | `APP_PACKAGE` widened to `org.chainlink` to cover `org.chainlink.infrastructure.*`           |
+| `ArchConst`, `ArchUtil`             | helper   | —             | `APP_PACKAGE` widened to `org.linkweave` to cover `org.linkweave.infrastructure.*`           |
 | `ConfigTest`                        | 1 fail   | 1 / 5         | 9 `@ConfigProperty` fields in favicon code bypass `ConfigService`                            |
 | `ExceptionsTest`                    | green    | 0 / 4         |                                                                                              |
 | `GeneralTest`                       | green    | 0 / 6         |                                                                                              |
@@ -82,7 +82,7 @@ From `ConfigTest`:
 ### G. ID type safety (`IdClassTest`)
 - 15 fields named `id`/`*Id` not typed `ID<T>`; 5 method params likewise.
 - **Most are framework-level false positives**: `AbstractEntity.id` IS the id; same for
-  `ExceptionId.id`, `AppException.id`, `User.keycloakId` (a Keycloak UUID, not a chainlink ID).
+  `ExceptionId.id`, `AppException.id`, `User.keycloakId` (a Keycloak UUID, not a linkweave ID).
 - A few may be real: `CleanupSuggestionJson.id`, `MoveToTrashJson.collectionId` —
   these are JSON DTOs and arguably *should* be `String` on the wire, so the rule
   needs to exclude DTOs or these need a carve-out.
@@ -90,8 +90,8 @@ From `ConfigTest`:
 ## Configuration changes already applied
 
 - `APP_PACKAGE` in `ArchConst` was widened from `org.linkweave.api` to
-  `org.chainlink` so the rules see `org.chainlink.infrastructure.*`.
+  `org.linkweave` so the rules see `org.linkweave.infrastructure.*`.
 - `LayeringTest` predicates (`SHARED`, `STARTER_INFRASTRUCTURE`, `DATABASE_LAYER`)
-  were rewritten to use chainlink's actual package paths
-  (`org.linkweave.api.shared..`, `org.chainlink.infrastructure..`).
+  were rewritten to use linkweave's actual package paths
+  (`org.linkweave.api.shared..`, `org.linkweave.infrastructure..`).
 - `archunit-junit5` 1.4.1 added to `api/pom.xml`.

@@ -28,7 +28,7 @@
 Automatic caching (default behavior — no user action required):
 
 1. User browses the app normally (loads collections, views bookmarks).
-2. After every successful API response for `GET /api/auth/me`, `GET /api/collections`, and `GET /api/collections/{id}`, the system automatically persists the response data to IndexedDB (`chainlink-offline` database).
+2. After every successful API response for `GET /api/auth/me`, `GET /api/collections`, and `GET /api/collections/{id}`, the system automatically persists the response data to IndexedDB (`linkweave-offline` database).
 3. All data is stored under user-scoped keys using the user's email as a namespace prefix (e.g., `alice@example.com:collections`, `alice@example.com:collection-info:uuid-123`).
 4. The cached data is available for offline browsing (see UC-048).
 
@@ -93,7 +93,7 @@ Automatic caching (default behavior — no user action required):
 
 ### Success Postconditions
 
-- IndexedDB `chainlink-offline` database contains the user's collection data under user-scoped keys
+- IndexedDB `linkweave-offline` database contains the user's collection data under user-scoped keys
 - All future successful GET responses for auth, collections, and collection info are automatically persisted to IndexedDB
 - The cached data is namespaced by the user's email, ensuring isolation from other users
 

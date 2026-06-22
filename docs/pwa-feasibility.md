@@ -33,7 +33,7 @@ What's already wired in `frontend/`:
 
 What's missing for "installable, passes Lighthouse PWA":
 
-- **Real icon assets at 192×192 and 512×512.** The manifest references `/chainlink-favicon.png` for both, but `frontend/public/` only contains `chainlink-favicon.png` (a single favicon-sized PNG) and `favicon.ico`. Browsers will install but the install dialog and home-screen icon will look poor.
+- **Real icon assets at 192×192 and 512×512.** The manifest references `/linkweave-favicon.png` for both, but `frontend/public/` only contains `linkweave-favicon.png` (a single favicon-sized PNG) and `favicon.ico`. Browsers will install but the install dialog and home-screen icon will look poor.
 - **No `purpose: "maskable"` icon.** Android adaptive icons get cropped without one.
 - **No `screenshots` array in the manifest.** Chrome's richer install UI (especially on Android) needs at least one wide + one narrow screenshot.
 - **No explicit `<link rel="manifest">` in `index.html`.** vite-plugin-pwa injects this at build time — verify it lands in the production build (`pnpm run build` then inspect `dist/index.html`).
@@ -53,7 +53,7 @@ What's missing for "installable, passes Lighthouse PWA":
 | Not already installed | ✅ |
 
 Concrete fix-list:
-1. Generate `chainlink-192.png`, `chainlink-512.png`, and `chainlink-512-maskable.png`. Update the manifest icons array.
+1. Generate `linkweave-192.png`, `linkweave-512.png`, and `linkweave-512-maskable.png`. Update the manifest icons array.
 2. Add 1–2 desktop and 1–2 mobile screenshots (`form_factor: "wide"` / `"narrow"`) under `public/screenshots/`.
 3. Run Lighthouse → PWA category in Chrome DevTools against a production build; fix flagged items.
 

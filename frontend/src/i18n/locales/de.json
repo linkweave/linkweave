@@ -143,7 +143,7 @@
     "revokeError": "API-Schlüssel konnte nicht widerrufen werden.",
     "revokeSuccess": "Schlüssel \"{name}\" widerrufen.",
     "revokeTitle": "API-Schlüssel widerrufen?",
-    "revokeConfirm": "\"{name}\" (cl_{prefix}…) widerrufen? Tools, die diesen Schlüssel verwenden, verlieren sofort den Zugriff.",
+    "revokeConfirm": "\"{name}\" (lw_{prefix}…) widerrufen? Tools, die diesen Schlüssel verwenden, verlieren sofort den Zugriff.",
     "revoke": "Widerrufen",
     "empty": "Noch keine API-Schlüssel vorhanden.",
     "fieldName": "Name",
