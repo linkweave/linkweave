@@ -83,7 +83,9 @@ Decisions: **D1 = yes** (code identity now, hostnames later), **D2 = yes** (rena
 
 ## 6. Phase 2 — Sensitive runtime (hand-edited, Tier A)
 
-1. `application.properties`: rename app name, `app-project`, config namespaces (`chainlink.favicon`→`linkweave.favicon`, etc.), cookie name, encryption keys. **Leave `cookie-domain` lines as-is.**
+> **REFINED BOUNDARY (discovered during execution):** config-property KEYS (`chainlink.*`, referenced via `@ConfigProperty` in Java), env-var NAMES (`CHAINLINK_*`/`CL_*`/`CLINK_*`), and **metric names** (`chainlink.collections.total` etc., queried by Grafana) are all **frozen in pass 1** and deferred to Phase 4 (§8a) — they bind to the prod `.env`, the Grafana dashboard, and `desktop/src-tauri/src/lib.rs`. Pass 1 renames only source identifiers + human text.
+
+1. `application.properties`: rename only **non-key/non-contract** values — `quarkus.application.name=chainlink-api`→`linkweave-api`, the form cookie **name** `chainlink-credential` (+ its `same-site-cookie` refs), and literal encryption-key *defaults* (desktop/test). **Leave** all `chainlink.*` keys, `CHAINLINK_*`/`CL_*`/`CLINK_*` `${...}` env names, and `cookie-domain` lines **untouched** (Phase 4).
 2. DB (D2): env var `CHAINLINK_DB_PATH`→`LINKWEAVE_DB_PATH`, default path → `linkweave.db`, test db → `linkweave-test.db`; **move the actual files**: `git mv developer-local-settings/chainlink.db .../linkweave.db` (and delete/regenerate the test db). Grep for `CHAINLINK_DB_PATH` / `CHAINLINK_DESKTOP_WEB_ROOT` in any deploy scripts on the host.
 3. `V1__Initial_schema.sql` header comment.
 4. Tauri (D3): bundle identifier + productName.

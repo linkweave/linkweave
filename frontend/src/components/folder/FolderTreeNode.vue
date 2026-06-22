@@ -2,7 +2,7 @@
 import { requireValue } from '@/lib/nullish.ts'
 import { Folder, FolderOpen, ChevronRight, MoreHorizontal } from '@lucide/vue'
 import { DropdownMenuRoot, DropdownMenuTrigger } from 'radix-vue'
-import { DropdownMenuContentCl, DropdownMenuItemCl } from '@/components/ui'
+import { DropdownMenuContentLw, DropdownMenuItemLw } from '@/components/ui'
 import type { FolderJson } from '@/api/generated'
 import { reactive, ref } from 'vue'
 import { useFolderStore } from '@/stores/folder'
@@ -194,17 +194,17 @@ async function onDrop(event: DragEvent, targetFolder: FolderJson) {
             </button>
           </DropdownMenuTrigger>
         </div>
-        <DropdownMenuContentCl class="min-w-[160px] z-50">
-          <DropdownMenuItemCl @select="emit('createSubfolder', node.folder.id)">
+        <DropdownMenuContentLw class="min-w-[160px] z-50">
+          <DropdownMenuItemLw @select="emit('createSubfolder', node.folder.id)">
             {{ $t('folder.createSubfolder') }}
-          </DropdownMenuItemCl>
-          <DropdownMenuItemCl @select="emit('rename', node.folder)">
+          </DropdownMenuItemLw>
+          <DropdownMenuItemLw @select="emit('rename', node.folder)">
             {{ $t('common.edit') }}
-          </DropdownMenuItemCl>
-          <DropdownMenuItemCl variant="destructive" @select="emit('delete', node.folder)">
+          </DropdownMenuItemLw>
+          <DropdownMenuItemLw variant="destructive" @select="emit('delete', node.folder)">
             {{ $t('common.delete') }}
-          </DropdownMenuItemCl>
-        </DropdownMenuContentCl>
+          </DropdownMenuItemLw>
+        </DropdownMenuContentLw>
       </DropdownMenuRoot>
 
       <FolderTreeNode

@@ -2,8 +2,8 @@
 import { config } from '@/api'
 import { AuthResourceApi } from '@/api/generated'
 import ApiKeySection from '@/components/apikey/ApiKeySection.vue'
-import DialogCl from './DialogCl.vue'
-import SwitchCl from './SwitchCl.vue'
+import DialogLw from './DialogLw.vue'
+import SwitchLw from './SwitchLw.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationStore } from '@/stores/notification'
 import { type BookmarkLayout, type Theme, useUiStore } from '@/stores/ui'
@@ -109,7 +109,7 @@ const layouts: { value: BookmarkLayout; icon: typeof LayoutList; labelKey: strin
 </script>
 
 <template>
-  <DialogCl :open="open" @update:open="emit('update:open', $event)">
+  <DialogLw :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('settings.title') }}</template>
 
     <div class="space-y-6">
@@ -174,7 +174,7 @@ const layouts: { value: BookmarkLayout; icon: typeof LayoutList; labelKey: strin
               {{ t('settings.offlineCachingHint') }}
             </div>
           </div>
-          <SwitchCl
+          <SwitchLw
             :model-value="offlineCachingSettingToggle"
             :disabled="settingsLoading"
             @update:model-value="onOfflineCachingChange"
@@ -189,7 +189,7 @@ const layouts: { value: BookmarkLayout; icon: typeof LayoutList; labelKey: strin
               {{ t('settings.savedSearchesHint') }}
             </div>
           </div>
-          <SwitchCl
+          <SwitchLw
             :model-value="savedSearchesSettingToggle"
             :disabled="settingsLoading"
             @update:model-value="onSavedSearchesChange"
@@ -202,5 +202,5 @@ const layouts: { value: BookmarkLayout; icon: typeof LayoutList; labelKey: strin
         <ApiKeySection />
       </div>
     </div>
-  </DialogCl>
+  </DialogLw>
 </template>

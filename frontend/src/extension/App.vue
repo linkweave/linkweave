@@ -4,7 +4,7 @@ import { useExtensionStore } from './stores/extension'
 import LoginPrompt from './views/LoginPrompt.vue'
 import SaveView from './views/SaveView.vue'
 import BrowseView from './views/BrowseView.vue'
-import SelectCl from '@/components/ui/SelectCl.vue'
+import SelectLw from '@/components/ui/SelectLw.vue'
 
 const store = useExtensionStore()
 
@@ -50,7 +50,7 @@ onMounted(async () => {
       <span class="font-semibold text-sm">Chainlink</span>
 
       <!-- Collection switcher (only if user has multiple collections) -->
-      <SelectCl
+      <SelectLw
         v-if="store.isAuthenticated && store.collections.length > 1"
         :model-value="store.currentCollectionId"
         class="ml-auto w-auto"
@@ -59,7 +59,7 @@ onMounted(async () => {
         <option v-for="c in store.collections" :key="c.id" :value="c.id">
           {{ c.name }}
         </option>
-      </SelectCl>
+      </SelectLw>
     </div>
 
     <!-- Loading state -->

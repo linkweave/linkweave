@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useExtensionStore } from '../stores/extension'
-import ButtonCl from '@/components/ui/ButtonCl.vue'
+import ButtonLw from '@/components/ui/ButtonLw.vue'
 
 const store = useExtensionStore()
 
@@ -19,6 +19,6 @@ function openWebApp() {
         Open the web app to sign in with Google or your email.
       </p>
     </div>
-    <ButtonCl @click="openWebApp">Open Chainlink</ButtonCl>
+    <ButtonLw @click="openWebApp">Open Chainlink</ButtonLw>
   </div>
 </template>

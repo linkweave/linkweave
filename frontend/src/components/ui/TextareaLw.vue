@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-// Mirror of InputCl for multi-line text. Same elevation (`bg-input`), same
+// Mirror of InputLw for multi-line text. Same elevation (`bg-input`), same
 // focus ring, same border treatment; `resize-none` by default because forms
 // inside dialogs shouldn't grow user-resizable. Caller can override `rows`
 // (default 3) and any attribute via $attrs.

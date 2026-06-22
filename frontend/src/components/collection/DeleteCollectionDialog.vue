@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DialogCl, DialogFooterCl, FormFieldCl, InputCl } from '@/components/ui'
+import { DialogLw, DialogFooterLw, FormFieldLw, InputLw } from '@/components/ui'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { collectionDeleteSchema } from '@/schemas/collection'
 import { useCollectionStore } from '@/stores/collection'
@@ -47,16 +47,16 @@ const onSubmit = handleSubmit(async () => {
 </script>
 
 <template>
-  <DialogCl :open="open" @update:open="emit('update:open', $event)">
+  <DialogLw :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('collectionManage.deleteTitle') }}</template>
     <form id="delete-collection-form" class="space-y-4" @submit.prevent="onSubmit">
       <p class="text-sm text-muted-foreground">{{ t('collectionManage.deleteConfirm') }}</p>
-      <FormFieldCl
+      <FormFieldLw
         :label="t('collectionManage.typeToConfirm', { name: collectionName })"
         for-id="delete-confirm-name"
         :error="errors.confirmName"
       >
-        <InputCl
+        <InputLw
           id="delete-confirm-name"
           v-model="confirmName"
           v-bind="confirmNameAttrs"
@@ -64,11 +64,11 @@ const onSubmit = handleSubmit(async () => {
           data-testid="delete-confirm-name-input"
           :placeholder="collectionName"
         />
-      </FormFieldCl>
+      </FormFieldLw>
     </form>
 
     <template #footer>
-      <DialogFooterCl
+      <DialogFooterLw
         submit-form="delete-collection-form"
         :submit-label="t('common.delete')"
         :submitting="isSubmitting"
@@ -78,5 +78,5 @@ const onSubmit = handleSubmit(async () => {
         @cancel="emit('update:open', false)"
       />
     </template>
-  </DialogCl>
+  </DialogLw>
 </template>

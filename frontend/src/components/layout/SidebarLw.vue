@@ -2,9 +2,9 @@
 import { CreateFolderDialog, FolderTree } from '@/components/folder'
 import SmartCollectionsList from '@/components/savedsearch/SmartCollectionsList.vue'
 import TagList from '@/components/tag/TagList.vue'
-import { ButtonCl, CollapsibleCl } from '@/components/ui'
+import { ButtonLw, CollapsibleLw } from '@/components/ui'
 import { useSidebarSectionExpandedPref } from '@/composables/useSidebarSectionExpandedPref'
-import BuildversionCl from '@/components/ui/BuildversionCl.vue'
+import BuildversionLw from '@/components/ui/BuildversionLw.vue'
 import { useDndMove } from '@/composables/useDndMove'
 import {
   DRAG_TYPE_BOOKMARK,
@@ -188,7 +188,7 @@ async function onAllBookmarksDrop(event: DragEvent) {
 
         <FolderTree class-name="mt-2" @create-subfolder="handleCreateSubfolder" />
 
-        <ButtonCl
+        <ButtonLw
           v-if="collectionId"
           variant="ghost"
           size="sm"
@@ -201,7 +201,7 @@ async function onAllBookmarksDrop(event: DragEvent) {
         >
           <Plus class="h-4 w-4 mr-2" />
           {{ t('sidebar.newFolder') }}
-        </ButtonCl>
+        </ButtonLw>
 
         <CreateFolderDialog
           v-if="collectionId"
@@ -234,7 +234,7 @@ async function onAllBookmarksDrop(event: DragEvent) {
           aria-hidden="true"
         />
       </button>
-      <CollapsibleCl :open="propertiesExpanded">
+      <CollapsibleLw :open="propertiesExpanded">
       <ul
         class="px-2 pb-2 overflow-y-auto flex-1 min-h-0"
         data-testid="sidebar-properties"
@@ -258,7 +258,7 @@ async function onAllBookmarksDrop(event: DragEvent) {
           </button>
         </li>
       </ul>
-      </CollapsibleCl>
+      </CollapsibleLw>
     </div>
 
     <!-- Smart Collections Section -->
@@ -291,16 +291,16 @@ async function onAllBookmarksDrop(event: DragEvent) {
           aria-hidden="true"
         />
       </button>
-      <CollapsibleCl :open="tagsExpanded">
+      <CollapsibleLw :open="tagsExpanded">
         <TagList
           class-name="px-2 pb-2 overflow-y-auto min-h-0"
           :collection-id="collectionId"
         />
-      </CollapsibleCl>
+      </CollapsibleLw>
     </div>
     <div class="border-t border-border shrink-0">
       <div class="p-3 flex items-center justify-between">
-        <BuildversionCl />
+        <BuildversionLw />
       </div>
     </div>
   </div>

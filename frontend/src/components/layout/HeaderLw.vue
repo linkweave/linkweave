@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UserMenuCl } from '@/components/ui'
+import { UserMenuLw } from '@/components/ui'
 import { useAuthStore } from '@/stores/auth'
 import logoUrl from '@/assets/logo.png'
 import CollectionSwitcher from './CollectionSwitcher.vue'
@@ -34,7 +34,7 @@ const auth = useAuthStore()
     <div class="flex items-center gap-1 sm:gap-2 shrink-0">
       <slot name="search-mobile" />
       <slot name="actions" />
-      <UserMenuCl v-if="auth.isAuthenticated" />
+      <UserMenuLw v-if="auth.isAuthenticated" />
     </div>
   </header>
 </template>

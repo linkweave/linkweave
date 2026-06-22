@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { config } from '@/api'
 import { CollectionResourceApi } from '@/api/generated'
-import { DialogCl, DialogFooterCl, FormFieldCl, InputCl } from '@/components/ui'
+import { DialogLw, DialogFooterLw, FormFieldLw, InputLw } from '@/components/ui'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { collectionUpdateSchema } from '@/schemas/collection'
 import { useCollectionStore } from '@/stores/collection'
@@ -73,16 +73,16 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <DialogCl :open="open" @update:open="emit('update:open', $event)">
+  <DialogLw :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('collectionManage.editTitle') }}</template>
     <form id="edit-collection-form" @submit.prevent="onSubmit" class="space-y-4">
-      <FormFieldCl
+      <FormFieldLw
         :label="t('collectionManage.name')"
         for-id="edit-collection-name"
         :error="errors.name"
         required
       >
-        <InputCl
+        <InputLw
           id="edit-collection-name"
           v-model="name"
           v-bind="nameAttrs"
@@ -91,8 +91,8 @@ const onSubmit = handleSubmit(async (values) => {
           data-testid="edit-collection-name-input"
           :placeholder="t('collectionManage.namePlaceholder')"
         />
-      </FormFieldCl>
-      <FormFieldCl
+      </FormFieldLw>
+      <FormFieldLw
         v-if="props.isOwner"
         :label="t('collectionManage.faviconAllowlist')"
         for-id="edit-collection-favicon-allowlist"
@@ -111,11 +111,11 @@ const onSubmit = handleSubmit(async (values) => {
         <p class="text-xs text-muted-foreground mt-1">
           {{ t('collectionManage.faviconAllowlistHelp') }}
         </p>
-      </FormFieldCl>
+      </FormFieldLw>
     </form>
 
     <template #footer>
-      <DialogFooterCl
+      <DialogFooterLw
         submit-form="edit-collection-form"
         :submit-label="t('common.save')"
         :submitting="isSubmitting"
@@ -123,5 +123,5 @@ const onSubmit = handleSubmit(async (values) => {
         @cancel="emit('update:open', false)"
       />
     </template>
-  </DialogCl>
+  </DialogLw>
 </template>

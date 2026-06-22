@@ -9,7 +9,7 @@ import {
 } from 'radix-vue'
 import { ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, Info, RotateCcw } from '@lucide/vue'
 import { SortDirection, SortField } from '@/api/generated'
-import { DropdownMenuContentCl, DropdownMenuItemCl } from '@/components/ui'
+import { DropdownMenuContentLw, DropdownMenuItemLw } from '@/components/ui'
 import { useCollectionStore } from '@/stores/collection'
 
 const { t } = useI18n()
@@ -81,7 +81,7 @@ function reset() {
         <ChevronDown class="h-3 w-3 text-muted-foreground" />
       </button>
     </DropdownMenuTrigger>
-    <DropdownMenuContentCl class="z-[100] w-72">
+    <DropdownMenuContentLw class="z-[100] w-72">
         <DropdownMenuLabel class="flex items-center justify-between px-2 py-1.5 text-xs">
           <span class="font-medium">{{ t('sort.menu.title') }}</span>
           <button
@@ -97,7 +97,7 @@ function reset() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator class="-mx-1 my-1 h-px bg-border" />
 
-        <DropdownMenuItemCl
+        <DropdownMenuItemLw
           v-for="f in FIELDS"
           :key="f.id"
           :data-testid="`bookmark-sort-option-${f.id}`"
@@ -141,7 +141,7 @@ function reset() {
               <ArrowDown class="h-3 w-3" />
             </button>
           </div>
-        </DropdownMenuItemCl>
+        </DropdownMenuItemLw>
 
         <template v-if="showSharedClicksNote">
           <DropdownMenuSeparator class="-mx-1 my-1 h-px bg-border" />
@@ -150,6 +150,6 @@ function reset() {
             <span>{{ t('sort.menu.sharedClicksNote') }}</span>
           </div>
         </template>
-    </DropdownMenuContentCl>
+    </DropdownMenuContentLw>
   </DropdownMenuRoot>
 </template>

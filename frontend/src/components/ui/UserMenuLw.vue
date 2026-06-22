@@ -4,8 +4,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from 'radix-vue'
-import DropdownMenuContentCl from '@/components/ui/DropdownMenuContentCl.vue'
-import DropdownMenuItemCl from '@/components/ui/DropdownMenuItemCl.vue'
+import DropdownMenuContentLw from '@/components/ui/DropdownMenuContentLw.vue'
+import DropdownMenuItemLw from '@/components/ui/DropdownMenuItemLw.vue'
 import { ChevronDown, LogOut, Settings, Trash2, Sparkles } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
@@ -65,7 +65,7 @@ function switchLocale(locale: SupportedLocale) {
         </span>
       </button>
     </DropdownMenuTrigger>
-    <DropdownMenuContentCl class="min-w-[160px] z-[100]">
+    <DropdownMenuContentLw class="min-w-[160px] z-[100]">
         <div class="sm:hidden px-2 py-1.5 text-sm font-medium text-foreground truncate">
           {{ auth.displayName }}
         </div>
@@ -88,14 +88,14 @@ function switchLocale(locale: SupportedLocale) {
           </button>
         </div>
         <DropdownMenuSeparator class="-mx-1 my-1 h-px bg-border" />
-        <DropdownMenuItemCl
+        <DropdownMenuItemLw
           data-testid="user-menu-cleanup-suggestions"
           @select="openCleanupSuggestions"
         >
           <Sparkles class="h-4 w-4" />
           <span class="flex-1">{{ $t('header.cleanupSuggestions') }}</span>
-        </DropdownMenuItemCl>
-        <DropdownMenuItemCl
+        </DropdownMenuItemLw>
+        <DropdownMenuItemLw
           data-testid="user-menu-trashbin"
           @select="openTrashbin"
         >
@@ -107,21 +107,21 @@ function switchLocale(locale: SupportedLocale) {
           >
             {{ trashbinStore.count }}
           </span>
-        </DropdownMenuItemCl>
-        <DropdownMenuItemCl
+        </DropdownMenuItemLw>
+        <DropdownMenuItemLw
           @select="isSettingsOpen = true"
         >
           <Settings class="h-4 w-4" />
           {{ $t('header.settings') }}
-        </DropdownMenuItemCl>
+        </DropdownMenuItemLw>
         <DropdownMenuSeparator class="-mx-1 my-1 h-px bg-border" />
-        <DropdownMenuItemCl
+        <DropdownMenuItemLw
           @select="auth.logout"
         >
           <LogOut class="h-4 w-4" />
           {{ $t('header.logout') }}
-        </DropdownMenuItemCl>
-    </DropdownMenuContentCl>
+        </DropdownMenuItemLw>
+    </DropdownMenuContentLw>
   </DropdownMenuRoot>
 
   <SettingsDialog v-model:open="isSettingsOpen" />

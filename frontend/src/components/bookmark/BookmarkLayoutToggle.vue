@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { LayoutGrid, LayoutList, Layers } from '@lucide/vue'
-import { ButtonCl } from '@/components/ui'
+import { ButtonLw } from '@/components/ui'
 import { useCollectionStore } from '@/stores/collection'
 import { useUiStore, type BookmarkLayout } from '@/stores/ui'
 import { useI18n } from 'vue-i18n'
@@ -91,7 +91,7 @@ onBeforeUnmount(() => {
 
   <!-- Mobile: icon button opens a menu -->
   <div ref="mobileRoot" class="relative sm:hidden">
-    <ButtonCl
+    <ButtonLw
       variant="ghost"
       size="icon"
       class="h-7 w-7"
@@ -101,7 +101,7 @@ onBeforeUnmount(() => {
       @click="mobileMenuOpen = !mobileMenuOpen"
     >
       <component :is="currentOption.icon" class="h-3.5 w-3.5" />
-    </ButtonCl>
+    </ButtonLw>
     <div
       v-if="mobileMenuOpen"
       class="absolute right-0 top-full mt-1 z-40 min-w-[8rem] rounded-md border border-border bg-popover shadow-xl ring-1 ring-black/5 dark:ring-white/10 py-1"

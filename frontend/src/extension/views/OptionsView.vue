@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { loadExtensionConfig, saveExtensionConfig, getDefaults } from '../api/client'
 import type { ExtensionConfig } from '../api/client'
-import ButtonCl from '@/components/ui/ButtonCl.vue'
+import ButtonLw from '@/components/ui/ButtonLw.vue'
 
 const apiUrl = ref('')
 const webAppUrl = ref('')
@@ -88,9 +88,9 @@ function resetDefaults() {
 
       <!-- Actions -->
       <div class="flex items-center gap-3 pt-2">
-        <ButtonCl type="submit" :disabled="saving">
+        <ButtonLw type="submit" :disabled="saving">
           {{ saving ? 'Saving…' : 'Save' }}
-        </ButtonCl>
+        </ButtonLw>
         <button
           type="button"
           class="text-sm text-muted-foreground hover:text-foreground transition-colors"

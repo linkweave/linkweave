@@ -2,14 +2,14 @@
 import type { BookmarkJson } from '@/api/generated'
 import AutoTagRulesDialog from '@/components/autotagrule/AutoTagRulesDialog.vue'
 import {
-  ButtonCl,
-  CollapsibleCl,
-  DialogCl,
-  DialogFooterCl,
-  FolderSelectCl,
-  FormFieldCl,
-  InputCl,
-  TextareaCl,
+  ButtonLw,
+  CollapsibleLw,
+  DialogLw,
+  DialogFooterLw,
+  FolderSelectLw,
+  FormFieldLw,
+  InputLw,
+  TextareaLw,
 } from '@/components/ui'
 import { useDuplicateCheck } from '@/composables/useDuplicateCheck'
 import { useFormDialog } from '@/composables/useFormDialog'
@@ -259,7 +259,7 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <DialogCl :open="open" @update:open="emit('update:open', $event)">
+  <DialogLw :open="open" @update:open="emit('update:open', $event)">
     <template #title>
       <span class="inline-flex items-center gap-1.5">
         <component
@@ -272,13 +272,13 @@ const onSubmit = handleSubmit(async (values) => {
     </template>
 
     <form :id="formId" @submit.prevent="onSubmit" class="space-y-4">
-      <FormFieldCl
+      <FormFieldLw
         :label="t('bookmark.url')"
         :for-id="`${idPrefix}-url`"
         :error="errors.url"
         required
       >
-        <InputCl
+        <InputLw
           :id="`${idPrefix}-url`"
           v-model="url"
           v-bind="urlAttrs"
@@ -286,7 +286,7 @@ const onSubmit = handleSubmit(async (values) => {
           :placeholder="t('bookmark.urlPlaceholder')"
           @blur="onUrlBlur"
         />
-      </FormFieldCl>
+      </FormFieldLw>
 
       <div
         v-if="duplicates.length > 0"
@@ -310,48 +310,48 @@ const onSubmit = handleSubmit(async (values) => {
         </ul>
       </div>
 
-      <FormFieldCl
+      <FormFieldLw
         :label="t('bookmark.title')"
         :for-id="`${idPrefix}-title`"
         :error="errors.title"
         required
       >
-        <InputCl
+        <InputLw
           :id="`${idPrefix}-title`"
           v-model="title"
           v-bind="titleAttrs"
           type="text"
           :placeholder="t('bookmark.titlePlaceholder')"
         />
-      </FormFieldCl>
+      </FormFieldLw>
 
-      <FormFieldCl
+      <FormFieldLw
         :label="t('bookmark.description')"
         :for-id="`${idPrefix}-description`"
         :error="errors.description"
       >
-        <TextareaCl
+        <TextareaLw
           :id="`${idPrefix}-description`"
           v-model="description"
           v-bind="descriptionAttrs"
           rows="3"
           :placeholder="t('bookmark.descriptionPlaceholder')"
         />
-      </FormFieldCl>
+      </FormFieldLw>
 
-      <FormFieldCl
+      <FormFieldLw
         :label="t('bookmark.folder')"
         :for-id="`${idPrefix}-folder`"
         :error="errors.folderId"
       >
-        <FolderSelectCl
+        <FolderSelectLw
           :id="`${idPrefix}-folder`"
           v-model="folderId"
           :folders="folders"
           :placeholder="t('bookmark.noFolder')"
           direction="down"
         />
-      </FormFieldCl>
+      </FormFieldLw>
 
       <div class="space-y-2">
         <label class="block text-sm font-medium leading-none">{{ t('bookmark.tags') }}</label>
@@ -406,7 +406,7 @@ const onSubmit = handleSubmit(async (values) => {
             </button>
           </div>
           <div class="flex justify-end">
-            <ButtonCl
+            <ButtonLw
               type="button"
               variant="outline"
               size="sm"
@@ -415,7 +415,7 @@ const onSubmit = handleSubmit(async (values) => {
               @click="onAcceptSuggestions"
             >
               {{ t('bookmark.acceptSuggestions') }}
-            </ButtonCl>
+            </ButtonLw>
           </div>
         </template>
       </div>
@@ -460,7 +460,7 @@ const onSubmit = handleSubmit(async (values) => {
         </component>
 
         <!-- Collapse wrapper using CSS grid trick; always open when not collapsible -->
-        <CollapsibleCl :open="propsIsExpanded">
+        <CollapsibleLw :open="propsIsExpanded">
           <div class="space-y-3" :class="propsIsCollapsible ? 'pt-[14px]' : ''">
             <BookmarkPropertyInput
               v-for="def in propertyStore.definitions"
@@ -471,19 +471,19 @@ const onSubmit = handleSubmit(async (values) => {
               @clear="setPropertyValue(def.id, undefined)"
             />
           </div>
-        </CollapsibleCl>
+        </CollapsibleLw>
       </template>
     </form>
 
     <template #footer>
-      <DialogFooterCl
+      <DialogFooterLw
         :submit-form="formId"
         :submit-label="isEdit ? t('common.save') : t('common.create')"
         :submitting="isSubmitting"
         @cancel="emit('update:open', false)"
       />
     </template>
-  </DialogCl>
+  </DialogLw>
 
   <AutoTagRulesDialog
     v-if="effectiveCollectionId"

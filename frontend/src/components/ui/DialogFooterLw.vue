@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import ButtonCl from './ButtonCl.vue'
+import ButtonLw from './ButtonLw.vue'
 
 type ButtonVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
 
-// `DialogFooterCl` does two jobs:
+// `DialogFooterLw` does two jobs:
 //   1. Renders the bg-card / border-t footer chrome.
 //   2. Optionally renders a default Cancel + Submit button pair for form
 //      dialogs that use the convention.
@@ -15,7 +15,7 @@ type ButtonVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghos
 // slot — the chrome stays consistent across every dialog. The submit-/cancel-
 // related props are only consulted when no slot content is provided.
 //
-// Since DialogCl now renders the footer in its own grid row (outside the
+// Since DialogLw now renders the footer in its own grid row (outside the
 // scrollable body), this component is no longer sticky — its position is
 // determined by the parent layout.
 
@@ -37,7 +37,7 @@ const props = withDefaults(
     cancelLabel?: string
     /**
      * ID of the form this footer's submit button should submit. Required
-     * when the footer lives in DialogCl's `#footer` slot — the form is
+     * when the footer lives in DialogLw's `#footer` slot — the form is
      * inside the scrollable body slot and the submit button needs the
      * HTML5 `form` attribute to associate with it.
      */
@@ -66,14 +66,14 @@ const submitDisabledFinal = computed(() => props.submitting || props.submitDisab
 <template>
   <!-- Footer chrome: top border to separate from the body, `bg-card` to
        carry the dialog's elevated tone, `py-3` for breathing room. Lives in
-       DialogCl's `#footer` grid row, which is the row below the scrollable
+       DialogLw's `#footer` grid row, which is the row below the scrollable
        body — so no sticky / negative-margin gymnastics needed. -->
   <div class="px-4 sm:px-6 py-3 bg-card border-t border-border flex justify-end gap-2">
     <slot>
-      <ButtonCl type="button" variant="outline" @click="emit('cancel')">
+      <ButtonLw type="button" variant="outline" @click="emit('cancel')">
         {{ cancelText }}
-      </ButtonCl>
-      <ButtonCl
+      </ButtonLw>
+      <ButtonLw
         type="submit"
         :variant="submitVariant"
         :disabled="submitDisabledFinal"
@@ -81,7 +81,7 @@ const submitDisabledFinal = computed(() => props.submitting || props.submitDisab
         :form="submitForm"
       >
         {{ submitText }}
-      </ButtonCl>
+      </ButtonLw>
     </slot>
   </div>
 </template>

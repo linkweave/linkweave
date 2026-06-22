@@ -4,7 +4,7 @@ import EditCollectionDialog from '@/components/collection/EditCollectionDialog.v
 import DeleteCollectionDialog from '@/components/collection/DeleteCollectionDialog.vue'
 import ShareCollectionDialog from '@/components/collection/ShareCollectionDialog.vue'
 import { MainLayout } from '@/components/layout'
-import { ButtonCl, ResponsiveButton, SearchBar } from '@/components/ui'
+import { ButtonLw, ResponsiveButton, SearchBar } from '@/components/ui'
 import { useCollectionStore } from '@/stores/collection'
 import { ArrowLeft, Pencil, Plus, Star, Trash2, Users } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
@@ -63,7 +63,7 @@ function goBack() {
 <template>
   <MainLayout hide-sidebar>
     <template #header-leading>
-      <ButtonCl
+      <ButtonLw
         variant="ghost"
         size="icon"
         data-testid="collection-manage-back-btn"
@@ -71,7 +71,7 @@ function goBack() {
         @click="goBack"
       >
         <ArrowLeft class="h-4 w-4" />
-      </ButtonCl>
+      </ButtonLw>
     </template>
 
     <template #header-title>
@@ -146,7 +146,7 @@ function goBack() {
           </div>
 
           <div class="flex items-center gap-1 shrink-0">
-            <ButtonCl
+            <ButtonLw
               v-if="!col.isDefault"
               variant="ghost"
               size="icon"
@@ -155,8 +155,8 @@ function goBack() {
               @click="handleSetDefault(col.id!)"
             >
               <Star class="h-4 w-4" />
-            </ButtonCl>
-            <ButtonCl
+            </ButtonLw>
+            <ButtonLw
               v-if="col.role === 'OWNER'"
               variant="ghost"
               size="icon"
@@ -165,8 +165,8 @@ function goBack() {
               @click="openShare(col.id!, col.name ?? '')"
             >
               <Users class="h-4 w-4" />
-            </ButtonCl>
-            <ButtonCl
+            </ButtonLw>
+            <ButtonLw
               v-if="col.role === 'OWNER'"
               variant="ghost"
               size="icon"
@@ -175,8 +175,8 @@ function goBack() {
               @click="openEdit(col.id!, col.name ?? '', true)"
             >
               <Pencil class="h-4 w-4" />
-            </ButtonCl>
-            <ButtonCl
+            </ButtonLw>
+            <ButtonLw
               v-if="col.role === 'OWNER'"
               variant="ghost"
               size="icon"
@@ -185,7 +185,7 @@ function goBack() {
               @click="openDelete(col.id!, col.name ?? '')"
             >
               <Trash2 class="h-4 w-4 text-destructive" />
-            </ButtonCl>
+            </ButtonLw>
           </div>
         </div>
       </div>

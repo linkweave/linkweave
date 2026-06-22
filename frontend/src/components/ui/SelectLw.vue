@@ -7,7 +7,7 @@ const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
 defineOptions({ inheritAttrs: false })
 
-// Mirrors InputCl: same height, background, border, focus ring — but with
+// Mirrors InputLw: same height, background, border, focus ring — but with
 // `appearance-none` so we can place a consistent chevron via an overlay.
 // `pr-8` reserves room for the chevron so option text never collides with it.
 const BASE =

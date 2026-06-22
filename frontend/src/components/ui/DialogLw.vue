@@ -81,7 +81,7 @@ const forwarded = useForwardPropsEmits(props, emits)
         </div>
 
         <!-- Footer row: auto-sized. Default slot inside the footer area
-             can be DialogFooterCl, a plain button row, or nothing. -->
+             can be DialogFooterLw, a plain button row, or nothing. -->
         <div v-if="$slots.footer">
           <slot name="footer" />
         </div>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { InputCl, SelectCl, SwitchCl } from '@/components/ui'
+import { InputLw, SelectLw, SwitchLw } from '@/components/ui'
 import { PropertyType } from '@/api/generated'
 import type { PropertyDefinitionJson } from '@/api/generated'
 import type { PropertyFormValue } from '@/lib/propertyValueMapper'
@@ -103,7 +103,7 @@ function toggleMulti(option: string) {
     </div>
 
     <!-- TEXT -->
-    <InputCl
+    <InputLw
       v-if="propDef.data.type === PropertyType.Text"
       :id="`property-input-${propDef.id}`"
       type="text"
@@ -112,7 +112,7 @@ function toggleMulti(option: string) {
     />
 
     <!-- NUMBER -->
-    <InputCl
+    <InputLw
       v-else-if="propDef.data.type === PropertyType.Number"
       :id="`property-input-${propDef.id}`"
       type="number"
@@ -122,7 +122,7 @@ function toggleMulti(option: string) {
 
     <!-- BOOLEAN -->
     <div v-else-if="propDef.data.type === PropertyType.Boolean" class="flex items-center gap-2">
-      <SwitchCl
+      <SwitchLw
         :model-value="asBoolean()"
         :aria-label="propDef.data.name"
         @update:model-value="onBoolean"
@@ -133,7 +133,7 @@ function toggleMulti(option: string) {
     </div>
 
     <!-- SELECT -->
-    <SelectCl
+    <SelectLw
       v-else-if="propDef.data.type === PropertyType.Select"
       :id="`property-input-${propDef.id}`"
       :model-value="asString()"
@@ -141,7 +141,7 @@ function toggleMulti(option: string) {
     >
       <option value="">{{ t('property.notSet') }}</option>
       <option v-for="opt in options" :key="opt" :value="opt">{{ opt }}</option>
-    </SelectCl>
+    </SelectLw>
 
     <!-- MULTI_SELECT -->
     <div v-else-if="propDef.data.type === PropertyType.MultiSelect" class="flex flex-wrap gap-1.5">
@@ -162,7 +162,7 @@ function toggleMulti(option: string) {
     </div>
 
     <!-- DATE -->
-    <InputCl
+    <InputLw
       v-else-if="propDef.data.type === PropertyType.Date"
       :id="`property-input-${propDef.id}`"
       type="date"

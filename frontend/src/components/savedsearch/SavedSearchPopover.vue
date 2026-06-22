@@ -2,7 +2,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'radix-vue'
 import { useI18n } from 'vue-i18n'
-import { ButtonCl, DialogCl, InputCl } from '@/components/ui'
+import { ButtonLw, DialogLw, InputLw } from '@/components/ui'
 import type { SavedSearchJson } from '@/api/generated'
 import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useNotificationStore } from '@/stores/notification'
@@ -13,7 +13,7 @@ import { useSavedSearchStore } from '@/stores/savedSearch'
  *
  * - `mode='create'`: anchored popover. The default slot is the trigger element
  *   (wrapped in `PopoverTrigger as-child`). Used by the chip-strip funnel button.
- * - `mode='rename'`: centered `DialogCl` modal. The default slot is unused;
+ * - `mode='rename'`: centered `DialogLw` modal. The default slot is unused;
  *   `open` is controlled by the parent. Used by Smart Collections rows.
  *
  * The form content (title, query preview, name input, action buttons) is shared.
@@ -138,7 +138,7 @@ function onPopoverKeyDown(event: KeyboardEvent) {
           >
             {{ queryPreview || '—' }}
           </div>
-          <InputCl
+          <InputLw
             v-model="name"
             type="text"
             :placeholder="t('savedSearch.namePlaceholder')"
@@ -146,10 +146,10 @@ function onPopoverKeyDown(event: KeyboardEvent) {
             data-testid="saved-search-name-input"
           />
           <div class="flex justify-end gap-2 pt-1">
-            <ButtonCl variant="ghost" size="sm" type="button" @click="close">
+            <ButtonLw variant="ghost" size="sm" type="button" @click="close">
               {{ t('savedSearch.cancelButton') }}
-            </ButtonCl>
-            <ButtonCl
+            </ButtonLw>
+            <ButtonLw
               size="sm"
               type="button"
               :disabled="!canSubmit || submitting"
@@ -157,7 +157,7 @@ function onPopoverKeyDown(event: KeyboardEvent) {
               @click="onSubmit"
             >
               {{ submitLabel }}
-            </ButtonCl>
+            </ButtonLw>
           </div>
         </div>
       </PopoverContent>
@@ -165,7 +165,7 @@ function onPopoverKeyDown(event: KeyboardEvent) {
   </PopoverRoot>
 
   <!-- Rename mode: centered modal dialog, no trigger needed -->
-  <DialogCl
+  <DialogLw
     v-else
     :open="open"
     class="max-w-md"
@@ -183,7 +183,7 @@ function onPopoverKeyDown(event: KeyboardEvent) {
       >
         {{ queryPreview || '—' }}
       </div>
-      <InputCl
+      <InputLw
         v-model="name"
         type="text"
         :placeholder="t('savedSearch.namePlaceholder')"
@@ -193,10 +193,10 @@ function onPopoverKeyDown(event: KeyboardEvent) {
     </div>
     <template #footer>
       <div class="flex justify-end gap-2 px-4 sm:px-6 py-3 border-t border-border">
-        <ButtonCl variant="ghost" size="sm" type="button" @click="close">
+        <ButtonLw variant="ghost" size="sm" type="button" @click="close">
           {{ t('savedSearch.cancelButton') }}
-        </ButtonCl>
-        <ButtonCl
+        </ButtonLw>
+        <ButtonLw
           size="sm"
           type="button"
           :disabled="!canSubmit || submitting"
@@ -204,8 +204,8 @@ function onPopoverKeyDown(event: KeyboardEvent) {
           @click="onSubmit"
         >
           {{ submitLabel }}
-        </ButtonCl>
+        </ButtonLw>
       </div>
     </template>
-  </DialogCl>
+  </DialogLw>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DialogCl, DialogFooterCl, FormFieldCl, InputCl } from '@/components/ui'
+import { DialogLw, DialogFooterLw, FormFieldLw, InputLw } from '@/components/ui'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { tagSaveSchema } from '@/schemas/tag'
 import { useNotificationStore } from '@/stores/notification'
@@ -48,12 +48,12 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <DialogCl :open="open" @update:open="emit('update:open', $event)">
+  <DialogLw :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('tag.createTitle') }}</template>
 
     <form id="create-tag-form" @submit.prevent="onSubmit" class="space-y-4">
-      <FormFieldCl :label="t('tag.name')" for-id="create-tag-name" :error="errors.name" required>
-        <InputCl
+      <FormFieldLw :label="t('tag.name')" for-id="create-tag-name" :error="errors.name" required>
+        <InputLw
           id="create-tag-name"
           v-model="name"
           v-bind="nameAttrs"
@@ -62,11 +62,11 @@ const onSubmit = handleSubmit(async (values) => {
           data-testid="create-tag-name-input"
           :placeholder="t('tag.namePlaceholder')"
         />
-      </FormFieldCl>
+      </FormFieldLw>
     </form>
 
     <template #footer>
-      <DialogFooterCl
+      <DialogFooterLw
         submit-form="create-tag-form"
         :submit-label="t('common.create')"
         :submitting="isSubmitting"
@@ -74,5 +74,5 @@ const onSubmit = handleSubmit(async (values) => {
         @cancel="emit('update:open', false)"
       />
     </template>
-  </DialogCl>
+  </DialogLw>
 </template>

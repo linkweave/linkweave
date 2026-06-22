@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import {
-  ColorInputCl,
-  DialogCl,
-  DialogFooterCl,
-  FolderSelectCl,
-  FormFieldCl,
-  InputCl,
+  ColorInputLw,
+  DialogLw,
+  DialogFooterLw,
+  FolderSelectLw,
+  FormFieldLw,
+  InputLw,
 } from '@/components/ui'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { folderSaveSchema } from '@/schemas/folder'
@@ -67,47 +67,47 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <DialogCl :open="open" @update:open="emit('update:open', $event)">
+  <DialogLw :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('folder.createTitle') }}</template>
 
     <form id="create-folder-form" @submit.prevent="onSubmit" class="space-y-4">
-      <FormFieldCl :label="t('folder.name')" for-id="folder-name" :error="errors.name" required>
-        <InputCl
+      <FormFieldLw :label="t('folder.name')" for-id="folder-name" :error="errors.name" required>
+        <InputLw
           id="folder-name"
           v-model="name"
           v-bind="nameAttrs"
           type="text"
           :placeholder="t('folder.namePlaceholder')"
         />
-      </FormFieldCl>
+      </FormFieldLw>
 
-      <FormFieldCl :label="t('folder.parentFolder')" for-id="folder-parent">
-        <FolderSelectCl
+      <FormFieldLw :label="t('folder.parentFolder')" for-id="folder-parent">
+        <FolderSelectLw
           id="folder-parent"
           v-model="selectedParentId"
           :folders="folders"
           :placeholder="t('folder.noParent')"
           direction="down"
         />
-      </FormFieldCl>
+      </FormFieldLw>
 
-      <FormFieldCl :label="t('folder.color')" for-id="folder-color" :error="errors.color">
-        <ColorInputCl
+      <FormFieldLw :label="t('folder.color')" for-id="folder-color" :error="errors.color">
+        <ColorInputLw
           :model-value="color"
           :attrs="colorAttrs"
           input-id="folder-color"
           @update:model-value="color = $event"
         />
-      </FormFieldCl>
+      </FormFieldLw>
     </form>
 
     <template #footer>
-      <DialogFooterCl
+      <DialogFooterLw
         submit-form="create-folder-form"
         :submit-label="t('common.create')"
         :submitting="isSubmitting"
         @cancel="emit('update:open', false)"
       />
     </template>
-  </DialogCl>
+  </DialogLw>
 </template>

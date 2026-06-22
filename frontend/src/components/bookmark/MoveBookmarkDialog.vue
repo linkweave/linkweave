@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { BookmarkJson } from '@/api/generated'
-import { DialogCl, DialogFooterCl, FolderSelectCl, FormFieldCl } from '@/components/ui'
+import { DialogLw, DialogFooterLw, FolderSelectLw, FormFieldLw } from '@/components/ui'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { bookmarkMoveSchema } from '@/schemas/bookmark'
 import { useBookmarkStore } from '@/stores/bookmark'
@@ -84,31 +84,31 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <DialogCl :open="open" @update:open="emit('update:open', $event)">
+  <DialogLw :open="open" @update:open="emit('update:open', $event)">
     <template #title>
       {{ isBatchMode ? t('batch.moveTitle', { count: bookmarkIds?.length ?? 0 }) : t('bookmark.moveToFolder') }}
     </template>
     <template v-if="isBatchMode" #description>{{ t('batch.moveSubtitle') }}</template>
 
     <form id="move-bookmark-form" @submit.prevent="onSubmit" class="space-y-4">
-      <FormFieldCl :label="t('bookmark.folder')" for-id="move-bookmark-folder">
-        <FolderSelectCl
+      <FormFieldLw :label="t('bookmark.folder')" for-id="move-bookmark-folder">
+        <FolderSelectLw
           id="move-bookmark-folder"
           v-model="folderId"
           :folders="folderStore.folders"
           :placeholder="isBatchMode ? t('batch.noFolderRoot') : t('bookmark.noFolder')"
           direction="down"
         />
-      </FormFieldCl>
+      </FormFieldLw>
     </form>
 
     <template #footer>
-      <DialogFooterCl
+      <DialogFooterLw
         submit-form="move-bookmark-form"
         :submit-label="isBatchMode ? t('batch.moveHere') : t('common.save')"
         :submitting="isSubmitting"
         @cancel="emit('update:open', false)"
       />
     </template>
-  </DialogCl>
+  </DialogLw>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DialogCl, DialogFooterCl, FormFieldCl, InputCl } from '@/components/ui'
+import { DialogLw, DialogFooterLw, FormFieldLw, InputLw } from '@/components/ui'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { collectionCreateSchema } from '@/schemas/collection'
 import { useCollectionStore } from '@/stores/collection'
@@ -41,16 +41,16 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <DialogCl :open="open" @update:open="emit('update:open', $event)">
+  <DialogLw :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('collectionManage.createTitle') }}</template>
     <form id="create-collection-form" @submit.prevent="onSubmit" class="space-y-4">
-      <FormFieldCl
+      <FormFieldLw
         :label="t('collectionManage.name')"
         for-id="create-collection-name"
         :error="errors.name"
         required
       >
-        <InputCl
+        <InputLw
           id="create-collection-name"
           v-model="name"
           v-bind="nameAttrs"
@@ -59,11 +59,11 @@ const onSubmit = handleSubmit(async (values) => {
           data-testid="create-collection-name-input"
           :placeholder="t('collectionManage.namePlaceholder')"
         />
-      </FormFieldCl>
+      </FormFieldLw>
     </form>
 
     <template #footer>
-      <DialogFooterCl
+      <DialogFooterLw
         submit-form="create-collection-form"
         :submit-label="t('common.create')"
         :submitting="isSubmitting"
@@ -71,5 +71,5 @@ const onSubmit = handleSubmit(async (values) => {
         @cancel="emit('update:open', false)"
       />
     </template>
-  </DialogCl>
+  </DialogLw>
 </template>
