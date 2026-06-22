@@ -94,8 +94,8 @@ else
   fi
   SMOKE_LOG="/tmp/chainlink-desktop-smoke.log"
   QUARKUS_PROFILE=desktop QUARKUS_HTTP_HOST=127.0.0.1 QUARKUS_HTTP_PORT="$SMOKE_PORT" \
-    CHAINLINK_DB_PATH="$(mktemp -d)/smoke.db" CHAINLINK_FAVICON_CACHE_DIR="$(mktemp -d)" \
-    CHAINLINK_DESKTOP_WEB_ROOT="$REPO_ROOT/frontend/dist" \
+    LINKWEAVE_DB_PATH="$(mktemp -d)/smoke.db" LINKWEAVE_FAVICON_CACHE_DIR="$(mktemp -d)" \
+    LINKWEAVE_DESKTOP_WEB_ROOT="$REPO_ROOT/frontend/dist" \
     java -jar api/target/quarkus-app/quarkus-run.jar >"$SMOKE_LOG" 2>&1 &
   SMOKE_PID=$!
   trap 'kill "$SMOKE_PID" 2>/dev/null || true' EXIT
@@ -116,7 +116,7 @@ else
 fi
 
 # Stage 5 — stage payloads as Tauri resources. The SPA is NOT baked into the jar; it ships as a
-# sibling folder and is served at runtime from CHAINLINK_DESKTOP_WEB_ROOT. A trimmed Java 25
+# sibling folder and is served at runtime from LINKWEAVE_DESKTOP_WEB_ROOT. A trimmed Java 25
 # runtime is jlinked in so the bundle is self-contained. Idempotent.
 log "5/7 stage Tauri resources"
 BIN="desktop/src-tauri/bin"

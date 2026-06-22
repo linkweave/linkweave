@@ -72,7 +72,7 @@
 
 ### A5: Properties Feature Disabled
 
-**Trigger:** The `chainlink.feature.bookmark-properties.enabled` config property is `false` on the backend (step 2).
+**Trigger:** The `linkweave.feature.bookmark-properties.enabled` config property is `false` on the backend (step 2).
 **Flow:**
 
 1. The collection data contains no property definitions.

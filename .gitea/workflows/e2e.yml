@@ -9,7 +9,7 @@
 #   - The dev TLS cert lives under developer-local-settings/, which is
 #     gitignored. CI generates a fresh self-signed cert via mkcert before
 #     starting the API.
-#   - CL_FORM_LOGIN_COOKIE_SECRET only needs a value, anything works for tests.
+#   - LINKWEAVE_FORM_LOGIN_COOKIE_SECRET only needs a value, anything works for tests.
 name: e2e
 
 on:
@@ -29,7 +29,7 @@ jobs:
     env:
       # Form-login cookie encryption key. Tests don't care about the value, but
       # Quarkus refuses to boot without one.
-      CL_FORM_LOGIN_COOKIE_SECRET: ci-e2e-cookie-secret-placeholder
+      LINKWEAVE_FORM_LOGIN_COOKIE_SECRET: ci-e2e-cookie-secret-placeholder
       VITE_E2E: "true"
       QUARKUS_LOG_SENTRY_ENABLED: "false"
       # Dedicated CI hostname keeps any future concurrent dev/CI usage from

@@ -527,7 +527,7 @@ The extension needs to know where the LinkWeave API is running. This is configur
 
 ```typescript
 // src/api/config.ts
-const API_BASE_URL = import.meta.env.VITE_CHAINLINK_API_URL
+const API_BASE_URL = import.meta.env.VITE_LINKWEAVE_API_URL
   || 'https://chainlink.markushofstetter.com/api'
 
 export const apiClient = new ChainlinkClient(API_BASE_URL)
@@ -535,7 +535,7 @@ export const apiClient = new ChainlinkClient(API_BASE_URL)
 
 For local development:
 ```bash
-VITE_CHAINLINK_API_URL=https://local-chainlink.localhost:8443/api npm run dev
+VITE_LINKWEAVE_API_URL=https://local-chainlink.localhost:8443/api npm run dev
 ```
 
 ---
@@ -700,8 +700,8 @@ dist/
 | 2.3 | `extension/tsconfig.json` | **Create** | TypeScript config targeting ES2022, module ESNext. |
 | 2.4 | `extension/vite.config.ts` | **Create** | Vite config with multi-entry build for popup + service worker. |
 | 2.5 | `extension/manifest.json` | **Create** | MV3 manifest with permissions, host_permissions, popup, background. |
-| 2.6 | `extension/.env` | **Create** | Default env vars: `VITE_CHAINLINK_API_URL=https://chainlink.markushofstetter.com/api`. |
-| 2.7 | `extension/.env.development` | **Create** | Dev env vars: `VITE_CHAINLINK_API_URL=https://local-chainlink.localhost:8443/api`. |
+| 2.6 | `extension/.env` | **Create** | Default env vars: `VITE_LINKWEAVE_API_URL=https://chainlink.markushofstetter.com/api`. |
+| 2.7 | `extension/.env.development` | **Create** | Dev env vars: `VITE_LINKWEAVE_API_URL=https://local-chainlink.localhost:8443/api`. |
 | 2.8 | `extension/assets/icons/` | **Create** | Extension icons (16, 48, 128px). Can use the existing `frontend/src/assets/logo.svg` as a starting point. |
 
 ### Phase 3: Extension — Core Modules

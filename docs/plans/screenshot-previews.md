@@ -113,9 +113,9 @@ api/src/main/java/org/linkweave/api/screenshot/
 
 Config properties:
 ```properties
-chainlink.screenshot.cache-dir=developer-local-settings/screenshot-cache
-chainlink.screenshot.success-ttl=30D
-chainlink.screenshot.negative-ttl=12H
+linkweave.screenshot.cache-dir=developer-local-settings/screenshot-cache
+linkweave.screenshot.success-ttl=30D
+linkweave.screenshot.negative-ttl=12H
 ```
 
 ### ScreenshotFetcherService
@@ -129,9 +129,9 @@ chainlink.screenshot.negative-ttl=12H
 
 Config properties:
 ```properties
-chainlink.screenshot.service-url=http://localhost:3000
-chainlink.screenshot.timeout=15S
-chainlink.screenshot.enabled=true
+linkweave.screenshot.service-url=http://localhost:3000
+linkweave.screenshot.timeout=15S
+linkweave.screenshot.enabled=true
 ```
 
 ### ScreenshotService
@@ -238,10 +238,10 @@ void onScreenshotsEnabled(@ObservesAsync CollectionScreenshotsEnabledEvent event
 
 Config properties:
 ```properties
-chainlink.screenshot.cache-cleanup.max-size=200MB
-chainlink.screenshot.cache-cleanup.min-bookmark-age=28D
-chainlink.screenshot.cache-cleanup.cron=0 0 3 ? * SUN
-chainlink.screenshot.cache-cleanup.enabled=true
+linkweave.screenshot.cache-cleanup.max-size=200MB
+linkweave.screenshot.cache-cleanup.min-bookmark-age=28D
+linkweave.screenshot.cache-cleanup.cron=0 0 3 ? * SUN
+linkweave.screenshot.cache-cleanup.enabled=true
 ```
 
 ### Modified Backend Files
@@ -398,7 +398,7 @@ The GET path never calls the sidecar. If the cache is cold for a bookmark, the c
   - Exposed only on the internal compose network — not published to the host.
 - [ ] Verify ARM64 + AMD64 image availability for the chosen image tag (pin a specific digest, not `:latest`).
 - [ ] Configure network so Quarkus API can reach sidecar by service name (`http://screenshot-service:3000`).
-- [ ] Document local dev story: the sidecar is **optional** in `pnpm run dev` / `mvnw quarkus:dev`. With `chainlink.screenshot.enabled=false` (or sidecar simply unreachable), `ScreenshotTriggerService` no-ops cleanly and all tile renders return 204 → placeholders. Devs who want to test the full flow start the sidecar via `docker compose up screenshot-service`.
+- [ ] Document local dev story: the sidecar is **optional** in `pnpm run dev` / `mvnw quarkus:dev`. With `linkweave.screenshot.enabled=false` (or sidecar simply unreachable), `ScreenshotTriggerService` no-ops cleanly and all tile renders return 204 → placeholders. Devs who want to test the full flow start the sidecar via `docker compose up screenshot-service`.
 
 ---
 
@@ -406,30 +406,30 @@ The GET path never calls the sidecar. If the cache is cold for a bookmark, the c
 
 ```properties
 # Screenshot feature master switch
-chainlink.screenshot.enabled=true
+linkweave.screenshot.enabled=true
 
 # Playwright sidecar URL
-chainlink.screenshot.service-url=http://localhost:3000
+linkweave.screenshot.service-url=http://localhost:3000
 
 # Fetch timeout
-chainlink.screenshot.timeout=15S
+linkweave.screenshot.timeout=15S
 
 # Cache directory
-chainlink.screenshot.cache-dir=developer-local-settings/screenshot-cache
+linkweave.screenshot.cache-dir=developer-local-settings/screenshot-cache
 
 # Cache TTL
-chainlink.screenshot.success-ttl=30D
-chainlink.screenshot.negative-ttl=12H
+linkweave.screenshot.success-ttl=30D
+linkweave.screenshot.negative-ttl=12H
 
 # Cleanup job
-chainlink.screenshot.cache-cleanup.enabled=true
-chainlink.screenshot.cache-cleanup.max-size=200MB
-chainlink.screenshot.cache-cleanup.min-bookmark-age=28D
-chainlink.screenshot.cache-cleanup.cron=0 0 3 ? * SUN
+linkweave.screenshot.cache-cleanup.enabled=true
+linkweave.screenshot.cache-cleanup.max-size=200MB
+linkweave.screenshot.cache-cleanup.min-bookmark-age=28D
+linkweave.screenshot.cache-cleanup.cron=0 0 3 ? * SUN
 
 # Disable in tests
-%test.chainlink.screenshot.enabled=false
-%test.chainlink.screenshot.cache-cleanup.enabled=false
+%test.linkweave.screenshot.enabled=false
+%test.linkweave.screenshot.cache-cleanup.enabled=false
 ```
 
 ---

@@ -112,7 +112,7 @@ public class ConfigService {
     // the backend must never fetch favicons or screenshots for. Use for domains
     // the server cannot reach (internal CDNs) or should not hammer (rate-limiting
     // hosts). Comma- or newline-separated. Parsed once and cached; see
-    // getBackendFetchDenylist. (Config key kept as skip-domains for compatibility.)
+    // getBackendFetchDenylist.
     @ConfigProperty(name = "linkweave.fetch.skip-domains")
     Optional<String> backendFetchDenylistRaw;
 

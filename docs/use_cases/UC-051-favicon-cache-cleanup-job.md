@@ -21,17 +21,17 @@
 
 ## Trigger
 
-- A scheduler fires the cleanup job once per week (configurable via `chainlink.favicon.cache-cleanup.cron`, default `0 0 3 ? * SUN` — Sunday 03:00 server time).
+- A scheduler fires the cleanup job once per week (configurable via `linkweave.favicon.cache-cleanup.cron`, default `0 0 3 ? * SUN` — Sunday 03:00 server time).
 
 ## Main Success Scenario
 
 1. Scheduler invokes the favicon cache cleanup job.
 2. Job computes the **current cache size** by summing the byte size of every regular file in the cache directory (both `*.bin` payload files and `*.meta` sidecars).
-3. Job compares the size to the configured threshold `chainlink.favicon.cache-cleanup.max-size` (default `40MB`).
+3. Job compares the size to the configured threshold `linkweave.favicon.cache-cleanup.max-size` (default `40MB`).
 4. **If size is at or below the threshold:** job logs the current size and exits. Use case ends.
 5. **If size exceeds the threshold:**
     1. Job loads bookmarks across **all collections** ordered by `lastClickedAt` ascending (nulls last), then by `timestampErstellt` ascending, excluding soft-deleted bookmarks. The effective eviction timestamp for each bookmark is `lastClickedAt` if present, falling back to `timestampErstellt`.
-   2. For each bookmark, the job checks the bookmark's age: if it is younger than the configured minimum age `chainlink.favicon.cache-cleanup.min-bookmark-age` (default `28d` — four weeks), the bookmark and all subsequent (younger) bookmarks are skipped and the iteration ends.
+   2. For each bookmark, the job checks the bookmark's age: if it is younger than the configured minimum age `linkweave.favicon.cache-cleanup.min-bookmark-age` (default `28d` — four weeks), the bookmark and all subsequent (younger) bookmarks are skipped and the iteration ends.
    3. The job derives the **canonical origin** of the bookmark URL (same logic as UC-050) and computes the SHA-256 cache key.
    4. If `<key>.bin` and/or `<key>.meta` exist in the cache directory, they are deleted and the running cache-size estimate is decremented by their on-disk size.
    5. After each deletion, the job re-checks against the threshold. As soon as the running size estimate is at or below the threshold, the job stops iterating.
@@ -78,7 +78,7 @@
 
 ### Success Postconditions
 
-- The cache directory's total size is at or below `chainlink.favicon.cache-cleanup.max-size`, or — if A1 fired — every evictable bookmark's cache entry has been removed.
+- The cache directory's total size is at or below `linkweave.favicon.cache-cleanup.max-size`, or — if A1 fired — every evictable bookmark's cache entry has been removed.
 - No bookmark rows, collection rows, or any other user-visible data have been modified.
 - A log entry summarising the run is written.
 
@@ -94,7 +94,7 @@ The cleanup job may only delete files inside the configured favicon cache direct
 
 ### BR-109: Minimum Bookmark Age Before Eviction
 
-A bookmark whose `timestampErstellt` is younger than `chainlink.favicon.cache-cleanup.min-bookmark-age` (default 4 weeks) must not have its origin's cache entry evicted by this job. This protects recently created bookmarks from a cold-cache experience the moment a user adds them.
+A bookmark whose `timestampErstellt` is younger than `linkweave.favicon.cache-cleanup.min-bookmark-age` (default 4 weeks) must not have its origin's cache entry evicted by this job. This protects recently created bookmarks from a cold-cache experience the moment a user adds them.
 
 ### BR-110: Eviction Order
 
@@ -106,7 +106,7 @@ Cache entries are keyed by canonical origin, not by bookmark. Evicting the entry
 
 ### BR-112: Schedule Configurability
 
-The cron expression, size threshold, and minimum bookmark age are application properties (`chainlink.favicon.cache-cleanup.cron`, `.max-size`, `.min-bookmark-age`) and must be settable per environment without code changes. Setting `chainlink.favicon.cache-cleanup.enabled=false` disables the schedule entirely.
+The cron expression, size threshold, and minimum bookmark age are application properties (`linkweave.favicon.cache-cleanup.cron`, `.max-size`, `.min-bookmark-age`) and must be settable per environment without code changes. Setting `linkweave.favicon.cache-cleanup.enabled=false` disables the schedule entirely.
 
 ### BR-113: Cleanup Is Best-Effort
 

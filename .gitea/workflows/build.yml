@@ -299,7 +299,7 @@ jobs:
             read -r Y MD HM <<< "$(date -u +'%Y %m%d %H%M')"
             VERSION="${Y}.$((10#$MD)).$((10#$HM))"
           fi
-          ARTIFACT_NAME="chainlink-extension-${VERSION}"
+          ARTIFACT_NAME="linkweave-extension-${VERSION}"
           echo "VERSION=$VERSION" >> $GITEA_OUTPUT
           echo "ARTIFACT_NAME=$ARTIFACT_NAME" >> $GITEA_OUTPUT
           echo "Extension version: $VERSION"
@@ -336,13 +336,13 @@ jobs:
 
       - name: Package extension
         working-directory: frontend
-        run: pnpm exec web-ext build --source-dir dist-extension --artifacts-dir . --overwrite-dest --filename chainlink-extension.zip
+        run: pnpm exec web-ext build --source-dir dist-extension --artifacts-dir . --overwrite-dest --filename linkweave-extension.zip
 
       - name: Upload extension artifact
         uses: actions/upload-artifact@v3
         with:
-          name: chainlink-extension-${{ steps.version.outputs.VERSION }}
-          path: frontend/chainlink-extension.zip
+          name: linkweave-extension-${{ steps.version.outputs.VERSION }}
+          path: frontend/linkweave-extension.zip
 
   deploy:
     needs: [build, build-frontend, build-screenshot-sidecar]
@@ -376,6 +376,14 @@ jobs:
           sed -i "s|linkweave-api:.*|linkweave-api:${COMMIT_HASH}|g" docker-compose.yml
           sed -i "s|linkweave-frontend:.*|linkweave-frontend:${COMMIT_HASH}|g" docker-compose.yml
           sed -i "s|linkweave-screenshot-service:.*|linkweave-screenshot-service:${COMMIT_HASH}|g" docker-compose.yml
+          # Fail loud if the sed matched nothing (e.g. the external compose still uses the old
+          # chainlink-* image names) — otherwise prod silently keeps the previous tag forever.
+          for img in linkweave-api linkweave-frontend linkweave-screenshot-service; do
+            grep -q "${img}:${COMMIT_HASH}" docker-compose.yml || {
+              echo "ERROR: ${img}:${COMMIT_HASH} not found after sed — does the compose still reference old chainlink-* image names?" >&2
+              exit 1
+            }
+          done
           echo "docker-compose.yml content (after sed):"
           cat docker-compose.yml
           echo "Git diff showing changes:"
@@ -388,7 +396,7 @@ jobs:
           git config user.email "gitea-actions[bot]@users.noreply.gitea"
           git add chainlink/docker-compose.yml
           git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "chore(chainlink): update image tags to ${{ steps.commit-hash.outputs.COMMIT_HASH }}"
+          git commit -m "chore(deploy): update image tags to ${{ steps.commit-hash.outputs.COMMIT_HASH }}"
           git push
 
   release:
@@ -432,8 +440,8 @@ jobs:
           curl -sf -w "\nHTTP_CODE:%{http_code}" -X POST \
             "${GITEA_API}/releases/${RELEASE_ID}/assets" \
             -H "Authorization: token ${GITEA_TOKEN}" \
-            -F "name=chainlink-extension-${TAG}.zip" \
-            -F "attachment=@chainlink-extension.zip"
+            -F "name=linkweave-extension-${TAG}.zip" \
+            -F "attachment=@linkweave-extension.zip"
 
   publish-chrome:
     needs: [build-extension, release]
@@ -446,7 +454,7 @@ jobs:
           name: ${{ needs.build-extension.outputs.artifact-name }}
 
       - name: Publish to Chrome Web Store
-        run: npx chrome-webstore-upload-cli@3 upload --source chainlink-extension.zip --auto-publish
+        run: npx chrome-webstore-upload-cli@3 upload --source linkweave-extension.zip --auto-publish
         env:
           EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
           CLIENT_ID: ${{ secrets.CHROME_EXTENSION_GWS_CLIENT_ID }}
@@ -471,7 +479,7 @@ jobs:
       - name: Unzip extension for Firefox
         run: |
           mkdir -p extension-src
-          unzip chainlink-extension.zip -d extension-src
+          unzip linkweave-extension.zip -d extension-src
 
       - name: Publish to Firefox Add-ons
         run: npx web-ext sign --channel=listed --source-dir extension-src

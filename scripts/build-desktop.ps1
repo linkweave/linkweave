@@ -97,9 +97,9 @@ if ($SkipSmoke) {
     $env:QUARKUS_PROFILE = "desktop"
     $env:QUARKUS_HTTP_HOST = "127.0.0.1"
     $env:QUARKUS_HTTP_PORT = $SmokePort
-    $env:CHAINLINK_DB_PATH = $SmokeDb
-    $env:CHAINLINK_FAVICON_CACHE_DIR = $SmokeFav
-    $env:CHAINLINK_DESKTOP_WEB_ROOT = "$REPO_ROOT\frontend\dist"
+    $env:LINKWEAVE_DB_PATH = $SmokeDb
+    $env:LINKWEAVE_FAVICON_CACHE_DIR = $SmokeFav
+    $env:LINKWEAVE_DESKTOP_WEB_ROOT = "$REPO_ROOT\frontend\dist"
 
     $proc = Start-Process -FilePath "java" `
         -ArgumentList "-jar", "$REPO_ROOT\api\target\quarkus-app\quarkus-run.jar" `
@@ -120,7 +120,7 @@ if ($SkipSmoke) {
     }
     Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
     Remove-Item Env:\QUARKUS_PROFILE, Env:\QUARKUS_HTTP_HOST, Env:\QUARKUS_HTTP_PORT,
-        Env:\CHAINLINK_DB_PATH, Env:\CHAINLINK_FAVICON_CACHE_DIR, Env:\CHAINLINK_DESKTOP_WEB_ROOT `
+        Env:\LINKWEAVE_DB_PATH, Env:\LINKWEAVE_FAVICON_CACHE_DIR, Env:\LINKWEAVE_DESKTOP_WEB_ROOT `
         -ErrorAction SilentlyContinue
 
     if (-not $smokeOk) {
