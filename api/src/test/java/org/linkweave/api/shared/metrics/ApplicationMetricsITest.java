@@ -40,7 +40,11 @@ class ApplicationMetricsITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldIncludeCustomLinkweaveMetricsAfterRefresh() {
-        fixtureService.createTestCollection();
+        // createTestBookmark creates a Collection *with* a Bookmark, so the
+        // bookmarks-per-collection MultiGauge actually has a row to emit —
+        // otherwise linkweave_bookmarks_total is absent and the assertion only
+        // passes via leaked cross-test state.
+        fixtureService.createTestBookmark(b -> {});
 
         metricsService.refreshMetrics();
 
