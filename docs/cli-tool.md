@@ -1,6 +1,6 @@
 # CLI Tool & API Key Architecture
 
-**Status:** Draft
+**Status:** In Progress — Phases 1–2 complete (API key backend + web UI); CLI (Phases 3–5) pending
 **Date:** 2026-05-10
 
 ---
@@ -187,24 +187,28 @@ chainlink/
 
 ## Implementation Phases
 
-### Phase 1: API Key Backend (Prerequisite)
+### Phase 1: API Key Backend (Prerequisite) — ✅ Done
 
-- [ ] Create `ApiKey` entity
-- [ ] Create Flyway migration
-- [ ] Create `ApiKeyRepo`
-- [ ] Create `ApiKeyService`
-- [ ] Create `ApiKeyResource` with JSON DTOs
-- [ ] Create `ApiKeyAuthenticationMechanism`
-- [ ] Register mechanism in Quarkus
-- [ ] Integration tests (`ApiKeyITest`, `ApiKeyAuthITest`)
+Implemented in `api/src/main/java/org/chainlink/api/auth/apikey/`.
 
-### Phase 2: Frontend — API Key Management
+- [x] Create `ApiKey` entity
+- [x] Create Flyway migration
+- [x] Create `ApiKeyRepo`
+- [x] Create `ApiKeyService`
+- [x] Create `ApiKeyResource` with JSON DTOs
+- [x] Create `ApiKeyAuthenticationMechanism` (`ApiKeyAuthMechanism` + `ApiKeyIdentityProvider`)
+- [x] Register mechanism in Quarkus
+- [x] Integration tests (`ApiKeyResourceITest`)
 
-- [ ] Add API Keys section to Settings page
-- [ ] Create key dialog
-- [ ] Key list table
-- [ ] Revoke key confirmation
-- [ ] One-time key display with copy
+### Phase 2: Frontend — API Key Management — ✅ Done
+
+Implemented in `frontend/src/components/apikey/` and `frontend/src/stores/apiKey.ts`.
+
+- [x] Add API Keys section to Settings page (`ApiKeySection.vue`)
+- [x] Create key dialog (`ApiKeyCreateDialog.vue`)
+- [x] Key list table
+- [x] Revoke key confirmation
+- [x] One-time key display with copy (`ApiKeyRevealDialog.vue`)
 
 ### Phase 3: CLI Scaffolding
 
