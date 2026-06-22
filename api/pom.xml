@@ -310,11 +310,11 @@
                     <dataFile>${project.build.directory}/jacoco-quarkus.exec</dataFile>
                     <excludes>
                         <!-- QueryDSL generated query types (Q*.class) -->
-                        <exclude>org/chainlink/**/Q*.class</exclude>
+                        <exclude>org/linkweave/**/Q*.class</exclude>
                         <!-- Hibernate JPA canonical metamodel (*_.class, e.g. Bookmark_) -->
-                        <exclude>org/chainlink/**/*_.class</exclude>
+                        <exclude>org/linkweave/**/*_.class</exclude>
                         <!-- Hibernate Jakarta Data static metamodel (_*.class, e.g. _Bookmark) -->
-                        <exclude>org/chainlink/**/_*.class</exclude>
+                        <exclude>org/linkweave/**/_*.class</exclude>
                     </excludes>
                     <rules>
                         <rule>

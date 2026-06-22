@@ -85,7 +85,7 @@ This document describes the architecture for adding a command-line interface (CL
 ```
 chainlink/
 ├── api/                                    # Existing Quarkus backend
-│   └── src/main/java/org/chainlink/api/
+│   └── src/main/java/org/linkweave/api/
 │       ├── auth/
 │       │   ├── AuthResource.java           # Existing
 │       │   ├── ApiKeyResource.java         # NEW: CRUD for API keys
@@ -125,12 +125,12 @@ chainlink/
 
 #### 1a. Entity & Repository
 
-- **`ApiKey` entity** (`api/src/main/java/org/chainlink/api/auth/ApiKey.java`)
+- **`ApiKey` entity** (`api/src/main/java/org/linkweave/api/auth/ApiKey.java`)
   - Fields: `id`, `user` (ManyToOne), `name`, `keyHash`, `keyPrefix`, `createdAt`, `lastUsedAt`, `revokedAt`
   - Extends `AbstractEntity` (gets `userErstellt`/`userMutiert` for audit)
   - `@Column` lengths from `DbConst`
 
-- **`ApiKeyRepo`** (`api/src/main/java/org/chainlink/api/auth/ApiKeyRepo.java`)
+- **`ApiKeyRepo`** (`api/src/main/java/org/linkweave/api/auth/ApiKeyRepo.java`)
   - `findByKeyHash(String hash)` — for auth lookup
   - `findActiveByUserId(ID<User> userId)` — for listing
   - `countActiveByUserId(ID<User> userId)` — for max-key enforcement
@@ -144,7 +144,7 @@ chainlink/
 
 #### 1c. Service Layer
 
-- **`ApiKeyService`** (`api/src/main/java/org/chainlink/api/auth/ApiKeyService.java`)
+- **`ApiKeyService`** (`api/src/main/java/org/linkweave/api/auth/ApiKeyService.java`)
   - `createApiKey(ID<User> userId, String name)` — generates key, hashes, stores, returns raw key once
   - `listActiveKeys(ID<User> userId)` — returns all non-revoked keys for the user
   - `revokeKey(ID<User> userId, ID<ApiKey> keyId)` — sets `revokedAt`
@@ -153,7 +153,7 @@ chainlink/
 
 #### 1d. Resource Layer
 
-- **`ApiKeyResource`** (`api/src/main/java/org/chainlink/api/auth/ApiKeyResource.java`)
+- **`ApiKeyResource`** (`api/src/main/java/org/linkweave/api/auth/ApiKeyResource.java`)
   - `@Authenticated` — requires web session (API keys cannot manage other API keys)
   - `POST /api/auth/api-keys` — create key
   - `GET /api/auth/api-keys` — list keys
@@ -163,7 +163,7 @@ chainlink/
 
 #### 1e. Authentication Mechanism
 
-- **`ApiKeyAuthenticationMechanism`** (`api/src/main/java/org/chainlink/infrastructure/auth/ApiKeyAuthenticationMechanism.java`)
+- **`ApiKeyAuthenticationMechanism`** (`api/src/main/java/org/linkweave/infrastructure/auth/ApiKeyAuthenticationMechanism.java`)
   - Implements Quarkus `HttpAuthenticationMechanism`
   - Checks for `X-API-Key` header on every request
   - Strips `cl_` prefix, computes SHA-256, looks up via `ApiKeyService`
@@ -189,7 +189,7 @@ chainlink/
 
 ### Phase 1: API Key Backend (Prerequisite) — ✅ Done
 
-Implemented in `api/src/main/java/org/chainlink/api/auth/apikey/`.
+Implemented in `api/src/main/java/org/linkweave/api/auth/apikey/`.
 
 - [x] Create `ApiKey` entity
 - [x] Create Flyway migration

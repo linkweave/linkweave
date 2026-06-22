@@ -90,7 +90,7 @@ ALTER TABLE Collection ADD COLUMN screenshot_enabled BOOLEAN NOT NULL DEFAULT 0;
 ### Package: `org.linkweave.api.screenshot`
 
 ```
-api/src/main/java/org/chainlink/api/screenshot/
+api/src/main/java/org/linkweave/api/screenshot/
 ├── ScreenshotCacheService.java      — File-based cache (mirrors FaviconCacheService)
 ├── ScreenshotFetcherService.java    — HTTP client to Playwright sidecar
 ├── ScreenshotService.java           — Cache-first orchestration

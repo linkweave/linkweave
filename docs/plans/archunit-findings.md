@@ -1,7 +1,7 @@
 # ArchUnit Tests — Status & Findings
 
 Implements **UC-035** (FR-039). Tests live under
-`api/src/test/java/org/chainlink/api/shared/archunit/`.
+`api/src/test/java/org/linkweave/api/shared/archunit/`.
 
 Ported 1:1 from the `esc` reference project, adapted to chainlink's package
 layout. Three esc-only suites were dropped (no analog in chainlink): `MetricsTest`

@@ -179,14 +179,14 @@ The tag name is idempotent-friendly: if the user imports twice on the same day, 
 | Action | File |
 |---|---|
 | **Modify** | `api/pom.xml` — add jsoup + multipart deps |
-| **Create** | `api/src/main/java/org/chainlink/application/import_/ParsedFolder.java` |
-| **Create** | `api/src/main/java/org/chainlink/application/import_/ParsedBookmark.java` |
-| **Create** | `api/src/main/java/org/chainlink/application/import_/NetscapeBookmarkParser.java` |
-| **Create** | `api/src/main/java/org/chainlink/application/import_/ImportSummaryJson.java` |
-| **Create** | `api/src/main/java/org/chainlink/application/import_/BookmarkImportService.java` |
-| **Create** | `api/src/main/java/org/chainlink/infrastructure/rest/ImportResource.java` |
-| **Create** | `api/src/test/java/org/chainlink/application/import_/NetscapeBookmarkParserTest.java` |
-| **Create** | `api/src/test/java/org/chainlink/application/import_/BookmarkImportServiceTest.java` |
+| **Create** | `api/src/main/java/org/linkweave/application/import_/ParsedFolder.java` |
+| **Create** | `api/src/main/java/org/linkweave/application/import_/ParsedBookmark.java` |
+| **Create** | `api/src/main/java/org/linkweave/application/import_/NetscapeBookmarkParser.java` |
+| **Create** | `api/src/main/java/org/linkweave/application/import_/ImportSummaryJson.java` |
+| **Create** | `api/src/main/java/org/linkweave/application/import_/BookmarkImportService.java` |
+| **Create** | `api/src/main/java/org/linkweave/infrastructure/rest/ImportResource.java` |
+| **Create** | `api/src/test/java/org/linkweave/application/import_/NetscapeBookmarkParserTest.java` |
+| **Create** | `api/src/test/java/org/linkweave/application/import_/BookmarkImportServiceTest.java` |
 | **Create** | `api/src/test/resources/__files/bookmarks-sample.html` |
 
 ---

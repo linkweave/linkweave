@@ -283,7 +283,7 @@ extension/
 
 ### 5.1 CORS Filter (New File)
 
-**File:** `api/src/main/java/org/chainlink/infrastructure/cors/CorsFilter.java`
+**File:** `api/src/main/java/org/linkweave/infrastructure/cors/CorsFilter.java`
 
 A JAX-RS `ContainerResponseFilter` that adds CORS headers to all API responses:
 
@@ -320,7 +320,7 @@ chainlink.cors.allow-extension-origins=true
 
 ### 5.3 Config Service Update
 
-**File:** `api/src/main/java/org/chainlink/api/shared/config/ConfigService.java`
+**File:** `api/src/main/java/org/linkweave/api/shared/config/ConfigService.java`
 
 Add a method to read CORS configuration:
 
@@ -686,9 +686,9 @@ dist/
 
 | # | File | Action | Description |
 |---|------|--------|-------------|
-| 1.1 | `api/src/main/java/org/chainlink/infrastructure/cors/CorsFilter.java` | **Create** | JAX-RS `ContainerResponseFilter` that adds CORS headers. Matches origins against allowed patterns (LinkWeave domain, `chrome-extension://*`, `moz-extension://*`). Handles OPTIONS preflight. |
+| 1.1 | `api/src/main/java/org/linkweave/infrastructure/cors/CorsFilter.java` | **Create** | JAX-RS `ContainerResponseFilter` that adds CORS headers. Matches origins against allowed patterns (LinkWeave domain, `chrome-extension://*`, `moz-extension://*`). Handles OPTIONS preflight. |
 | 1.2 | `api/src/main/resources/application.properties` | **Modify** | Add `chainlink.cors.allowed-origins` config property (dev + prod). |
-| 1.3 | `api/src/main/java/org/chainlink/api/shared/config/ConfigService.java` | **Modify** | Add `getCorsAllowedOrigins()` and `isCorsExtensionOriginsAllowed()` methods. |
+| 1.3 | `api/src/main/java/org/linkweave/api/shared/config/ConfigService.java` | **Modify** | Add `getCorsAllowedOrigins()` and `isCorsExtensionOriginsAllowed()` methods. |
 | 1.4 | `CorsFilter` | **Test** | Unit test: verify CORS headers for allowed origins, no headers for disallowed origins, OPTIONS preflight handling. |
 
 ### Phase 2: Extension — Project Scaffold

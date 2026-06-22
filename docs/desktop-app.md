@@ -99,7 +99,7 @@ Google OAuth requires browser redirect to a fixed callback URL. A desktop app on
 
 ### 3. Favicon cache directory is also relative (no code change needed)
 
-This is **not** in `application.properties`. It's a `@ConfigProperty(name = "chainlink.favicon.cache-dir", defaultValue = "developer-local-settings/favicon-cache")` in `api/src/main/java/org/chainlink/api/shared/config/ConfigService.java:108`.
+This is **not** in `application.properties`. It's a `@ConfigProperty(name = "chainlink.favicon.cache-dir", defaultValue = "developer-local-settings/favicon-cache")` in `api/src/main/java/org/linkweave/api/shared/config/ConfigService.java:108`.
 
 Because it's already a Quarkus config property, no code change is required — Quarkus auto-maps the env var `CHAINLINK_FAVICON_CACHE_DIR` onto `chainlink.favicon.cache-dir`. The shell just exports it. (The same env-var mapping is why the DB path in #1 is the only config that needs a property-file edit — `quarkus.datasource.jdbc.url` is a single string we have to splice the path into.)
 

@@ -11,7 +11,7 @@
 
 The docs in `docs/cli-tool.md` describe 5 phases. **Phases 1 and 2 are already done** and you must NOT redo them:
 
-- **Backend API-key auth (UC-077/UC-078) — DONE.** See `api/src/main/java/org/chainlink/api/auth/apikey/`:
+- **Backend API-key auth (UC-077/UC-078) — DONE.** See `api/src/main/java/org/linkweave/api/auth/apikey/`:
   `ApiKeyResource` (`GET/POST/DELETE /api/auth/api-keys`), `ApiKeyAuthMechanism`, `ApiKeyService`, `ApiKeyIdentityProvider`. The server already authenticates the `X-API-Key` header.
 - **Web UI for managing keys — DONE.** `frontend/src/components/apikey/`, `stores/apiKey.ts`. Users create/copy/revoke keys in the browser.
 

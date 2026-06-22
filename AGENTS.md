@@ -63,7 +63,7 @@ The project uses custom types like `ID<T>` and `EmailAddress`. Use their `fromSt
 
 ## Database
 
-- **Location**: `developer-local-settings/chainlink.db`
+- **Location**: `developer-local-settings/linkweave.db`
 - **Migrations**: Flyway
 
 ### Security in Tests
