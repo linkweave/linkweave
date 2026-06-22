@@ -55,12 +55,12 @@ class AuthFlowITest {
             .then()
             .statusCode(200)
             .extract()
-            .cookie("chainlink-credential");
+            .cookie("linkweave-credential");
 
         assertThat(sessionCookie).isNotBlank();
 
         String json = RestAssured.given()
-            .cookie("chainlink-credential", sessionCookie)
+            .cookie("linkweave-credential", sessionCookie)
             .get("/auth/me")
             .then()
             .statusCode(200)
@@ -85,24 +85,24 @@ class AuthFlowITest {
             .then()
             .statusCode(200)
             .extract()
-            .cookie("chainlink-credential");
+            .cookie("linkweave-credential");
 
         assertThat(sessionCookie).isNotBlank();
 
         RestAssured.given()
-            .cookie("chainlink-credential", sessionCookie)
+            .cookie("linkweave-credential", sessionCookie)
             .get("/auth/me")
             .then()
             .statusCode(200);
 
         var logoutResponse = RestAssured.given()
-            .cookie("chainlink-credential", sessionCookie)
+            .cookie("linkweave-credential", sessionCookie)
             .post("/auth/logout")
             .then()
             .statusCode(204)
             .extract();
 
-        String clearedCookie = logoutResponse.cookie("chainlink-credential");
+        String clearedCookie = logoutResponse.cookie("linkweave-credential");
         assertThat(clearedCookie).isEmpty();
 
         RestAssured.given()

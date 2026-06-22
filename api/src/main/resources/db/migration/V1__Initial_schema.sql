@@ -1,4 +1,4 @@
--- Initial schema for LinkWeave application
+-- Initial schema for Chainlink application
 -- All tables with named FK constraints and composite FK indexes
 
 -- Create REVINFO table for Hibernate Envers

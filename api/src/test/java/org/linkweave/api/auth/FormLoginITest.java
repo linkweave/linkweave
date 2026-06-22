@@ -28,7 +28,7 @@ class FormLoginITest {
         assertThat(sessionCookie).isNotBlank();
 
         String meJson = RestAssured.given()
-            .cookie("chainlink-credential", sessionCookie)
+            .cookie("linkweave-credential", sessionCookie)
             .get("/auth/me")
             .then()
             .statusCode(200)
@@ -77,19 +77,19 @@ class FormLoginITest {
         String sessionCookie = loginAndGetCookie(email, password);
 
         RestAssured.given()
-            .cookie("chainlink-credential", sessionCookie)
+            .cookie("linkweave-credential", sessionCookie)
             .get("/auth/me")
             .then()
             .statusCode(200);
 
         var logoutResponse = RestAssured.given()
-            .cookie("chainlink-credential", sessionCookie)
+            .cookie("linkweave-credential", sessionCookie)
             .post("/auth/logout")
             .then()
             .statusCode(204)
             .extract();
 
-        String clearedCookie = logoutResponse.cookie("chainlink-credential");
+        String clearedCookie = logoutResponse.cookie("linkweave-credential");
         assertThat(clearedCookie).isEmpty();
 
         RestAssured.given()
@@ -116,7 +116,7 @@ class FormLoginITest {
         assertThat(cookie1).isNotBlank();
 
         RestAssured.given()
-            .cookie("chainlink-credential", cookie1)
+            .cookie("linkweave-credential", cookie1)
             .post("/auth/logout")
             .then()
             .statusCode(204);
@@ -125,7 +125,7 @@ class FormLoginITest {
         assertThat(cookie2).isNotBlank();
 
         RestAssured.given()
-            .cookie("chainlink-credential", cookie2)
+            .cookie("linkweave-credential", cookie2)
             .get("/auth/me")
             .then()
             .statusCode(200);
@@ -140,7 +140,7 @@ class FormLoginITest {
         String cookie = loginAndGetCookie(email, password);
 
         String meJson = RestAssured.given()
-            .cookie("chainlink-credential", cookie)
+            .cookie("linkweave-credential", cookie)
             .get("/auth/me")
             .then()
             .statusCode(200)
@@ -178,6 +178,6 @@ class FormLoginITest {
             .then()
             .statusCode(200)
             .extract()
-            .cookie("chainlink-credential");
+            .cookie("linkweave-credential");
     }
 }
