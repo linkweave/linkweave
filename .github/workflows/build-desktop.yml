@@ -121,7 +121,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: chainlink-desktop-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}
+          name: linkweave-desktop-${{ matrix.platform }}-${{ steps.version.outputs.VERSION }}
           path: desktop/dist/*
           retention-days: 30
 
