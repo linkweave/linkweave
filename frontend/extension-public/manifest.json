@@ -4,10 +4,8 @@
   "version": "0.0.0",
   "description": "Save and browse your self-hosted LinkWeave bookmarks from any tab",
   "permissions": ["activeTab", "tabs", "contextMenus", "storage"],
-  "host_permissions": [
-    "https://chainlink.markushofstetter.com/*",
-    "https://dev-chainlink.markushofstetter.com/*"
-  ],
+  "host_permissions": ["https://linkweave.dev/*"],
+  "optional_host_permissions": ["https://*/*"],
   "icons": {
     "48": "icon-48.png"
   },
@@ -29,7 +27,7 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "extension@linkweave.dev",
+      "id": "chainlink@markushofstetter.com",
       "strict_min_version": "142.0",
       "data_collection_permissions": {
         "required": ["browsingActivity"]

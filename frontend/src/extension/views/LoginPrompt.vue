@@ -12,7 +12,7 @@ function openWebApp() {
 
 <template>
   <div class="flex flex-col items-center justify-center gap-4 p-8 text-center">
-    <img src="@/assets/ChainlinkLogoTrResc.png" alt="LinkWeave" class="w-12 h-12 opacity-80" />
+    <img src="@/assets/LinkWeaveLogoTrResc.png" alt="LinkWeave" class="w-12 h-12 opacity-80" />
     <div>
       <p class="font-medium text-sm">Sign in to LinkWeave</p>
       <p class="text-xs text-muted-foreground mt-1">

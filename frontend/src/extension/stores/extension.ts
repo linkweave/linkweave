@@ -16,6 +16,7 @@ import type {
 } from '@/api/generated'
 import { loadExtensionConfig, createApiConfig } from '../api/client'
 import type { ExtensionConfig } from '../api/client'
+import { hasApiPermission, requestApiPermission } from '../api/permissions'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { parseSearchQuery, bookmarkMatchesTerms } from '@/utils/search'
@@ -28,6 +29,7 @@ export const useExtensionStore = defineStore('extension', () => {
   let bookmarkApi: BookmarkResourceApi
   let tagApi: TagResourceApi
   const webAppUrl = ref('')
+  const apiUrl = ref('')
 
   // --- Current browser tab ---
   const currentTabUrl = ref('')
@@ -35,6 +37,9 @@ export const useExtensionStore = defineStore('extension', () => {
   // --- Auth ---
   const user = ref<UserInfoJson | null>(null)
   const isAuthenticated = computed(() => user.value !== null)
+
+  // --- Permission to reach the self-hosted API host ---
+  const needsPermission = ref(false)
 
   // --- Collections ---
   const collections = ref<CollectionSummaryJson[]>([])
@@ -114,10 +119,10 @@ export const useExtensionStore = defineStore('extension', () => {
   function setError(e: unknown): void {
     if (e instanceof ResponseError) {
       error.value = `HTTP ${e.response.status} – ${e.response.url}`
-      console.error('[chainlink] error', e.response.status, e.response.url)
+      console.error('[linkweave] error', e.response.status, e.response.url)
     } else {
       error.value = e instanceof Error ? e.message : String(e)
-      console.error('[chainlink] error', e)
+      console.error('[linkweave] error', e)
     }
   }
 
@@ -131,6 +136,7 @@ export const useExtensionStore = defineStore('extension', () => {
     bookmarkApi = new BookmarkResourceApi(apiConfig)
     tagApi = new TagResourceApi(apiConfig)
     webAppUrl.value = config.webAppUrl
+    apiUrl.value = config.apiUrl
     return config
   }
 
@@ -139,6 +145,13 @@ export const useExtensionStore = defineStore('extension', () => {
     error.value = null
     try {
       await loadConfig()
+      // Self-hosted hosts are granted at runtime — refuse to fire API calls
+      // until the user has authorised the configured origin.
+      if (!(await hasApiPermission(apiUrl.value))) {
+        needsPermission.value = true
+        return
+      }
+      needsPermission.value = false
       user.value = await authApi.apiAuthMeGet()
       const defaultId = user.value.defaultCollectionId
       await Promise.all([
@@ -215,10 +228,26 @@ export const useExtensionStore = defineStore('extension', () => {
     searchQuery.value = ''
   }
 
+  /** Requests host permission for the configured API origin, then initialises. */
+  async function grantPermission(): Promise<void> {
+    // apiUrl is already populated by the initialize() that set needsPermission.
+    // Call request() with no preceding await so the user gesture stays active
+    // (Firefox invalidates the gesture across an intervening await).
+    const granted = await requestApiPermission(apiUrl.value)
+    if (!granted) {
+      error.value = 'Access to the API host was denied. Grant permission in the options page.'
+      return
+    }
+    needsPermission.value = false
+    await initialize()
+  }
+
   return {
     user,
     isAuthenticated,
     webAppUrl,
+    apiUrl,
+    needsPermission,
     currentTabUrl,
     alreadySavedBookmark,
     collections,
@@ -235,6 +264,7 @@ export const useExtensionStore = defineStore('extension', () => {
     filteredBookmarks,
     loadConfig,
     initialize,
+    grantPermission,
     loadCollections,
     loadCollection,
     createBookmark,

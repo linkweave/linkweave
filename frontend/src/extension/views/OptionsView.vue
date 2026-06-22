@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { loadExtensionConfig, saveExtensionConfig, getDefaults } from '../api/client'
 import type { ExtensionConfig } from '../api/client'
+import { requestApiPermission } from '../api/permissions'
 import ButtonLw from '@/components/ui/ButtonLw.vue'
 
 const apiUrl = ref('')
@@ -27,6 +28,12 @@ async function save() {
       apiUrl: apiUrl.value.replace(/\/+$/, ''),
       webAppUrl: webAppUrl.value.replace(/\/+$/, ''),
     }
+    // Host access is granted per-instance at runtime (Save is a user gesture).
+    const granted = await requestApiPermission(config.apiUrl)
+    if (!granted) {
+      error.value = 'Permission to access the API host was denied. The extension cannot reach your LinkWeave instance without it.'
+      return
+    }
     await saveExtensionConfig(config)
     saved.value = true
     setTimeout(() => { saved.value = false }, 3000)
@@ -48,7 +55,7 @@ function resetDefaults() {
   <div class="max-w-lg mx-auto p-8">
     <!-- Header -->
     <div class="flex items-center gap-3 mb-8">
-      <img src="@/assets/ChainlinkLogoTrResc.png" alt="LinkWeave" class="w-8 h-8" />
+      <img src="@/assets/LinkWeaveLogoTrResc.png" alt="LinkWeave" class="w-8 h-8" />
       <div>
         <h1 class="text-lg font-semibold">LinkWeave Options</h1>
         <p class="text-xs text-muted-foreground">Configure your self-hosted instance</p>
