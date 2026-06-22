@@ -35,7 +35,7 @@ Use stereotype annotations like `@JaxResource` and `@Service`. They mark the lay
 
 All access checks are performed in the **Resource layer** using `AuthorizationService`.
 - Services and Repositories never perform authorization checks — they trust the caller.
-- `AuthorizationService` (`org.chainlink.api.shared.auth.AuthorizationService`) is the single source of truth for "can user X access resource Y".
+- `AuthorizationService` (`org.linkweave.api.shared.auth.AuthorizationService`) is the single source of truth for "can user X access resource Y".
 - Use `require*` methods (e.g. `requireCollectionAccess`) for guard clauses — they throw `AppAuthorizationException` (HTTP 403).
 - Use `has*` methods (e.g. `hasCollectionAccess`) for conditional branching — they return boolean.
 - Never inject `CollectionAccessRepo` or `CurrentUserService` into business services for authorization purposes.

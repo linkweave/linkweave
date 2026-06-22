@@ -26,8 +26,8 @@ build.properties
 docker-compose.override.yml
 
  ## test database
-api/chainlink.db
-api/chainlink-test.db
+api/linkweave.db
+api/linkweave-test.db
 
 ### Build systems ###
 

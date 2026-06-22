@@ -34,7 +34,7 @@ Decisions: **D1 = yes** (code identity now, hostnames later), **D2 = yes** (rena
   - `quarkus.http.auth.form.cookie-name=chainlink-credential` and `same-site-cookie."chainlink-credential"` → changing **logs out all sessions** (acceptable pre-launch).
   - `%test/%desktop ... session.encryption-key=chainlink-*-key` → literal secrets; changing invalidates existing encrypted sessions (fine pre-launch).
   - `cookie-domain=*chainlink.markushofstetter.com` → **Tier-out (§8), do NOT change in pass 1.**
-  - `quarkus.application.name`, `app.deployment.app-project`, `CHAINLINK_DESKTOP_WEB_ROOT`, fault-tolerance keys (`org.chainlink.api...`), `chainlink.favicon.*`, `chainlink.fetch.*` config namespaces.
+  - `quarkus.application.name`, `app.deployment.app-project`, `CHAINLINK_DESKTOP_WEB_ROOT`, fault-tolerance keys (`org.linkweave.api...`), `chainlink.favicon.*`, `chainlink.fetch.*` config namespaces.
 - `desktop/src-tauri/tauri.conf.json` — **bundle identifier / productName**. Changing the identifier changes the desktop app's update channel & data dir; intended but call it out (D3).
 - DB files on disk: `developer-local-settings/chainlink.db`, `api/chainlink-test.db` — physically move/rename or the app silently creates a fresh empty DB.
 - **Browser extension** (`frontend/extension-public/manifest.json`, `frontend/src/extension/{popup,options}.html`):

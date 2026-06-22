@@ -126,7 +126,7 @@ Frontend already preloads `collectionInfo` (which contains tags, folders, etc.) 
 
 ### ArchUnit
 
-No special concern — entity sits in the existing `bookmark` package (it's tightly coupled to tag resolution). If `chainlink-api` ArchUnit complains about location, move to a dedicated `org.chainlink.api.autotag` package.
+No special concern — entity sits in the existing `bookmark` package (it's tightly coupled to tag resolution). If `chainlink-api` ArchUnit complains about location, move to a dedicated `org.linkweave.api.autotag` package.
 
 ## Frontend
 

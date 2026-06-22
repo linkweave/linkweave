@@ -34,10 +34,10 @@ No new use case file is needed.
 
 ## Sort field enum
 
-Define an enum in `org.chainlink.api.collection.SortField`:
+Define an enum in `org.linkweave.api.collection.SortField`:
 
 ```java
-package org.chainlink.api.collection;
+package org.linkweave.api.collection;
 
 public enum SortField {
     TITLE,
@@ -50,7 +50,7 @@ public enum SortField {
 And:
 
 ```java
-package org.chainlink.api.collection;
+package org.linkweave.api.collection;
 
 public enum SortDirection {
     ASC,
@@ -166,7 +166,7 @@ Existing rules should cover the new endpoint (JaxResource stereotype, `@Authenti
 
 - [ ] FR-082 updated in `docs/requirements.md` (per-collection scope only, shared-clicks note included).
 - [ ] UC-076 retains BR-108 (system default fallback) and carries the shared-clicks note.
-- [ ] `SortField` and `SortDirection` enums in `org.chainlink.api.collection`.
+- [ ] `SortField` and `SortDirection` enums in `org.linkweave.api.collection`.
 - [ ] `CollectionSettingsJson` carries `sortField` + `sortDirection` (nullable).
 - [ ] PUT `/collections/{id}/settings` merges new fields; existing layout preference unaffected.
 - [ ] DELETE `/collections/{id}/settings/sort` clears sort fields, keeps layout.

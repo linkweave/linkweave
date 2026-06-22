@@ -87,7 +87,7 @@ ALTER TABLE Collection ADD COLUMN screenshot_enabled BOOLEAN NOT NULL DEFAULT 0;
 
 ## Backend
 
-### Package: `org.chainlink.api.screenshot`
+### Package: `org.linkweave.api.screenshot`
 
 ```
 api/src/main/java/org/chainlink/api/screenshot/
