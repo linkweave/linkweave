@@ -4,7 +4,7 @@ Implementation plan for **UC-052: Run LinkWeave as a Desktop Application**.
 
 ## Context
 
-LinkWeave today is a hosted web app: Vue 3 SPA + Quarkus 3.30 backend + SQLite, deployed at `dev-chainlink.markushofstetter.com`. This plan covers packaging the same codebase as a self-contained desktop application (macOS first, Windows/Linux as natural follow-ups). The goal is a learning exercise: understand what changes to the existing code, what gets added, and what blockers exist. It is not a production ship.
+LinkWeave today is a hosted web app: Vue 3 SPA + Quarkus 3.30 backend + SQLite, deployed at `linkweave.dev`. This plan covers packaging the same codebase as a self-contained desktop application (macOS first, Windows/Linux as natural follow-ups). The goal is a learning exercise: understand what changes to the existing code, what gets added, and what blockers exist. It is not a production ship.
 
 **Short answer: feasible.** The architecture is well-suited — SPA + embedded SQLite + self-contained backend. There are 3–4 real blockers, all solvable.
 
@@ -139,7 +139,7 @@ There are two ways to wire the SPA to the sidecar, and the choice matters becaus
 %desktop.app.deployment.environment=LOCAL
 %desktop.app.deployment.public-url=http://127.0.0.1/
 %desktop.app.deployment.instance=desktop
-%desktop.quarkus.http.auth.session.encryption-key=chainlink-desktop-local-session-key  # local-only
+%desktop.quarkus.http.auth.session.encryption-key=linkweave-desktop-local-session-key  # local-only
 ```
 
 > Lesson learned: a `@QuarkusTest` runs under the `test` profile, which already neutralizes Sentry/deployment/secret — so it does **not** prove the `desktop` profile boots. The build pipeline therefore boots the packaged jar under `QUARKUS_PROFILE=desktop` and probes `/api/ping` before bundling (see Build Pipeline).
@@ -153,7 +153,7 @@ The SPA is still **never baked into the jar**: it ships as a Tauri resource fold
 - *Build-time* (`%desktop` profile): `root-path=/`, `rest.path=/api`, `oidc.enabled=false`.
 - *Runtime* (env vars, install-specific): `LINKWEAVE_DB_PATH`, `LINKWEAVE_FAVICON_CACHE_DIR`, `LINKWEAVE_DESKTOP_WEB_ROOT`, `QUARKUS_PROFILE=desktop`.
 
-**Implementation:** `org.chainlink.infrastructure.web.DesktopWebRootRoute` registers a `Filters` handler (gated on `linkweave.desktop.web-root` being set) that serves real files from the web-root via Vert.x `StaticHandler`, and falls back to `index.html` for SPA deep-links while passing `/api` and `/q` through to JAX-RS. With `root-path=/` the handler runs at the root, so the SPA lands at `/`. Covered by `DesktopWebRootRouteITest` (asserts `/`, `/asset`, deep-link fallback, and that `/api/ping` is not shadowed).
+**Implementation:** `org.linkweave.infrastructure.web.DesktopWebRootRoute` registers a `Filters` handler (gated on `linkweave.desktop.web-root` being set) that serves real files from the web-root via Vert.x `StaticHandler`, and falls back to `index.html` for SPA deep-links while passing `/api` and `/q` through to JAX-RS. With `root-path=/` the handler runs at the root, so the SPA lands at `/`. Covered by `DesktopWebRootRouteITest` (asserts `/`, `/asset`, deep-link fallback, and that `/api/ping` is not shadowed).
 
 **Why not quinoa / `META-INF/resources` / `quarkus.http.static-dir`?** All of those bake the SPA into the jar and/or add a build dependency present in the Docker image. The runtime web-root keeps the SPA out of the jar entirely and adds zero production dependencies, so it wins for a sidecar whose webview loads `/` once.
 

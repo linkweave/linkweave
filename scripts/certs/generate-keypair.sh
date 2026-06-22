@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 # Multiple domains separated by spaces. Override via env (e.g. CI uses
 # CERT_DOMAINS="e2e-chainlink.localhost" for an isolated e2e hostname).
-domains="${CERT_DOMAINS:-local-chainlink.localhost dev-chainlink.markushofstetter.com}"
+domains="${CERT_DOMAINS:-local-chainlink.localhost dev-linkweave.dev}"
 # For now, use the first domain as the cert alias for backward compatibility
 cert_alias=$(echo ${domains} | cut -d' ' -f1)
 

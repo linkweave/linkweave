@@ -21,3 +21,8 @@ keeping `chainlink@…` costs nothing and preserves the listing, the automated
 - `optional_host_permissions: ["https://*/*"]` is requested at runtime via
   `chrome.permissions.request()` for a user's self-hosted origin (options Save
   click or the popup's Grant-Access button). HTTPS-only is deliberate.
+- The **dev build** (`.env.extension.development`) targets the dev backend
+  `dev-linkweave.dev`. It is
+  **not** in `host_permissions` — by design, so the dev host never leaks into the
+  published manifest — so `pnpm run dev:extension` goes through the same one-time
+  runtime grant as a self-hoster (covered by `optional_host_permissions`).

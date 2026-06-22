@@ -19,6 +19,9 @@ chrome.runtime.onInstalled.addListener(async () => {
     title: 'Add to LinkWeave',
     contexts: ['page', 'link'],
   })
+
+  // One-shot cleanup of the pre-rename storage key (_cl_ -> _lw_).
+  chrome.storage.local.remove('_cl_contextMenuUrl').catch(() => {})
 })
 
 chrome.contextMenus.onClicked.addListener((info) => {

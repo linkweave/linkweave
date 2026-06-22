@@ -12,7 +12,7 @@ Rename the **product/codebase identity** from `chainlink` to `linkweave`. The pu
 - **Browser extension** identity (name, titles, description, id, zip filename). See §3 + §7a.
 
 **Explicitly phased OUT of the first pass** (separate, later cutover — see §8):
-- The deployed backend hostnames `chainlink.markushofstetter.com` / `dev-chainlink.markushofstetter.com` and their **OIDC cookie domains**. These are tied to DNS + the OIDC/Keycloak provider config and must be changed in lockstep with infra, not in the code-rename PR. The extension's `host_permissions` point at these and therefore **also stay** until cutover.
+- The deployed backend hostnames `chainlink.markushofstetter.com` / `dev-linkweave.dev` and their **OIDC cookie domains**. These are tied to DNS + the OIDC/Keycloak provider config and must be changed in lockstep with infra, not in the code-rename PR. The extension's `host_permissions` point at these and therefore **also stay** until cutover.
 - **All env-var names supplied by the prod host** (`CL_*`, `CLINK_*`, `CHAINLINK_*` secrets/paths) — they're a runtime contract with the deploy repo `~/source/IdeaProjects/docker-compose-config/chainlink` (separate git repo) + its host `.env`. Renaming them code-side without the host breaks prod. See §8a.
 
 Decisions: **D1 = yes** (code identity now, hostnames later), **D2 = yes** (rename + move DB), **D3 = yes** (Tauri bundle id), **D4 = yes** (`Cl`→`Lw`), **D5 = yes** (extension id).

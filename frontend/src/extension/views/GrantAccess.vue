@@ -7,6 +7,10 @@ const store = useExtensionStore()
 function tryExtractHost(url: string): string {
   try { return new URL(url).host || url } catch { return url }
 }
+
+function openOptions(): void {
+  chrome.runtime.openOptionsPage()
+}
 </script>
 
 <template>
@@ -20,6 +24,12 @@ function tryExtractHost(url: string): string {
       </p>
     </div>
     <ButtonLw :disabled="store.granting" @click="store.grantPermission()">Grant access</ButtonLw>
+    <button
+      class="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+      @click="openOptions"
+    >
+      Open options
+    </button>
     <p v-if="store.error" class="text-xs text-destructive text-center">{{ store.error }}</p>
   </div>
 </template>
