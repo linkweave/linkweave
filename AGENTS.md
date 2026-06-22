@@ -22,7 +22,7 @@ cd api && ./mvnw test -Dtest=ClassNameTest           # Specific class
 cd api && ./mvnw quarkus:dev        # Dev mode with hot reload, assume running
 cd frontend && pnpm run dev # frontend dev mode, assume running
 cd frontend && pnpm run type-check # frontend type checking
-cd frontend && pnpm run lint       # frontend linting (oxlint + eslint)
+cd frontend && pnpm run check      # PRE-PUSH GATE: type-check + lint + analyze:deadcode (fallow). Run before pushing frontend changes.
 pnpm exec playwright test --project=chromium  
 
 ```
@@ -54,7 +54,7 @@ All access checks are performed in the **Resource layer** using `AuthorizationSe
 - Use `@TestSecurity` when testing persistence/services that depend on current user
 - Most entities extend `AbstractEntity` which auto-sets `userErstellt` and `userMutiert` via `CurrentUserService`
 - Use `@AllArgsConstructor` for entity classes to ensure all fields are initialized
-- Always check your code by running pnpm run type-check, pnpm run lint and by compiling using maven
+- For frontend changes, run `pnpm run check` (bundles `type-check` + `lint` + `analyze:deadcode`) before pushing. The **fallow dead-code gate** blocks CI on things `type-check`/`lint` do NOT catch — most commonly an **exported symbol with no external consumer** (un-export it, or it must be a real public API). For backend changes, compile with maven.
 - Use zod schemas to validate form input
 
 ## Custom Types
