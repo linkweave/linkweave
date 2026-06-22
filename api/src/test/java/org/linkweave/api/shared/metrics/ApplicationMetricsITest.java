@@ -39,8 +39,12 @@ class ApplicationMetricsITest {
 
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
-    void shouldIncludeCustomChainlinkMetricsAfterRefresh() {
-        fixtureService.createTestCollection();
+    void shouldIncludeCustomLinkweaveMetricsAfterRefresh() {
+        // createTestBookmark creates a Collection *with* a Bookmark, so the
+        // bookmarks-per-collection MultiGauge actually has a row to emit —
+        // otherwise linkweave_bookmarks_total is absent and the assertion only
+        // passes via leaked cross-test state.
+        fixtureService.createTestBookmark(b -> {});
 
         metricsService.refreshMetrics();
 
@@ -49,22 +53,22 @@ class ApplicationMetricsITest {
             .get("/metrics")
             .then()
             .statusCode(200)
-            .body(containsString("chainlink_collections_total"))
-            .body(containsString("chainlink_collections_shared"))
-            .body(containsString("chainlink_bookmarks_total"));
+            .body(containsString("linkweave_collections_total"))
+            .body(containsString("linkweave_collections_shared"))
+            .body(containsString("linkweave_bookmarks_total"));
     }
 
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldRefreshCollectionCountAfterCreation() {
         metricsService.refreshMetrics();
-        long countBefore = countFromMetrics("chainlink_collections_total");
+        long countBefore = countFromMetrics("linkweave_collections_total");
 
         fixtureService.createTestCollection();
         fixtureService.createTestCollection();
 
         metricsService.refreshMetrics();
-        long countAfter = countFromMetrics("chainlink_collections_total");
+        long countAfter = countFromMetrics("linkweave_collections_total");
         org.assertj.core.api.Assertions.assertThat(countAfter).isEqualTo(countBefore + 2);
     }
 
