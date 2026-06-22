@@ -28,7 +28,7 @@
 1. User launches the LinkWeave desktop application from their OS application launcher.
 2. System (desktop shell) determines the OS-appropriate user data directory (e.g. `~/Library/Application Support/LinkWeave/` on macOS) and ensures it exists.
 3. System selects a random free TCP port on `127.0.0.1` for the backend.
-4. System spawns the bundled Quarkus backend as a child process, passing `CHAINLINK_DB_PATH`, `CHAINLINK_FAVICON_CACHE_DIR`, and the chosen port via environment variables.
+4. System spawns the bundled Quarkus backend as a child process, passing `LINKWEAVE_DB_PATH`, `LINKWEAVE_FAVICON_CACHE_DIR`, and the chosen port via environment variables.
 5. System polls the backend's health endpoint until it responds successfully or a timeout elapses.
 6. System opens the application window and loads the bundled Vue SPA into the embedded webview, injecting the backend port into a global object accessible to the SPA.
 7. SPA reads the injected port and configures its API client to call `http://127.0.0.1:<port>`.
@@ -146,7 +146,7 @@ When the user quits the application, the shell MUST send a graceful shutdown sig
 
 ### BR-052-6: Configurable Storage Paths
 
-The backend MUST accept the database path and favicon cache directory via environment variables (`CHAINLINK_DB_PATH`, `CHAINLINK_FAVICON_CACHE_DIR`). Hardcoded relative paths (currently `../developer-local-settings/chainlink.db`) must be replaced with environment-variable defaults.
+The backend MUST accept the database path and favicon cache directory via environment variables (`LINKWEAVE_DB_PATH`, `LINKWEAVE_FAVICON_CACHE_DIR`). Hardcoded relative paths (currently `../developer-local-settings/linkweave.db`) must be replaced with environment-variable defaults.
 
 ### BR-052-7: No External Network Dependency for Core Features
 

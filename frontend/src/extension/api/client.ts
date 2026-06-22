@@ -6,8 +6,8 @@ export interface ExtensionConfig {
   webAppUrl: string
 }
 
-const DEFAULT_API_URL = import.meta.env.VITE_CHAINLINK_API_URL as string
-const DEFAULT_WEB_APP_URL = import.meta.env.VITE_CHAINLINK_URL as string
+const DEFAULT_API_URL = import.meta.env.VITE_LINKWEAVE_API_URL as string
+const DEFAULT_WEB_APP_URL = import.meta.env.VITE_LINKWEAVE_URL as string
 
 /**
  * Reads user-configured URLs from chrome.storage.sync, falling back to

@@ -73,7 +73,7 @@ One database per server instance
 
 Path:
 
-developer-local-settings/chainlink.db
+developer-local-settings/linkweave.db
 
 5. Domain Model
 Entitis should extend AbstractEntity for id etc

@@ -56,5 +56,5 @@ quarkus.micrometer.enabled=false
 The refresh interval for business metrics defaults to 30 minutes and can be overridden:
 
 ```properties
-chainlink.metrics.refresh.every=30m
+linkweave.metrics.refresh.every=30m
 ```

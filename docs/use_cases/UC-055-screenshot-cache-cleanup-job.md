@@ -43,7 +43,7 @@
 
 ### A2: Job Disabled via Configuration
 
-**Trigger:** The `chainlink.screenshot.cache-cleanup.enabled` property is set to `false`.
+**Trigger:** The `linkweave.screenshot.cache-cleanup.enabled` property is set to `false`.
 **Flow:**
 
 1. The Quarkus skip predicate prevents execution.
@@ -83,11 +83,11 @@
 
 ### BR-123: Size Budget
 
-The configurable maximum cache size (`chainlink.screenshot.cache-cleanup.max-size`, default `200MB`) is parsed from human-readable units (KB, MB, GB). Sizes are expressed in binary units (1 MB = 1024 × 1024 bytes).
+The configurable maximum cache size (`linkweave.screenshot.cache-cleanup.max-size`, default `200MB`) is parsed from human-readable units (KB, MB, GB). Sizes are expressed in binary units (1 MB = 1024 × 1024 bytes).
 
 ### BR-124: Minimum Bookmark Age
 
-Bookmarks younger than the configured minimum age (`chainlink.screenshot.cache-cleanup.min-bookmark-age`, default `28D`) are never evicted. This protects recently added bookmarks whose screenshots are likely still being viewed.
+Bookmarks younger than the configured minimum age (`linkweave.screenshot.cache-cleanup.min-bookmark-age`, default `28D`) are never evicted. This protects recently added bookmarks whose screenshots are likely still being viewed.
 
 ### BR-125: File-Only Operation
 

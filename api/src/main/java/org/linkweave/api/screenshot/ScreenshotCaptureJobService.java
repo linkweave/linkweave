@@ -48,7 +48,7 @@ public class ScreenshotCaptureJobService {
     private final ConfigService configService;
 
     @Scheduled(
-        every = "{chainlink.screenshot.capture-job.every:30s}",
+        every = "{linkweave.screenshot.capture-job.every:30s}",
         skipExecutionIf = DisabledPredicate.class,
         identity = "screenshot-capture"
     )

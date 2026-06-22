@@ -3,8 +3,8 @@
 //! Spawns the Quarkus backend as a child process bound to a random loopback port, waits for it to
 //! become reachable, then points the webview at it. The backend is launched with the `desktop`
 //! Quarkus profile (serves the SPA at `/`, REST under `/api`, OIDC compiled out) and the three
-//! install-specific runtime paths (`CHAINLINK_DB_PATH`, `CHAINLINK_FAVICON_CACHE_DIR`,
-//! `CHAINLINK_DESKTOP_WEB_ROOT`). The child is killed when the app exits.
+//! install-specific runtime paths (`LINKWEAVE_DB_PATH`, `LINKWEAVE_FAVICON_CACHE_DIR`,
+//! `LINKWEAVE_DESKTOP_WEB_ROOT`). The child is killed when the app exits.
 
 use std::net::TcpListener;
 use std::process::{Child, Command};
@@ -70,9 +70,9 @@ fn spawn_backend(app: &tauri::App, port: u16) -> Result<Child, Box<dyn std::erro
         .env("QUARKUS_PROFILE", "desktop")
         .env("QUARKUS_HTTP_HOST", "127.0.0.1")
         .env("QUARKUS_HTTP_PORT", port.to_string())
-        .env("CHAINLINK_DB_PATH", data_dir.join("linkweave.db"))
-        .env("CHAINLINK_FAVICON_CACHE_DIR", data_dir.join("favicon-cache"))
-        .env("CHAINLINK_DESKTOP_WEB_ROOT", &web_root)
+        .env("LINKWEAVE_DB_PATH", data_dir.join("linkweave.db"))
+        .env("LINKWEAVE_FAVICON_CACHE_DIR", data_dir.join("favicon-cache"))
+        .env("LINKWEAVE_DESKTOP_WEB_ROOT", &web_root)
         .stdout(std::process::Stdio::from(log))
         .stderr(std::process::Stdio::from(log_err))
         .spawn()?;

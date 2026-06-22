@@ -78,18 +78,18 @@ The JVM (~80 MB JRE) is the heaviest thing in the bundle either way, so Tauri's 
 `api/src/main/resources/application.properties:46`
 
 ```
-quarkus.datasource.jdbc.url=jdbc:sqlite:../developer-local-settings/chainlink.db?foreign_keys=on&busy_timeout=10000
+quarkus.datasource.jdbc.url=jdbc:sqlite:../developer-local-settings/linkweave.db?foreign_keys=on&busy_timeout=10000
 ```
 
-Must become env-driven so the shell can point it at the OS-appropriate user data directory (e.g. `~/Library/Application Support/LinkWeave/chainlink.db` on macOS — BR-052-1).
+Must become env-driven so the shell can point it at the OS-appropriate user data directory (e.g. `~/Library/Application Support/LinkWeave/linkweave.db` on macOS — BR-052-1).
 
 **Fix:** make only the path segment env-driven and keep the query params (they enforce foreign keys and set the busy timeout — don't lose them):
 
 ```
-quarkus.datasource.jdbc.url=jdbc:sqlite:${CHAINLINK_DB_PATH:../developer-local-settings/chainlink.db}?foreign_keys=on&busy_timeout=10000
+quarkus.datasource.jdbc.url=jdbc:sqlite:${LINKWEAVE_DB_PATH:../developer-local-settings/linkweave.db}?foreign_keys=on&busy_timeout=10000
 ```
 
-Have the shell export `CHAINLINK_DB_PATH` before spawning the JVM.
+Have the shell export `LINKWEAVE_DB_PATH` before spawning the JVM.
 
 ### 2. OIDC login is impossible in a desktop context (must work around)
 
@@ -99,9 +99,9 @@ Google OAuth requires browser redirect to a fixed callback URL. A desktop app on
 
 ### 3. Favicon cache directory is also relative (no code change needed)
 
-This is **not** in `application.properties`. It's a `@ConfigProperty(name = "chainlink.favicon.cache-dir", defaultValue = "developer-local-settings/favicon-cache")` in `api/src/main/java/org/linkweave/api/shared/config/ConfigService.java:108`.
+This is **not** in `application.properties`. It's a `@ConfigProperty(name = "linkweave.favicon.cache-dir", defaultValue = "developer-local-settings/favicon-cache")` in `api/src/main/java/org/linkweave/api/shared/config/ConfigService.java:108`.
 
-Because it's already a Quarkus config property, no code change is required — Quarkus auto-maps the env var `CHAINLINK_FAVICON_CACHE_DIR` onto `chainlink.favicon.cache-dir`. The shell just exports it. (The same env-var mapping is why the DB path in #1 is the only config that needs a property-file edit — `quarkus.datasource.jdbc.url` is a single string we have to splice the path into.)
+Because it's already a Quarkus config property, no code change is required — Quarkus auto-maps the env var `LINKWEAVE_FAVICON_CACHE_DIR` onto `linkweave.favicon.cache-dir`. The shell just exports it. (The same env-var mapping is why the DB path in #1 is the only config that needs a property-file edit — `quarkus.datasource.jdbc.url` is a single string we have to splice the path into.)
 
 ### 4. Frontend ↔ backend transport: keep it same-origin (key design decision)
 
@@ -147,17 +147,17 @@ There are two ways to wire the SPA to the sidecar, and the choice matters becaus
 - **Docker build** (`mvnw package`, no profile): completely unchanged — `root-path=/api`, OIDC on, Google callback at `/api/q/authorized` intact. The `%desktop` lines do not apply.
 - **Desktop build** (`mvnw package -Dquarkus.profile=desktop`, run with `QUARKUS_PROFILE=desktop`): SPA served at `/`, REST under `/api`, OIDC absent, form login at `/api/j_security_check`.
 
-The SPA is still **never baked into the jar**: it ships as a Tauri resource folder and is served at runtime from the directory in `CHAINLINK_DESKTOP_WEB_ROOT` (install-specific absolute path → must be runtime, mirroring `CHAINLINK_DB_PATH` / `CHAINLINK_FAVICON_CACHE_DIR`).
+The SPA is still **never baked into the jar**: it ships as a Tauri resource folder and is served at runtime from the directory in `LINKWEAVE_DESKTOP_WEB_ROOT` (install-specific absolute path → must be runtime, mirroring `LINKWEAVE_DB_PATH` / `LINKWEAVE_FAVICON_CACHE_DIR`).
 
 **Clean separation:**
 - *Build-time* (`%desktop` profile): `root-path=/`, `rest.path=/api`, `oidc.enabled=false`.
-- *Runtime* (env vars, install-specific): `CHAINLINK_DB_PATH`, `CHAINLINK_FAVICON_CACHE_DIR`, `CHAINLINK_DESKTOP_WEB_ROOT`, `QUARKUS_PROFILE=desktop`.
+- *Runtime* (env vars, install-specific): `LINKWEAVE_DB_PATH`, `LINKWEAVE_FAVICON_CACHE_DIR`, `LINKWEAVE_DESKTOP_WEB_ROOT`, `QUARKUS_PROFILE=desktop`.
 
-**Implementation:** `org.chainlink.infrastructure.web.DesktopWebRootRoute` registers a `Filters` handler (gated on `chainlink.desktop.web-root` being set) that serves real files from the web-root via Vert.x `StaticHandler`, and falls back to `index.html` for SPA deep-links while passing `/api` and `/q` through to JAX-RS. With `root-path=/` the handler runs at the root, so the SPA lands at `/`. Covered by `DesktopWebRootRouteITest` (asserts `/`, `/asset`, deep-link fallback, and that `/api/ping` is not shadowed).
+**Implementation:** `org.chainlink.infrastructure.web.DesktopWebRootRoute` registers a `Filters` handler (gated on `linkweave.desktop.web-root` being set) that serves real files from the web-root via Vert.x `StaticHandler`, and falls back to `index.html` for SPA deep-links while passing `/api` and `/q` through to JAX-RS. With `root-path=/` the handler runs at the root, so the SPA lands at `/`. Covered by `DesktopWebRootRouteITest` (asserts `/`, `/asset`, deep-link fallback, and that `/api/ping` is not shadowed).
 
 **Why not quinoa / `META-INF/resources` / `quarkus.http.static-dir`?** All of those bake the SPA into the jar and/or add a build dependency present in the Docker image. The runtime web-root keeps the SPA out of the jar entirely and adds zero production dependencies, so it wins for a sidecar whose webview loads `/` once.
 
-(`chainlink.desktop.web-root` ← `CHAINLINK_DESKTOP_WEB_ROOT` via Quarkus env mapping. The handler reads the backend prefixes to skip from `quarkus.rest.path` and `quarkus.http.non-application-root-path` rather than hardcoding `/api` / `/q`, so it stays correct if those move.)
+(`linkweave.desktop.web-root` ← `LINKWEAVE_DESKTOP_WEB_ROOT` via Quarkus env mapping. The handler reads the backend prefixes to skip from `quarkus.rest.path` and `quarkus.http.non-application-root-path` rather than hardcoding `/api` / `/q`, so it stays correct if those move.)
 
 ### 4b. Login calls bypass the generated client (must fix regardless)
 
@@ -178,15 +178,15 @@ Assuming Option B (same-origin, SPA served by Quarkus):
 
 | File | Change |
 |---|---|
-| `api/src/main/resources/application.properties` | Splice `${CHAINLINK_DB_PATH:...}` into the JDBC URL (keep `?foreign_keys=on&busy_timeout=10000`) |
-| `ConfigService.java` (favicon dir) | **No change** — set env var `CHAINLINK_FAVICON_CACHE_DIR` (Quarkus auto-maps it) |
+| `api/src/main/resources/application.properties` | Splice `${LINKWEAVE_DB_PATH:...}` into the JDBC URL (keep `?foreign_keys=on&busy_timeout=10000`) |
+| `ConfigService.java` (favicon dir) | **No change** — set env var `LINKWEAVE_FAVICON_CACHE_DIR` (Quarkus auto-maps it) |
 | `frontend/src/api/client.ts` | **No change** under Option B — `basePath: ''` stays correct |
 | `frontend/src/views/LoginView.vue` | Hide OIDC button when `import.meta.env.VITE_DESKTOP === 'true'`. Raw `/api/...` fetches need no change under Option B |
-| **New** `DesktopWebRootRoute.java` (api) | Serve the SPA from a filesystem dir **only when** `CHAINLINK_DESKTOP_WEB_ROOT` is set (#4c). Keeps the API jar identical for Docker (Caddy) and desktop |
+| **New** `DesktopWebRootRoute.java` (api) | Serve the SPA from a filesystem dir **only when** `LINKWEAVE_DESKTOP_WEB_ROOT` is set (#4c). Keeps the API jar identical for Docker (Caddy) and desktop |
 | **New** `desktop/` (repo root) | Tauri (or Electron) project containing the shell |
 | **New** build script | (a) `pnpm run build` SPA, (b) `mvnw package` backend (no SPA baked in), (c) stage `dist/` + `quarkus-app/` as Tauri resources, (d) `tauri build` |
 
-> If you instead go with Option A (cross-origin), add: port injection in `frontend/src/main.ts` (`window.__CHAINLINK_DESKTOP__`), `client.ts` reading it, rewriting the two raw fetches in `LoginView.vue`, and CORS + SameSite cookie config on the backend.
+> If you instead go with Option A (cross-origin), add: port injection in `frontend/src/main.ts` (`window.__LINKWEAVE_DESKTOP__`), `client.ts` reading it, rewriting the two raw fetches in `LoginView.vue`, and CORS + SameSite cookie config on the backend.
 
 ## Build Pipeline (`scripts/build-desktop.sh`)
 
@@ -194,7 +194,7 @@ One script chains the three toolchains in dependency order. It is the single ent
 
 ### What it produces
 
-A `.app`/`.dmg` (macOS first) whose Tauri resources contain two self-contained payloads: the packaged `quarkus-app/` (no SPA baked in) and the built `dist/` SPA folder. At launch the shell sets `CHAINLINK_DESKTOP_WEB_ROOT` to the bundled `dist/` so Quarkus serves it same-origin (#4c). Nothing is fetched or built at app launch.
+A `.app`/`.dmg` (macOS first) whose Tauri resources contain two self-contained payloads: the packaged `quarkus-app/` (no SPA baked in) and the built `dist/` SPA folder. At launch the shell sets `LINKWEAVE_DESKTOP_WEB_ROOT` to the bundled `dist/` so Quarkus serves it same-origin (#4c). Nothing is fetched or built at app launch.
 
 ### Stages (fail-fast; `set -euo pipefail`)
 
@@ -213,7 +213,7 @@ The SPA is **never** copied into `api/src/main/resources/` — that's the whole 
 
 - **`VITE_DESKTOP=true` is set only in stage 1**, so the desktop SPA build hides the OIDC button (#2) while the normal web build is unaffected. The flag belongs to the build script, not to `frontend/`'s default scripts.
 - **No tracked source tree is written.** Both payloads are staged into `desktop/src-tauri/bin/` (a gitignored build location). Nothing under `api/src/` is touched, so there's no risk of the SPA leaking into the Docker image.
-- **The shell exports `CHAINLINK_DESKTOP_WEB_ROOT`** (pointing at the bundled `bin/web/`) alongside `CHAINLINK_DB_PATH` and `CHAINLINK_FAVICON_CACHE_DIR` when it spawns the JVM. These three env vars are the entire desktop-specific runtime contract.
+- **The shell exports `LINKWEAVE_DESKTOP_WEB_ROOT`** (pointing at the bundled `bin/web/`) alongside `LINKWEAVE_DB_PATH` and `LINKWEAVE_FAVICON_CACHE_DIR` when it spawns the JVM. These three env vars are the entire desktop-specific runtime contract.
 - **JRE is bundled by default (`--no-jre` to skip).** This turned out to be *required*, not optional: a dependency (`dvbstarter`) is compiled for Java 25, and a Finder/launchd launch resolves whatever (often older) `java` the OS has — on the dev machine that was a system Java 21, which crashed the backend with `UnsupportedClassVersionError` (the app just spun on the splash). Stage 4 `jlink`s a trimmed Java 25 runtime (~94 MB, `--add-modules ALL-MODULE-PATH` for correctness over size) into `bin/runtime`, ships it as a Tauri resource, and the shell prefers `runtime/bin/java` over PATH. `--no-jre` skips it for environments with a guaranteed system Java 25+.
 - **`mvnw -DskipTests`** in the build script — tests run in their own CI stage / `mvnw verify`, not in the packaging path. Keep packaging fast and deterministic.
 - **Idempotent staging.** Stage 3 `rm -rf`s each destination before copying so stale assets from a previous build never leak into the bundle.
@@ -224,21 +224,21 @@ The SPA is **never** copied into `api/src/main/resources/` — that's the whole 
 After stage 2, run the packaged jar standalone with the env vars set to confirm Option B end-to-end *outside* Tauri:
 
 ```bash
-CHAINLINK_DB_PATH=/tmp/desktop-smoke.db \
-CHAINLINK_FAVICON_CACHE_DIR=/tmp/desktop-fav \
-CHAINLINK_DESKTOP_WEB_ROOT=frontend/dist \
+LINKWEAVE_DB_PATH=/tmp/desktop-smoke.db \
+LINKWEAVE_FAVICON_CACHE_DIR=/tmp/desktop-fav \
+LINKWEAVE_DESKTOP_WEB_ROOT=frontend/dist \
 java -jar api/target/quarkus-app/quarkus-run.jar
 # then in a browser: SPA loads at http://127.0.0.1:<port>, /api/* works, form login works
 ```
 
-Run the same jar **without** `CHAINLINK_DESKTOP_WEB_ROOT` and confirm Quarkus serves no SPA (proves the Docker/Caddy path is unaffected).
+Run the same jar **without** `LINKWEAVE_DESKTOP_WEB_ROOT` and confirm Quarkus serves no SPA (proves the Docker/Caddy path is unaffected).
 
 This isolates "did the build wire the SPA + paths correctly" from "does Tauri spawn/teardown correctly" — the two failure domains the rest of the plan tests separately.
 
 ## Implementation Order
 
-1. **Make paths env-configurable** (#1, #3). Edit only the JDBC URL; favicon dir needs no code change. Verify `CHAINLINK_DB_PATH=/tmp/foo.db CHAINLINK_FAVICON_CACHE_DIR=/tmp/fav java -jar quarkus-app/quarkus-run.jar` writes to those locations.
-2. **Add `DesktopWebRootRoute`** (#4c) gated on `CHAINLINK_DESKTOP_WEB_ROOT`. With it set to `frontend/dist`, confirm the SPA + `/api/*` + form login all work from a single `http://127.0.0.1:port` origin in a plain browser; with it unset, confirm Quarkus serves no SPA (Docker/Caddy path unaffected). This removes the port-injection and CORS work entirely and keeps the API jar identical across deployments.
+1. **Make paths env-configurable** (#1, #3). Edit only the JDBC URL; favicon dir needs no code change. Verify `LINKWEAVE_DB_PATH=/tmp/foo.db LINKWEAVE_FAVICON_CACHE_DIR=/tmp/fav java -jar quarkus-app/quarkus-run.jar` writes to those locations.
+2. **Add `DesktopWebRootRoute`** (#4c) gated on `LINKWEAVE_DESKTOP_WEB_ROOT`. With it set to `frontend/dist`, confirm the SPA + `/api/*` + form login all work from a single `http://127.0.0.1:port` origin in a plain browser; with it unset, confirm Quarkus serves no SPA (Docker/Caddy path unaffected). This removes the port-injection and CORS work entirely and keeps the API jar identical across deployments.
 3. **Scaffold a minimal Tauri project in `desktop/`**. Get it to spawn the JVM (with `QUARKUS_PROFILE=desktop` + the three runtime env vars), poll `/api/ping` (there is no health extension), then point the webview at `http://127.0.0.1:${port}/`. The shell starts on a bundled splash page and navigates the window once the backend answers.
 4. **Hide OIDC button** when `VITE_DESKTOP=true` (#2).
 5. **Write `scripts/build-desktop.sh`** (see Build Pipeline) and produce a `.dmg`/`.app` for macOS. Verify launch → register → add bookmark → quit → relaunch → bookmark persists.
@@ -255,7 +255,7 @@ After step 5:
 - Confirm SPA loads and `/api/ping` returns 204 from inside webview devtools
 - Register a new local user via form auth
 - Add a bookmark, restart the app, verify it persists
-- Confirm DB file is at `~/Library/Application Support/LinkWeave/chainlink.db`, **not** in the app bundle (BR-052-1)
+- Confirm DB file is at `~/Library/Application Support/LinkWeave/linkweave.db`, **not** in the app bundle (BR-052-1)
 - Quit the app; confirm Quarkus actually exits (`pgrep -f quarkus-run` returns nothing)
 - Launch a second instance; confirm the existing window comes forward instead of a duplicate launching (BR-052-4)
 - Disconnect from the network; confirm bookmarks still browse/edit normally and only favicon fetches fail (A6)

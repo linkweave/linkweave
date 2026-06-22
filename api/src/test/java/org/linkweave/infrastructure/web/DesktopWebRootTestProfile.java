@@ -9,9 +9,9 @@ import java.util.Map;
 import io.quarkus.test.junit.QuarkusTestProfile;
 
 /**
- * Activates {@link DesktopWebRootRoute} by pointing {@code chainlink.desktop.web-root} at a
+ * Activates {@link DesktopWebRootRoute} by pointing {@code linkweave.desktop.web-root} at a
  * throwaway directory containing a stand-in SPA ({@code index.html} + one asset). Mirrors how the
- * desktop bundle (UC-052) sets {@code CHAINLINK_DESKTOP_WEB_ROOT}.
+ * desktop bundle (UC-052) sets {@code LINKWEAVE_DESKTOP_WEB_ROOT}.
  */
 public class DesktopWebRootTestProfile implements QuarkusTestProfile {
 
@@ -58,7 +58,7 @@ public class DesktopWebRootTestProfile implements QuarkusTestProfile {
         // API stays under /api (rest.path=/api). Quarkus re-augments per test profile, so these
         // build-time properties take effect for this test.
         return Map.of(
-            "chainlink.desktop.web-root", WEB_ROOT.toString(),
+            "linkweave.desktop.web-root", WEB_ROOT.toString(),
             "quarkus.http.root-path", "/",
             "quarkus.rest.path", "/api");
     }
