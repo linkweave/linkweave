@@ -19,7 +19,7 @@ function tryExtractHost(url: string): string {
         <span class="font-medium text-foreground">{{ tryExtractHost(store.apiUrl) }}</span>.
       </p>
     </div>
-    <ButtonLw @click="store.grantPermission()">Grant access</ButtonLw>
+    <ButtonLw :disabled="store.granting" @click="store.grantPermission()">Grant access</ButtonLw>
     <p v-if="store.error" class="text-xs text-destructive text-center">{{ store.error }}</p>
   </div>
 </template>

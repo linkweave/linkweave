@@ -5,15 +5,19 @@
 // Session storage is Chrome 102+ only; local storage works everywhere.
 const CONTEXT_MENU_KEY = '_lw_contextMenuUrl'
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener(async () => {
   // Clear any stale items first — e.g. the legacy 'chainlink-save' id from
   // pre-rename versions — so updates don't accumulate duplicate menu entries.
-  chrome.contextMenus.removeAll().then(() => {
-    chrome.contextMenus.create({
-      id: 'linkweave-save',
-      title: 'Add to LinkWeave',
-      contexts: ['page', 'link'],
-    })
+  // removeAll() rarely rejects; create the menu regardless so it never vanishes.
+  try {
+    await chrome.contextMenus.removeAll()
+  } catch {
+    /* ignore — proceed to (re)create the menu */
+  }
+  chrome.contextMenus.create({
+    id: 'linkweave-save',
+    title: 'Add to LinkWeave',
+    contexts: ['page', 'link'],
   })
 })
 

@@ -40,6 +40,7 @@ export const useExtensionStore = defineStore('extension', () => {
 
   // --- Permission to reach the self-hosted API host ---
   const needsPermission = ref(false)
+  const granting = ref(false)
 
   // --- Collections ---
   const collections = ref<CollectionSummaryJson[]>([])
@@ -230,16 +231,23 @@ export const useExtensionStore = defineStore('extension', () => {
 
   /** Requests host permission for the configured API origin, then initialises. */
   async function grantPermission(): Promise<void> {
-    // apiUrl is already populated by the initialize() that set needsPermission.
-    // Call request() with no preceding await so the user gesture stays active
-    // (Firefox invalidates the gesture across an intervening await).
-    const granted = await requestApiPermission(apiUrl.value)
-    if (!granted) {
-      error.value = 'Access to the API host was denied. Grant permission in the options page.'
-      return
+    if (granting.value) return // guard against double-clicks → concurrent initialize()
+    granting.value = true
+    error.value = null // clear any stale error before the native prompt
+    try {
+      // apiUrl is already populated by the initialize() that set needsPermission.
+      // Call request() with no preceding await so the user gesture stays active
+      // (Firefox invalidates the gesture across an intervening await).
+      const granted = await requestApiPermission(apiUrl.value)
+      if (!granted) {
+        error.value = 'Access to the API host was denied. Grant permission in the options page.'
+        return
+      }
+      needsPermission.value = false
+      await initialize()
+    } finally {
+      granting.value = false
     }
-    needsPermission.value = false
-    await initialize()
   }
 
   return {
@@ -248,6 +256,7 @@ export const useExtensionStore = defineStore('extension', () => {
     webAppUrl,
     apiUrl,
     needsPermission,
+    granting,
     currentTabUrl,
     alreadySavedBookmark,
     collections,

@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { loadExtensionConfig, saveExtensionConfig, getDefaults } from '../api/client'
 import type { ExtensionConfig } from '../api/client'
-import { requestApiPermission } from '../api/permissions'
+import { requestApiPermission, checkApiUrl } from '../api/permissions'
 import ButtonLw from '@/components/ui/ButtonLw.vue'
 
 const apiUrl = ref('')
@@ -28,7 +28,15 @@ async function save() {
       apiUrl: apiUrl.value.replace(/\/+$/, ''),
       webAppUrl: webAppUrl.value.replace(/\/+$/, ''),
     }
-    // Host access is granted per-instance at runtime (Save is a user gesture).
+    // Validate up-front so we can distinguish a bad URL / missing HTTPS from an
+    // actual permission denial. Save is a user gesture, so request() is allowed.
+    const check = checkApiUrl(config.apiUrl)
+    if (!check.ok) {
+      error.value = check.reason === 'not-https'
+        ? 'Your instance URL must use HTTPS.'
+        : 'That doesn’t look like a valid URL.'
+      return
+    }
     const granted = await requestApiPermission(config.apiUrl)
     if (!granted) {
       error.value = 'Permission to access the API host was denied. The extension cannot reach your LinkWeave instance without it.'
