@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useExtensionStore } from './stores/extension'
 import LoginPrompt from './views/LoginPrompt.vue'
+import GrantAccess from './views/GrantAccess.vue'
 import SaveView from './views/SaveView.vue'
 import BrowseView from './views/BrowseView.vue'
 import SelectLw from '@/components/ui/SelectLw.vue'
@@ -17,7 +18,7 @@ const activeTabTitle = ref('')
 // URL pre-filled via context menu right-click (stored by service worker)
 const contextMenuUrl = ref<string | null>(null)
 
-const CONTEXT_MENU_KEY = '_cl_contextMenuUrl'
+const CONTEXT_MENU_KEY = '_lw_contextMenuUrl'
 
 onMounted(async () => {
   // Read context menu URL if the popup was triggered via right-click
@@ -46,7 +47,7 @@ onMounted(async () => {
   <div class="w-[400px] min-h-[480px] max-h-[600px] flex flex-col bg-background text-foreground">
     <!-- Header -->
     <div class="flex items-center gap-2 px-4 py-3 border-b border-border">
-      <img src="@/assets/ChainlinkLogoTrResc.png" alt="LinkWeave" class="w-5 h-5" />
+      <img src="@/assets/LinkWeaveLogoTrResc.png" alt="LinkWeave" class="w-5 h-5" />
       <span class="font-semibold text-sm">LinkWeave</span>
 
       <!-- Collection switcher (only if user has multiple collections) -->
@@ -69,8 +70,9 @@ onMounted(async () => {
 
     <!-- Not authenticated -->
     <template v-else-if="!store.isAuthenticated">
-      <LoginPrompt />
-      <div class="px-4 pb-3 flex flex-col gap-2">
+      <GrantAccess v-if="store.needsPermission" />
+      <LoginPrompt v-else />
+      <div v-if="!store.needsPermission" class="px-4 pb-3 flex flex-col gap-2">
         <button
           class="w-full text-xs py-1.5 rounded border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
           @click="store.initialize()"

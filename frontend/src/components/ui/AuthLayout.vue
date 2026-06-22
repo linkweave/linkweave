@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import logoUrl from '@/assets/ChainlinkLogoTrResc.png'
+import logoUrl from '@/assets/LinkWeaveLogoTrResc.png'
 
 defineProps<{
   title: string

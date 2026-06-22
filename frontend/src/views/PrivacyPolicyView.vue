@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import logoUrl from '@/assets/ChainlinkLogoTrResc.png'
+import logoUrl from '@/assets/LinkWeaveLogoTrResc.png'
 </script>
 
 <template>
@@ -22,7 +22,7 @@ import logoUrl from '@/assets/ChainlinkLogoTrResc.png'
           <img :src="logoUrl" alt="LinkWeave" class="mx-auto h-20 w-20 mb-3" />
         </router-link>
         <h1 class="text-2xl font-bold tracking-tight text-white">Privacy Policy</h1>
-        <p class="text-white/70 text-sm mt-1">Last updated: May 2025</p>
+        <p class="text-white/70 text-sm mt-1">Last updated: June 2026</p>
       </div>
 
       <div
@@ -40,7 +40,7 @@ import logoUrl from '@/assets/ChainlinkLogoTrResc.png'
           <p>
             LinkWeave ("we", "our", "us") operates the LinkWeave browser extension (the "Extension") and the
             associated web application at
-            <strong>chainlink.markushofstetter.com</strong> (the "Service"). This privacy policy describes how the
+            <strong>linkweave.dev</strong> (the "Service"). This privacy policy describes how the
             Extension and Service collect, use, and share user data.
           </p>
         </section>
@@ -51,7 +51,7 @@ import logoUrl from '@/assets/ChainlinkLogoTrResc.png'
             LinkWeave is a self-hosted bookmark manager. The instance you connect to may be operated by you, your
             organisation, or a third party. The operator of the LinkWeave server instance is the data controller for
             the data stored on that server. This policy covers the data handled by the official LinkWeave Extension as
-            published on the Chrome Web Store.
+            published on the Chrome Web Store and Mozilla Add-ons.
           </p>
         </section>
 
@@ -94,7 +94,7 @@ import logoUrl from '@/assets/ChainlinkLogoTrResc.png'
           <h2 class="text-lg font-semibold text-white mb-2">How Your Data Is Shared</h2>
           <ul class="list-disc list-inside space-y-1 ml-2">
             <li><strong>Google:</strong> If you use "Sign in with Google", your authentication request is processed by Google. Google receives your sign-in event but does not receive your bookmark data. The scopes requested are <code>openid</code>, <code>profile</code>, and <code>email</code>.</li>
-            <li><strong>Your configured server:</strong> All bookmark data you save is sent exclusively to the LinkWeave API server you have configured in the Extension options. By default, this is <strong>chainlink.markushofstetter.com</strong>. No data is sent to any other server.</li>
+            <li><strong>Your configured server:</strong> All bookmark data you save is sent exclusively to the LinkWeave API server you have configured in the Extension options. By default, this is <strong>linkweave.dev</strong>. When you configure your instance, the Extension asks you to grant it access (a host permission) to that server's origin. No data is sent to any other server.</li>
           </ul>
           <p class="mt-2">We do <strong>not</strong> sell, rent, or trade your data to any third party. We do not use advertising trackers or analytics services.</p>
         </section>

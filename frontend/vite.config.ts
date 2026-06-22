@@ -82,7 +82,7 @@ export default defineConfig(({ command }) => {
     server: {
       port: 5173,
       host: true,
-      allowedHosts: ['dev-chainlink.markushofstetter.com', 'local-chainlink.localhost', devHost],
+      allowedHosts: ['dev-linkweave.dev', 'local-chainlink.localhost', devHost],
       ...(isDev
         ? {
             https: {
@@ -93,12 +93,12 @@ export default defineConfig(({ command }) => {
         : {}),
       proxy: {
         '/api': {
-          target: process.env.VITE_API_TARGET ?? 'https://dev-chainlink.markushofstetter.com:8443',
+          target: process.env.VITE_API_TARGET ?? 'https://dev-linkweave.dev:8443',
           changeOrigin: true,
           secure: false,
           configure: (proxy, _options) => {
             proxy.on('proxyReq', (proxyReq, _req, _res) => {
-              proxyReq.setHeader('X-Forwarded-Host', 'dev-chainlink.markushofstetter.com')
+              proxyReq.setHeader('X-Forwarded-Host', 'dev-linkweave.dev')
               proxyReq.setHeader('X-Forwarded-Proto', 'https')
               proxyReq.setHeader('X-Forwarded-Port', '5173')
             })
