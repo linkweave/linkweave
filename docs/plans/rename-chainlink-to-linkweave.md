@@ -130,7 +130,7 @@ At cutover, rename each on **both** sides + the host `.env` simultaneously. **D6
 
 **8d. Other.** `container_name: chainlink-api`, external network `chainlink-internal` (needs `docker network create linkweave-internal` + recreate dependents), OIDC client redirect URIs + cookie-domain (`*chainlink.markushofstetter.com`), extension `host_permissions`, nginx upstream name. Sequence so sessions/redirects don't break.
 
-**8e. Observability identity (frozen — rename in the external service first).** `app.deployment.app-project=chainlink` (→ `ConfigService.appProject`) and the Sentry project slug `pom.xml` sentry-upload `<project>chainlink-api</project>`. Renaming the slug code-side routes source-map uploads to a non-existent Sentry project until the project is renamed in the Sentry dashboard — so rename the Sentry project first, then update both. Metric names (`chainlink_*`, queried by Grafana) belong here too.
+**8e. Observability identity.** The Sentry project slug `pom.xml` sentry-upload `<project>chainlink-api</project>` is **frozen — rename in the external service first**: renaming the slug code-side routes source-map uploads to a non-existent Sentry project until the project is renamed in the Sentry dashboard. Metric names (`chainlink_*`, queried by Grafana) belong here too. NOTE: `app.deployment.app-project` was renamed to `linkweave` in pass 1 — it's only an MDC log-tag value (`LoggingCommonMDCFieldsRequestFilter`), not env-driven and not a breaking contract; just update any log/Sentry dashboard filter on the old `chainlink` value.
 
 ## 9. Verification gate (before merge)
 

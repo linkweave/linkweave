@@ -25,7 +25,7 @@ public class JacksonCustomizer implements ObjectMapperCustomizer {
         mapper.enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         mapper.setConstructorDetector(ConstructorDetector.USE_PROPERTIES_BASED);
 
-        SimpleModule module = new SimpleModule("chainlink.api");
+        SimpleModule module = new SimpleModule("linkweave.api");
 
         EmailAddressConverter.registerJackson(module);
         CleanFileNameConverter.registerJackson(module);
