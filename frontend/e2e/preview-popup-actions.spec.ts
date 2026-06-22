@@ -49,7 +49,7 @@ test.describe('UC-093 preview popup action footer', () => {
     await page.addInitScript(() => {
       localStorage.setItem('bookmarkLayout', 'list')
       localStorage.setItem('previewsEnabled', 'true')
-      localStorage.setItem('chainlink:showPreviewPopup', 'true')
+      localStorage.setItem('linkweave:showPreviewPopup', 'true')
     })
     await gotoCollection(page, collection)
     await expect(page.getByTestId(/^bookmark-card-/).first()).toBeVisible({ timeout: 10000 })

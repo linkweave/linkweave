@@ -22,5 +22,5 @@ export function getDraggingFolderId(): string | null {
   return _draggingFolderId.value
 }
 
-export const DRAG_TYPE_BOOKMARK = 'application/x-chainlink-bookmark'
-export const DRAG_TYPE_FOLDER = 'application/x-chainlink-folder'
+export const DRAG_TYPE_BOOKMARK = 'application/x-linkweave-bookmark'
+export const DRAG_TYPE_FOLDER = 'application/x-linkweave-folder'

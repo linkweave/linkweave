@@ -32,7 +32,7 @@ async function initializeApp() {
     tracePropagationTargets: [
       'local-chainlink.localhost',
       'dev-chainlink.markushofstetter.com',
-      'chainlink.markushofstetter.com',
+      'linkweave.dev',
     ],
     sendDefaultPii: true,
     enableLogs: true,

@@ -29,17 +29,11 @@ function onKey(e: KeyboardEvent) {
   }
 }
 
-function onFocusSearch() {
-  if (window.innerWidth < 640) open.value = true
-}
-
 onMounted(() => {
   window.addEventListener('keydown', onKey)
-  window.addEventListener('chainlink:focus-search', onFocusSearch)
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', onKey)
-  window.removeEventListener('chainlink:focus-search', onFocusSearch)
 })
 </script>
 

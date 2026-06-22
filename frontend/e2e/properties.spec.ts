@@ -156,7 +156,7 @@ test.describe('UC-067 property filtering', () => {
   test('card badge click filters by equality and lights up purple', async ({ page }) => {
     // Enable badges on cards before the SPA boots so the row renders on first paint.
     await page.addInitScript(() => {
-      localStorage.setItem('chainlink:showPropertyBadges', 'true')
+      localStorage.setItem('linkweave:showPropertyBadges', 'true')
     })
     await page.goto(`/collections/${collectionId}`)
     await expect.poll(() => visibleCardCount(page)).toBe(4)

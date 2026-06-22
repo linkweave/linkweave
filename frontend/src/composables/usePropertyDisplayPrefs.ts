@@ -14,9 +14,9 @@ function usePersistedBoolean(key: string, defaultValue: boolean): Ref<boolean> {
 }
 
 // Module-level singletons so every consumer mutates the same reactive ref.
-const showPropertyBadgesRef = usePersistedBoolean('chainlink:showPropertyBadges', false)
-const showPropertiesSidebarRef = usePersistedBoolean('chainlink:showPropertiesSidebar', true)
-const showPreviewPopupRef = usePersistedBoolean('chainlink:showPreviewPopup', true)
+const showPropertyBadgesRef = usePersistedBoolean('linkweave:showPropertyBadges', false)
+const showPropertiesSidebarRef = usePersistedBoolean('linkweave:showPropertiesSidebar', true)
+const showPreviewPopupRef = usePersistedBoolean('linkweave:showPreviewPopup', true)
 
 export function useShowPropertyBadges() {
   return showPropertyBadgesRef
