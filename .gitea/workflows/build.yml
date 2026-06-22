@@ -367,7 +367,7 @@ jobs:
         run: echo "Deploying with commit hash ${{ steps.commit-hash.outputs.COMMIT_HASH }}"
 
       - name: Update image tags in docker-compose.yml
-        working-directory: docker-compose-config/chainlink
+        working-directory: docker-compose-config/linkweave
         run: |
           COMMIT_HASH="${{ steps.commit-hash.outputs.COMMIT_HASH }}"
           echo "COMMIT_HASH variable value: $COMMIT_HASH"
@@ -377,10 +377,10 @@ jobs:
           sed -i "s|linkweave-frontend:.*|linkweave-frontend:${COMMIT_HASH}|g" docker-compose.yml
           sed -i "s|linkweave-screenshot-service:.*|linkweave-screenshot-service:${COMMIT_HASH}|g" docker-compose.yml
           # Fail loud if the sed matched nothing (e.g. the external compose still uses the old
-          # chainlink-* image names) — otherwise prod silently keeps the previous tag forever.
+          # linkweave-* image names) — otherwise prod silently keeps the previous tag forever.
           for img in linkweave-api linkweave-frontend linkweave-screenshot-service; do
             grep -q "${img}:${COMMIT_HASH}" docker-compose.yml || {
-              echo "ERROR: ${img}:${COMMIT_HASH} not found after sed — does the compose still reference old chainlink-* image names?" >&2
+              echo "ERROR: ${img}:${COMMIT_HASH} not found after sed — does the compose still reference old linkweave-* image names?" >&2
               exit 1
             }
           done
@@ -394,7 +394,7 @@ jobs:
         run: |
           git config user.name "gitea-actions[bot]"
           git config user.email "gitea-actions[bot]@users.noreply.gitea"
-          git add chainlink/docker-compose.yml
+          git add linkweave/docker-compose.yml
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore(deploy): update image tags to ${{ steps.commit-hash.outputs.COMMIT_HASH }}"
           git push
