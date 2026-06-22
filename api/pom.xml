@@ -385,7 +385,7 @@
                         <configuration>
                             <debugSentryCli>true</debugSentryCli>
                             <org>mh03r932</org>
-                            <project>chainlink-api</project>
+                            <project>linkweave-api</project>
                             <authToken>${env.SENTRY_AUTH_TOKEN}</authToken>
                         </configuration>
                         <executions>
