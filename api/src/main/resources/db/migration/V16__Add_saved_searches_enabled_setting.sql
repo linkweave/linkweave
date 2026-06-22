@@ -1,2 +1,0 @@
-ALTER TABLE UserSettings ADD COLUMN savedSearchesEnabled BOOLEAN NOT NULL DEFAULT TRUE;
-ALTER TABLE UserSettings_AUD ADD COLUMN savedSearchesEnabled BOOLEAN;
