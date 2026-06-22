@@ -7,7 +7,7 @@
  */
 
 /** Converts an API base URL to a host-permission match pattern (scheme + host + "/*"). */
-export function toOriginPattern(apiUrl: string): string | null {
+function toOriginPattern(apiUrl: string): string | null {
   try {
     // Match patterns must NOT include a port; a host grant covers all ports.
     const { protocol, hostname } = new URL(apiUrl)
