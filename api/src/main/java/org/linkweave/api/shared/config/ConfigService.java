@@ -149,7 +149,7 @@ public class ConfigService {
 
     // A realistic browser User-Agent. Many sites sit behind a WAF/CDN (e.g.
     // CloudFront, Akamai) that returns 403 to non-browser User-Agents, so a
-    // bespoke token like "Chainlink-FaviconProxy/1.0" never reaches the icon.
+    // bespoke token like "LinkWeave-FaviconProxy/1.0" never reaches the icon.
     @ConfigProperty(name = "chainlink.favicon.user-agent",
         defaultValue = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
             + "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")

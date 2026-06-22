@@ -138,7 +138,7 @@ Infrastructure metrics provided by Quarkus/Micrometer retain their default names
 | `jdbc.connections.pending` | Gauge | — | Number of threads waiting for a connection |
 | `jdbc.connections.max` | Gauge | — | Maximum configured pool size |
 
-### Custom Business Metrics (Registered by Chainlink Services)
+### Custom Business Metrics (Registered by LinkWeave Services)
 
 | Metric Name | Type | Tags | Source | Description |
 |---|---|---|---|---|

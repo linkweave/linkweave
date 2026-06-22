@@ -1,11 +1,11 @@
-# Use Case: Run Chainlink as a Desktop Application
+# Use Case: Run LinkWeave as a Desktop Application
 
 ## Overview
 
 **Use Case ID:** UC-052
-**Use Case Name:** Run Chainlink as a Desktop Application
-**Primary Actor:** User (running Chainlink locally on their own machine)
-**Goal:** Use Chainlink as a self-contained desktop application that does not require a separately hosted backend or a browser
+**Use Case Name:** Run LinkWeave as a Desktop Application
+**Primary Actor:** User (running LinkWeave locally on their own machine)
+**Goal:** Use LinkWeave as a self-contained desktop application that does not require a separately hosted backend or a browser
 **Status:** Done
 
 **Notes:**
@@ -13,20 +13,20 @@
 - The backend is started as a sidecar process on app launch, bound to `127.0.0.1` on a random free port, and terminated on app quit.
 - The desktop build deliberately uses local form-based authentication only — Google OIDC is hidden because the OAuth redirect flow is incompatible with a localhost desktop app without additional infrastructure (loopback handler / device flow).
 
-**Traces to:** (no FR exists yet — would need a new requirement, e.g. FR-070 "Distribute Chainlink as a desktop application").
+**Traces to:** (no FR exists yet — would need a new requirement, e.g. FR-070 "Distribute LinkWeave as a desktop application").
 
 **Implementation Plan:** See [`../desktop-app.md`](../desktop-app.md) for the architectural approach, blockers, file-by-file changes, and verification steps.
 
 ## Preconditions
 
-- The user has installed the Chainlink desktop application on a supported operating system (macOS for the prototype; Windows/Linux later).
+- The user has installed the LinkWeave desktop application on a supported operating system (macOS for the prototype; Windows/Linux later).
 - The user's machine has sufficient resources to run a JVM (~300–400 MB RSS).
 - The user has network access if they intend to use features that require it (favicon fetching, bookmark imports from URLs).
 
 ## Main Success Scenario
 
-1. User launches the Chainlink desktop application from their OS application launcher.
-2. System (desktop shell) determines the OS-appropriate user data directory (e.g. `~/Library/Application Support/Chainlink/` on macOS) and ensures it exists.
+1. User launches the LinkWeave desktop application from their OS application launcher.
+2. System (desktop shell) determines the OS-appropriate user data directory (e.g. `~/Library/Application Support/LinkWeave/` on macOS) and ensures it exists.
 3. System selects a random free TCP port on `127.0.0.1` for the backend.
 4. System spawns the bundled Quarkus backend as a child process, passing `CHAINLINK_DB_PATH`, `CHAINLINK_FAVICON_CACHE_DIR`, and the chosen port via environment variables.
 5. System polls the backend's health endpoint until it responds successfully or a timeout elapses.
@@ -56,7 +56,7 @@
 **Flow:**
 
 1. System captures the backend's stdout/stderr to a log file in the user data directory.
-2. System displays a native error dialog: "Chainlink could not start. See the log file at `<path>` for details."
+2. System displays a native error dialog: "LinkWeave could not start. See the log file at `<path>` for details."
 3. User dismisses the dialog; system shuts down cleanly.
 
 ### A3: Port Selection Race
@@ -73,7 +73,7 @@
 **Trigger:** SQLite reports the database is locked or corrupted on Quarkus startup (step 4)
 **Flow:**
 
-1. Quarkus startup fails; flow continues with A2, but the error dialog additionally suggests: "Another instance of Chainlink may already be running, or the database file may be corrupt."
+1. Quarkus startup fails; flow continues with A2, but the error dialog additionally suggests: "Another instance of LinkWeave may already be running, or the database file may be corrupt."
 
 ### A5: Second Instance Launched
 

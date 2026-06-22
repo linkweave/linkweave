@@ -1,4 +1,4 @@
-# AGENTS.md - Chainlink Project Guide
+# AGENTS.md - LinkWeave Project Guide
 
 ## Project Overview
 

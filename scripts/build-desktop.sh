@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Builds the Chainlink desktop bundle (UC-052). Cross-platform; see docs/desktop-app.md
+# Builds the LinkWeave desktop bundle (UC-052). Cross-platform; see docs/desktop-app.md
 # "Build Pipeline". Chains the three toolchains in dependency order and fails fast.
 #
 #   frontend (VITE_DESKTOP=true)  ->  backend (quarkus.profile=desktop)  ->  stage  ->  tauri build

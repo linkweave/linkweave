@@ -48,9 +48,9 @@ function resetDefaults() {
   <div class="max-w-lg mx-auto p-8">
     <!-- Header -->
     <div class="flex items-center gap-3 mb-8">
-      <img src="@/assets/ChainlinkLogoTrResc.png" alt="Chainlink" class="w-8 h-8" />
+      <img src="@/assets/ChainlinkLogoTrResc.png" alt="LinkWeave" class="w-8 h-8" />
       <div>
-        <h1 class="text-lg font-semibold">Chainlink Options</h1>
+        <h1 class="text-lg font-semibold">LinkWeave Options</h1>
         <p class="text-xs text-muted-foreground">Configure your self-hosted instance</p>
       </div>
     </div>
@@ -67,7 +67,7 @@ function resetDefaults() {
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
         <p class="text-xs text-muted-foreground">
-          Base URL of the Chainlink API (no trailing slash, no <code>/api</code> suffix).
+          Base URL of the LinkWeave API (no trailing slash, no <code>/api</code> suffix).
         </p>
       </div>
 
@@ -82,7 +82,7 @@ function resetDefaults() {
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
         <p class="text-xs text-muted-foreground">
-          URL of the Chainlink web app, used for the "Open Chainlink" login link.
+          URL of the LinkWeave web app, used for the "Open LinkWeave" login link.
         </p>
       </div>
 

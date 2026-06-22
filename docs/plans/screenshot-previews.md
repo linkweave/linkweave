@@ -44,7 +44,7 @@ Screenshots are captured by a Playwright-based microservice running as a Docker 
 
 ```
 ┌─────────────────────┐       HTTP        ┌──────────────────────────┐
-│  Chainlink API      │ ───────────────── │  Playwright Screenshot   │
+│  LinkWeave API      │ ───────────────── │  Playwright Screenshot   │
 │  (Quarkus)          │  POST /screenshot │  Service (Node.js)       │
 │                     │  {url, width,     │  :3000                   │
 │  ScreenshotFetcher  │   format:"jpeg"}  │                          │

@@ -33,7 +33,7 @@
 
 ## Main Success Scenario
 
-1. User opens or refreshes the Chainlink application in the browser while the server is unreachable.
+1. User opens or refreshes the LinkWeave application in the browser while the server is unreachable.
 2. Service worker serves the app shell from the Cache Storage.
 3. Vue application boots; the router guard triggers `initializeSession()`.
 4. System detects that `GET /api/auth/me` failed with a `TypeError` (network-level failure) and `navigator.onLine === false` (browser confirms no network). The offline middleware classifies this as a genuine network outage (see BR-048-8).
@@ -191,7 +191,7 @@ Only collections that were loaded while the user was online (triggering `fetchCo
 
 ### BR-048-5: Bookmark Links Navigate Normally
 
-Clicking a bookmark URL while offline will open the target URL in a new browser tab. Whether the target page loads depends on the user's internet connectivity and the target server — this is outside Chainlink's control.
+Clicking a bookmark URL while offline will open the target URL in a new browser tab. Whether the target page loads depends on the user's internet connectivity and the target server — this is outside LinkWeave's control.
 
 ### BR-048-6: User-Scoped Data Isolation
 

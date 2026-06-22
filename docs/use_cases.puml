@@ -1,4 +1,4 @@
-@startuml Chainlink Use Cases
+@startuml LinkWeave Use Cases
 left to right direction
 
 skinparam usecaseBackgroundColor<<implemented>> #E8F5E9
@@ -14,7 +14,7 @@ actor "CLI User" as cliuser
 owner --|> user
 cliuser --|> user
 
-rectangle "Chainlink Bookmark Manager" {
+rectangle "LinkWeave Bookmark Manager" {
 
     rectangle "Authentication" {
         usecase "UC-033\nLogin with Google" as UC033 <<implemented>>

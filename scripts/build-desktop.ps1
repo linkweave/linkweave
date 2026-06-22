@@ -1,5 +1,5 @@
 #
-# Builds the Chainlink desktop bundle (UC-052) on Windows.
+# Builds the LinkWeave desktop bundle (UC-052) on Windows.
 # PowerShell equivalent of build-desktop.sh. Run from repo root:
 #   powershell -ExecutionPolicy Bypass -File scripts\build-desktop.ps1
 #

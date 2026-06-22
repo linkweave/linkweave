@@ -14,7 +14,7 @@ export class LoginPageObject {
     this.passwordInput = page.getByLabel('Password')
     this.loginSubmitButton = page.getByRole('button', { name: 'Sign in', exact: true })
     this.errorMessage = page.getByText('Invalid email or password.')
-    this.appTitle = page.getByRole('heading', { name: 'Chainlink' })
+    this.appTitle = page.getByRole('heading', { name: 'LinkWeave' })
   }
 
   async goto() {

@@ -1,6 +1,6 @@
-# Chainlink Frontend
+# LinkWeave Frontend
 
-Vue.js frontend and browser extension for [Chainlink](https://chainlink.markushofstetter.com), a self-hosted bookmark manager.
+Vue.js frontend and browser extension for [LinkWeave](https://chainlink.markushofstetter.com), a self-hosted bookmark manager.
 
 ## Prerequisites
 
@@ -102,8 +102,8 @@ npx web-ext lint --source-dir dist-extension
 
 On first use, configure the extension via the options page (right-click the extension icon → Options). Set:
 
-- **API URL** — Base URL of your Chainlink API instance (e.g. `https://chainlink.example.com`)
-- **Web App URL** — URL of the Chainlink web app (used for the sign-in link)
+- **API URL** — Base URL of your LinkWeave API instance (e.g. `https://chainlink.example.com`)
+- **Web App URL** — URL of the LinkWeave web app (used for the sign-in link)
 
 These are stored in `chrome.storage.sync` and can be changed at any time.
 

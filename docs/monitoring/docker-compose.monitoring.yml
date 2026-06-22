@@ -1,5 +1,5 @@
 # Optional reference monitoring stack for local evaluation.
-# Starts VictoriaMetrics (single-node) + Grafana with the Chainlink dashboard pre-loaded.
+# Starts VictoriaMetrics (single-node) + Grafana with the LinkWeave dashboard pre-loaded.
 #
 # Usage:
 #   docker compose -f docker-compose.monitoring.yml up -d

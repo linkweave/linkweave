@@ -61,8 +61,8 @@ export default defineConfig(({ command }) => {
           ],
         },
         manifest: {
-          name: 'Chainlink - Bookmark Manager',
-          short_name: 'Chainlink',
+          name: 'LinkWeave - Bookmark Manager',
+          short_name: 'LinkWeave',
           description: 'Self-hosted bookmark manager',
           theme_color: '#2563eb',
           background_color: '#ffffff',

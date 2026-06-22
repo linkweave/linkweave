@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "Chainlink application metrics — HTTP, JVM, database pool, business counters, and scheduled jobs",
+  "description": "LinkWeave application metrics — HTTP, JVM, database pool, business counters, and scheduled jobs",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -258,7 +258,7 @@
   "time": { "from": "now-1h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Chainlink",
+  "title": "LinkWeave",
   "uid": "chainlink-overview",
   "version": 1
 }

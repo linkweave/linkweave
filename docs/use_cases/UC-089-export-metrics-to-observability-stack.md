@@ -5,7 +5,7 @@
 **Use Case ID:** UC-089
 **Use Case Name:** Export Metrics to Observability Stack
 **Primary Actor:** Operator
-**Goal:** Expose collected application metrics (UC-088) on a dedicated HTTP endpoint in a format that an external metrics scraper can ingest, so that the operator can integrate Chainlink into their existing observability infrastructure.
+**Goal:** Expose collected application metrics (UC-088) on a dedicated HTTP endpoint in a format that an external metrics scraper can ingest, so that the operator can integrate LinkWeave into their existing observability infrastructure.
 **Status:** Draft
 
 ## Traceability
@@ -21,9 +21,9 @@
 
 ## Main Success Scenario — Prometheus-Compatible Scraping
 
-1. Operator configures an external metrics scraper (e.g., Prometheus, VictoriaMetrics vmagent) to scrape the Chainlink metrics endpoint at the configured path (default `/q/metrics`).
+1. Operator configures an external metrics scraper (e.g., Prometheus, VictoriaMetrics vmagent) to scrape the LinkWeave metrics endpoint at the configured path (default `/q/metrics`).
 2. Operator sets the scrape interval (e.g., 15 seconds) in the scraper configuration.
-3. Scraper sends an HTTP `GET` request to the Chainlink metrics endpoint.
+3. Scraper sends an HTTP `GET` request to the LinkWeave metrics endpoint.
 4. System collects all registered meter snapshots from the Micrometer `MeterRegistry`.
 5. System serializes the meters into Prometheus exposition format text.
 6. System returns the response with HTTP 200 and `Content-Type: text/plain; version=0.0.4; charset=utf-8`.

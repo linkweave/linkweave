@@ -19,7 +19,7 @@ import logoUrl from '@/assets/ChainlinkLogoTrResc.png'
     <div class="max-w-2xl mx-auto">
       <div class="text-center mb-8">
         <router-link :to="{ name: 'login' }">
-          <img :src="logoUrl" alt="Chainlink" class="mx-auto h-20 w-20 mb-3" />
+          <img :src="logoUrl" alt="LinkWeave" class="mx-auto h-20 w-20 mb-3" />
         </router-link>
         <h1 class="text-2xl font-bold tracking-tight text-white">Privacy Policy</h1>
         <p class="text-white/70 text-sm mt-1">Last updated: May 2025</p>
@@ -38,7 +38,7 @@ import logoUrl from '@/assets/ChainlinkLogoTrResc.png'
         <section>
           <h2 class="text-lg font-semibold text-white mb-2">Introduction</h2>
           <p>
-            Chainlink ("we", "our", "us") operates the Chainlink browser extension (the "Extension") and the
+            LinkWeave ("we", "our", "us") operates the LinkWeave browser extension (the "Extension") and the
             associated web application at
             <strong>chainlink.markushofstetter.com</strong> (the "Service"). This privacy policy describes how the
             Extension and Service collect, use, and share user data.
@@ -48,9 +48,9 @@ import logoUrl from '@/assets/ChainlinkLogoTrResc.png'
         <section>
           <h2 class="text-lg font-semibold text-white mb-2">Data Controller</h2>
           <p>
-            Chainlink is a self-hosted bookmark manager. The instance you connect to may be operated by you, your
-            organisation, or a third party. The operator of the Chainlink server instance is the data controller for
-            the data stored on that server. This policy covers the data handled by the official Chainlink Extension as
+            LinkWeave is a self-hosted bookmark manager. The instance you connect to may be operated by you, your
+            organisation, or a third party. The operator of the LinkWeave server instance is the data controller for
+            the data stored on that server. This policy covers the data handled by the official LinkWeave Extension as
             published on the Chrome Web Store.
           </p>
         </section>
@@ -68,7 +68,7 @@ import logoUrl from '@/assets/ChainlinkLogoTrResc.png'
           <h3 class="font-semibold text-white mt-4 mb-1">Data Collected Automatically</h3>
           <ul class="list-disc list-inside space-y-1 ml-2">
             <li><strong>Current page URL and title:</strong> When you open the Extension popup or use the context menu, the Extension reads the URL and title of the active browser tab using the <code>activeTab</code> and <code>tabs</code> permissions. This data is used solely to pre-fill the bookmark save form and is not transmitted unless you explicitly save the bookmark.</li>
-            <li><strong>Clicked link URL:</strong> If you right-click a link and select "Add to Chainlink", the URL of that link is captured to pre-fill the save form.</li>
+            <li><strong>Clicked link URL:</strong> If you right-click a link and select "Add to LinkWeave", the URL of that link is captured to pre-fill the save form.</li>
             <li><strong>Click tracking:</strong> When you click a bookmark in the Extension, an anonymous count is incremented on the server to track how often a bookmark has been opened. No personal data is attached to these counts.</li>
           </ul>
 
@@ -76,7 +76,7 @@ import logoUrl from '@/assets/ChainlinkLogoTrResc.png'
           <ul class="list-disc list-inside space-y-1 ml-2">
             <li><strong>Extension configuration:</strong> The API URL and Web App URL you configure in the Extension options page are stored in <code>chrome.storage.sync</code>. These settings remain on your device and are not transmitted to any server except the one you explicitly configure.</li>
             <li><strong>Temporary context menu data:</strong> The URL captured from the context menu is temporarily stored in <code>chrome.storage.local</code> and cleared when the popup opens.</li>
-            <li><strong>Session cookies:</strong> Authentication cookies are stored in your browser to maintain your signed-in session with the Chainlink API server.</li>
+            <li><strong>Session cookies:</strong> Authentication cookies are stored in your browser to maintain your signed-in session with the LinkWeave API server.</li>
           </ul>
         </section>
 
@@ -94,7 +94,7 @@ import logoUrl from '@/assets/ChainlinkLogoTrResc.png'
           <h2 class="text-lg font-semibold text-white mb-2">How Your Data Is Shared</h2>
           <ul class="list-disc list-inside space-y-1 ml-2">
             <li><strong>Google:</strong> If you use "Sign in with Google", your authentication request is processed by Google. Google receives your sign-in event but does not receive your bookmark data. The scopes requested are <code>openid</code>, <code>profile</code>, and <code>email</code>.</li>
-            <li><strong>Your configured server:</strong> All bookmark data you save is sent exclusively to the Chainlink API server you have configured in the Extension options. By default, this is <strong>chainlink.markushofstetter.com</strong>. No data is sent to any other server.</li>
+            <li><strong>Your configured server:</strong> All bookmark data you save is sent exclusively to the LinkWeave API server you have configured in the Extension options. By default, this is <strong>chainlink.markushofstetter.com</strong>. No data is sent to any other server.</li>
           </ul>
           <p class="mt-2">We do <strong>not</strong> sell, rent, or trade your data to any third party. We do not use advertising trackers or analytics services.</p>
         </section>
@@ -147,7 +147,7 @@ import logoUrl from '@/assets/ChainlinkLogoTrResc.png'
 
         <div class="pt-4 border-t border-white/10 text-center">
           <router-link :to="{ name: 'login' }" class="text-white/60 hover:text-white text-sm underline">
-            Back to Chainlink
+            Back to LinkWeave
           </router-link>
         </div>
       </div>

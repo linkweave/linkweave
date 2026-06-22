@@ -2,7 +2,7 @@
 
 ## Overview
 
-This handoff covers two coupled UX changes in Chainlink's bookmark list:
+This handoff covers two coupled UX changes in LinkWeave's bookmark list:
 
 1. **Whole-card click opens the bookmark** — replaces today's behavior where only the URL anchor and kebab are clickable, while the card visually advertises (with `cursor-grab`, hover ring, and primary-tinted border) that the entire surface is interactive.
 2. **Clickable tag chips and folder labels filter the list** — clicking a `#tag` chip on a card toggles a `#tagname` filter in the search bar; clicking the "in folder" label toggles `folder:foldername`. This is the first slice of **UC-070 (Search with Operators)** delivered through direct manipulation on cards, plus a new multi-pill rendering of the `SearchActiveChip` to show the active filters.

@@ -5,7 +5,7 @@
 **Use Case ID:** UC-090
 **Use Case Name:** Visualize Metrics in Dashboard
 **Primary Actor:** Operator
-**Goal:** Connect an external dashboarding tool (e.g., Grafana) to the metrics storage backend that is scraping Chainlink's metrics endpoint (UC-089), so that the operator can visualize system health, request rates, error rates, and business metrics over time through interactive charts and alerts.
+**Goal:** Connect an external dashboarding tool (e.g., Grafana) to the metrics storage backend that is scraping LinkWeave's metrics endpoint (UC-089), so that the operator can visualize system health, request rates, error rates, and business metrics over time through interactive charts and alerts.
 **Status:** Draft
 
 ## Traceability
@@ -16,14 +16,14 @@
 
 ## Preconditions
 
-- The Chainlink metrics endpoint (UC-089) is accessible and being scraped by a metrics storage backend (e.g., Prometheus, VictoriaMetrics).
+- The LinkWeave metrics endpoint (UC-089) is accessible and being scraped by a metrics storage backend (e.g., Prometheus, VictoriaMetrics).
 - A dashboarding tool (e.g., Grafana) is deployed and accessible to the operator.
 - The dashboarding tool can query the metrics storage backend (e.g., Grafana has a Prometheus/VictoriaMetrics data source configured).
 
 ## Main Success Scenario — Import Provided Dashboard
 
 1. Operator opens the Grafana UI and navigates to Dashboards → Import.
-2. Operator uploads the provided Chainlink dashboard JSON file from the project repository (`docs/monitoring/grafana-provisioning/dashboards/chainlink-overview.json`).
+2. Operator uploads the provided LinkWeave dashboard JSON file from the project repository (`docs/monitoring/grafana-provisioning/dashboards/chainlink-overview.json`).
 3. Operator selects the Prometheus/VictoriaMetrics data source to bind the dashboard to.
 4. System imports the dashboard and displays it with panels populated from live metrics data.
 5. Operator sees the following dashboard sections:
@@ -39,10 +39,10 @@
 
 1. Operator opens the Grafana UI and creates a new dashboard.
 2. Operator adds a new panel and selects the Prometheus/VictoriaMetrics data source.
-3. Operator writes a PromQL query using the Chainlink metric names documented in UC-088 (e.g., `rate(http.server.requests{uri=~"/api/.*"}[5m])`).
+3. Operator writes a PromQL query using the LinkWeave metric names documented in UC-088 (e.g., `rate(http.server.requests{uri=~"/api/.*"}[5m])`).
 4. Operator configures the panel visualization (time series, stat, gauge, table).
 5. Operator saves the dashboard.
-6. Dashboard displays live data from the Chainlink metrics endpoint.
+6. Dashboard displays live data from the LinkWeave metrics endpoint.
 
 ## Alternative Flows
 
@@ -51,10 +51,10 @@
 **Trigger:** The dashboard panels display "No data" after import (step 4 of import flow).
 **Flow:**
 
-1. Operator verifies that the metrics scraper is running and successfully scraping the Chainlink endpoint (UC-089).
-2. Operator checks the scraper's targets page (e.g., Prometheus `/targets`) to confirm the Chainlink target is `UP`.
+1. Operator verifies that the metrics scraper is running and successfully scraping the LinkWeave endpoint (UC-089).
+2. Operator checks the scraper's targets page (e.g., Prometheus `/targets`) to confirm the LinkWeave target is `UP`.
 3. Operator verifies that the data source in Grafana is correctly configured (URL matches the scraper's query endpoint).
-4. If the target is `DOWN`, operator checks network connectivity between scraper and Chainlink.
+4. If the target is `DOWN`, operator checks network connectivity between scraper and LinkWeave.
 5. Once the scraper is healthy, data begins flowing and the dashboard populates.
 
 ### A2: Operator Uses a Non-Grafana Dashboard
@@ -79,9 +79,9 @@
    - `jvm.memory.used` (heap) > 90% of max for 5 minutes → "JVM memory pressure"
 4. Alerts fire independently of dashboard viewing.
 
-### A4: Multiple Chainlink Instances
+### A4: Multiple LinkWeave Instances
 
-**Trigger:** The operator runs multiple Chainlink instances behind a load balancer, each exposing its own metrics endpoint.
+**Trigger:** The operator runs multiple LinkWeave instances behind a load balancer, each exposing its own metrics endpoint.
 **Flow:**
 
 1. Operator configures the scraper to discover and scrape each instance separately (using `instance` labels).
@@ -92,7 +92,7 @@
 
 ### Success Postconditions
 
-- A Grafana dashboard (imported or custom) displays live Chainlink metrics.
+- A Grafana dashboard (imported or custom) displays live LinkWeave metrics.
 - The operator can monitor HTTP performance, JVM health, database pool, business counters, and job execution.
 - The operator can set time ranges and refresh intervals.
 - The dashboard configuration JSON is versioned in the project repository.
@@ -101,7 +101,7 @@
 
 - The dashboard shows no data or partial data.
 - The operator must troubleshoot the scraper or data source configuration.
-- Chainlink application functionality is unaffected — dashboards are non-critical visualization tooling.
+- LinkWeave application functionality is unaffected — dashboards are non-critical visualization tooling.
 
 ## Business Rules
 
@@ -109,13 +109,13 @@
 
 The provided Grafana dashboard JSON file (`docs/monitoring/grafana-provisioning/dashboards/chainlink-overview.json`) is a reference artifact that operators can import as-is or customize. It is not required infrastructure — operators can build their own dashboards using the documented metric names.
 
-### BR-002: Dashboard Does Not Require Chainlink Code Changes
+### BR-002: Dashboard Does Not Require LinkWeave Code Changes
 
-All dashboard configuration lives outside the Chainlink application. The dashboard queries the metrics storage backend, not the Chainlink application directly. Changing, adding, or removing dashboard panels never requires redeploying Chainlink.
+All dashboard configuration lives outside the LinkWeave application. The dashboard queries the metrics storage backend, not the LinkWeave application directly. Changing, adding, or removing dashboard panels never requires redeploying LinkWeave.
 
 ### BR-003: Example Docker Compose Is Optional
 
-The project may provide a `docker-compose.monitoring.yml` file that starts VictoriaMetrics + Grafana with the Chainlink dashboard pre-loaded. This file is reference material for quick-start evaluation, not a required component of the Chainlink deployment.
+The project may provide a `docker-compose.monitoring.yml` file that starts VictoriaMetrics + Grafana with the LinkWeave dashboard pre-loaded. This file is reference material for quick-start evaluation, not a required component of the LinkWeave deployment.
 
 ---
 

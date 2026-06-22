@@ -22,7 +22,7 @@ defineProps<{
   >
     <div class="w-full max-w-sm space-y-8">
       <div class="text-center">
-        <img :src="logoUrl" alt="Chainlink" class="mx-auto h-32 w-32 mb-4" />
+        <img :src="logoUrl" alt="LinkWeave" class="mx-auto h-32 w-32 mb-4" />
         <h1 class="text-2xl font-bold tracking-tight">{{ title }}</h1>
       </div>
 

@@ -5,7 +5,7 @@
 **Use Case ID:** UC-057
 **Use Case Name:** Improve Mobile Responsiveness
 **Primary Actor:** Developer
-**Goal:** Fix all critical and important mobile responsiveness issues identified in the mobile viability audit so that Chainlink is usable on 375px-wide screens (standard mobile).
+**Goal:** Fix all critical and important mobile responsiveness issues identified in the mobile viability audit so that LinkWeave is usable on 375px-wide screens (standard mobile).
 **Status:** Done
 
 ## Traceability

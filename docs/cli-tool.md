@@ -7,7 +7,7 @@
 
 ## Overview
 
-This document describes the architecture for adding a command-line interface (CLI) to Chainlink, enabling users to manage bookmarks from a terminal. The CLI authenticates via API keys — a new server-side credential type — and communicates exclusively through the existing HTTP API.
+This document describes the architecture for adding a command-line interface (CLI) to LinkWeave, enabling users to manage bookmarks from a terminal. The CLI authenticates via API keys — a new server-side credential type — and communicates exclusively through the existing HTTP API.
 
 ---
 

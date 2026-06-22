@@ -117,8 +117,8 @@ jobs:
             --build-arg COMMIT_HASH="${COMMIT_HASH}" \
             --build-arg VERSION="${VERSION}" \
             --label org.opencontainers.image.commit="${COMMIT_HASH}" \
-            --label org.opencontainers.image.title="Chainlink API" \
-            --label org.opencontainers.image.description="Quarkus-based Java backend for Chainlink" \
+            --label org.opencontainers.image.title="LinkWeave API" \
+            --label org.opencontainers.image.description="Quarkus-based Java backend for LinkWeave" \
             .
           for t in "${tags[@]}"; do docker push "$t"; done
 
@@ -221,8 +221,8 @@ jobs:
             --build-arg VITE_SENTRY_DSN="https://dd086e579810c04e75f2e37463ac7378@o4509425614520320.ingest.de.sentry.io/4511463699120208" \
             --secret id=sentry_auth_token,env=sentry_auth_token \
             --label org.opencontainers.image.commit="${COMMIT_HASH}" \
-            --label org.opencontainers.image.title="Chainlink Frontend" \
-            --label org.opencontainers.image.description="Vue.js frontend for Chainlink" \
+            --label org.opencontainers.image.title="LinkWeave Frontend" \
+            --label org.opencontainers.image.description="Vue.js frontend for LinkWeave" \
             .
           for t in "${tags[@]}"; do docker push "$t"; done
 
@@ -268,8 +268,8 @@ jobs:
             -t "${IMAGE}:latest" \
             -t "${IMAGE}:${COMMIT_HASH}" \
             --label org.opencontainers.image.commit="${COMMIT_HASH}" \
-            --label org.opencontainers.image.title="Chainlink Screenshot Service" \
-            --label org.opencontainers.image.description="Playwright-based screenshot sidecar for Chainlink" \
+            --label org.opencontainers.image.title="LinkWeave Screenshot Service" \
+            --label org.opencontainers.image.description="Playwright-based screenshot sidecar for LinkWeave" \
             .
           docker push "${IMAGE}:latest"
           docker push "${IMAGE}:${COMMIT_HASH}"

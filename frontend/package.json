@@ -29,7 +29,7 @@
     "test:watch": "vitest",
     "dev:extension": "vite build --watch --config vite.config.extension.ts --mode extension.development",
     "build:extension": "vite build --config vite.config.extension.ts --mode extension.production",
-    "package:extension": "pnpm run build:extension && web-ext build --source-dir dist-extension --artifacts-dir . --overwrite-dest --filename=\"chainlink-ext-$(date +%Y%m%d-%H%M%S).zip\""
+    "package:extension": "pnpm run build:extension && web-ext build --source-dir dist-extension --artifacts-dir . --overwrite-dest --filename=\"linkweave-ext-$(date +%Y%m%d-%H%M%S).zip\""
   },
   "dependencies": {
     "@lucide/vue": "^1.16.0",

@@ -1,6 +1,6 @@
 # Vision
 
-The **Chainlink** Bookmark manager is a self-hosted web application that helps teams or individuals manage bookmarks in a clear and simple way.
+The **LinkWeave** Bookmark manager is a self-hosted web application that helps teams or individuals manage bookmarks in a clear and simple way.
 
 The system focuses on **observable behavior**, **clear rules**, and **traceability** from requirements to code and
 tests. 

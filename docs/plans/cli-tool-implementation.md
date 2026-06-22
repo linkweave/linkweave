@@ -53,7 +53,7 @@ Create `cli/` at the repo root (sibling of `api/` and `frontend/`). If the repo 
 {
   "name": "@chainlink/cli",
   "version": "0.1.0",
-  "description": "Chainlink command-line interface",
+  "description": "LinkWeave command-line interface",
   "type": "module",
   "bin": { "chainlink": "./dist/main.js" },
   "files": ["dist"],
@@ -106,9 +106,9 @@ import { CliError } from './errors.js'
 const program = new Command()
 program
   .name('chainlink')
-  .description('Manage Chainlink bookmarks from the command line')
+  .description('Manage LinkWeave bookmarks from the command line')
   .version(process.env.npm_package_version ?? '0.1.0', '-v, --version')
-  .option('-s, --server <url>', 'Chainlink API server URL')
+  .option('-s, --server <url>', 'LinkWeave API server URL')
   .option('-k, --api-key <key>', 'API key (overrides config file)')
   .option('--insecure', 'Disable TLS verification (dev only)', false)
   .option('-f, --format <fmt>', 'Output format: table | json | ids', 'table')
@@ -239,7 +239,7 @@ export async function call<T>(fn: () => Promise<T>, ctx: { server: string }): Pr
     // network / TLS errors have no response
     const msg = String(e?.cause?.message ?? e?.message ?? '')
     if (/certificate|self-signed|TLS/i.test(msg)) throw new CliError('Error: TLS certificate verification failed. Use --insecure flag for local development only.')
-    throw new CliError(`Error: Cannot reach Chainlink server at ${ctx.server}. Check your network connection and server URL.`)
+    throw new CliError(`Error: Cannot reach LinkWeave server at ${ctx.server}. Check your network connection and server URL.`)
   }
 }
 ```

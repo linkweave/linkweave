@@ -1,6 +1,6 @@
 # UI Layout Specification
 
-**Project:** Chainlink Bookmark Manager
+**Project:** LinkWeave Bookmark Manager
 **Source:** [requirements.md](requirements.md), [use_cases/](use_cases/)
 **Date:** 2026-03-27
 
@@ -8,7 +8,7 @@
 
 ## Overview
 
-This document defines the user interface layout and design system for Chainlink.
+This document defines the user interface layout and design system for LinkWeave.
 It serves as a reference for frontend implementation using Vue.js with Tailwind CSS.
 
 ---
