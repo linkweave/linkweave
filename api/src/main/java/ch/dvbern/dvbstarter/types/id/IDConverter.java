@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.NotImplementedException;
-import org.chainlink.api.shared.abstractentity.AbstractEntity;
+import org.linkweave.api.shared.abstractentity.AbstractEntity;
 import org.jspecify.annotations.Nullable;
 
 import static java.util.Objects.requireNonNull;

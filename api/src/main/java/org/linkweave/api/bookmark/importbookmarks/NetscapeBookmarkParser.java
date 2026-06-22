@@ -1,0 +1,96 @@
+package org.linkweave.api.bookmark.importbookmarks;
+
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.linkweave.infrastructure.errorhandling.AppValidationException;
+import org.linkweave.infrastructure.errorhandling.AppValidationMessage;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+public class NetscapeBookmarkParser {
+
+    @NonNull
+    public ParsedImportResult parse(@NonNull InputStream inputStream) {
+        try {
+            Document doc = Jsoup.parse(inputStream, StandardCharsets.UTF_8.name(), "");
+
+            Element firstDl = doc.selectFirst("dl");
+            if (firstDl == null) {
+                throw new AppValidationException(
+                    AppValidationMessage.uploadProblem("Invalid bookmark file format. Please export from your browser and try again."));
+            }
+
+            List<ParsedFolder> rootFolders = new ArrayList<>();
+            List<ParsedBookmark> rootBookmarks = new ArrayList<>();
+
+            parseChildren(firstDl, rootFolders, rootBookmarks);
+
+            return new ParsedImportResult(rootFolders, rootBookmarks);
+        } catch (AppValidationException e) {
+            throw e;
+        } catch (Exception _) {
+            throw new AppValidationException(
+                AppValidationMessage.uploadProblem("Invalid bookmark file format. Please export from your browser and try again."));
+        }
+    }
+
+    private void parseChildren(Element dl, List<ParsedFolder> folders, List<ParsedBookmark> bookmarks) {
+        Elements dts = dl.select("> dt");
+
+        for (Element dt : dts) {
+            Element firstChild = dt.firstElementChild();
+            if (firstChild != null && firstChild.tagName().equals("h3")) {
+                ParsedFolder folder = new ParsedFolder(firstChild.text());
+
+                Element nestedDl = dt.select("> dl").first();
+                if (nestedDl != null) {
+                    parseChildren(nestedDl, folder.getFolders(), folder.getBookmarks());
+                }
+
+                folders.add(folder);
+            } else if (firstChild != null && firstChild.tagName().equals("a")) {
+                String href = firstChild.attr("href");
+                String title = firstChild.text();
+                String description = extractDescription(dt);
+                Instant addedAt = parseAddDate(firstChild.attr("add_date"));
+                bookmarks.add(new ParsedBookmark(title, href, description, addedAt));
+            }
+        }
+    }
+
+    @Nullable
+    private String extractDescription(@NonNull Element dt) {
+        Element nextSibling = dt.nextElementSibling();
+        if (nextSibling != null && nextSibling.tagName().equals("dd")) {
+            String text = nextSibling.text();
+            return text.isBlank() ? null : text;
+        }
+        return null;
+    }
+
+    /**
+     * Netscape format stores `ADD_DATE` as seconds since Unix epoch on the
+     * `<A>` element. Browsers (Firefox/Chrome/Safari) emit it consistently.
+     * Returns null for missing, empty, or unparseable values — the caller
+     * then falls back to import time.
+     */
+    @Nullable
+    private Instant parseAddDate(@Nullable String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        try {
+            long seconds = Long.parseLong(raw.trim());
+            if (seconds <= 0) return null;
+            return Instant.ofEpochSecond(seconds);
+        } catch (NumberFormatException _) {
+            return null;
+        }
+    }
+}

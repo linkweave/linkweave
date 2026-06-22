@@ -8,7 +8,7 @@ import java.util.UUID;
 import jakarta.ws.rs.ext.ParamConverter;
 import jakarta.ws.rs.ext.ParamConverterProvider;
 import jakarta.ws.rs.ext.Provider;
-import org.chainlink.api.shared.abstractentity.AbstractEntity;
+import org.linkweave.api.shared.abstractentity.AbstractEntity;
 import org.jspecify.annotations.Nullable;
 
 import static java.util.Objects.requireNonNull;
