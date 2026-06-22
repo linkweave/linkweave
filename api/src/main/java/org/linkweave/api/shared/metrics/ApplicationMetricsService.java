@@ -36,15 +36,15 @@ public class ApplicationMetricsService {
 
     @PostConstruct
     void registerMetrics() {
-        Gauge.builder("chainlink.collections.total", collectionsTotal, AtomicLong::get)
+        Gauge.builder("linkweave.collections.total", collectionsTotal, AtomicLong::get)
             .description("Total number of collections")
             .register(meterRegistry);
 
-        Gauge.builder("chainlink.collections.shared", collectionsShared, AtomicLong::get)
+        Gauge.builder("linkweave.collections.shared", collectionsShared, AtomicLong::get)
             .description("Number of collections shared with at least one other user")
             .register(meterRegistry);
 
-        bookmarksPerCollection = MultiGauge.builder("chainlink.bookmarks.total")
+        bookmarksPerCollection = MultiGauge.builder("linkweave.bookmarks.total")
             .description("Total bookmarks per collection")
             .register(meterRegistry);
     }
