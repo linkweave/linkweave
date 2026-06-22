@@ -42,7 +42,7 @@ export default defineConfig(({ command }) => {
         : []),
       sentryVitePlugin({
         org: 'mh03r932',
-        project: 'chainlink-vue',
+        project: 'linkweave-vue',
         authToken: process.env.SENTRY_AUTH_TOKEN,
         // Only upload in CI — skip silently when token is absent
         disable: !process.env.SENTRY_AUTH_TOKEN,
