@@ -34,7 +34,7 @@
 
 1. Operator opens a browser or uses `curl` to access the metrics endpoint (e.g., `http://localhost:8443/q/metrics`).
 2. System returns the Prometheus exposition format text showing all registered metrics with their current values.
-3. Operator confirms the expected metrics are present (HTTP request metrics, JVM metrics, custom `chainlink.*` business metrics).
+3. Operator confirms the expected metrics are present (HTTP request metrics, JVM metrics, custom `linkweave.*` business metrics).
 
 ## Alternative Flows
 
@@ -155,10 +155,10 @@ The metrics endpoint runs on the same HTTP server as business API endpoints. Ser
 
 ```yaml
 scrape_configs:
-  - job_name: 'chainlink'
+  - job_name: 'linkweave'
     scrape_interval: 15s
     static_configs:
-      - targets: ['chainlink:8443']
+      - targets: ['linkweave:8443']
     scheme: https
     tls_config:
       insecure_skip_verify: true  # For self-signed certs in dev
@@ -168,10 +168,10 @@ scrape_configs:
 
 ```yaml
 scrape_configs:
-  - job_name: 'chainlink'
+  - job_name: 'linkweave'
     scrape_interval: 15s
     static_configs:
-      - targets: ['chainlink:8443']
+      - targets: ['linkweave:8443']
     scheme: https
     tls_config:
       insecure_skip_verify: true

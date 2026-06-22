@@ -39,7 +39,7 @@ The repo is not a unified monorepo (no root `pnpm-workspace.yaml`, `package.json
 The desktop shell follows the same pattern as `screenshot-service/`: a standalone runtime that orchestrates the others, living as a root sibling.
 
 ```
-chainlink/
+linkweave/
 ├── api/                 # Quarkus backend (Maven)
 ├── frontend/            # Vue SPA (pnpm) — builds to frontend/dist/
 ├── screenshot-service/  # Node sidecar (precedent for a sibling service dir)

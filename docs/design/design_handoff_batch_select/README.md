@@ -1,7 +1,7 @@
 # Handoff: Batch Select — Move & Delete Bookmarks (UC-074)
 
 ## Overview
-Multi-select for the bookmark view (product: *chainlink*) with a batch action bar: select N bookmarks, then **Move**, **Add tag**, **Copy URLs**, or **Delete** them in one action. Implements **UC-074** (maps to FR-078, FR-080). Works in both **grid** and **list** layouts, and in both **previews-on** and **previews-off** modes.
+Multi-select for the bookmark view (product: *linkweave*) with a batch action bar: select N bookmarks, then **Move**, **Add tag**, **Copy URLs**, or **Delete** them in one action. Implements **UC-074** (maps to FR-078, FR-080). Works in both **grid** and **list** layouts, and in both **previews-on** and **previews-off** modes.
 
 Decided design direction:
 

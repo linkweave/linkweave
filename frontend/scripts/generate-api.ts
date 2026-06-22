@@ -4,7 +4,7 @@ import { request } from 'node:https'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-const OPENAPI_URL = 'https://local-chainlink.localhost:8443/q/openapi'
+const OPENAPI_URL = 'https://local-linkweave.localhost:8443/q/openapi'
 const OUTPUT_DIR = 'src/api/generated'
 
 function fetchSpec(url: string): Promise<string> {
@@ -27,7 +27,7 @@ function fetchSpec(url: string): Promise<string> {
 async function main() {
   console.log('Fetching OpenAPI spec from', OPENAPI_URL)
   const spec = await fetchSpec(OPENAPI_URL)
-  const specFile = join(tmpdir(), `chainlink-openapi-${process.pid}.json`)
+  const specFile = join(tmpdir(), `linkweave-openapi-${process.pid}.json`)
   writeFileSync(specFile, spec)
 
   if (existsSync(OUTPUT_DIR)) {

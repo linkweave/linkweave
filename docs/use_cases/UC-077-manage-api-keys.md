@@ -27,8 +27,8 @@
 4. System prompts the user to enter a descriptive name for the key (e.g., "My Laptop CLI", "CI Pipeline") and optionally select an expiration period.
 5. User enters a name, optionally selects an expiration period (30 days / 90 days / 1 year / Never), and confirms creation.
 6. System validates that the user has fewer than 10 active API keys (BR-001). The UI should disable the "Create API Key" button when the user already has 10 active keys (preventing the user from filling out the form pointlessly), but the server must also enforce the limit as a safeguard.
-7. System generates a cryptographically random secret: a 32-byte random value, hex-encoded, prefixed with `cl_` (e.g., `cl_a1b2c3d4...`).
-8. System stores a SHA-256 hash of the full key (without prefix) in the `api_key` table alongside the key prefix (first 8 characters after `cl_`), the user-provided name, the owner's user ID, the creation timestamp, and the optional expiration timestamp.
+7. System generates a cryptographically random secret: a 32-byte random value, hex-encoded, prefixed with `lw_` (e.g., `lw_a1b2c3d4...`).
+8. System stores a SHA-256 hash of the full key (without prefix) in the `api_key` table alongside the key prefix (first 8 characters after `lw_`), the user-provided name, the owner's user ID, the creation timestamp, and the optional expiration timestamp.
 9. System displays the full API key to the user exactly once in a dismissible dialog with a clear warning: "Copy this key now. You will not be able to see it again."
 10. User copies the key and dismisses the dialog.
 11. System returns to the API key list, which now includes the newly created key (showing name, prefix, creation date, expiration date, last used = "Never").
@@ -37,13 +37,13 @@
 
 1. User navigates to the API Keys section in the Settings page.
 2. System returns all of the current user's keys, including revoked ones — each carrying its `revokedAt` (null when active). The UI hides revoked keys so the user sees only active and expired ones; the raw list is returned so a future view could surface revoked-key history without an API change.
-3. System displays a table with columns: Name, Prefix (e.g., `cl_a1b2…`), Created, Expires, Last Used. Expired keys are visually distinguished (e.g., greyed out or marked "Expired").
+3. System displays a table with columns: Name, Prefix (e.g., `lw_a1b2…`), Created, Expires, Last Used. Expired keys are visually distinguished (e.g., greyed out or marked "Expired").
 4. Each row has a "Revoke" action button.
 
 ## Main Success Scenario — Revoke API Key
 
 1. User clicks "Revoke" on an API key in the list.
-2. System prompts the user with a confirmation dialog: "Revoke key '{name}' (cl_{prefix}…)? Any tools using this key will immediately lose access."
+2. System prompts the user with a confirmation dialog: "Revoke key '{name}' (lw_{prefix}…)? Any tools using this key will immediately lose access."
 3. User confirms revocation.
 4. System soft-deletes the API key by setting `revoked_at` to the current timestamp.
 5. System removes the key from the displayed list.
@@ -84,7 +84,7 @@
 
 1. System revokes the key immediately.
 2. The next CLI request fails with HTTP 401.
-3. CLI displays: "API key revoked. Run `chainlink login` to configure a new key."
+3. CLI displays: "API key revoked. Run `linkweave login` to configure a new key."
 4. No data is lost; the user can create a new key and reconfigure the CLI.
 
 ### A5: Key Not Found During Authentication
@@ -147,15 +147,15 @@ A user may have at most 10 non-revoked API keys at any time (including expired k
 
 ### BR-002: Key Format
 
-API keys follow the format `cl_` + 64 hex characters (32 bytes of randomness). The `cl_` prefix makes keys visually identifiable in logs and config files. Total key length: 67 characters.
+API keys follow the format `lw_` + 64 hex characters (32 bytes of randomness). The `lw_` prefix makes keys visually identifiable in logs and config files. Total key length: 67 characters.
 
 ### BR-003: Key Hashing
 
-Only the SHA-256 hash of the raw key (the part after `cl_`) is stored in the database. The raw key is never written to any log, database, or persistent storage after the initial creation response. Key lookup on incoming requests hashes the provided key and compares against stored hashes.
+Only the SHA-256 hash of the raw key (the part after `lw_`) is stored in the database. The raw key is never written to any log, database, or persistent storage after the initial creation response. Key lookup on incoming requests hashes the provided key and compares against stored hashes.
 
 ### BR-004: Key Prefix for Identification
 
-The first 8 hex characters after `cl_` are stored in plaintext as `key_prefix`. This allows the UI to display a partial key (e.g., `cl_a1b2c3d4…`) so the user can identify which key is which without exposing the full secret.
+The first 8 hex characters after `lw_` are stored in plaintext as `key_prefix`. This allows the UI to display a partial key (e.g., `lw_a1b2c3d4…`) so the user can identify which key is which without exposing the full secret.
 
 ### BR-005: Constant-Time Comparison
 
@@ -187,7 +187,7 @@ API keys may optionally have an expiration timestamp (`expires_at`). The user ch
 
 Expired keys remain in the user's key list (displayed as "Expired") until the user revokes them. The key list should visually separate expired keys from active ones to encourage cleanup.
 
-A configuration property `quarkus.chainlink.api-key.default-expiration` may be set by administrators to override the default from "Never" to a specific period (e.g., `90d`) for environments with stricter compliance requirements.
+A configuration property `quarkus.linkweave.api-key.default-expiration` may be set by administrators to override the default from "Never" to a specific period (e.g., `90d`) for environments with stricter compliance requirements.
 
 ---
 
@@ -200,7 +200,7 @@ A configuration property `quarkus.chainlink.api-key.default-expiration` may be s
 | `id` | UUID | PK, auto-generated | Unique key identifier |
 | `user_id` | UUID | FK → `user.id`, NOT NULL, ON DELETE CASCADE | Owning user |
 | `name` | VARCHAR(100) | NOT NULL | User-provided descriptive label |
-| `key_hash` | VARCHAR(64) | NOT NULL | SHA-256 hex digest of the raw key (without `cl_` prefix). Indexed for O(1) lookup. The hash space (2^256) makes collisions infeasible, so no UNIQUE constraint is needed. |
+| `key_hash` | VARCHAR(64) | NOT NULL | SHA-256 hex digest of the raw key (without `lw_` prefix). Indexed for O(1) lookup. The hash space (2^256) makes collisions infeasible, so no UNIQUE constraint is needed. |
 | `key_prefix` | VARCHAR(8) | NOT NULL | First 8 hex chars of raw key, for UI identification |
 | `created_at` | TIMESTAMP | NOT NULL, default NOW() | Key creation time |
 | `expires_at` | TIMESTAMP | NULLABLE | When the key expires; NULL = never expires. Checked during authentication alongside `revoked_at`. |
@@ -238,7 +238,7 @@ The `expiresIn` field is optional. Accepted values: `"30d"`, `"90d"`, `"1y"`, `"
   "createdAt": "2026-05-10T12:00:00Z",
   "expiresAt": "2026-08-08T12:00:00Z",
   "lastUsedAt": null,
-  "key": "cl_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1"
+  "key": "lw_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1"
 }
 ```
 

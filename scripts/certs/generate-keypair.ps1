@@ -1,5 +1,5 @@
 # Set variables - Multiple domains separated by spaces
-$domains = "local-chainlink.localhost"
+$domains = "local-linkweave.localhost"
 # For now, use the first domain as the cert alias for backward compatibility
 $cert_alias = ($domains -split ' ')[0]
 

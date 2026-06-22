@@ -52,6 +52,12 @@ node -v; pnpm -v; java -version 2>&1 | head -1; cargo --version
 # failed or interrupted build never leaves the working tree dirty.
 log "1/7 determine version"
 VERSION="${DESKTOP_VERSION:-$(git describe --tags --always --dirty 2>/dev/null || git rev-parse --short=7 HEAD)}"
+# Tauri 2 requires strict semver. git describe yields e.g. "v1.3.0-17-gfd9ca87" — strip the
+# leading "v" and rewrite the "<N>-g<sha>" describe segment as build metadata ("1.3.0+17.gfd9ca87").
+if [[ "$VERSION" =~ ^v([0-9].*)$ ]]; then VERSION="${BASH_REMATCH[1]}"; fi
+if [[ "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([0-9]+)-g([0-9a-f]+)(-dirty)?$ ]]; then
+  VERSION="${BASH_REMATCH[1]}+${BASH_REMATCH[2]}.g${BASH_REMATCH[3]}${BASH_REMATCH[4]}"
+fi
 echo "Version: $VERSION"
 VERSION_CONFIG="$(mktemp -d)/version.json"
 printf '{"version": "%s"}\n' "$VERSION" > "$VERSION_CONFIG"
@@ -92,7 +98,7 @@ else
     echo "ERROR: smoke-test port $SMOKE_PORT is already in use; free it or pass --skip-smoke." >&2
     exit 1
   fi
-  SMOKE_LOG="/tmp/chainlink-desktop-smoke.log"
+  SMOKE_LOG="/tmp/linkweave-desktop-smoke.log"
   QUARKUS_PROFILE=desktop QUARKUS_HTTP_HOST=127.0.0.1 QUARKUS_HTTP_PORT="$SMOKE_PORT" \
     LINKWEAVE_DB_PATH="$(mktemp -d)/smoke.db" LINKWEAVE_FAVICON_CACHE_DIR="$(mktemp -d)" \
     LINKWEAVE_DESKTOP_WEB_ROOT="$REPO_ROOT/frontend/dist" \

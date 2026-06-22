@@ -19,9 +19,9 @@ export default defineConfig(({ command }) => {
 
   const certsDir = path.resolve(__dirname, '../developer-local-settings/config/certs')
   // Hostname Vite serves under. Override via VITE_DEV_HOST (e.g. CI uses
-  // 'e2e-chainlink.localhost' to keep e2e cookies/storage isolated). The
+  // 'e2e-linkweave.localhost' to keep e2e cookies/storage isolated). The
   // matching cert files are written by scripts/certs/generate-keypair.sh.
-  const devHost = process.env.VITE_DEV_HOST ?? 'local-chainlink.localhost'
+  const devHost = process.env.VITE_DEV_HOST ?? 'local-linkweave.localhost'
   const certFile = path.join(certsDir, `${devHost}.pem`)
   const keyFile = path.join(certsDir, `${devHost}.key`)
 
@@ -56,7 +56,7 @@ export default defineConfig(({ command }) => {
             {
               urlPattern: /^https:\/\/.*\.(js|css|png|svg|ico|woff2)$/,
               handler: 'CacheFirst',
-              options: { cacheName: 'chainlink-assets' },
+              options: { cacheName: 'linkweave-assets' },
             },
           ],
         },
@@ -68,8 +68,8 @@ export default defineConfig(({ command }) => {
           background_color: '#ffffff',
           display: 'standalone',
           icons: [
-            { src: '/chainlink-favicon.png', sizes: '192x192', type: 'image/png' },
-            { src: '/chainlink-favicon.png', sizes: '512x512', type: 'image/png' },
+            { src: '/linkweave-favicon.png', sizes: '192x192', type: 'image/png' },
+            { src: '/linkweave-favicon.png', sizes: '512x512', type: 'image/png' },
           ],
         },
       }),
@@ -82,7 +82,7 @@ export default defineConfig(({ command }) => {
     server: {
       port: 5173,
       host: true,
-      allowedHosts: ['dev-linkweave.dev', 'local-chainlink.localhost', devHost],
+      allowedHosts: ['dev-linkweave.dev', 'local-linkweave.localhost', devHost],
       ...(isDev
         ? {
             https: {

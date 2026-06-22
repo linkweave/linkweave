@@ -12,7 +12,7 @@ node_modules
 dist
 dist-ssr
 dist-extension
-chainlink-extension.zip
+linkweave-extension.zip
 /coverage
 /coverage-e2e
 /coverage-unit

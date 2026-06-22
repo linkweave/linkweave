@@ -16,7 +16,7 @@
 
 ## Preconditions
 
-- The developer has access to the `chainlink` and `esc` codebases.
+- The developer has access to the `linkweave` and `esc` codebases.
 - ArchUnit dependency is available in the `api` module.
 
 ## Main Success Scenario

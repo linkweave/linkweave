@@ -66,7 +66,7 @@ public class FixtureService {
 
     /**
      * Removes every API key. The users behind {@code @TestSecurity} are fixed annotation values
-     * (e.g. test@example.com), so their keys survive in chainlink-test.db across runs and would
+     * (e.g. test@example.com), so their keys survive in linkweave-test.db across runs and would
      * otherwise accumulate until creates fail the max-active-keys check (BR-001).
      */
     public void deleteAllApiKeys() {

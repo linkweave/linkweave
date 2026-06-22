@@ -93,7 +93,7 @@ class ApiKeyResourceITest {
             .body("prefix.length()", greaterThanOrEqualTo(8))
             .body("createdAt", notNullValue())
             .body("expiresAt", nullValue())
-            .body("key", startsWith("cl_"))
+            .body("key", startsWith("lw_"))
             .body("key.length()", equalTo(67));
     }
 
@@ -108,7 +108,7 @@ class ApiKeyResourceITest {
             .statusCode(201)
             .body("name", equalTo("Expiring Key"))
             .body("expiresAt", notNullValue())
-            .body("key", startsWith("cl_"));
+            .body("key", startsWith("lw_"));
     }
 
     @Test
@@ -198,7 +198,7 @@ class ApiKeyResourceITest {
     @Test
     void shouldReturn401_whenInvalidApiKey() {
         RestAssured.given()
-            .header("X-API-Key", "cl_" + "a".repeat(64))
+            .header("X-API-Key", "lw_" + "a".repeat(64))
             .get("/auth/api-keys")
             .then()
             .statusCode(401);

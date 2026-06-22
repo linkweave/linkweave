@@ -67,7 +67,7 @@ This document describes the architecture for adding a command-line interface (CL
 **Rationale:**
 - The frontend already uses `@openapitools/openapi-generator-cli` with `typescript-fetch`. The CLI can reuse the exact same pipeline.
 - The team is proficient in TypeScript.
-- Distribution via `npm install -g @chainlink/cli` is straightforward.
+- Distribution via `npm install -g @linkweave/cli` is straightforward.
 
 ### AD-4: Through the HTTP API
 
@@ -83,7 +83,7 @@ This document describes the architecture for adding a command-line interface (CL
 ## Repository Structure
 
 ```
-chainlink/
+linkweave/
 ├── api/                                    # Existing Quarkus backend
 │   └── src/main/java/org/linkweave/api/
 │       ├── auth/
@@ -99,18 +99,18 @@ chainlink/
 │   ├── src/
 │   │   ├── main.ts                         # CLI entry point (commander)
 │   │   ├── commands/
-│   │   │   ├── login.ts                    # chainlink login
-│   │   │   ├── logout.ts                   # chainlink logout
+│   │   │   ├── login.ts                    # linkweave login
+│   │   │   ├── logout.ts                   # linkweave logout
 │   │   │   ├── bookmarks/
-│   │   │   │   ├── add.ts                  # chainlink bookmarks add <url>
-│   │   │   │   ├── list.ts                 # chainlink bookmarks list
-│   │   │   │   ├── edit.ts                 # chainlink bookmarks edit <id>
-│   │   │   │   └── rm.ts                   # chainlink bookmarks rm <id>
+│   │   │   │   ├── add.ts                  # linkweave bookmarks add <url>
+│   │   │   │   ├── list.ts                 # linkweave bookmarks list
+│   │   │   │   ├── edit.ts                 # linkweave bookmarks edit <id>
+│   │   │   │   └── rm.ts                   # linkweave bookmarks rm <id>
 │   │   │   └── collections/
-│   │   │       └── list.ts                 # chainlink collections list
+│   │   │       └── list.ts                 # linkweave collections list
 │   │   ├── api/
 │   │   │   └── generated/                  # Generated from /q/openapi
-│   │   ├── config.ts                       # Read/write ~/.chainlink/config.json
+│   │   ├── config.ts                       # Read/write ~/.linkweave/config.json
 │   │   └── client.ts                       # API client with X-API-Key injection
 │   └── tests/
 ├── docs/                                   # Documentation (this file)
@@ -166,7 +166,7 @@ chainlink/
 - **`ApiKeyAuthenticationMechanism`** (`api/src/main/java/org/linkweave/infrastructure/auth/ApiKeyAuthenticationMechanism.java`)
   - Implements Quarkus `HttpAuthenticationMechanism`
   - Checks for `X-API-Key` header on every request
-  - Strips `cl_` prefix, computes SHA-256, looks up via `ApiKeyService`
+  - Strips `lw_` prefix, computes SHA-256, looks up via `ApiKeyService`
   - Builds `SecurityIdentity` with user's principal and roles
   - Falls through to OIDC/form if no `X-API-Key` header present
   - Registered with `@Alternative` + `@Priority` to run before OIDC
@@ -215,21 +215,21 @@ Implemented in `frontend/src/components/apikey/` and `frontend/src/stores/apiKey
 - [ ] Create `cli/` directory with `package.json`
 - [ ] Set up TypeScript + commander
 - [ ] Configure OpenAPI client generation (reuse `typescript-fetch` pipeline)
-- [ ] Implement config management (`~/.chainlink/config.json`)
-- [ ] Implement `chainlink login` / `chainlink logout`
+- [ ] Implement config management (`~/.linkweave/config.json`)
+- [ ] Implement `linkweave login` / `linkweave logout`
 
 ### Phase 4: CLI Bookmark Commands
 
-- [ ] `chainlink bookmarks add <url>`
-- [ ] `chainlink bookmarks list`
-- [ ] `chainlink bookmarks edit <id>`
-- [ ] `chainlink bookmarks rm <id>`
-- [ ] `chainlink collections list`
+- [ ] `linkweave bookmarks add <url>`
+- [ ] `linkweave bookmarks list`
+- [ ] `linkweave bookmarks edit <id>`
+- [ ] `linkweave bookmarks rm <id>`
+- [ ] `linkweave collections list`
 
 ### Phase 5: Polish & Distribution
 
 - [ ] Shell completions (bash/zsh/fish)
-- [ ] `npm install -g @chainlink/cli` publishing setup
+- [ ] `npm install -g @linkweave/cli` publishing setup
 - [ ] README with installation instructions
 - [ ] `--insecure` flag for self-signed certs
 
@@ -241,7 +241,7 @@ Implemented in `frontend/src/components/apikey/` and `frontend/src/stores/apiKey
 |---|---|---|
 | Raw API key | Stored in DB | Never stored; only SHA-256 hash is persisted |
 | Raw API key | Logged | Never logged; only prefix appears in logs |
-| `~/.chainlink/config.json` | Read by other users | File permissions set to `0600` |
+| `~/.linkweave/config.json` | Read by other users | File permissions set to `0600` |
 | API key in transit | Intercepted | TLS required; no HTTP fallback |
 | Key brute-force | Guessed by attacker | 32 bytes of entropy (2^256); infeasible |
 | Key enumeration | Attacker probes keys | Constant-time hash comparison; generic error messages |

@@ -13,7 +13,7 @@
 Always make sure that at the end of your task you run a build for the relevant module (api or frontend)
 Verify that your changes don't break any existing tests.
 **Always add tests for new features and bug fixes** — backend integration tests for new endpoints/services, frontend component or E2E tests as appropriate.
-The web app is running at https://local-chainlink.localhost:5173 the quarkus is at 8443
+The web app is running at https://local-linkweave.localhost:5173 the quarkus is at 8443
 
 ```bash
 cd api && ./mvnw package            # Build

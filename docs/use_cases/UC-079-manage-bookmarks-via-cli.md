@@ -16,16 +16,16 @@
 
 ## Preconditions
 
-- The user has installed the LinkWeave CLI (`npm install -g @chainlink/cli`).
-- The user has configured their CLI credentials via UC-080 (`chainlink login`).
+- The user has installed the LinkWeave CLI (`npm install -g @linkweave/cli`).
+- The user has configured their CLI credentials via UC-080 (`linkweave login`).
 - The LinkWeave API server is reachable at the configured URL.
 - The user has at least one collection (auto-provisioned on first web login).
 
 ## Main Success Scenario — Add Bookmark
 
-1. User runs `chainlink bookmarks add <url>` with optional flags `--title`, `--collection`, `--folder`, `--tags`, `--description`.
-2. CLI reads the API key from `~/.chainlink/config.json` (or `CHAINLINK_API_KEY` env var).
-3. CLI reads the server URL from config (default: `https://chainlink.markushofstetter.com`).
+1. User runs `linkweave bookmarks add <url>` with optional flags `--title`, `--collection`, `--folder`, `--tags`, `--description`.
+2. CLI reads the API key from `~/.linkweave/config.json` (or `LINKWEAVE_API_KEY` env var).
+3. CLI reads the server URL from config (default: `https://linkweave.dev`).
 4. If `--collection` is not specified, CLI calls `GET /api/auth/me` to retrieve the user's default collection ID.
 5. If `--title` is not specified, CLI uses the URL as a fallback title (the server does not auto-fetch titles via the API).
 6. CLI sends `POST /api/bookmarks` with the `X-API-Key` header and a `BookmarkSaveJson` body.
@@ -34,7 +34,7 @@
 
 ## Main Success Scenario — List Bookmarks
 
-1. User runs `chainlink bookmarks list` with optional flags `--collection`, `--folder`, `--tag`, `--format`.
+1. User runs `linkweave bookmarks list` with optional flags `--collection`, `--folder`, `--tag`, `--format`.
 2. CLI resolves the collection ID (default collection if not specified).
 3. CLI sends `GET /api/bookmarks?collectionId={id}` with the `X-API-Key` header.
 4. Server returns all bookmarks in the collection.
@@ -45,14 +45,14 @@
 
 ## Main Success Scenario — Edit Bookmark
 
-1. User runs `chainlink bookmarks edit <bookmarkId>` with optional flags `--title`, `--url`, `--description`, `--tags`.
+1. User runs `linkweave bookmarks edit <bookmarkId>` with optional flags `--title`, `--url`, `--description`, `--tags`.
 2. CLI sends `PUT /api/bookmarks/{bookmarkId}` with the `X-API-Key` header and the updated `BookmarkSaveJson` body.
 3. Server authenticates, authorizes, and updates the bookmark.
 4. CLI displays a success message: `✓ Bookmark updated: {title}`.
 
 ## Main Success Scenario — Remove Bookmark
 
-1. User runs `chainlink bookmarks rm <bookmarkId>`.
+1. User runs `linkweave bookmarks rm <bookmarkId>`.
 2. CLI sends `DELETE /api/bookmarks/{bookmarkId}` with the `X-API-Key` header.
 3. Server authenticates, authorizes, and soft-deletes the bookmark (moves to trashbin).
 4. CLI displays a success message: `✓ Bookmark removed: {bookmarkId}`.
@@ -64,7 +64,7 @@
 **Trigger:** CLI cannot find an API key in config or env var (step 2).
 **Flow:**
 
-1. CLI displays an error: `Error: Not authenticated. Run 'chainlink login' to configure your API key.`
+1. CLI displays an error: `Error: Not authenticated. Run 'linkweave login' to configure your API key.`
 2. CLI exits with code 1.
 
 ### A2: API Key Revoked or Invalid
@@ -72,7 +72,7 @@
 **Trigger:** Server rejects the request with HTTP 401 (step 7 of any scenario).
 **Flow:**
 
-1. CLI displays: `Error: Authentication failed. Your API key may have been revoked. Run 'chainlink login' to reconfigure.`
+1. CLI displays: `Error: Authentication failed. Your API key may have been revoked. Run 'linkweave login' to reconfigure.`
 2. CLI exits with code 1.
 
 ### A3: Server Unreachable
@@ -88,7 +88,7 @@
 **Trigger:** Server returns HTTP 403 for the collection ID (step 7).
 **Flow:**
 
-1. CLI displays: `Error: Collection not found or access denied. Use 'chainlink collections list' to see your collections.`
+1. CLI displays: `Error: Collection not found or access denied. Use 'linkweave collections list' to see your collections.`
 2. CLI exits with code 1.
 
 ### A5: Bookmark Not Found
@@ -129,7 +129,7 @@
 2. CLI matches the collection name case-insensitively.
 3. If exactly one match is found, CLI uses that collection's ID.
 4. If multiple matches are found, CLI displays: `Error: Multiple collections match '{name}'. Use the collection ID instead.`
-5. If no match is found, CLI displays: `Error: No collection found with name '{name}'. Use 'chainlink collections list' to see your collections.`
+5. If no match is found, CLI displays: `Error: No collection found with name '{name}'. Use 'linkweave collections list' to see your collections.`
 
 ## Postconditions
 
@@ -179,7 +179,7 @@ Every CLI command must work without any interactive prompts. All required parame
 
 ### BR-018: Output to stdout, Errors to stderr
 
-Success messages and data output go to stdout. Error messages and warnings go to stderr. This allows piping: `chainlink bookmarks list --format=json | jq '.[0].url'`.
+Success messages and data output go to stdout. Error messages and warnings go to stderr. This allows piping: `linkweave bookmarks list --format=json | jq '.[0].url'`.
 
 ### BR-019: Tag Name Resolution
 
@@ -197,7 +197,7 @@ The `--folder` flag accepts a folder name (not an ID). The CLI resolves the name
 
 | Flag | Short | Description | Default |
 |---|---|---|---|
-| `--server` | `-s` | LinkWeave API server URL | `https://chainlink.markushofstetter.com` |
+| `--server` | `-s` | LinkWeave API server URL | `https://linkweave.dev` |
 | `--api-key` | `-k` | API key (overrides config file) | — |
 | `--insecure` | | Disable TLS verification | `false` |
 | `--format` | `-f` | Output format (`table`, `json`, `ids`) | `table` |
@@ -207,12 +207,12 @@ The `--folder` flag accepts a folder name (not an ID). The CLI resolves the name
 ### Commands
 
 ```
-chainlink login [--server <url>] [--api-key <key>]
-chainlink bookmarks add <url> [--title <t>] [--collection <c>] [--folder <f>] [--tags <t1,t2>] [--description <d>]
-chainlink bookmarks list [--collection <c>] [--folder <f>] [--tag <t>] [--format <fmt>]
-chainlink bookmarks edit <id> [--title <t>] [--url <u>] [--description <d>] [--tags <t1,t2>]
-chainlink bookmarks rm <id>
-chainlink collections list [--format <fmt>]
+linkweave login [--server <url>] [--api-key <key>]
+linkweave bookmarks add <url> [--title <t>] [--collection <c>] [--folder <f>] [--tags <t1,t2>] [--description <d>]
+linkweave bookmarks list [--collection <c>] [--folder <f>] [--tag <t>] [--format <fmt>]
+linkweave bookmarks edit <id> [--title <t>] [--url <u>] [--description <d>] [--tags <t1,t2>]
+linkweave bookmarks rm <id>
+linkweave collections list [--format <fmt>]
 ```
 
 ---
