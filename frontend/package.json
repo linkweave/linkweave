@@ -16,6 +16,7 @@
     "analyze": "fallow --skip health --baseline .fallow-baseline.json",
     "analyze:deadcode": "fallow dead-code --baseline .fallow-baseline.json",
     "analyze:health": "fallow health",
+    "check": "run-s type-check lint analyze:deadcode",
     "format": "prettier --write --experimental-cli src/",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
