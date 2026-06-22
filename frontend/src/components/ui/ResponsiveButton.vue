@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue'
-import ButtonCl from './ButtonCl.vue'
+import ButtonLw from './ButtonLw.vue'
 
 type Variant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
 
@@ -24,11 +24,11 @@ const mobileAttrs = computed(() => {
 </script>
 
 <template>
-  <ButtonCl v-bind="mobileAttrs" size="icon" :variant="variant" :disabled="disabled" :aria-label="label" class="sm:hidden">
+  <ButtonLw v-bind="mobileAttrs" size="icon" :variant="variant" :disabled="disabled" :aria-label="label" class="sm:hidden">
     <slot />
-  </ButtonCl>
-  <ButtonCl v-bind="attrs" size="sm" :variant="variant" :disabled="disabled" class="hidden sm:inline-flex">
+  </ButtonLw>
+  <ButtonLw v-bind="attrs" size="sm" :variant="variant" :disabled="disabled" class="hidden sm:inline-flex">
     <slot />
     {{ label }}
-  </ButtonCl>
+  </ButtonLw>
 </template>

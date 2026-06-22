@@ -1,10 +1,10 @@
-# Chainlink Monitoring Stack
+# LinkWeave Monitoring Stack
 
-This directory contains reference artifacts for observing a Chainlink deployment. This is completely optional.
+This directory contains reference artifacts for observing a LinkWeave deployment. This is completely optional.
 
 ## Quick Start (Local)
 
-Requires Docker and a running Chainlink dev instance (`cd api && ./mvnw quarkus:dev`).
+Requires Docker and a running LinkWeave dev instance (`cd api && ./mvnw quarkus:dev`).
 
 ```bash
 cd docs/monitoring
@@ -19,7 +19,7 @@ Import `grafana-provisioning/dashboards/chainlink-overview.json` via Grafana →
 
 ## Metrics Endpoint
 
-The Chainlink API exposes metrics at `GET /q/metrics` in Prometheus exposition format.
+The LinkWeave API exposes metrics at `GET /q/metrics` in Prometheus exposition format.
 
 ```bash
 curl -k https://local-chainlink.localhost:8443/q/metrics | grep chainlink

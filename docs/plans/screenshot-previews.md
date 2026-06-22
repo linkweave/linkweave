@@ -44,7 +44,7 @@ Screenshots are captured by a Playwright-based microservice running as a Docker 
 
 ```
 ┌─────────────────────┐       HTTP        ┌──────────────────────────┐
-│  Chainlink API      │ ───────────────── │  Playwright Screenshot   │
+│  LinkWeave API      │ ───────────────── │  Playwright Screenshot   │
 │  (Quarkus)          │  POST /screenshot │  Service (Node.js)       │
 │                     │  {url, width,     │  :3000                   │
 │  ScreenshotFetcher  │   format:"jpeg"}  │                          │
@@ -87,10 +87,10 @@ ALTER TABLE Collection ADD COLUMN screenshot_enabled BOOLEAN NOT NULL DEFAULT 0;
 
 ## Backend
 
-### Package: `org.chainlink.api.screenshot`
+### Package: `org.linkweave.api.screenshot`
 
 ```
-api/src/main/java/org/chainlink/api/screenshot/
+api/src/main/java/org/linkweave/api/screenshot/
 ├── ScreenshotCacheService.java      — File-based cache (mirrors FaviconCacheService)
 ├── ScreenshotFetcherService.java    — HTTP client to Playwright sidecar
 ├── ScreenshotService.java           — Cache-first orchestration

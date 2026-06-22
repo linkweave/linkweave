@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { AutoTagRuleJson } from '@/api/generated'
-import { DialogCl, DialogFooterCl, FormFieldCl, HelpPopoverCl, InputCl } from '@/components/ui'
+import { DialogLw, DialogFooterLw, FormFieldLw, HelpPopoverLw, InputLw } from '@/components/ui'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { autoTagRuleSaveSchema } from '@/schemas/autoTagRule'
 import { useAutoTagRuleStore } from '@/stores/autoTagRule'
@@ -45,7 +45,7 @@ const [description] = defineField('description')
 const [enabled] = defineField('enabled')
 
 const testUrl = ref('')
-const helpPopover = ref<InstanceType<typeof HelpPopoverCl> | null>(null)
+const helpPopover = ref<InstanceType<typeof HelpPopoverLw> | null>(null)
 
 const isEditing = computed(() => !!props.rule)
 
@@ -149,11 +149,11 @@ watch(testUrl, () => {})
 </script>
 
 <template>
-  <DialogCl :open="open" @update:open="emit('update:open', $event)">
+  <DialogLw :open="open" @update:open="emit('update:open', $event)">
     <template #title>
       <span class="flex items-center gap-2">
         {{ isEditing ? t('autoTagRule.editTitle') : t('autoTagRule.createTitle') }}
-        <HelpPopoverCl ref="helpPopover" :aria-label="t('autoTagRule.helpAria')" width="26rem">
+        <HelpPopoverLw ref="helpPopover" :aria-label="t('autoTagRule.helpAria')" width="26rem">
           <p class="font-medium mb-2">{{ t('autoTagRule.helpHeader') }}</p>
           <p class="mb-2 text-muted-foreground">{{ t('autoTagRule.helpSyntax') }}</p>
           <p class="font-medium mb-1">{{ t('autoTagRule.helpExamples') }}</p>
@@ -182,13 +182,13 @@ watch(testUrl, () => {})
               </div>
             </div>
           </div>
-        </HelpPopoverCl>
+        </HelpPopoverLw>
       </span>
     </template>
 
     <form id="auto-tag-rule-form" class="space-y-4" @submit.prevent="onSubmit">
       <!--      Regex pattern-->
-      <FormFieldCl
+      <FormFieldLw
         :label="t('autoTagRule.pattern')"
         for-id="auto-tag-rule-pattern"
         :error="errors.pattern"
@@ -205,7 +205,7 @@ watch(testUrl, () => {})
           :placeholder="t('autoTagRule.patternPlaceholder')"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 font-mono text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
-      </FormFieldCl>
+      </FormFieldLw>
       <!--Regex tester-->
       <div class="space-y-1">
         <label class="text-xs font-medium text-muted-foreground" for="auto-tag-rule-test">
@@ -234,13 +234,13 @@ watch(testUrl, () => {})
         </p>
       </div>
       <!-- Tag names-->
-      <FormFieldCl
+      <FormFieldLw
         :label="t('autoTagRule.tagNames')"
         for-id="auto-tag-rule-tags"
         :error="errors.tagNames"
         required
       >
-        <InputCl
+        <InputLw
           id="auto-tag-rule-tags"
           v-model="tagNames"
           type="text"
@@ -258,9 +258,9 @@ watch(testUrl, () => {})
           </span>
         </div>
         <p class="text-[11px] text-muted-foreground mt-1">{{ t('autoTagRule.tagNamesHelp') }}</p>
-      </FormFieldCl>
+      </FormFieldLw>
       <!--Description-->
-      <FormFieldCl
+      <FormFieldLw
         :label="t('autoTagRule.description')"
         for-id="auto-tag-rule-desc"
         :error="errors.description"
@@ -272,7 +272,7 @@ watch(testUrl, () => {})
           maxlength="255"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
-      </FormFieldCl>
+      </FormFieldLw>
 
       <label class="flex items-center gap-2 text-sm">
         <input v-model="enabled" type="checkbox" class="h-4 w-4" />
@@ -281,7 +281,7 @@ watch(testUrl, () => {})
     </form>
 
     <template #footer>
-      <DialogFooterCl
+      <DialogFooterLw
         submit-form="auto-tag-rule-form"
         :submit-label="isEditing ? t('common.save') : t('common.create')"
         :submitting="isSubmitting"
@@ -289,5 +289,5 @@ watch(testUrl, () => {})
         @cancel="emit('update:open', false)"
       />
     </template>
-  </DialogCl>
+  </DialogLw>
 </template>

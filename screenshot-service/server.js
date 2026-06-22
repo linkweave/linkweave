@@ -22,7 +22,7 @@ const MAX_BODY_BYTES = 8 * 1024
 const MAX_DESCRIPTION_CHARS = 2000
 const DESCRIPTION_HEADER = 'x-page-description'
 // A realistic browser User-Agent. Playwright's default carries a "HeadlessChrome"
-// token and a bespoke token like "Chrome/Chainlink-Screenshot" is not a valid
+// token and a bespoke token like "Chrome/LinkWeave-Screenshot" is not a valid
 // Chrome version — both are routinely rejected (HTTP 403) by WAF/CDN bot rules,
 // which would capture an error page instead of the real site.
 const USER_AGENT =

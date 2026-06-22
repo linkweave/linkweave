@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import ButtonCl from './ButtonCl.vue'
-import DialogCl from './DialogCl.vue'
-import DialogFooterCl from './DialogFooterCl.vue'
+import ButtonLw from './ButtonLw.vue'
+import DialogLw from './DialogLw.vue'
+import DialogFooterLw from './DialogFooterLw.vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -32,25 +32,25 @@ function handleConfirm() {
 </script>
 
 <template>
-  <DialogCl :open="open" @update:open="emit('update:open', $event)">
+  <DialogLw :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ title || t('common.confirm') }}</template>
 
     <p class="text-sm text-muted-foreground">{{ message }}</p>
 
     <template #footer>
-      <DialogFooterCl>
-        <ButtonCl type="button" variant="outline" @click="emit('update:open', false)">
+      <DialogFooterLw>
+        <ButtonLw type="button" variant="outline" @click="emit('update:open', false)">
           {{ t('common.cancel') }}
-        </ButtonCl>
-        <ButtonCl
+        </ButtonLw>
+        <ButtonLw
           type="button"
           data-testid="confirm-dialog-submit"
           :variant="destructive ? 'destructive' : 'default'"
           @click="handleConfirm"
         >
           {{ confirmLabel || t('common.delete') }}
-        </ButtonCl>
-      </DialogFooterCl>
+        </ButtonLw>
+      </DialogFooterLw>
     </template>
-  </DialogCl>
+  </DialogLw>
 </template>

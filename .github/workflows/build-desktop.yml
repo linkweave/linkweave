@@ -1,4 +1,4 @@
-# Builds the Chainlink desktop app for macOS (Apple Silicon), Windows, and Linux.
+# Builds the LinkWeave desktop app for macOS (Apple Silicon), Windows, and Linux.
 #
 # Triggered by:
 #   - Tags matching v*       -> full build + GitHub Release upload
@@ -146,9 +146,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: Chainlink Desktop ${{ github.ref_name }}
+          name: LinkWeave Desktop ${{ github.ref_name }}
           body: |
-            Desktop builds for **Chainlink ${{ github.ref_name }}**.
+            Desktop builds for **LinkWeave ${{ github.ref_name }}**.
 
             | Platform | File |
             |---|---|

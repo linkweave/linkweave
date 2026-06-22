@@ -8,7 +8,7 @@ const CONTEXT_MENU_KEY = '_cl_contextMenuUrl'
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: 'chainlink-save',
-    title: 'Add to Chainlink',
+    title: 'Add to LinkWeave',
     contexts: ['page', 'link'],
   })
 })

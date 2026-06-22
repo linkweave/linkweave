@@ -1,6 +1,6 @@
 # Browser Extension Architecture Plan
 
-**Project:** Chainlink Browser Extension  
+**Project:** LinkWeave Browser Extension  
 **Date:** 2026-04-04  
 **Status:** Implemented
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-A Chrome/Firefox browser extension that lets users save the current page as a bookmark to their Chainlink collection. The extension popup pre-fills URL and title from the active tab, and lets the user choose a collection, folder, and tags before saving.
+A Chrome/Firefox browser extension that lets users save the current page as a bookmark to their LinkWeave collection. The extension popup pre-fills URL and title from the active tab, and lets the user choose a collection, folder, and tags before saving.
 
 ### Scope
 
@@ -18,7 +18,7 @@ A Chrome/Firefox browser extension that lets users save the current page as a bo
 - Select tags (optional, multi-select)
 - Login through the extension popup
 - Success/error feedback
-- Context menu ("Right-click → Add to Chainlink")
+- Context menu ("Right-click → Add to LinkWeave")
 
 ### Out of Scope (Future)
 
@@ -95,9 +95,9 @@ FolderJson { id, entityInfo, data: { collectionId, parentId?, name } }
 
 **Rationale:**
 - The backend already has form-based auth with cookie sessions (`quarkus.http.auth.form.enabled=true`)
-- Browser extensions with `host_permissions` for the Chainlink domain can make credentialed fetch requests that include cookies for that domain
+- Browser extensions with `host_permissions` for the LinkWeave domain can make credentialed fetch requests that include cookies for that domain
 - No new auth mechanism (tokens, API keys) is needed for v1
-- The user logs in through the extension popup → the session cookie is set on the Chainlink domain → all subsequent API calls include it automatically
+- The user logs in through the extension popup → the session cookie is set on the LinkWeave domain → all subsequent API calls include it automatically
 
 **How it works:**
 
@@ -192,11 +192,11 @@ extension/
 
 #### `manifest.json`
 - Declares MV3 permissions: `activeTab`, `cookies`, `contextMenus`, `storage`
-- Declares `host_permissions` for the Chainlink domain
+- Declares `host_permissions` for the LinkWeave domain
 - Registers popup, service worker, and icons
 
 #### `service-worker.ts`
-- Registers context menu item ("Add to Chainlink")
+- Registers context menu item ("Add to LinkWeave")
 - Handles context menu clicks → opens popup with URL pre-filled
 - Listens for messages from popup
 - Manages the extension lifecycle
@@ -243,9 +243,9 @@ extension/
 ```json
 {
   "manifest_version": 3,
-  "name": "Chainlink Bookmark Saver",
+  "name": "LinkWeave Bookmark Saver",
   "version": "1.0.0",
-  "description": "Save bookmarks to your Chainlink collection",
+  "description": "Save bookmarks to your LinkWeave collection",
   "permissions": [
     "activeTab",
     "cookies",
@@ -283,7 +283,7 @@ extension/
 
 ### 5.1 CORS Filter (New File)
 
-**File:** `api/src/main/java/org/chainlink/infrastructure/cors/CorsFilter.java`
+**File:** `api/src/main/java/org/linkweave/infrastructure/cors/CorsFilter.java`
 
 A JAX-RS `ContainerResponseFilter` that adds CORS headers to all API responses:
 
@@ -320,7 +320,7 @@ chainlink.cors.allow-extension-origins=true
 
 ### 5.3 Config Service Update
 
-**File:** `api/src/main/java/org/chainlink/api/shared/config/ConfigService.java`
+**File:** `api/src/main/java/org/linkweave/api/shared/config/ConfigService.java`
 
 Add a method to read CORS configuration:
 
@@ -345,7 +345,7 @@ The existing API is sufficient. The extension reuses:
 
 ```
 ┌────────┐         ┌──────────┐         ┌────────────────┐
-│  Popup │         │  Client  │         │  Chainlink API  │
+│  Popup │         │  Client  │         │  LinkWeave API  │
 └───┬────┘         └────┬─────┘         └───────┬────────┘
     │   user opens popup   │                      │
     │─────────────────────→│                      │
@@ -377,7 +377,7 @@ The existing API is sufficient. The extension reuses:
 
 ```
 ┌────────┐         ┌──────────┐         ┌────────────────┐
-│  Popup │         │  Client  │         │  Chainlink API  │
+│  Popup │         │  Client  │         │  LinkWeave API  │
 └───┬────┘         └────┬─────┘         └───────┬────────┘
     │  popup opens with tab URL/title    │               │
     │─────────────────────→│              │               │
@@ -523,7 +523,7 @@ class ChainlinkClient {
 
 ### 7.3 Base URL Configuration
 
-The extension needs to know where the Chainlink API is running. This is configured at build time via Vite environment variables:
+The extension needs to know where the LinkWeave API is running. This is configured at build time via Vite environment variables:
 
 ```typescript
 // src/api/config.ts
@@ -610,7 +610,7 @@ dist/
 
 ```
 ┌─────────────────────────────────┐
-│ 🔗 Add to Chainlink      [⚙️]  │
+│ 🔗 Add to LinkWeave      [⚙️]  │
 ├─────────────────────────────────┤
 │                                 │
 │  URL ─────────────────────────  │
@@ -641,7 +641,7 @@ dist/
 
 ```
 ┌─────────────────────────────────┐
-│ 🔗 Chainlink                    │
+│ 🔗 LinkWeave                    │
 ├─────────────────────────────────┤
 │                                 │
 │  Email                          │
@@ -663,7 +663,7 @@ dist/
 
 ```
 ┌─────────────────────────────────┐
-│ 🔗 Chainlink                    │
+│ 🔗 LinkWeave                    │
 ├─────────────────────────────────┤
 │                                 │
 │         ✅ Saved!               │
@@ -686,9 +686,9 @@ dist/
 
 | # | File | Action | Description |
 |---|------|--------|-------------|
-| 1.1 | `api/src/main/java/org/chainlink/infrastructure/cors/CorsFilter.java` | **Create** | JAX-RS `ContainerResponseFilter` that adds CORS headers. Matches origins against allowed patterns (Chainlink domain, `chrome-extension://*`, `moz-extension://*`). Handles OPTIONS preflight. |
+| 1.1 | `api/src/main/java/org/linkweave/infrastructure/cors/CorsFilter.java` | **Create** | JAX-RS `ContainerResponseFilter` that adds CORS headers. Matches origins against allowed patterns (LinkWeave domain, `chrome-extension://*`, `moz-extension://*`). Handles OPTIONS preflight. |
 | 1.2 | `api/src/main/resources/application.properties` | **Modify** | Add `chainlink.cors.allowed-origins` config property (dev + prod). |
-| 1.3 | `api/src/main/java/org/chainlink/api/shared/config/ConfigService.java` | **Modify** | Add `getCorsAllowedOrigins()` and `isCorsExtensionOriginsAllowed()` methods. |
+| 1.3 | `api/src/main/java/org/linkweave/api/shared/config/ConfigService.java` | **Modify** | Add `getCorsAllowedOrigins()` and `isCorsExtensionOriginsAllowed()` methods. |
 | 1.4 | `CorsFilter` | **Test** | Unit test: verify CORS headers for allowed origins, no headers for disallowed origins, OPTIONS preflight handling. |
 
 ### Phase 2: Extension — Project Scaffold
@@ -721,7 +721,7 @@ dist/
 | # | File | Action | Description |
 |---|------|--------|-------------|
 | 4.1 | `extension/src/popup/popup.html` | **Create** | Minimal HTML shell with `<div id="app">`. |
-| 4.2 | `extension/src/popup/popup.css` | **Create** | Clean, minimal styles. Consistent with Chainlink brand. |
+| 4.2 | `extension/src/popup/popup.css` | **Create** | Clean, minimal styles. Consistent with LinkWeave brand. |
 | 4.3 | `extension/src/popup/popup.ts` | **Create** | Entry point: checks auth, reads active tab, renders appropriate view. |
 | 4.4 | `extension/src/popup/views/login-view.ts` | **Create** | Login form with email/password. Calls `authService.login()`. On success → transition to save view. |
 | 4.5 | `extension/src/popup/views/save-view.ts` | **Create** | Main bookmark save form: URL (with full/domain toggle), title, collection selector, folder dropdown, tag multi-select, save button. |
@@ -733,7 +733,7 @@ dist/
 
 | # | File | Action | Description |
 |---|------|--------|-------------|
-| 5.1 | `extension/src/background/service-worker.ts` | **Create** | Registers context menu "Add to Chainlink". On click → opens popup with URL pre-filled via `chrome.action.openPopup()` or message passing. |
+| 5.1 | `extension/src/background/service-worker.ts` | **Create** | Registers context menu "Add to LinkWeave". On click → opens popup with URL pre-filled via `chrome.action.openPopup()` or message passing. |
 
 ### Phase 6: Testing & Polish
 
@@ -804,7 +804,7 @@ dist/
 |---------|------------|
 | **Session cookie exposure** | Cookie is HttpOnly and encrypted (Quarkus form auth). The extension never reads the cookie directly — the browser sends it via `credentials: 'include'`. |
 | **CSRF** | Browser extensions are not susceptible to traditional CSRF because they don't share the same origin as the web app. The CORS filter validates the Origin header. |
-| **CORS origin spoofing** | The CORS filter explicitly checks for known patterns: the Chainlink domain and `chrome-extension://`/`moz-extension://` prefixes. It doesn't use `*`. |
+| **CORS origin spoofing** | The CORS filter explicitly checks for known patterns: the LinkWeave domain and `chrome-extension://`/`moz-extension://` prefixes. It doesn't use `*`. |
 | **Extension permissions** | The manifest requests minimal permissions: `activeTab` (read current tab URL/title), `cookies` (read cookie for auth check), `contextMenus` (right-click menu), `storage` (cache settings). |
 | **API data exposure** | The extension only calls existing authenticated endpoints. `AuthorizationService` enforces collection access on every call. No new attack surface. |
 | **Stored credentials** | The extension does NOT store passwords. Auth is session-based. The session cookie is managed by the browser. |

@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Trash2, Undo2, ArrowLeft, Folder as FolderIcon, Bookmark as BookmarkIcon } from '@lucide/vue'
 import { MainLayout } from '@/components/layout'
-import { ButtonCl, ConfirmDialog, ResponsiveButton } from '@/components/ui'
+import { ButtonLw, ConfirmDialog, ResponsiveButton } from '@/components/ui'
 import { useTrashbinStore } from '@/stores/trashbin'
 import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
@@ -83,9 +83,9 @@ function goBack() {
 <template>
   <MainLayout :hide-sidebar="true">
     <template #header-leading>
-      <ButtonCl variant="ghost" size="icon" :aria-label="$t('common.back')" @click="goBack">
+      <ButtonLw variant="ghost" size="icon" :aria-label="$t('common.back')" @click="goBack">
         <ArrowLeft class="h-4 w-4" />
-      </ButtonCl>
+      </ButtonLw>
     </template>
     <template #header-title>
       <h1 class="text-base font-semibold text-foreground truncate">{{ $t('trashbin.title') }}</h1>

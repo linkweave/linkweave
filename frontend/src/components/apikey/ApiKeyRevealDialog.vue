@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import ButtonCl from '@/components/ui/ButtonCl.vue'
-import DialogCl from '@/components/ui/DialogCl.vue'
-import DialogFooterCl from '@/components/ui/DialogFooterCl.vue'
+import ButtonLw from '@/components/ui/ButtonLw.vue'
+import DialogLw from '@/components/ui/DialogLw.vue'
+import DialogFooterLw from '@/components/ui/DialogFooterLw.vue'
 import { Check, Copy, TriangleAlert } from '@lucide/vue'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -26,7 +26,7 @@ async function copyKey() {
 </script>
 
 <template>
-  <DialogCl :open="open" @update:open="emit('update:open', $event)">
+  <DialogLw :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('apiKeys.revealTitle') }}</template>
 
     <div class="space-y-4">
@@ -41,7 +41,7 @@ async function copyKey() {
           <code class="flex-1 min-w-0 rounded-md border border-border bg-muted px-3 py-2 text-xs font-mono break-all select-all">
             {{ rawKey }}
           </code>
-          <ButtonCl
+          <ButtonLw
             type="button"
             variant="outline"
             size="icon"
@@ -51,17 +51,17 @@ async function copyKey() {
           >
             <Check v-if="copied" class="h-4 w-4 text-green-600" />
             <Copy v-else class="h-4 w-4" />
-          </ButtonCl>
+          </ButtonLw>
         </div>
       </div>
     </div>
 
     <template #footer>
-      <DialogFooterCl>
-        <ButtonCl type="button" @click="emit('update:open', false)">
+      <DialogFooterLw>
+        <ButtonLw type="button" @click="emit('update:open', false)">
           {{ t('apiKeys.revealDone') }}
-        </ButtonCl>
-      </DialogFooterCl>
+        </ButtonLw>
+      </DialogFooterLw>
     </template>
-  </DialogCl>
+  </DialogLw>
 </template>

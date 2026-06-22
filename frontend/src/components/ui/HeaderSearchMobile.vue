@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { Search, X } from '@lucide/vue'
-import ButtonCl from './ButtonCl.vue'
+import ButtonLw from './ButtonLw.vue'
 import SearchBar from './SearchBar.vue'
 import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useI18n } from 'vue-i18n'
@@ -44,7 +44,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <ButtonCl
+  <ButtonLw
     variant="ghost"
     size="icon"
     class="sm:hidden relative"
@@ -59,7 +59,7 @@ onUnmounted(() => {
       class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-card"
       aria-hidden="true"
     />
-  </ButtonCl>
+  </ButtonLw>
 
   <Teleport to="body">
     <div v-if="open" class="fixed inset-0 z-[70] sm:hidden">
@@ -70,9 +70,9 @@ onUnmounted(() => {
           :placeholder="t('search.placeholder')"
           class="flex-1"
         />
-        <ButtonCl variant="ghost" size="icon" :aria-label="t('common.cancel')" @click="open = false">
+        <ButtonLw variant="ghost" size="icon" :aria-label="t('common.cancel')" @click="open = false">
           <X class="h-5 w-5" />
-        </ButtonCl>
+        </ButtonLw>
       </div>
     </div>
   </Teleport>

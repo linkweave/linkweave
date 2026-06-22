@@ -1,4 +1,4 @@
-//! Chainlink desktop shell (UC-052).
+//! LinkWeave desktop shell (UC-052).
 //!
 //! Spawns the Quarkus backend as a child process bound to a random loopback port, waits for it to
 //! become reachable, then points the webview at it. The backend is launched with the `desktop`
@@ -62,7 +62,7 @@ fn spawn_backend(app: &tauri::App, port: u16) -> Result<Child, Box<dyn std::erro
     let log_path = data_dir.join("backend.log");
     let log = std::fs::File::create(&log_path)?;
     let log_err = log.try_clone()?;
-    eprintln!("Chainlink backend log: {}", log_path.display());
+    eprintln!("LinkWeave backend log: {}", log_path.display());
 
     let child = Command::new(&java)
         .arg("-jar")
@@ -70,7 +70,7 @@ fn spawn_backend(app: &tauri::App, port: u16) -> Result<Child, Box<dyn std::erro
         .env("QUARKUS_PROFILE", "desktop")
         .env("QUARKUS_HTTP_HOST", "127.0.0.1")
         .env("QUARKUS_HTTP_PORT", port.to_string())
-        .env("CHAINLINK_DB_PATH", data_dir.join("chainlink.db"))
+        .env("CHAINLINK_DB_PATH", data_dir.join("linkweave.db"))
         .env("CHAINLINK_FAVICON_CACHE_DIR", data_dir.join("favicon-cache"))
         .env("CHAINLINK_DESKTOP_WEB_ROOT", &web_root)
         .stdout(std::process::Stdio::from(log))
@@ -121,7 +121,7 @@ fn show_startup_error(window: &tauri::WebviewWindow, handle: &tauri::AppHandle) 
         .unwrap_or_else(|_| "the application data directory".to_string());
     let html = format!(
         "<div style=\"font:15px system-ui,sans-serif;color:#e2e8f0;max-width:34rem;text-align:center;padding:1.5rem\">\
-           <h2 style=\"margin:0 0 .75rem\">Couldn't start Chainlink</h2>\
+           <h2 style=\"margin:0 0 .75rem\">Couldn't start LinkWeave</h2>\
            <p style=\"margin:.25rem 0\">The backend didn't respond within {}s.</p>\
            <p style=\"margin:.75rem 0 0;color:#94a3b8\">See the log at:<br><code>{}</code></p>\
          </div>",
@@ -154,7 +154,7 @@ pub fn run() {
             let port = pick_free_port()?;
 
             let child = spawn_backend(app, port).map_err(|e| {
-                format!("failed to start the Chainlink backend (is Java installed?): {e}")
+                format!("failed to start the LinkWeave backend (is Java installed?): {e}")
             })?;
             app.state::<Backend>().0.lock().unwrap().replace(child);
 
@@ -171,7 +171,7 @@ pub fn run() {
                         let _ = window.navigate(url);
                     }
                 } else {
-                    eprintln!("Chainlink backend did not become ready within {STARTUP_TIMEOUT:?}");
+                    eprintln!("LinkWeave backend did not become ready within {STARTUP_TIMEOUT:?}");
                     show_startup_error(&window, &handle);
                 }
             });
@@ -179,7 +179,7 @@ pub fn run() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("error while building the Chainlink desktop app")
+        .expect("error while building the LinkWeave desktop app")
         .run(|app_handle, event| {
             // Kill the backend when the app is shutting down so no orphan JVM is left behind.
             if let RunEvent::Exit = event {

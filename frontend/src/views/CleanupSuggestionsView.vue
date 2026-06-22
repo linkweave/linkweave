@@ -3,7 +3,7 @@ import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ArrowLeft, Trash2, Sparkles, EyeOff, Folder as FolderIcon } from '@lucide/vue'
 import { MainLayout } from '@/components/layout'
-import { ButtonCl, ConfirmDialog, SelectCl } from '@/components/ui'
+import { ButtonLw, ConfirmDialog, SelectLw } from '@/components/ui'
 import { useCleanupSuggestionsStore } from '@/stores/cleanupSuggestions'
 import { useNotificationStore } from '@/stores/notification'
 import { useRoute, useRouter } from 'vue-router'
@@ -83,15 +83,15 @@ function goBack() {
     <div class="container mx-auto max-w-4xl px-4 py-6">
       <div class="mb-6 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <ButtonCl variant="ghost" size="icon" @click="goBack" :aria-label="$t('common.back')">
+          <ButtonLw variant="ghost" size="icon" @click="goBack" :aria-label="$t('common.back')">
             <ArrowLeft class="h-4 w-4" />
-          </ButtonCl>
+          </ButtonLw>
           <Sparkles class="h-5 w-5 text-muted-foreground" />
           <h1 class="text-2xl font-semibold">{{ $t('cleanupSuggestions.title') }}</h1>
         </div>
 
         <div class="flex items-center gap-3">
-          <SelectCl
+          <SelectLw
             :model-value="store.thresholdMonths"
             class="w-auto"
             :aria-label="$t('cleanupSuggestions.thresholdLabel')"
@@ -100,9 +100,9 @@ function goBack() {
             <option v-for="m in store.thresholds" :key="m" :value="m">
               {{ formatRelativeMonths(m) }}
             </option>
-          </SelectCl>
+          </SelectLw>
 
-          <ButtonCl
+          <ButtonLw
             variant="destructive"
             :disabled="store.selectedCount === 0"
             data-testid="cleanup-move-to-trash-btn"
@@ -111,7 +111,7 @@ function goBack() {
             <Trash2 class="mr-2 h-4 w-4" />
             {{ $t('cleanupSuggestions.moveToTrash') }}
             <span v-if="store.selectedCount > 0" class="ml-1">({{ store.selectedCount }})</span>
-          </ButtonCl>
+          </ButtonLw>
         </div>
       </div>
 
@@ -126,7 +126,7 @@ function goBack() {
 
       <template v-else>
         <div class="mb-3 flex items-center justify-between">
-          <ButtonCl
+          <ButtonLw
             variant="outline"
             size="sm"
             @click="store.allSelected ? store.clearSelection() : store.selectAll()"
@@ -136,7 +136,7 @@ function goBack() {
                 ? $t('cleanupSuggestions.deselectAll')
                 : $t('cleanupSuggestions.selectAll')
             }}
-          </ButtonCl>
+          </ButtonLw>
           <span class="text-sm text-muted-foreground">
             {{ store.suggestions.length }} {{ $t('cleanupSuggestions.suggestions') }}
           </span>
@@ -181,14 +181,14 @@ function goBack() {
               </div>
             </div>
 
-            <ButtonCl
+            <ButtonLw
               variant="ghost"
               size="sm"
               :title="$t('cleanupSuggestions.dismiss')"
               @click="handleDismiss(suggestion.id)"
             >
               <EyeOff class="h-4 w-4" />
-            </ButtonCl>
+            </ButtonLw>
           </li>
         </ul>
       </template>

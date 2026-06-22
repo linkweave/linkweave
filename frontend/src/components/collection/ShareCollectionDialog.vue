@@ -3,7 +3,7 @@ import type {CollectionMemberJson} from '@/api/generated'
 import {ResponseError} from '@/api/generated'
 import {toTypedSchema} from '@vee-validate/zod'
 import {useForm} from 'vee-validate'
-import {ButtonCl, DialogCl, FormFieldCl, InputCl} from '@/components/ui'
+import {ButtonLw, DialogLw, FormFieldLw, InputLw} from '@/components/ui'
 import {useCollectionStore} from '@/stores/collection'
 import {useNotificationStore} from '@/stores/notification'
 import {collectionShareSchema} from '@/schemas/collection'
@@ -109,7 +109,7 @@ function nonOwnerMembers() {
 </script>
 
 <template>
-  <DialogCl :open="props.open" @update:open="emit('update:open', $event)">
+  <DialogLw :open="props.open" @update:open="emit('update:open', $event)">
     <template #title>
       <div class="flex items-center gap-2">
         <UserPlus class="h-4 w-4 text-muted-foreground" />
@@ -163,7 +163,7 @@ function nonOwnerMembers() {
             <span class="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded border border-border shrink-0 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hidden [@media(hover:none)]:inline">
               {{ t('collectionManage.shareMemberBadge') }}
             </span>
-            <ButtonCl
+            <ButtonLw
               variant="ghost"
               size="icon"
               class="h-8 w-8 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
@@ -174,7 +174,7 @@ function nonOwnerMembers() {
             >
               <Loader2 v-if="revokingUserId === member.userId" class="h-3.5 w-3.5 animate-spin" />
               <X v-else class="h-3.5 w-3.5" />
-            </ButtonCl>
+            </ButtonLw>
           </div>
 
           <p
@@ -190,8 +190,8 @@ function nonOwnerMembers() {
 
       <form class="flex flex-col sm:flex-row gap-2 sm:items-start" @submit.prevent="handleInvite">
         <div class="flex-1">
-          <FormFieldCl :label="t('collectionManage.shareInvite')" for-id="share-email-input" :error="errors.email">
-            <InputCl
+          <FormFieldLw :label="t('collectionManage.shareInvite')" for-id="share-email-input" :error="errors.email">
+            <InputLw
               id="share-email-input"
               v-model="inviteEmail"
               v-bind="inviteEmailAttrs"
@@ -200,9 +200,9 @@ function nonOwnerMembers() {
               data-testid="share-email-input"
               :placeholder="t('collectionManage.shareEmailPlaceholder')"
             />
-          </FormFieldCl>
+          </FormFieldLw>
         </div>
-        <ButtonCl
+        <ButtonLw
           type="submit"
           data-testid="share-invite-btn"
           class="w-full sm:w-auto sm:mt-[1.625rem]"
@@ -211,8 +211,8 @@ function nonOwnerMembers() {
           <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
           <UserPlus v-else class="h-4 w-4" />
           {{ t('collectionManage.shareInviteBtn') }}
-        </ButtonCl>
+        </ButtonLw>
       </form>
     </div>
-  </DialogCl>
+  </DialogLw>
 </template>

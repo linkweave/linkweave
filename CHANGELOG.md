@@ -18,9 +18,9 @@
 
 ### Files Changed
 
-- `src/main/java/org/chainlink/domain/Bookmark.java` - New file
-- `src/main/java/org/chainlink/domain/Tag.java` - New file
-- `src/main/java/org/chainlink/domain/Folder.java` - New file
+- `src/main/java/org/linkweave/domain/Bookmark.java` - New file
+- `src/main/java/org/linkweave/domain/Tag.java` - New file
+- `src/main/java/org/linkweave/domain/Folder.java` - New file
 - `pom.xml` - Added htmx.org dependency
 - `src/main/resources/application.properties` - Added web-bundler configuration
 - `CHANGELOG.md` - Created
@@ -92,12 +92,12 @@
 
 ### Files Changed
 
-- `src/main/java/org/chainlink/api/bookmark/TagRepo.java` - New file
-- `src/main/java/org/chainlink/api/bookmark/BookmarkRepo.java` - New file
-- `src/main/java/org/chainlink/api/bookmark/TagService.java` - New file
-- `src/main/java/org/chainlink/api/bookmark/BookmarkService.java` - New file
-- `src/main/java/org/chainlink/api/bookmark/BookmarkResource.java` - New file
-- `src/main/java/org/chainlink/api/bookmark/folder/FolderService.java` - Updated with getAllFolders()
+- `src/main/java/org/linkweave/api/bookmark/TagRepo.java` - New file
+- `src/main/java/org/linkweave/api/bookmark/BookmarkRepo.java` - New file
+- `src/main/java/org/linkweave/api/bookmark/TagService.java` - New file
+- `src/main/java/org/linkweave/api/bookmark/BookmarkService.java` - New file
+- `src/main/java/org/linkweave/api/bookmark/BookmarkResource.java` - New file
+- `src/main/java/org/linkweave/api/bookmark/folder/FolderService.java` - Updated with getAllFolders()
 - `src/main/resources/templates/bookmarks.qute.html` - New file
 - `src/main/resources/templates/login.html` - New file
 - `src/main/resources/templates/bookmark-form.html` - New file

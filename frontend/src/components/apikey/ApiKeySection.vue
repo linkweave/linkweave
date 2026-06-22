@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ApiKeyJson } from '@/api/generated/models/api-key-json'
-import ButtonCl from '@/components/ui/ButtonCl.vue'
+import ButtonLw from '@/components/ui/ButtonLw.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import { useApiKeyStore } from '@/stores/apiKey'
 import { useNotificationStore } from '@/stores/notification'
@@ -58,7 +58,7 @@ onMounted(async () => {
   <div>
     <div class="flex items-center justify-between mb-3">
       <h3 class="text-sm font-medium text-foreground">{{ t('apiKeys.sectionTitle') }}</h3>
-      <ButtonCl
+      <ButtonLw
         size="sm"
         :disabled="maxReached"
         :title="maxReached ? t('apiKeys.maxReachedHint') : undefined"
@@ -67,7 +67,7 @@ onMounted(async () => {
       >
         <Plus class="h-4 w-4" />
         {{ t('apiKeys.create') }}
-      </ButtonCl>
+      </ButtonLw>
     </div>
 
     <p v-if="loading" class="text-sm text-muted-foreground py-2">{{ t('common.loading') }}</p>
@@ -101,7 +101,7 @@ onMounted(async () => {
             <span>{{ t('apiKeys.lastUsed') }}: {{ formatDate(key.lastUsedAt) }}</span>
           </div>
         </div>
-        <ButtonCl
+        <ButtonLw
           size="sm"
           variant="ghost"
           class="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
@@ -109,7 +109,7 @@ onMounted(async () => {
           @click="confirmRevoke = key"
         >
           {{ t('apiKeys.revoke') }}
-        </ButtonCl>
+        </ButtonLw>
       </div>
     </div>
 

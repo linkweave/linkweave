@@ -1,7 +1,7 @@
 # ArchUnit Tests — Status & Findings
 
 Implements **UC-035** (FR-039). Tests live under
-`api/src/test/java/org/chainlink/api/shared/archunit/`.
+`api/src/test/java/org/linkweave/api/shared/archunit/`.
 
 Ported 1:1 from the `esc` reference project, adapted to chainlink's package
 layout. Three esc-only suites were dropped (no analog in chainlink): `MetricsTest`
@@ -89,9 +89,9 @@ From `ConfigTest`:
 
 ## Configuration changes already applied
 
-- `APP_PACKAGE` in `ArchConst` was widened from `org.chainlink.api` to
+- `APP_PACKAGE` in `ArchConst` was widened from `org.linkweave.api` to
   `org.chainlink` so the rules see `org.chainlink.infrastructure.*`.
 - `LayeringTest` predicates (`SHARED`, `STARTER_INFRASTRUCTURE`, `DATABASE_LAYER`)
   were rewritten to use chainlink's actual package paths
-  (`org.chainlink.api.shared..`, `org.chainlink.infrastructure..`).
+  (`org.linkweave.api.shared..`, `org.chainlink.infrastructure..`).
 - `archunit-junit5` 1.4.1 added to `api/pom.xml`.

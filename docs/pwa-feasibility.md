@@ -37,7 +37,7 @@ What's missing for "installable, passes Lighthouse PWA":
 - **No `purpose: "maskable"` icon.** Android adaptive icons get cropped without one.
 - **No `screenshots` array in the manifest.** Chrome's richer install UI (especially on Android) needs at least one wide + one narrow screenshot.
 - **No explicit `<link rel="manifest">` in `index.html`.** vite-plugin-pwa injects this at build time — verify it lands in the production build (`pnpm run build` then inspect `dist/index.html`).
-- **No Web Share Target** (`share_target` in manifest). Without it, the OS "Share" sheet on mobile can't send a URL to Chainlink.
+- **No Web Share Target** (`share_target` in manifest). Without it, the OS "Share" sheet on mobile can't send a URL to LinkWeave.
 
 ---
 
@@ -104,7 +104,7 @@ PWA, extension, and CLI are complementary rather than redundant:
 |----------|-----------|-----|
 | Save the page I'm reading right now | Extension | Only the extension can read the *active tab's* URL from the surrounding browser. A PWA can't. |
 | Manage / browse / organize my bookmarks | PWA | Full UI, same as the web app, installable, offline-capable. |
-| "Share to Chainlink" from mobile OS share sheet | PWA + `share_target` | Extensions don't run on mobile Chrome. PWAs do, and registering as a share target gets Chainlink into the system Share menu. |
+| "Share to LinkWeave" from mobile OS share sheet | PWA + `share_target` | Extensions don't run on mobile Chrome. PWAs do, and registering as a share target gets LinkWeave into the system Share menu. |
 | Scripted/CLI workflows | CLI (FR-085) | Headless automation, no browser. |
 
 The PWA does *not* obsolete the extension. The most interesting overlap is **mobile**: today there's no good way to save a page from a phone, because the extension only runs on desktop browsers. A PWA with `share_target` fills that gap and is the strongest argument for shipping this initiative.

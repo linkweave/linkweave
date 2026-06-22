@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import ButtonCl from '@/components/ui/ButtonCl.vue'
-import FolderSelectCl from '@/components/ui/FolderSelectCl.vue'
+import ButtonLw from '@/components/ui/ButtonLw.vue'
+import FolderSelectLw from '@/components/ui/FolderSelectLw.vue'
 import { useDuplicateCheck } from '@/composables/useDuplicateCheck'
 import { useTagSuggestions } from '@/composables/useTagSuggestions'
 import { ensureUrlProtocol } from '@/lib/url'
@@ -140,8 +140,8 @@ function saveAnother() {
     <p class="font-medium text-sm">Saved!</p>
     <p class="text-xs text-muted-foreground truncate max-w-full px-4">{{ savedTitle }}</p>
     <div class="flex gap-2 mt-1">
-      <ButtonCl size="sm" variant="outline" @click="saveAnother">Save another</ButtonCl>
-      <ButtonCl size="sm" @click="emit('saved')">Browse</ButtonCl>
+      <ButtonLw size="sm" variant="outline" @click="saveAnother">Save another</ButtonLw>
+      <ButtonLw size="sm" @click="emit('saved')">Browse</ButtonLw>
     </div>
   </div>
 
@@ -250,7 +250,7 @@ function saveAnother() {
     <!-- Folder -->
     <div class="space-y-1.5">
       <label class="block text-xs font-medium leading-none">Folder</label>
-      <FolderSelectCl v-model="folderId" :folders="store.folders" />
+      <FolderSelectLw v-model="folderId" :folders="store.folders" />
     </div>
 
     <!-- Tags -->
@@ -299,8 +299,8 @@ function saveAnother() {
     <p v-if="error" class="text-xs text-destructive">{{ error }}</p>
 
     <!-- Submit -->
-    <ButtonCl type="submit" class="w-full" :disabled="saving || !title.trim()">
+    <ButtonLw type="submit" class="w-full" :disabled="saving || !title.trim()">
       {{ saving ? 'Saving…' : 'Save Bookmark' }}
-    </ButtonCl>
+    </ButtonLw>
   </form>
 </template>

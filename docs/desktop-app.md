@@ -1,10 +1,10 @@
 # Desktop Application — Implementation Plan
 
-Implementation plan for **UC-052: Run Chainlink as a Desktop Application**.
+Implementation plan for **UC-052: Run LinkWeave as a Desktop Application**.
 
 ## Context
 
-Chainlink today is a hosted web app: Vue 3 SPA + Quarkus 3.30 backend + SQLite, deployed at `dev-chainlink.markushofstetter.com`. This plan covers packaging the same codebase as a self-contained desktop application (macOS first, Windows/Linux as natural follow-ups). The goal is a learning exercise: understand what changes to the existing code, what gets added, and what blockers exist. It is not a production ship.
+LinkWeave today is a hosted web app: Vue 3 SPA + Quarkus 3.30 backend + SQLite, deployed at `dev-chainlink.markushofstetter.com`. This plan covers packaging the same codebase as a self-contained desktop application (macOS first, Windows/Linux as natural follow-ups). The goal is a learning exercise: understand what changes to the existing code, what gets added, and what blockers exist. It is not a production ship.
 
 **Short answer: feasible.** The architecture is well-suited — SPA + embedded SQLite + self-contained backend. There are 3–4 real blockers, all solvable.
 
@@ -81,7 +81,7 @@ The JVM (~80 MB JRE) is the heaviest thing in the bundle either way, so Tauri's 
 quarkus.datasource.jdbc.url=jdbc:sqlite:../developer-local-settings/chainlink.db?foreign_keys=on&busy_timeout=10000
 ```
 
-Must become env-driven so the shell can point it at the OS-appropriate user data directory (e.g. `~/Library/Application Support/Chainlink/chainlink.db` on macOS — BR-052-1).
+Must become env-driven so the shell can point it at the OS-appropriate user data directory (e.g. `~/Library/Application Support/LinkWeave/chainlink.db` on macOS — BR-052-1).
 
 **Fix:** make only the path segment env-driven and keep the query params (they enforce foreign keys and set the busy timeout — don't lose them):
 
@@ -99,7 +99,7 @@ Google OAuth requires browser redirect to a fixed callback URL. A desktop app on
 
 ### 3. Favicon cache directory is also relative (no code change needed)
 
-This is **not** in `application.properties`. It's a `@ConfigProperty(name = "chainlink.favicon.cache-dir", defaultValue = "developer-local-settings/favicon-cache")` in `api/src/main/java/org/chainlink/api/shared/config/ConfigService.java:108`.
+This is **not** in `application.properties`. It's a `@ConfigProperty(name = "chainlink.favicon.cache-dir", defaultValue = "developer-local-settings/favicon-cache")` in `api/src/main/java/org/linkweave/api/shared/config/ConfigService.java:108`.
 
 Because it's already a Quarkus config property, no code change is required — Quarkus auto-maps the env var `CHAINLINK_FAVICON_CACHE_DIR` onto `chainlink.favicon.cache-dir`. The shell just exports it. (The same env-var mapping is why the DB path in #1 is the only config that needs a property-file edit — `quarkus.datasource.jdbc.url` is a single string we have to splice the path into.)
 
@@ -255,7 +255,7 @@ After step 5:
 - Confirm SPA loads and `/api/ping` returns 204 from inside webview devtools
 - Register a new local user via form auth
 - Add a bookmark, restart the app, verify it persists
-- Confirm DB file is at `~/Library/Application Support/Chainlink/chainlink.db`, **not** in the app bundle (BR-052-1)
+- Confirm DB file is at `~/Library/Application Support/LinkWeave/chainlink.db`, **not** in the app bundle (BR-052-1)
 - Quit the app; confirm Quarkus actually exits (`pgrep -f quarkus-run` returns nothing)
 - Launch a second instance; confirm the existing window comes forward instead of a duplicate launching (BR-052-4)
 - Disconnect from the network; confirm bookmarks still browse/edit normally and only favicon fetches fail (A6)

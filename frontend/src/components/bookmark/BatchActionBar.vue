@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { TagJson } from '@/api/generated'
 import MoveBookmarkDialog from '@/components/bookmark/MoveBookmarkDialog.vue'
-import { ConfirmDialog, DropdownMenuContentCl, DropdownMenuItemCl } from '@/components/ui'
+import { ConfirmDialog, DropdownMenuContentLw, DropdownMenuItemLw } from '@/components/ui'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useFolderStore } from '@/stores/folder'
 import { useNotificationStore } from '@/stores/notification'
@@ -132,9 +132,9 @@ async function copyUrls() {
             <span class="hidden md:inline">{{ t('batch.addTag') }}</span>
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContentCl class="z-50 min-w-[186px]" align="start">
+        <DropdownMenuContentLw class="z-50 min-w-[186px]" align="start">
           <div class="batch-tag-header">{{ t('batch.addTagHeader') }}</div>
-          <DropdownMenuItemCl
+          <DropdownMenuItemLw
             v-for="tag in tagStore.tags"
             :key="tag.id"
             :data-testid="`batch-tag-option-${tag.data.name}`"
@@ -145,11 +145,11 @@ async function copyUrls() {
               :style="{ background: tag.data.color }"
             />
             {{ tag.data.name }}
-          </DropdownMenuItemCl>
+          </DropdownMenuItemLw>
           <div v-if="tagStore.tags.length === 0" class="batch-tag-empty">
             {{ t('batch.noTags') }}
           </div>
-        </DropdownMenuContentCl>
+        </DropdownMenuContentLw>
       </DropdownMenuRoot>
 
       <button type="button" class="batch-btn" data-testid="batch-copy-urls" @click="copyUrls">

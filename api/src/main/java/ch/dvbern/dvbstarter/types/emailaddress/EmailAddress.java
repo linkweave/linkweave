@@ -7,13 +7,13 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
-import org.chainlink.infrastructure.errorhandling.AppValidationException;
+import org.linkweave.infrastructure.errorhandling.AppValidationException;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.jspecify.annotations.Nullable;
 
 import static java.util.Objects.requireNonNull;
-import static org.chainlink.infrastructure.errorhandling.AppValidationMessage.invalidEmail;
+import static org.linkweave.infrastructure.errorhandling.AppValidationMessage.invalidEmail;
 
 @Getter
 @Schema(type = SchemaType.STRING, format = Format.EMAIL)

@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { MoreHorizontal } from '@lucide/vue'
 import { DropdownMenuRoot, DropdownMenuTrigger } from 'radix-vue'
-import { DropdownMenuContentCl, DropdownMenuItemCl } from '@/components/ui'
+import { DropdownMenuContentLw, DropdownMenuItemLw } from '@/components/ui'
 import { useI18n } from 'vue-i18n'
 import type { BookmarkJson } from '@/api/generated'
 
@@ -86,19 +86,19 @@ function onRootUpdateOpen(open: boolean) {
         <MoreHorizontal :class="iconClass" />
       </button>
     </DropdownMenuTrigger>
-    <DropdownMenuContentCl class="min-w-[160px] z-50">
-      <DropdownMenuItemCl @select="emit('edit', bookmark)">
+    <DropdownMenuContentLw class="min-w-[160px] z-50">
+      <DropdownMenuItemLw @select="emit('edit', bookmark)">
         {{ t('common.edit') }}
-      </DropdownMenuItemCl>
-      <DropdownMenuItemCl @select="emit('move', bookmark)">
+      </DropdownMenuItemLw>
+      <DropdownMenuItemLw @select="emit('move', bookmark)">
         {{ t('bookmark.moveToFolder') }}
-      </DropdownMenuItemCl>
-      <DropdownMenuItemCl v-if="showRefreshPreview" @select="emit('refreshPreview', bookmark)">
+      </DropdownMenuItemLw>
+      <DropdownMenuItemLw v-if="showRefreshPreview" @select="emit('refreshPreview', bookmark)">
         {{ t('bookmark.refreshPreview') }}
-      </DropdownMenuItemCl>
-      <DropdownMenuItemCl variant="destructive" @select="emit('delete', bookmark)">
+      </DropdownMenuItemLw>
+      <DropdownMenuItemLw variant="destructive" @select="emit('delete', bookmark)">
         {{ t('common.delete') }}
-      </DropdownMenuItemCl>
-    </DropdownMenuContentCl>
+      </DropdownMenuItemLw>
+    </DropdownMenuContentLw>
   </DropdownMenuRoot>
 </template>

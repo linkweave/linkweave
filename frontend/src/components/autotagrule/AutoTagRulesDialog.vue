@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ButtonCl, DialogCl, HelpPopoverCl } from '@/components/ui'
+import { ButtonLw, DialogLw, HelpPopoverLw } from '@/components/ui'
 import { useAutoTagRuleStore } from '@/stores/autoTagRule'
 import { useNotificationStore } from '@/stores/notification'
 import AutoTagRuleEditDialog from './AutoTagRuleEditDialog.vue'
@@ -57,20 +57,20 @@ async function toggleEnabled(rule: AutoTagRuleJson) {
 </script>
 
 <template>
-  <DialogCl :open="open" @update:open="emit('update:open', $event)">
+  <DialogLw :open="open" @update:open="emit('update:open', $event)">
     <template #title>
       <span class="flex items-center gap-2">
         {{ t('autoTagRule.managerTitle') }}
-        <HelpPopoverCl>
+        <HelpPopoverLw>
           <p class="font-medium mb-1">{{ t('autoTagRule.helpHeader') }}</p>
           <p class="text-muted-foreground">{{ t('autoTagRule.managerHelp') }}</p>
-        </HelpPopoverCl>
+        </HelpPopoverLw>
       </span>
     </template>
 
     <div class="space-y-3">
       <div class="flex justify-end">
-        <ButtonCl
+        <ButtonLw
           type="button"
           variant="outline"
           size="sm"
@@ -79,7 +79,7 @@ async function toggleEnabled(rule: AutoTagRuleJson) {
         >
           <Plus class="h-4 w-4 mr-1" />
           {{ t('autoTagRule.add') }}
-        </ButtonCl>
+        </ButtonLw>
       </div>
 
       <p
@@ -145,12 +145,12 @@ async function toggleEnabled(rule: AutoTagRuleJson) {
       </ul>
 
       <div class="flex justify-end pt-2">
-        <ButtonCl type="button" variant="outline" @click="emit('update:open', false)">
+        <ButtonLw type="button" variant="outline" @click="emit('update:open', false)">
           {{ t('common.close') }}
-        </ButtonCl>
+        </ButtonLw>
       </div>
     </div>
-  </DialogCl>
+  </DialogLw>
 
   <AutoTagRuleEditDialog
     v-model:open="editorOpen"

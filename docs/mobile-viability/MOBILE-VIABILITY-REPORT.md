@@ -1,4 +1,4 @@
-# Mobile Viability Review — Chainlink Frontend
+# Mobile Viability Review — LinkWeave Frontend
 
 **Date:** 2026-05-03 (audit) · 2026-05-10 (fixes applied)  
 **Viewport:** 375×812 (iPhone SE / standard mobile width)  

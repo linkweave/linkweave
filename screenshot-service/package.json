@@ -2,7 +2,7 @@
   "name": "chainlink-screenshot-service",
   "version": "0.1.0",
   "private": true,
-  "description": "Minimal Playwright-based screenshot sidecar for Chainlink.",
+  "description": "Minimal Playwright-based screenshot sidecar for LinkWeave.",
   "type": "module",
   "main": "server.js",
   "scripts": {

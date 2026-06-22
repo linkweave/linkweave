@@ -4,7 +4,7 @@ import { useExtensionStore } from './stores/extension'
 import LoginPrompt from './views/LoginPrompt.vue'
 import SaveView from './views/SaveView.vue'
 import BrowseView from './views/BrowseView.vue'
-import SelectCl from '@/components/ui/SelectCl.vue'
+import SelectLw from '@/components/ui/SelectLw.vue'
 
 const store = useExtensionStore()
 
@@ -46,11 +46,11 @@ onMounted(async () => {
   <div class="w-[400px] min-h-[480px] max-h-[600px] flex flex-col bg-background text-foreground">
     <!-- Header -->
     <div class="flex items-center gap-2 px-4 py-3 border-b border-border">
-      <img src="@/assets/ChainlinkLogoTrResc.png" alt="Chainlink" class="w-5 h-5" />
-      <span class="font-semibold text-sm">Chainlink</span>
+      <img src="@/assets/ChainlinkLogoTrResc.png" alt="LinkWeave" class="w-5 h-5" />
+      <span class="font-semibold text-sm">LinkWeave</span>
 
       <!-- Collection switcher (only if user has multiple collections) -->
-      <SelectCl
+      <SelectLw
         v-if="store.isAuthenticated && store.collections.length > 1"
         :model-value="store.currentCollectionId"
         class="ml-auto w-auto"
@@ -59,7 +59,7 @@ onMounted(async () => {
         <option v-for="c in store.collections" :key="c.id" :value="c.id">
           {{ c.name }}
         </option>
-      </SelectCl>
+      </SelectLw>
     </div>
 
     <!-- Loading state -->

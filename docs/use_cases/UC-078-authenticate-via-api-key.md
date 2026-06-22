@@ -5,7 +5,7 @@
 **Use Case ID:** UC-078
 **Use Case Name:** Authenticate via API Key
 **Primary Actor:** CLI User / Script / Automation
-**Goal:** Authenticate an API request by sending an `X-API-Key` header so that non-browser clients can access the full Chainlink API without browser-based session cookies or OIDC redirects.
+**Goal:** Authenticate an API request by sending an `X-API-Key` header so that non-browser clients can access the full LinkWeave API without browser-based session cookies or OIDC redirects.
 **Status:** Done
 
 ## Traceability
@@ -21,7 +21,7 @@
 
 ## Main Success Scenario
 
-1. Client sends an HTTP request to any Chainlink API endpoint with an `X-API-Key: cl_<64 hex chars>` header.
+1. Client sends an HTTP request to any LinkWeave API endpoint with an `X-API-Key: cl_<64 hex chars>` header.
 2. The Quarkus custom `HttpAuthenticationMechanism` (C-018) detects the `X-API-Key` header.
 3. System strips the `cl_` prefix from the header value.
 4. System computes SHA-256 hash of the remaining value.
@@ -176,7 +176,7 @@ The API key mechanism should have priority **2100** (higher than Basic) so it ru
 
 #### Proactive Authentication
 
-The Chainlink application has `quarkus.http.auth.proactive=false` (see `application.properties`). This means authentication only runs when a endpoint requires it (`@Authenticated`, `@RolesAllowed`, etc.). The API key mechanism respects this — it will only be invoked for protected endpoints.
+The LinkWeave application has `quarkus.http.auth.proactive=false` (see `application.properties`). This means authentication only runs when a endpoint requires it (`@Authenticated`, `@RolesAllowed`, etc.). The API key mechanism respects this — it will only be invoked for protected endpoints.
 
 This also means the `@HttpAuthenticationMechanism("api-key")` annotation **can** be used on specific endpoints to select the mechanism, if desired. However, since API key auth should work on all endpoints (not just specific ones), no endpoint-level selection is needed — the standalone mechanism at priority 2100 handles it globally.
 
@@ -255,7 +255,7 @@ The `last_used_at` update on the `api_key` table must not block or fail the auth
 
 The `HttpAuthenticationMechanism.authenticate()` method runs on the Vert.x event loop. Database access (looking up the API key hash, loading the User) is blocking and must not be performed directly on the event loop thread.
 
-**Solution**: Use `context.runBlocking()` from the `IdentityProviderManager`, or delegate the blocking work to an `IdentityProvider`. The recommended approach for Chainlink:
+**Solution**: Use `context.runBlocking()` from the `IdentityProviderManager`, or delegate the blocking work to an `IdentityProvider`. The recommended approach for LinkWeave:
 
 1. The `HttpAuthenticationMechanism` extracts the `X-API-Key` header, creates a custom `ApiKeyAuthenticationRequest` (extends `BaseAuthenticationRequest`), and delegates to `identityProviderManager.authenticate(request)`.
 2. A custom `ApiKeyIdentityProvider` implements `IdentityProvider<ApiKeyAuthenticationRequest>`, performs the database lookup (this runs on a worker thread), and builds the `SecurityIdentity`.

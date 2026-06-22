@@ -9,7 +9,7 @@ import {
 test('homepage has title', async ({ page }) => {
   await page.goto('/')
 
-  await expect(page).toHaveTitle(/Chainlink/)
+  await expect(page).toHaveTitle(/LinkWeave/)
 })
 
 test('redirects to login when unauthenticated', async ({ page }) => {

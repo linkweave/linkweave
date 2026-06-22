@@ -16,9 +16,9 @@
 
 ## Preconditions
 
-- The user has installed the Chainlink CLI (`npm install -g @chainlink/cli`).
+- The user has installed the LinkWeave CLI (`npm install -g @chainlink/cli`).
 - The user has configured their CLI credentials via UC-080 (`chainlink login`).
-- The Chainlink API server is reachable at the configured URL.
+- The LinkWeave API server is reachable at the configured URL.
 - The user has at least one collection (auto-provisioned on first web login).
 
 ## Main Success Scenario — Add Bookmark
@@ -80,7 +80,7 @@
 **Trigger:** The HTTP request fails due to network error (any step).
 **Flow:**
 
-1. CLI displays: `Error: Cannot reach Chainlink server at {url}. Check your network connection and server URL.`
+1. CLI displays: `Error: Cannot reach LinkWeave server at {url}. Check your network connection and server URL.`
 2. CLI exits with code 1.
 
 ### A4: Collection Not Found or No Access
@@ -197,7 +197,7 @@ The `--folder` flag accepts a folder name (not an ID). The CLI resolves the name
 
 | Flag | Short | Description | Default |
 |---|---|---|---|
-| `--server` | `-s` | Chainlink API server URL | `https://chainlink.markushofstetter.com` |
+| `--server` | `-s` | LinkWeave API server URL | `https://chainlink.markushofstetter.com` |
 | `--api-key` | `-k` | API key (overrides config file) | — |
 | `--insecure` | | Disable TLS verification | `false` |
 | `--format` | `-f` | Output format (`table`, `json`, `ids`) | `table` |

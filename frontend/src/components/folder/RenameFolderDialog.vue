@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import type { FolderJson } from '@/api/generated'
 import {
-  ColorInputCl,
-  DialogCl,
-  DialogFooterCl,
-  FolderSelectCl,
-  FormFieldCl,
-  InputCl,
+  ColorInputLw,
+  DialogLw,
+  DialogFooterLw,
+  FolderSelectLw,
+  FormFieldLw,
+  InputLw,
 } from '@/components/ui'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { folderSaveSchema } from '@/schemas/folder'
@@ -89,27 +89,27 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <DialogCl :open="open" @update:open="emit('update:open', $event)">
+  <DialogLw :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('folder.renameTitle') }}</template>
 
     <form id="rename-folder-form" @submit.prevent="onSubmit" class="space-y-4">
-      <FormFieldCl
+      <FormFieldLw
         :label="t('folder.name')"
         for-id="rename-folder-name"
         :error="errors.name"
         required
       >
-        <InputCl
+        <InputLw
           id="rename-folder-name"
           v-model="name"
           v-bind="nameAttrs"
           type="text"
           :placeholder="t('folder.namePlaceholder')"
         />
-      </FormFieldCl>
+      </FormFieldLw>
 
-      <FormFieldCl :label="t('folder.parentFolder')" for-id="rename-folder-parent">
-        <FolderSelectCl
+      <FormFieldLw :label="t('folder.parentFolder')" for-id="rename-folder-parent">
+        <FolderSelectLw
           id="rename-folder-parent"
           v-model="parentId"
           :folders="folderStore.folders"
@@ -117,25 +117,25 @@ const onSubmit = handleSubmit(async (values) => {
           :placeholder="t('folder.noParent')"
           direction="down"
         />
-      </FormFieldCl>
+      </FormFieldLw>
 
-      <FormFieldCl :label="t('folder.color')" for-id="rename-folder-color" :error="errors.color">
-        <ColorInputCl
+      <FormFieldLw :label="t('folder.color')" for-id="rename-folder-color" :error="errors.color">
+        <ColorInputLw
           :model-value="color"
           :attrs="colorAttrs"
           input-id="rename-folder-color"
           @update:model-value="color = $event"
         />
-      </FormFieldCl>
+      </FormFieldLw>
     </form>
 
     <template #footer>
-      <DialogFooterCl
+      <DialogFooterLw
         submit-form="rename-folder-form"
         :submit-label="t('common.save')"
         :submitting="isSubmitting"
         @cancel="emit('update:open', false)"
       />
     </template>
-  </DialogCl>
+  </DialogLw>
 </template>

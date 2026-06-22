@@ -5,7 +5,7 @@
 **Use Case ID:** UC-031   
 **Use Case Name:** Import Browser Bookmarks   
 **Primary Actor:** User   
-**Goal:** Migrate existing bookmarks from another browser into a Chainlink collection.   
+**Goal:** Migrate existing bookmarks from another browser into a LinkWeave collection.   
 **Status:** Implemented   
 
 ## Traceability

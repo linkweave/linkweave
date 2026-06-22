@@ -25,7 +25,7 @@ This plan adds **user-defined per-collection rules** on top. Built-in rules rema
 
 ### New entity: `AutoTagRule`
 
-`api/src/main/java/org/chainlink/api/bookmark/AutoTagRule.java`
+`api/src/main/java/org/linkweave/api/bookmark/AutoTagRule.java`
 
 | field          | type        | notes                                                                 |
 |----------------|-------------|-----------------------------------------------------------------------|
@@ -126,7 +126,7 @@ Frontend already preloads `collectionInfo` (which contains tags, folders, etc.) 
 
 ### ArchUnit
 
-No special concern — entity sits in the existing `bookmark` package (it's tightly coupled to tag resolution). If `chainlink-api` ArchUnit complains about location, move to a dedicated `org.chainlink.api.autotag` package.
+No special concern — entity sits in the existing `bookmark` package (it's tightly coupled to tag resolution). If `chainlink-api` ArchUnit complains about location, move to a dedicated `org.linkweave.api.autotag` package.
 
 ## Frontend
 
@@ -284,11 +284,11 @@ New keys under `bookmark` and a new `autoTagRule` block. (en + de.) Examples:
 
 ## Critical files (quick index)
 
-- `api/src/main/java/org/chainlink/api/bookmark/Tag.java` — entity template to copy
-- `api/src/main/java/org/chainlink/api/collection/Collection.java` — FK target
-- `api/src/main/java/org/chainlink/api/shared/auth/AuthorizationService.java` — add `requireCollectionEditAccess` if missing
+- `api/src/main/java/org/linkweave/api/bookmark/Tag.java` — entity template to copy
+- `api/src/main/java/org/linkweave/api/collection/Collection.java` — FK target
+- `api/src/main/java/org/linkweave/api/shared/auth/AuthorizationService.java` — add `requireCollectionEditAccess` if missing
 - `api/src/main/resources/db/migration/V8__Add_collection_favicon_allowlist.sql` — migration style reference
-- `api/src/main/java/org/chainlink/api/collection/CollectionInfoJson.java` (or wherever it lives) — extend with `autoTagRules`
+- `api/src/main/java/org/linkweave/api/collection/CollectionInfoJson.java` (or wherever it lives) — extend with `autoTagRules`
 - `frontend/src/lib/auto-tag-rules.ts` — extend with custom rule pipeline
 - `frontend/src/composables/useTagSuggestions.ts` — wire in custom rules
 - `frontend/src/components/bookmark/CreateBookmarkDialog.vue` & `EditBookmarkDialog.vue` — add help-popover trigger and "Manage rules" link

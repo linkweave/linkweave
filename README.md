@@ -1,4 +1,4 @@
-# Chainlink
+# LinkWeave
 
 A self-hosted bookmark manager for organizing web resources with folders, tags, and shared collections.
 

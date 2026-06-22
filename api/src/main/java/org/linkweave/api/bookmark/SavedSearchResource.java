@@ -1,0 +1,88 @@
+package org.linkweave.api.bookmark;
+
+import java.time.temporal.ChronoUnit;
+
+import ch.dvbern.dvbstarter.types.id.ID;
+import io.quarkus.security.Authenticated;
+import io.smallrye.faulttolerance.api.RateLimit;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import lombok.RequiredArgsConstructor;
+import org.linkweave.api.bookmark.json.SavedSearchJson;
+import org.linkweave.api.bookmark.json.SavedSearchListJson;
+import org.linkweave.api.bookmark.json.SavedSearchSaveJson;
+import org.linkweave.api.collection.Collection;
+import org.linkweave.api.shared.auth.AuthorizationService;
+import org.linkweave.infrastructure.stereotypes.JaxResource;
+import org.jspecify.annotations.NonNull;
+
+@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
+@JaxResource
+@RequiredArgsConstructor
+@Authenticated
+@Path("/saved-searches")
+public class SavedSearchResource {
+
+    private final SavedSearchService savedSearchService;
+    private final AuthorizationService authorizationService;
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @NonNull
+    @Authenticated
+    public SavedSearchListJson list(@QueryParam("collectionId") @NotNull @NonNull ID<Collection> collectionId) {
+        authorizationService.requireCollectionAccess(collectionId);
+        return new SavedSearchListJson(
+            savedSearchService.findByCollection(collectionId).stream()
+                .map(SavedSearchMapper::toJson)
+                .toList()
+        );
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @NonNull
+    @Authenticated
+    public SavedSearchJson create(@NotNull @Valid @NonNull SavedSearchSaveJson json) {
+        authorizationService.requireCollectionAccess(json.getCollectionId());
+        SavedSearch saved = savedSearchService.createSavedSearch(json);
+        return SavedSearchMapper.toJson(saved);
+    }
+
+    @PUT
+    @Path("/{savedSearchId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @NonNull
+    @Authenticated
+    public SavedSearchJson update(
+        @PathParam("savedSearchId") @NotNull @NonNull ID<SavedSearch> savedSearchId,
+        @NotNull @Valid @NonNull SavedSearchSaveJson json
+    ) {
+        SavedSearch saved = savedSearchService.getSavedSearch(savedSearchId);
+        authorizationService.requireAccessTo(saved);
+        authorizationService.requireSameCollection(saved, json.getCollectionId());
+        SavedSearch updated = savedSearchService.updateSavedSearch(saved, json);
+        return SavedSearchMapper.toJson(updated);
+    }
+
+    @DELETE
+    @Path("/{savedSearchId}")
+    @Authenticated
+    public void delete(@PathParam("savedSearchId") @NotNull @NonNull ID<SavedSearch> savedSearchId) {
+        SavedSearch saved = savedSearchService.getSavedSearch(savedSearchId);
+        authorizationService.requireAccessTo(saved);
+        savedSearchService.removeSavedSearch(savedSearchId);
+    }
+}

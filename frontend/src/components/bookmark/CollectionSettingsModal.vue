@@ -4,13 +4,13 @@ import type { PropertyDefinitionJson } from '@/api/generated'
 import { ImportResourceApi, PropertyType } from '@/api/generated'
 import { downloadBlobDirectly, extractFilenameFromContentDispositionHeader } from '@/utils/download'
 import {
-  ButtonCl,
+  ButtonLw,
   ConfirmDialog,
-  DialogCl,
-  DialogFooterCl,
-  FormFieldCl,
-  InputCl,
-  SwitchCl,
+  DialogLw,
+  DialogFooterLw,
+  FormFieldLw,
+  InputLw,
+  SwitchLw,
 } from '@/components/ui'
 import { useFormDialog } from '@/composables/useFormDialog'
 import {
@@ -322,7 +322,7 @@ function optionsPreview(allowedValues: string | undefined): string {
 </script>
 
 <template>
-  <DialogCl :open="open" class="!max-w-[560px]" @update:open="onOpenChange">
+  <DialogLw :open="open" class="!max-w-[560px]" @update:open="onOpenChange">
     <template #title>
       {{ t('collectionSettings.title') }}
     </template>
@@ -332,7 +332,7 @@ function optionsPreview(allowedValues: string | undefined): string {
       <span class="font-mono">{{ collectionStore.collectionName }}</span>
     </template>
 
-    <!-- Tab bar. Lives in DialogCl's `#header-extras` slot so it stays
+    <!-- Tab bar. Lives in DialogLw's `#header-extras` slot so it stays
          pinned to the top alongside the title while the body content
          scrolls. The active underline is an absolute-positioned span
          instead of `border-b-2`, because the border-overlap trick proved
@@ -468,7 +468,7 @@ function optionsPreview(allowedValues: string | undefined): string {
                 {{ t('property.badgesToggleDesc') }}
               </div>
             </div>
-            <SwitchCl
+            <SwitchLw
               v-model="showBadges"
               :aria-label="t('property.badgesToggle')"
               data-testid="toggle-show-badges"
@@ -483,7 +483,7 @@ function optionsPreview(allowedValues: string | undefined): string {
                 {{ t('property.sidebarToggleDesc') }}
               </div>
             </div>
-            <SwitchCl
+            <SwitchLw
               v-model="showSidebar"
               :aria-label="t('property.sidebarToggle')"
               data-testid="toggle-show-sidebar"
@@ -515,7 +515,7 @@ function optionsPreview(allowedValues: string | undefined): string {
               {{ t('collectionManage.screenshotEnabledHelp') }}
             </div>
           </div>
-          <SwitchCl
+          <SwitchLw
             :model-value="screenshotEnabled"
             :aria-label="t('collectionManage.screenshotEnabled')"
             data-testid="collection-settings-screenshot-enabled"
@@ -532,7 +532,7 @@ function optionsPreview(allowedValues: string | undefined): string {
               {{ t('collectionSettings.previewPopupToggleDesc') }}
             </div>
           </div>
-          <SwitchCl
+          <SwitchLw
             v-model="showPreviewPopup"
             :disabled="!screenshotEnabled"
             :aria-label="t('collectionSettings.previewPopupToggle')"
@@ -623,13 +623,13 @@ function optionsPreview(allowedValues: string | undefined): string {
           {{ isEditing ? t('property.editProperty') : t('property.newProperty') }}
         </div>
 
-        <FormFieldCl
+        <FormFieldLw
           :label="t('property.fieldName')"
           for-id="property-name"
           :error="errors.name"
           required
         >
-          <InputCl
+          <InputLw
             id="property-name"
             v-model="name"
             v-bind="nameAttrs"
@@ -639,7 +639,7 @@ function optionsPreview(allowedValues: string | undefined): string {
             data-testid="property-name-input"
             class="font-mono"
           />
-        </FormFieldCl>
+        </FormFieldLw>
 
         <div>
           <label class="block text-sm font-medium leading-none mb-2">
@@ -665,14 +665,14 @@ function optionsPreview(allowedValues: string | undefined): string {
           </div>
         </div>
 
-        <FormFieldCl
+        <FormFieldLw
           v-if="needsOptions(type)"
           :label="`${t('property.fieldOptions')} ${t('property.fieldOptionsHint')}`"
           for-id="property-options"
           :error="errors.allowedValues"
           required
         >
-          <InputCl
+          <InputLw
             id="property-options"
             v-model="allowedValues"
             v-bind="allowedValuesAttrs"
@@ -680,15 +680,15 @@ function optionsPreview(allowedValues: string | undefined): string {
             :placeholder="t('property.optionsPlaceholder')"
             data-testid="property-options-input"
           />
-        </FormFieldCl>
+        </FormFieldLw>
 
         <div class="flex justify-end gap-2">
-          <ButtonCl type="button" variant="outline" size="sm" @click="cancelForm">
+          <ButtonLw type="button" variant="outline" size="sm" @click="cancelForm">
             {{ t('common.cancel') }}
-          </ButtonCl>
-          <ButtonCl type="submit" size="sm" :disabled="isSubmitting" data-testid="property-submit">
+          </ButtonLw>
+          <ButtonLw type="submit" size="sm" :disabled="isSubmitting" data-testid="property-submit">
             {{ isEditing ? t('property.saveChanges') : t('property.addProperty') }}
-          </ButtonCl>
+          </ButtonLw>
         </div>
       </form>
 
@@ -732,7 +732,7 @@ function optionsPreview(allowedValues: string | undefined): string {
             @change="handleImportFileChange"
           />
         </div>
-        <ButtonCl
+        <ButtonLw
           class="mt-3"
           :disabled="!importSelectedFile || isImporting"
           data-testid="collection-settings-import-submit"
@@ -740,7 +740,7 @@ function optionsPreview(allowedValues: string | undefined): string {
         >
           <Loader2 v-if="isImporting" class="mr-2 h-4 w-4 animate-spin" />
           {{ t('import.submit') }}
-        </ButtonCl>
+        </ButtonLw>
       </section>
 
       <section>
@@ -750,7 +750,7 @@ function optionsPreview(allowedValues: string | undefined): string {
         <p class="text-xs text-muted-foreground leading-relaxed mb-3">
           {{ t('collectionSettings.exportDescription') }}
         </p>
-        <ButtonCl
+        <ButtonLw
           variant="outline"
           :disabled="isExporting"
           data-testid="collection-settings-export"
@@ -758,17 +758,17 @@ function optionsPreview(allowedValues: string | undefined): string {
         >
           <Download class="mr-2 h-4 w-4" />
           {{ t('settings.exportCollection') }}
-        </ButtonCl>
+        </ButtonLw>
       </section>
     </div>
 
     <!-- Single-button footer: this modal performs CRUD immediately on every
-         action, so there's nothing to "submit". Reuses DialogFooterCl's
+         action, so there's nothing to "submit". Reuses DialogFooterLw's
          chrome (bg-card / border-t) via its default slot, keeping the
          bottom rail consistent with form dialogs. -->
     <template #footer>
-      <DialogFooterCl>
-        <ButtonCl
+      <DialogFooterLw>
+        <ButtonLw
           type="button"
           variant="default"
           size="sm"
@@ -776,8 +776,8 @@ function optionsPreview(allowedValues: string | undefined): string {
           @click="onOpenChange(false)"
         >
           {{ t('common.done') }}
-        </ButtonCl>
-      </DialogFooterCl>
+        </ButtonLw>
+      </DialogFooterLw>
     </template>
 
     <ConfirmDialog
@@ -793,5 +793,5 @@ function optionsPreview(allowedValues: string | undefined): string {
         }
       "
     />
-  </DialogCl>
+  </DialogLw>
 </template>

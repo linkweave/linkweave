@@ -5,7 +5,7 @@
 **Use Case ID:** UC-080
 **Use Case Name:** Configure CLI Login
 **Primary Actor:** CLI User
-**Goal:** Store a Chainlink API key and server URL locally so that subsequent CLI commands are automatically authenticated without re-entering credentials.
+**Goal:** Store a LinkWeave API key and server URL locally so that subsequent CLI commands are automatically authenticated without re-entering credentials.
 **Status:** Draft
 
 ## Traceability
@@ -16,13 +16,13 @@
 
 ## Preconditions
 
-- The user has installed the Chainlink CLI.
+- The user has installed the LinkWeave CLI.
 - The user has created an API key via the web UI (UC-077).
 
 ## Main Success Scenario — Interactive Login
 
 1. User runs `chainlink login`.
-2. CLI prompts for the server URL: `Chainlink server URL [https://chainlink.markushofstetter.com]:`
+2. CLI prompts for the server URL: `LinkWeave server URL [https://chainlink.markushofstetter.com]:`
 3. User presses Enter to accept the default or types a different URL.
 4. CLI prompts for the API key: `API key (created at {serverUrl}/settings/api-keys):`
 5. User pastes the API key.

@@ -1,0 +1,19 @@
+package org.linkweave.api.collection;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Value;
+import org.linkweave.infrastructure.db.DbConst;
+import org.linkweave.infrastructure.stereotypes.JaxDTO;
+import org.jspecify.annotations.NonNull;
+
+@Value
+@JaxDTO
+@AllArgsConstructor
+public class CollectionCreateJson {
+
+    @NotBlank @NotNull @Size(max = DbConst.DB_DEFAULT_MAX_LENGTH) @NonNull
+    String name;
+}

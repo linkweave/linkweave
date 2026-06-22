@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { useNotificationStore } from '@/stores/notification'
-import { AuthLayout, ButtonCl, FormFieldCl } from '@/components/ui'
+import { AuthLayout, ButtonLw, FormFieldLw } from '@/components/ui'
 import { registrationSchema } from '@/schemas/auth'
 import { AuthResourceApi, ResponseError } from '@/api/generated'
 import { config } from '@/api'
@@ -57,7 +57,7 @@ const onSubmit = handleSubmit(async (values) => {
 <template>
   <AuthLayout :title="t('register.title')">
     <form @submit.prevent="onSubmit" class="space-y-4">
-      <FormFieldCl :label="t('register.firstName')" for-id="firstName" :error="errors.vorname">
+      <FormFieldLw :label="t('register.firstName')" for-id="firstName" :error="errors.vorname">
         <input
           id="firstName"
           v-model="vorname"
@@ -67,9 +67,9 @@ const onSubmit = handleSubmit(async (values) => {
           style="border: 1px solid rgba(143, 149, 161, 0.25)"
           :placeholder="t('register.firstNamePlaceholder')"
         />
-      </FormFieldCl>
+      </FormFieldLw>
 
-      <FormFieldCl :label="t('register.lastName')" for-id="lastName" :error="errors.nachname">
+      <FormFieldLw :label="t('register.lastName')" for-id="lastName" :error="errors.nachname">
         <input
           id="lastName"
           v-model="nachname"
@@ -79,9 +79,9 @@ const onSubmit = handleSubmit(async (values) => {
           style="border: 1px solid rgba(143, 149, 161, 0.25)"
           :placeholder="t('register.lastNamePlaceholder')"
         />
-      </FormFieldCl>
+      </FormFieldLw>
 
-      <FormFieldCl :label="t('register.email')" for-id="email" :error="errors.email">
+      <FormFieldLw :label="t('register.email')" for-id="email" :error="errors.email">
         <input
           id="email"
           v-model="email"
@@ -92,9 +92,9 @@ const onSubmit = handleSubmit(async (values) => {
           style="border: 1px solid rgba(143, 149, 161, 0.25)"
           :placeholder="t('register.emailPlaceholder')"
         />
-      </FormFieldCl>
+      </FormFieldLw>
 
-      <FormFieldCl :label="t('register.password')" for-id="password" :error="errors.password">
+      <FormFieldLw :label="t('register.password')" for-id="password" :error="errors.password">
         <input
           id="password"
           v-model="password"
@@ -105,9 +105,9 @@ const onSubmit = handleSubmit(async (values) => {
           style="border: 1px solid rgba(143, 149, 161, 0.25)"
           :placeholder="t('register.passwordPlaceholder')"
         />
-      </FormFieldCl>
+      </FormFieldLw>
 
-      <FormFieldCl :label="t('register.confirmPassword')" for-id="confirmPassword" :error="errors.confirmPassword">
+      <FormFieldLw :label="t('register.confirmPassword')" for-id="confirmPassword" :error="errors.confirmPassword">
         <input
           id="confirmPassword"
           v-model="confirmPassword"
@@ -118,11 +118,11 @@ const onSubmit = handleSubmit(async (values) => {
           style="border: 1px solid rgba(143, 149, 161, 0.25)"
           :placeholder="t('register.confirmPasswordPlaceholder')"
         />
-      </FormFieldCl>
+      </FormFieldLw>
 
-      <ButtonCl type="submit" class="w-full" :disabled="isSubmitting">
+      <ButtonLw type="submit" class="w-full" :disabled="isSubmitting">
         {{ isSubmitting ? t('common.loading') : t('register.submit') }}
-      </ButtonCl>
+      </ButtonLw>
     </form>
 
     <template #footer>

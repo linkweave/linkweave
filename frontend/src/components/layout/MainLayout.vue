@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import {ButtonCl} from '@/components/ui'
+import {ButtonLw} from '@/components/ui'
 import OfflineBanner from '@/components/ui/OfflineBanner.vue'
 import {cn} from '@/lib/utils'
 import {Menu, X} from '@lucide/vue'
 import {onMounted} from 'vue'
 import {ref} from 'vue'
-import SidebarCl from './SidebarCl.vue'
-import HeaderCl from './HeaderCl.vue'
+import SidebarLw from './SidebarLw.vue'
+import HeaderLw from './HeaderLw.vue'
 import CollectionSwitcher from './CollectionSwitcher.vue'
 import {useOfflineStore} from '@/stores/offline'
 
@@ -32,12 +32,12 @@ const closeSidebar = () => {
 <template>
   <div class="flex flex-col h-screen bg-background">
     <OfflineBanner />
-    <HeaderCl>
+    <HeaderLw>
       <template #leading>
         <slot name="header-leading">
-          <ButtonCl v-if="!hideSidebar" variant="ghost" size="icon" class="lg:hidden" data-testid="mobile-sidebar-toggle" @click="toggleSidebar">
+          <ButtonLw v-if="!hideSidebar" variant="ghost" size="icon" class="lg:hidden" data-testid="mobile-sidebar-toggle" @click="toggleSidebar">
             <Menu class="h-5 w-5" />
-          </ButtonCl>
+          </ButtonLw>
         </slot>
       </template>
       <template #title>
@@ -54,7 +54,7 @@ const closeSidebar = () => {
       <template #actions>
         <slot name="header-actions" />
       </template>
-    </HeaderCl>
+    </HeaderLw>
 
     <!-- Body: Sidebar + Content -->
     <div class="flex flex-1 min-h-0">
@@ -77,11 +77,11 @@ const closeSidebar = () => {
         >
           <div class="flex items-center justify-between p-4 lg:hidden shrink-0">
             <span class="font-semibold">Menu</span>
-            <ButtonCl variant="ghost" size="icon" @click="closeSidebar">
+            <ButtonLw variant="ghost" size="icon" @click="closeSidebar">
               <X class="h-5 w-5" />
-            </ButtonCl>
+            </ButtonLw>
           </div>
-          <SidebarCl class="flex-1 min-h-0" />
+          <SidebarLw class="flex-1 min-h-0" />
         </aside>
       </template>
 

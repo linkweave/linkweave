@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TagJson } from '@/api/generated'
-import { ColorInputCl, DialogCl, DialogFooterCl, FormFieldCl, InputCl } from '@/components/ui'
+import { ColorInputLw, DialogLw, DialogFooterLw, FormFieldLw, InputLw } from '@/components/ui'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { tagSaveSchema } from '@/schemas/tag'
 import { useNotificationStore } from '@/stores/notification'
@@ -60,12 +60,12 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <DialogCl :open="open" @update:open="emit('update:open', $event)">
+  <DialogLw :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('tag.editTitle') }}</template>
 
     <form id="edit-tag-form" @submit.prevent="onSubmit" class="space-y-4">
-      <FormFieldCl :label="t('tag.name')" for-id="edit-tag-name" :error="errors.name" required>
-        <InputCl
+      <FormFieldLw :label="t('tag.name')" for-id="edit-tag-name" :error="errors.name" required>
+        <InputLw
           id="edit-tag-name"
           v-model="name"
           v-bind="nameAttrs"
@@ -74,20 +74,20 @@ const onSubmit = handleSubmit(async (values) => {
           data-testid="edit-tag-name-input"
           :placeholder="t('tag.namePlaceholder')"
         />
-      </FormFieldCl>
+      </FormFieldLw>
 
-      <FormFieldCl :label="t('tag.color')" for-id="edit-tag-color" :error="errors.color">
-        <ColorInputCl
+      <FormFieldLw :label="t('tag.color')" for-id="edit-tag-color" :error="errors.color">
+        <ColorInputLw
           :model-value="color"
           :attrs="colorAttrs"
           input-id="edit-tag-color"
           @update:model-value="color = $event"
         />
-      </FormFieldCl>
+      </FormFieldLw>
     </form>
 
     <template #footer>
-      <DialogFooterCl
+      <DialogFooterLw
         submit-form="edit-tag-form"
         :submit-label="t('common.save')"
         :submitting="isSubmitting"
@@ -95,5 +95,5 @@ const onSubmit = handleSubmit(async (values) => {
         @cancel="emit('update:open', false)"
       />
     </template>
-  </DialogCl>
+  </DialogLw>
 </template>

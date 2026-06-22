@@ -1,6 +1,6 @@
 # Entity Model
 
-**Project:** Chainlink Bookmark Manager
+**Project:** LinkWeave Bookmark Manager
 **Source:** [requirements.md](requirements.md)
 **Date:** 2026-03-26
 

@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { ChevronDown, Filter, MoreHorizontal } from '@lucide/vue'
 import { DropdownMenuRoot, DropdownMenuTrigger } from 'radix-vue'
 import { useI18n } from 'vue-i18n'
-import { CollapsibleCl, DropdownMenuContentCl, DropdownMenuItemCl } from '@/components/ui'
+import { CollapsibleLw, DropdownMenuContentLw, DropdownMenuItemLw } from '@/components/ui'
 import { useSidebarSectionExpandedPref } from '@/composables/useSidebarSectionExpandedPref'
 import { useNotificationStore } from '@/stores/notification'
 import { useSavedSearchStore } from '@/stores/savedSearch'
@@ -65,7 +65,7 @@ async function deleteSaved(saved: SavedSearchJson) {
       />
     </button>
 
-    <CollapsibleCl :open="expanded">
+    <CollapsibleLw :open="expanded">
       <ul class="px-2 pb-2 overflow-y-auto min-h-0" data-testid="smart-collections-list">
         <li
           v-if="savedSearchStore.savedSearches.length === 0"
@@ -111,14 +111,14 @@ async function deleteSaved(saved: SavedSearchJson) {
                   <MoreHorizontal class="h-3.5 w-3.5" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContentCl class="min-w-[140px] z-50">
-                <DropdownMenuItemCl @select="setRenameOpen(saved.id, true)">
+              <DropdownMenuContentLw class="min-w-[140px] z-50">
+                <DropdownMenuItemLw @select="setRenameOpen(saved.id, true)">
                   {{ t('savedSearch.renameAction') }}
-                </DropdownMenuItemCl>
-                <DropdownMenuItemCl variant="destructive" @select="deleteSaved(saved)">
+                </DropdownMenuItemLw>
+                <DropdownMenuItemLw variant="destructive" @select="deleteSaved(saved)">
                   {{ t('savedSearch.deleteAction') }}
-                </DropdownMenuItemCl>
-              </DropdownMenuContentCl>
+                </DropdownMenuItemLw>
+              </DropdownMenuContentLw>
             </DropdownMenuRoot>
           </div>
           <SavedSearchPopover
@@ -129,6 +129,6 @@ async function deleteSaved(saved: SavedSearchJson) {
           />
         </li>
       </ul>
-    </CollapsibleCl>
+    </CollapsibleLw>
   </div>
 </template>

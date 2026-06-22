@@ -10,7 +10,7 @@
 
 ## Overview
 
-Offline mode enables read-only access to cached bookmarks, folders, and tags when the Chainlink server is unreachable. The feature uses a service worker for app shell caching, IndexedDB for data persistence, and an API middleware layer for transparent cache fallback.
+Offline mode enables read-only access to cached bookmarks, folders, and tags when the LinkWeave server is unreachable. The feature uses a service worker for app shell caching, IndexedDB for data persistence, and an API middleware layer for transparent cache fallback.
 
 **Key design decisions:**
 - **Always-on by default** — caching is automatic; users can opt out in Settings (FR-052)
@@ -231,8 +231,8 @@ VitePWA({
     ],
   },
   manifest: {
-    name: 'Chainlink - Bookmark Manager',
-    short_name: 'Chainlink',
+    name: 'LinkWeave - Bookmark Manager',
+    short_name: 'LinkWeave',
     icons: [/* ... */],
     display: 'standalone',
   },

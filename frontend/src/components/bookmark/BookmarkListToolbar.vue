@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FolderBreadcrumbCl } from '@/components/folder'
+import { FolderBreadcrumbLw } from '@/components/folder'
 import { computed } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
 import { useEffectiveLayout } from '@/composables/useEffectiveLayout'
@@ -40,7 +40,7 @@ function setRoot(el: Element | ComponentPublicInstance | null) {
     data-testid="bookmark-list-toolbar"
   >
     <div class="flex-1 min-w-0 overflow-hidden">
-      <FolderBreadcrumbCl />
+      <FolderBreadcrumbLw />
     </div>
 
     <div class="flex items-center gap-1 shrink-0">

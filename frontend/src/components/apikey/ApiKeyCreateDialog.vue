@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import DialogCl from '@/components/ui/DialogCl.vue'
-import DialogFooterCl from '@/components/ui/DialogFooterCl.vue'
-import FormFieldCl from '@/components/ui/FormFieldCl.vue'
-import InputCl from '@/components/ui/InputCl.vue'
-import SelectCl from '@/components/ui/SelectCl.vue'
+import DialogLw from '@/components/ui/DialogLw.vue'
+import DialogFooterLw from '@/components/ui/DialogFooterLw.vue'
+import FormFieldLw from '@/components/ui/FormFieldLw.vue'
+import InputLw from '@/components/ui/InputLw.vue'
+import SelectLw from '@/components/ui/SelectLw.vue'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { apiKeyCreateSchema } from '@/schemas/apiKey'
 import { useApiKeyStore } from '@/stores/apiKey'
@@ -49,13 +49,13 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <DialogCl :open="open" @update:open="emit('update:open', $event)">
+  <DialogLw :open="open" @update:open="emit('update:open', $event)">
     <template #title>{{ t('apiKeys.createTitle') }}</template>
     <template #description>{{ t('apiKeys.createDescription') }}</template>
 
     <form id="create-api-key-form" class="space-y-4" @submit.prevent="onSubmit">
-      <FormFieldCl :label="t('apiKeys.fieldName')" for-id="api-key-name" :error="errors.name" required>
-        <InputCl
+      <FormFieldLw :label="t('apiKeys.fieldName')" for-id="api-key-name" :error="errors.name" required>
+        <InputLw
           id="api-key-name"
           v-model="name"
           v-bind="nameAttrs"
@@ -65,20 +65,20 @@ const onSubmit = handleSubmit(async (values) => {
           data-testid="api-key-name-input"
           autocomplete="off"
         />
-      </FormFieldCl>
+      </FormFieldLw>
 
-      <FormFieldCl :label="t('apiKeys.fieldExpires')" for-id="api-key-expires">
-        <SelectCl id="api-key-expires" v-model="expiresIn">
+      <FormFieldLw :label="t('apiKeys.fieldExpires')" for-id="api-key-expires">
+        <SelectLw id="api-key-expires" v-model="expiresIn">
           <option value="">{{ t('apiKeys.expiresNever') }}</option>
           <option value="30d">{{ t('apiKeys.expires30d') }}</option>
           <option value="90d">{{ t('apiKeys.expires90d') }}</option>
           <option value="1y">{{ t('apiKeys.expires1y') }}</option>
-        </SelectCl>
-      </FormFieldCl>
+        </SelectLw>
+      </FormFieldLw>
     </form>
 
     <template #footer>
-      <DialogFooterCl
+      <DialogFooterLw
         submit-form="create-api-key-form"
         :submit-label="t('apiKeys.createSubmit')"
         :submitting="isSubmitting"
@@ -86,5 +86,5 @@ const onSubmit = handleSubmit(async (values) => {
         @cancel="emit('update:open', false)"
       />
     </template>
-  </DialogCl>
+  </DialogLw>
 </template>
