@@ -34,7 +34,7 @@ public class ScreenshotCacheCleanupJobService {
     private final ConfigService configService;
 
     @Scheduled(
-        cron = "{chainlink.screenshot.cache-cleanup.cron:0 0 3 ? * SUN}",
+        cron = "{linkweave.screenshot.cache-cleanup.cron:0 0 3 ? * SUN}",
         skipExecutionIf = DisabledPredicate.class,
         identity = "screenshot-cache-cleanup"
     )

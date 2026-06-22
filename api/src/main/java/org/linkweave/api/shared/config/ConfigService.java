@@ -64,7 +64,7 @@ public class ConfigService {
     boolean versionFilterEnabled;
 
 
-    @ConfigProperty(name = "chainlink.quick-search.max-results", defaultValue = "40")
+    @ConfigProperty(name = "linkweave.quick-search.max-results", defaultValue = "40")
     int quickSearchMaxResults;
 
 
@@ -102,10 +102,10 @@ public class ConfigService {
     @ConfigProperty(name = "esc.feature.optimistic.locking.disabled", defaultValue = "false")
     boolean featureOptimisticLockingDisabled;
 
-    @ConfigProperty(name = "chainlink.cleanup.default-threshold-months", defaultValue = "6")
+    @ConfigProperty(name = "linkweave.cleanup.default-threshold-months", defaultValue = "6")
     int cleanupDefaultThresholdMonths;
 
-    @ConfigProperty(name = "chainlink.cleanup.available-thresholds", defaultValue = "3,6,12")
+    @ConfigProperty(name = "linkweave.cleanup.available-thresholds", defaultValue = "3,6,12")
     List<Integer> cleanupAvailableThresholds;
 
     // Operator-facing global backend fetch denylist: hostnames (or *.wildcards)
@@ -113,97 +113,97 @@ public class ConfigService {
     // the server cannot reach (internal CDNs) or should not hammer (rate-limiting
     // hosts). Comma- or newline-separated. Parsed once and cached; see
     // getBackendFetchDenylist. (Config key kept as skip-domains for compatibility.)
-    @ConfigProperty(name = "chainlink.fetch.skip-domains")
+    @ConfigProperty(name = "linkweave.fetch.skip-domains")
     Optional<String> backendFetchDenylistRaw;
 
     private HostPatternSet backendFetchDenylist;
 
-    @ConfigProperty(name = "chainlink.favicon.cache-dir", defaultValue = "developer-local-settings/favicon-cache")
+    @ConfigProperty(name = "linkweave.favicon.cache-dir", defaultValue = "developer-local-settings/favicon-cache")
     String faviconCacheDir;
 
     // Desktop bundle (UC-052) only: directory the SPA is served from. Unset in the normal
     // (Caddy-fronted) deployment, where Caddy serves the frontend. See DesktopWebRootRoute.
-    @ConfigProperty(name = "chainlink.desktop.web-root")
+    @ConfigProperty(name = "linkweave.desktop.web-root")
     Optional<String> desktopWebRoot;
 
-    @ConfigProperty(name = "chainlink.favicon.success-ttl", defaultValue = "30D")
+    @ConfigProperty(name = "linkweave.favicon.success-ttl", defaultValue = "30D")
     Duration faviconSuccessTtl;
 
-    @ConfigProperty(name = "chainlink.favicon.negative-ttl", defaultValue = "6H")
+    @ConfigProperty(name = "linkweave.favicon.negative-ttl", defaultValue = "6H")
     Duration faviconNegativeTtl;
 
     // Backoff ceiling: each consecutive favicon fetch failure doubles the
     // negative TTL from negative-ttl up to this cap, so permanently-unreachable
     // hosts stop being re-fetched every 6h.
-    @ConfigProperty(name = "chainlink.favicon.negative-ttl-max", defaultValue = "30D")
+    @ConfigProperty(name = "linkweave.favicon.negative-ttl-max", defaultValue = "30D")
     Duration faviconNegativeTtlMax;
 
-    @ConfigProperty(name = "chainlink.favicon.timeout", defaultValue = "5S")
+    @ConfigProperty(name = "linkweave.favicon.timeout", defaultValue = "5S")
     Duration faviconTimeout;
 
-    @ConfigProperty(name = "chainlink.favicon.max-bytes", defaultValue = "262144")
+    @ConfigProperty(name = "linkweave.favicon.max-bytes", defaultValue = "262144")
     int faviconMaxBytes;
 
-    @ConfigProperty(name = "chainlink.favicon.max-redirects", defaultValue = "5")
+    @ConfigProperty(name = "linkweave.favicon.max-redirects", defaultValue = "5")
     int faviconMaxRedirects;
 
     // A realistic browser User-Agent. Many sites sit behind a WAF/CDN (e.g.
     // CloudFront, Akamai) that returns 403 to non-browser User-Agents, so a
     // bespoke token like "LinkWeave-FaviconProxy/1.0" never reaches the icon.
-    @ConfigProperty(name = "chainlink.favicon.user-agent",
+    @ConfigProperty(name = "linkweave.favicon.user-agent",
         defaultValue = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
             + "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
     String faviconUserAgent;
 
-    @ConfigProperty(name = "chainlink.favicon.cache-cleanup.max-size", defaultValue = "40MB")
+    @ConfigProperty(name = "linkweave.favicon.cache-cleanup.max-size", defaultValue = "40MB")
     String faviconCacheCleanupMaxSize;
 
-    @ConfigProperty(name = "chainlink.favicon.cache-cleanup.min-bookmark-age", defaultValue = "28D")
+    @ConfigProperty(name = "linkweave.favicon.cache-cleanup.min-bookmark-age", defaultValue = "28D")
     Duration faviconCacheCleanupMinBookmarkAge;
 
-    @ConfigProperty(name = "chainlink.favicon.cache-cleanup.enabled", defaultValue = "true")
+    @ConfigProperty(name = "linkweave.favicon.cache-cleanup.enabled", defaultValue = "true")
     boolean faviconCacheCleanupEnabled;
 
-    @ConfigProperty(name = "chainlink.screenshot.enabled", defaultValue = "true")
+    @ConfigProperty(name = "linkweave.screenshot.enabled", defaultValue = "true")
     boolean screenshotEnabled;
 
-    @ConfigProperty(name = "chainlink.screenshot.capture-job.enabled", defaultValue = "true")
+    @ConfigProperty(name = "linkweave.screenshot.capture-job.enabled", defaultValue = "true")
     boolean screenshotCaptureJobEnabled;
 
-    @ConfigProperty(name = "chainlink.screenshot.capture-job.batch-size", defaultValue = "10")
+    @ConfigProperty(name = "linkweave.screenshot.capture-job.batch-size", defaultValue = "10")
     int screenshotCaptureJobBatchSize;
 
-    @ConfigProperty(name = "chainlink.screenshot.cache-dir", defaultValue = "developer-local-settings/screenshot-cache")
+    @ConfigProperty(name = "linkweave.screenshot.cache-dir", defaultValue = "developer-local-settings/screenshot-cache")
     String screenshotCacheDir;
 
-    @ConfigProperty(name = "chainlink.screenshot.success-ttl", defaultValue = "30D")
+    @ConfigProperty(name = "linkweave.screenshot.success-ttl", defaultValue = "30D")
     Duration screenshotSuccessTtl;
 
-    @ConfigProperty(name = "chainlink.screenshot.negative-ttl", defaultValue = "12H")
+    @ConfigProperty(name = "linkweave.screenshot.negative-ttl", defaultValue = "12H")
     Duration screenshotNegativeTtl;
 
     // Backoff ceiling: each consecutive screenshot capture failure doubles the
     // negative TTL from negative-ttl up to this cap, so permanently-unreachable
     // pages stop being re-attempted (and re-hit) every 12h.
-    @ConfigProperty(name = "chainlink.screenshot.negative-ttl-max", defaultValue = "30D")
+    @ConfigProperty(name = "linkweave.screenshot.negative-ttl-max", defaultValue = "30D")
     Duration screenshotNegativeTtlMax;
 
-    @ConfigProperty(name = "chainlink.screenshot.cache-cleanup.enabled", defaultValue = "true")
+    @ConfigProperty(name = "linkweave.screenshot.cache-cleanup.enabled", defaultValue = "true")
     boolean screenshotCacheCleanupEnabled;
 
-    @ConfigProperty(name = "chainlink.screenshot.cache-cleanup.max-size", defaultValue = "200MB")
+    @ConfigProperty(name = "linkweave.screenshot.cache-cleanup.max-size", defaultValue = "200MB")
     String screenshotCacheCleanupMaxSize;
 
-    @ConfigProperty(name = "chainlink.screenshot.cache-cleanup.min-bookmark-age", defaultValue = "28D")
+    @ConfigProperty(name = "linkweave.screenshot.cache-cleanup.min-bookmark-age", defaultValue = "28D")
     Duration screenshotCacheCleanupMinBookmarkAge;
 
-    @ConfigProperty(name = "chainlink.feature.bookmark-properties.enabled", defaultValue = "true")
+    @ConfigProperty(name = "linkweave.feature.bookmark-properties.enabled", defaultValue = "true")
     boolean bookmarkPropertiesEnabled;
 
-    @ConfigProperty(name = "chainlink.metrics.refresh.enabled", defaultValue = "true")
+    @ConfigProperty(name = "linkweave.metrics.refresh.enabled", defaultValue = "true")
     boolean metricsRefreshEnabled;
 
-    @ConfigProperty(name = "chainlink.sentry.frontend-project-id", defaultValue = "4511463699120208")
+    @ConfigProperty(name = "linkweave.sentry.frontend-project-id", defaultValue = "4511463699120208")
     String sentryFrontendProject;
 
 

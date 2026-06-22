@@ -13,7 +13,7 @@ import org.jspecify.annotations.Nullable;
  * uniformly to favicon and screenshot fetches. A host is blocked when it is on:
  * <ul>
  *   <li>the operator-wide backend fetch denylist
- *       ({@code chainlink.fetch.skip-domains}) — hosts the server cannot reach
+ *       ({@code linkweave.fetch.skip-domains}) — hosts the server cannot reach
  *       or should not hammer; or</li>
  *   <li>the bookmark's per-collection browser fetch allowlist — hosts loaded
  *       directly by the user's browser, so the server can't reach them.</li>

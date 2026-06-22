@@ -39,7 +39,7 @@ public class FaviconCacheCleanupJobService {
     private final ConfigService configService;
 
     @Scheduled(
-        cron = "{chainlink.favicon.cache-cleanup.cron:0 0 3 ? * SUN}",
+        cron = "{linkweave.favicon.cache-cleanup.cron:0 0 3 ? * SUN}",
         skipExecutionIf = DisabledPredicate.class,
         identity = "favicon-cache-cleanup"
     )
@@ -129,7 +129,7 @@ public class FaviconCacheCleanupJobService {
         }
     }
 
-    /** Skip predicate honoured by quarkus-scheduler when {@code chainlink.favicon.cache-cleanup.enabled=false}. */
+    /** Skip predicate honoured by quarkus-scheduler when {@code linkweave.favicon.cache-cleanup.enabled=false}. */
     @ApplicationScoped
     @RequiredArgsConstructor
     public static class DisabledPredicate implements Scheduled.SkipPredicate {

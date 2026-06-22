@@ -18,7 +18,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Serves the built Vue SPA from a filesystem directory, but <strong>only</strong> when
- * {@code CHAINLINK_DESKTOP_WEB_ROOT} (config key {@code chainlink.desktop.web-root}) is set.
+ * {@code LINKWEAVE_DESKTOP_WEB_ROOT} (config key {@code linkweave.desktop.web-root}) is set.
  *
  * <p>This exists solely for the desktop bundle (UC-052), where there is no Caddy in front of
  * the backend: the Tauri shell ships the built {@code dist/} folder next to the jar, points
@@ -27,8 +27,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  *
  * <p>In the normal Docker deployment the property is unset, this bean registers nothing, and
  * Caddy keeps serving the frontend and proxying {@code /api}. The runtime directory is supplied
- * via {@code CHAINLINK_DESKTOP_WEB_ROOT}, mirroring {@code CHAINLINK_DB_PATH} and
- * {@code CHAINLINK_FAVICON_CACHE_DIR} — the SPA is never baked into the jar.
+ * via {@code LINKWEAVE_DESKTOP_WEB_ROOT}, mirroring {@code LINKWEAVE_DB_PATH} and
+ * {@code LINKWEAVE_FAVICON_CACHE_DIR} — the SPA is never baked into the jar.
  *
  * <p>The SPA must be served at {@code /} (with assets at {@code /assets/...}); serving it under
  * {@code /api} would collide with the REST API on deep-link reloads. The desktop build profile

@@ -50,7 +50,7 @@ public class ApplicationMetricsService {
     }
 
     @Scheduled(
-        every = "{chainlink.metrics.refresh.every:30m}",
+        every = "{linkweave.metrics.refresh.every:30m}",
         skipExecutionIf = DisabledPredicate.class,
         identity = "metrics-refresh"
     )

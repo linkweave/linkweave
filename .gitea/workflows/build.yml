@@ -99,7 +99,7 @@ jobs:
         working-directory: .
         env:
           DOCKER_BUILDKIT: "1"
-          IMAGE: git.markushofstetter.com/dividbzero/chainlink-api
+          IMAGE: git.markushofstetter.com/dividbzero/linkweave-api
           COMMIT_HASH: ${{ steps.commit-hash.outputs.COMMIT_HASH }}
           VERSION: ${{ steps.version.outputs.VERSION }}
           GIT_REF: ${{ gitea.ref }}
@@ -201,7 +201,7 @@ jobs:
         working-directory: frontend
         env:
           DOCKER_BUILDKIT: "1"
-          IMAGE: git.markushofstetter.com/dividbzero/chainlink-frontend
+          IMAGE: git.markushofstetter.com/dividbzero/linkweave-frontend
           COMMIT_HASH: ${{ steps.commit-hash.outputs.COMMIT_HASH }}
           VERSION: ${{ steps.version.outputs.VERSION }}
           sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -260,7 +260,7 @@ jobs:
         working-directory: screenshot-service
         env:
           DOCKER_BUILDKIT: "1"
-          IMAGE: git.markushofstetter.com/dividbzero/chainlink-screenshot-service
+          IMAGE: git.markushofstetter.com/dividbzero/linkweave-screenshot-service
           COMMIT_HASH: ${{ steps.commit-hash.outputs.COMMIT_HASH }}
         run: |
           set -euo pipefail
@@ -373,9 +373,9 @@ jobs:
           echo "COMMIT_HASH variable value: $COMMIT_HASH"
           echo "Current docker-compose.yml content (before sed):"
           cat docker-compose.yml
-          sed -i "s|chainlink-api:.*|chainlink-api:${COMMIT_HASH}|g" docker-compose.yml
-          sed -i "s|chainlink-frontend:.*|chainlink-frontend:${COMMIT_HASH}|g" docker-compose.yml
-          sed -i "s|chainlink-screenshot-service:.*|chainlink-screenshot-service:${COMMIT_HASH}|g" docker-compose.yml
+          sed -i "s|linkweave-api:.*|linkweave-api:${COMMIT_HASH}|g" docker-compose.yml
+          sed -i "s|linkweave-frontend:.*|linkweave-frontend:${COMMIT_HASH}|g" docker-compose.yml
+          sed -i "s|linkweave-screenshot-service:.*|linkweave-screenshot-service:${COMMIT_HASH}|g" docker-compose.yml
           echo "docker-compose.yml content (after sed):"
           cat docker-compose.yml
           echo "Git diff showing changes:"
