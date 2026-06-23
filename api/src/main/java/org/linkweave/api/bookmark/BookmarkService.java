@@ -223,9 +223,6 @@ public class BookmarkService {
         @NonNull List<ID<Tag>> removeTagIds,
         @NonNull ID<Collection> collectionId
     ) {
-        // A direct API caller can send both lists empty (the DTO permits it).
-        // Bail out before persisting so we don't bump userMutiert / version on
-        // every bookmark for no semantic change.
         if (addTagIds.isEmpty() && removeTagIds.isEmpty()) {
             return;
         }
@@ -248,8 +245,7 @@ public class BookmarkService {
 
     /**
      * Resolves a list of tag ids in one bulk query, throwing if any id is
-     * unknown — preserving the {@code getById} semantics the batch path relied
-     * on before the bulk load. Duplicate ids in the input are tolerated
+     * unknown. Duplicate ids in the input are tolerated
      * (the check compares against the distinct id set).
      */
     @NonNull
