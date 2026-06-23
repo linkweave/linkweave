@@ -27,12 +27,14 @@ public class BookmarkBatchTagJson {
 
     /** Tags to add to every listed bookmark. May be empty (e.g. a remove-only batch). */
     @NotNull
+    @Size(max = 500)
     @NonNull
     @Schema(required = true)
     List<ID<Tag>> addTagIds;
 
     /** Tags to remove from every listed bookmark. May be empty (e.g. an add-only batch). */
     @NotNull
+    @Size(max = 500)
     @NonNull
     @Schema(required = true)
     List<ID<Tag>> removeTagIds;

@@ -554,8 +554,9 @@
     "removeFrom": "von {k} entfernen",
     "cOfN": "{c} von {n}",
     "allN": "alle {n}",
-    "toastAdded": "{names} zu {k} hinzugefügt",
-    "toastRemoved": "{names} von {k} entfernt",
+    "toastAdded": "{names} zu {k} hinzugefügt.",
+    "toastRemoved": "{names} von {k} entfernt.",
+    "toastBoth": "{addNames} zu {addK} hinzugefügt, {removeNames} von {removeK} entfernt.",
     "applyError": "Tags konnten nicht aktualisiert werden. Es wurden keine Änderungen vorgenommen."
   }
 }

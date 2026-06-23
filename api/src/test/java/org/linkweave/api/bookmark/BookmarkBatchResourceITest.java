@@ -314,6 +314,33 @@ class BookmarkBatchResourceITest {
 
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldReturn400_whenBatchTagAddsAndRemovesSameTag() {
+        Collection collection = fixtureService.createTestCollection();
+        Tag tag = fixtureService.persistTag(b -> b
+            .withCollection(collection)
+            .withName("Contradiction")
+            .withColor("#00FF00")
+        );
+        Bookmark bookmark = persistBookmark(collection, "conflicted");
+
+        String body = """
+            {"collectionId":"%s","addTagIds":["%s"],"removeTagIds":["%s"],"bookmarkIds":["%s"]}
+            """.formatted(
+            collection.getId().getUUID(),
+            tag.getId().getUUID(),
+            tag.getId().getUUID(),
+            bookmark.getId().getUUID());
+
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/bookmarks/batch-tag")
+            .then()
+            .statusCode(400);
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldFail_whenBatchTagWithTagOfOtherCollection() {
         Collection collection = fixtureService.createTestCollection();
         Collection otherCollection = fixtureService.createTestCollection();

@@ -4,6 +4,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,6 +23,8 @@ import ch.dvbern.oss.commons.i18nl10n.I18nMessage;
 import org.linkweave.infrastructure.errorhandling.AppAuthorizationException;
 import org.linkweave.infrastructure.errorhandling.AppFailureException;
 import org.linkweave.infrastructure.errorhandling.AppFailureMessage;
+import org.linkweave.infrastructure.errorhandling.AppValidationException;
+import org.linkweave.infrastructure.errorhandling.AppValidationMessage;
 import org.linkweave.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
 import org.linkweave.api.shared.Util;
@@ -219,6 +222,12 @@ public class BookmarkService {
         @NonNull List<ID<Tag>> removeTagIds,
         @NonNull ID<Collection> collectionId
     ) {
+        // Reject contradictory requests rather than silently letting remove win:
+        // a direct API caller asking to both add and remove the same tag is a bug.
+        if (!Collections.disjoint(addTagIds, removeTagIds)) {
+            throw new AppValidationException(
+                AppValidationMessage.genericMessage("AppValidation.batchTag.overlappingTagIds"));
+        }
         List<Tag> addTags = addTagIds.stream().map(tagRepo::getById).toList();
         List<Tag> removeTags = removeTagIds.stream().map(tagRepo::getById).toList();
         addTags.forEach(tag -> requireTagBelongsToCollection(tag, collectionId));

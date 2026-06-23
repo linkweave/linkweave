@@ -557,8 +557,9 @@
     "removeFrom": "remove from {k}",
     "cOfN": "{c} of {n}",
     "allN": "all {n}",
-    "toastAdded": "Added {names} to {k}",
-    "toastRemoved": "removed {names} from {k}",
+    "toastAdded": "Added {names} to {k}.",
+    "toastRemoved": "Removed {names} from {k}.",
+    "toastBoth": "Added {addNames} to {addK}, removed {removeNames} from {removeK}.",
     "applyError": "Failed to update tags. No changes were made."
   }
 }

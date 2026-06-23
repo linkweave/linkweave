@@ -10,6 +10,8 @@ import {
   type ChangeItem,
   type Intent,
   type TagState,
+  type ToastKey,
+  type ToastParams,
 } from './batchTagModel'
 
 describe('baseState', () => {
@@ -106,9 +108,12 @@ describe('changeSummary', () => {
 })
 
 describe('buildToastMessage', () => {
-  // Mirrors the en.json clauses so the assembled sentence is realistic.
-  const translate = (key: 'toastAdded' | 'toastRemoved', p: { names: string; k: number }) =>
-    key === 'toastAdded' ? `Added ${p.names} to ${p.k}` : `removed ${p.names} from ${p.k}`
+  // Mirrors the en.json full-sentence keys so the assembled toast is realistic.
+  const translate = (key: ToastKey, p: ToastParams) => {
+    if (key === 'toastAdded') return `Added ${p.names} to ${p.k}.`
+    if (key === 'toastRemoved') return `Removed ${p.names} from ${p.k}.`
+    return `Added ${p.addNames} to ${p.addK}, removed ${p.removeNames} from ${p.removeK}.`
+  }
 
   it('formats an adds-only message with the max affected count', () => {
     const adds: ChangeItem[] = [
@@ -118,12 +123,12 @@ describe('buildToastMessage', () => {
     expect(buildToastMessage(adds, [], translate)).toBe('Added "java", "design" to 3.')
   })
 
-  it('sentence-cases a removes-only message', () => {
+  it('formats a removes-only message', () => {
     const removes: ChangeItem[] = [{ id: '1', name: 'red', isNew: false, k: 2 }]
     expect(buildToastMessage([], removes, translate)).toBe('Removed "red" from 2.')
   })
 
-  it('joins both clauses, capitalizing only the first', () => {
+  it('uses the combined key with per-clause max counts when both are present', () => {
     const adds: ChangeItem[] = [{ id: '1', name: 'ops', isNew: false, k: 5 }]
     const removes: ChangeItem[] = [{ id: '2', name: 'red', isNew: false, k: 2 }]
     expect(buildToastMessage(adds, removes, translate)).toBe(

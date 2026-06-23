@@ -189,6 +189,10 @@ function onInputEnter(): void {
 
 async function apply(): Promise<void> {
   if (!hasChanges.value || applying.value) return
+  // The editor is only reachable with a loaded collection; guard the invariant
+  // explicitly rather than posting an empty collectionId.
+  const collectionId = collectionStore.currentCollectionId
+  if (!collectionId) return
   applying.value = true
   const { adds, removes } = changes.value
   const idMap = new Map<string, string>() // temp id -> real id
@@ -201,10 +205,7 @@ async function apply(): Promise<void> {
         if (!tmp) continue
         // No colour sent — the backend auto-assigns from its palette, matching
         // the app's other create sites (CreateTagDialog, useTagSuggestions).
-        const real = await tagStore.createTag({
-          collectionId: collectionStore.currentCollectionId ?? '',
-          name: tmp.name,
-        })
+        const real = await tagStore.createTag({ collectionId, name: tmp.name })
         idMap.set(a.id, real.id)
         createdReal.push(real.id)
       }
@@ -219,11 +220,13 @@ async function apply(): Promise<void> {
     close()
   } catch {
     // Roll back any inline-created tags so a failed batch leaves no orphans.
+    // If a rollback itself fails the tag is left persisted; surface it rather
+    // than swallowing silently so the orphan isn't invisible.
     for (const id of createdReal) {
       try {
         await tagStore.deleteTag(id)
-      } catch {
-        /* best effort */
+      } catch (rollbackErr) {
+        console.error(`Failed to roll back inline-created tag ${id}; it may be orphaned.`, rollbackErr)
       }
     }
     notification.error(t('batchTag.applyError'))
@@ -252,12 +255,22 @@ function cancel(): void {
 // Positioning + lifecycle (fixed, clamped to viewport; close on outside / Esc)
 // ---------------------------------------------------------------------------
 
+const POPOVER_WIDTH = 288
+const VIEWPORT_MARGIN = 8
+const ANCHOR_GAP = 6
+
 function reposition(): void {
   const a = props.anchor
   if (!a) return
   const r = a.getBoundingClientRect()
-  const left = Math.min(r.left, window.innerWidth - 296)
-  posStyle.value = { left: `${Math.max(8, left)}px`, top: `${r.bottom + 6}px` }
+  const left = Math.min(r.left, window.innerWidth - POPOVER_WIDTH - VIEWPORT_MARGIN)
+  // Default below the anchor; flip above it if there isn't room below. Falls
+  // back to an estimate before the popover has rendered (height unknown).
+  const height = popoverEl.value?.offsetHeight ?? 360
+  const below = r.bottom + ANCHOR_GAP
+  const fitsBelow = below + height <= window.innerHeight - VIEWPORT_MARGIN
+  const top = fitsBelow ? below : Math.max(VIEWPORT_MARGIN, r.top - ANCHOR_GAP - height)
+  posStyle.value = { left: `${Math.max(VIEWPORT_MARGIN, left)}px`, top: `${top}px` }
 }
 
 function onDocMousedown(e: MouseEvent): void {
@@ -295,9 +308,12 @@ watch(
   (open) => {
     if (open) {
       resetDraft()
-      reposition()
+      reposition() // immediate (estimated height) to avoid a flash at 0,0
       addListeners()
-      nextTick(() => setTimeout(() => searchInput.value?.focus(), 40))
+      nextTick(() => {
+        reposition() // accurate now that the popover is in the DOM
+        setTimeout(() => searchInput.value?.focus(), 40)
+      })
     } else {
       removeListeners()
     }
@@ -308,16 +324,17 @@ onBeforeUnmount(removeListeners)
 </script>
 
 <template>
-  <div
-    v-if="open"
-    ref="popoverEl"
-    class="tag-editor"
-    role="dialog"
-    aria-modal="false"
-    :aria-label="t('batchTag.title')"
-    :style="posStyle"
-    data-testid="batch-tag-editor"
-  >
+  <Teleport to="body">
+    <div
+      v-if="open"
+      ref="popoverEl"
+      class="tag-editor"
+      role="dialog"
+      aria-modal="false"
+      :aria-label="t('batchTag.title')"
+      :style="posStyle"
+      data-testid="batch-tag-editor"
+    >
     <header class="te-header">
       <div class="te-header-row">
         <span class="te-title">{{ t('batchTag.title') }}</span>
@@ -338,7 +355,7 @@ onBeforeUnmount(removeListeners)
       </div>
     </header>
 
-    <div class="te-list" role="listbox" :aria-label="t('batchTag.title')">
+    <div class="te-list" role="group" :aria-label="t('batchTag.title')">
       <button
         v-if="showCreate"
         type="button"
@@ -405,7 +422,8 @@ onBeforeUnmount(removeListeners)
         {{ t('batchTag.apply') }}
       </button>
     </footer>
-  </div>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>

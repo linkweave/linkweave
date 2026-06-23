@@ -98,26 +98,31 @@ export function changeSummary(adds: ChangeItem[], removes: ChangeItem[]): string
   return [...adds.map((a) => `+${a.name}`), ...removes.map((r) => `−${r.name}`)].join('  ')
 }
 
-type ToastKey = 'toastAdded' | 'toastRemoved'
+export type ToastKey = 'toastAdded' | 'toastRemoved' | 'toastBoth'
+export type ToastParams = Record<string, string | number>
 
 /**
- * Net-change success toast. `translate` yields the localized clause for each
- * key (e.g. `Added {names} to {k}` / `removed {names} from {k}`); `k` is the
- * MAX affected count across that clause's tags. The combined string is
- * sentence-cased and terminated with a period.
+ * Net-change success toast. Picks one of three full-sentence locale keys —
+ * adds-only, removes-only, or both — so each is a complete, translator-owned
+ * sentence (no programmatic capitalization or lowercase-clause assumptions).
+ * `k` is the MAX affected count across that clause's tags. `translate` returns
+ * the localized, period-terminated string for the chosen key.
  */
 export function buildToastMessage(
   adds: ChangeItem[],
   removes: ChangeItem[],
-  translate: (key: ToastKey, params: { names: string; k: number }) => string,
+  translate: (key: ToastKey, params: ToastParams) => string,
 ): string {
   const quote = (items: ChangeItem[]) => items.map((i) => `"${i.name}"`).join(', ')
   const maxK = (items: ChangeItem[]) => Math.max(...items.map((i) => i.k))
-  const clauses: string[] = []
-  if (adds.length) clauses.push(translate('toastAdded', { names: quote(adds), k: maxK(adds) }))
-  if (removes.length) {
-    clauses.push(translate('toastRemoved', { names: quote(removes), k: maxK(removes) }))
+  if (adds.length && removes.length) {
+    return translate('toastBoth', {
+      addNames: quote(adds),
+      addK: maxK(adds),
+      removeNames: quote(removes),
+      removeK: maxK(removes),
+    })
   }
-  const s = clauses.join(', ')
-  return `${s.charAt(0).toUpperCase()}${s.slice(1)}.`
+  if (adds.length) return translate('toastAdded', { names: quote(adds), k: maxK(adds) })
+  return translate('toastRemoved', { names: quote(removes), k: maxK(removes) })
 }
