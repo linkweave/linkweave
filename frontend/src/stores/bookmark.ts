@@ -198,11 +198,21 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     await applyTrashed(bookmarkIds)
   }
 
-  async function batchAddTag(bookmarkIds: string[], tagId: string): Promise<void> {
+  /**
+   * Tri-state batch tag edit (UC-074a): add and remove tags across the selection in one
+   * atomic request. Either id list may be empty. The backend rolls back wholesale on
+   * failure, so on error the in-memory list is left untouched.
+   */
+  async function batchEditTags(
+    bookmarkIds: string[],
+    addTagIds: string[],
+    removeTagIds: string[],
+  ): Promise<void> {
     const result = await bookmarkApi.apiBookmarksBatchTagPost({
       bookmarkBatchTagJson: {
         collectionId: requireCollectionId(),
-        tagId,
+        addTagIds,
+        removeTagIds,
         bookmarkIds,
       },
     })
@@ -253,7 +263,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     // batch actions
     batchMove,
     batchDelete,
-    batchAddTag,
+    batchEditTags,
     // telemetry
     trackClick,
   }

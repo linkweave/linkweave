@@ -27,10 +27,16 @@ export interface BookmarkBatchTagJson {
     collectionId: string;
     /**
      * 
-     * @type {string}
+     * @type {Array<string>}
      * @memberof BookmarkBatchTagJson
      */
-    tagId: string;
+    addTagIds: Array<string>;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof BookmarkBatchTagJson
+     */
+    removeTagIds: Array<string>;
     /**
      * 
      * @type {Array<string>}
@@ -44,7 +50,8 @@ export interface BookmarkBatchTagJson {
  */
 export function instanceOfBookmarkBatchTagJson(value: object): value is BookmarkBatchTagJson {
     if (!('collectionId' in value) || value['collectionId'] === undefined) return false;
-    if (!('tagId' in value) || value['tagId'] === undefined) return false;
+    if (!('addTagIds' in value) || value['addTagIds'] === undefined) return false;
+    if (!('removeTagIds' in value) || value['removeTagIds'] === undefined) return false;
     if (!('bookmarkIds' in value) || value['bookmarkIds'] === undefined) return false;
     return true;
 }
@@ -60,7 +67,8 @@ export function BookmarkBatchTagJsonFromJSONTyped(json: any, ignoreDiscriminator
     return {
         
         'collectionId': json['collectionId'],
-        'tagId': json['tagId'],
+        'addTagIds': json['addTagIds'],
+        'removeTagIds': json['removeTagIds'],
         'bookmarkIds': json['bookmarkIds'],
     };
 }
@@ -77,7 +85,8 @@ export function BookmarkBatchTagJsonToJSONTyped(value?: BookmarkBatchTagJson | n
     return {
         
         'collectionId': value['collectionId'],
-        'tagId': value['tagId'],
+        'addTagIds': value['addTagIds'],
+        'removeTagIds': value['removeTagIds'],
         'bookmarkIds': value['bookmarkIds'],
     };
 }

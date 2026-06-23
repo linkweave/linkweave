@@ -38,6 +38,11 @@
      Properties (--color-property purple). Light-mode value tuned for contrast
      against secondary background. */
   --color-ss: oklch(44% 0.10 188deg);
+
+  /* "Remove" accent for the batch tag editor (UC-074a): staged-remove box
+     border / × glyph and the "remove from N" hint. A burnt orange, distinct
+     from destructive red (delete) — light-mode value tuned for contrast. */
+  --color-remove: #c2410c;
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.5rem;
@@ -72,6 +77,7 @@
   --color-sidebar: #1e2028;
   --color-property: #a78bfa;
   --color-ss: oklch(64% 0.10 188deg);
+  --color-remove: #e08a5b;
 }
 
 /* Everything below lives in `@layer base` so Tailwind utilities (which live in

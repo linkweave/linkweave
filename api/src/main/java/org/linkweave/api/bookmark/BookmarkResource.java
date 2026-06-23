@@ -139,7 +139,8 @@ public class BookmarkResource {
     @RolesAllowed("BOOKMARK_WRITE")
     public BookmarkListJson batchTag(@NotNull @Valid @NonNull BookmarkBatchTagJson json) {
         List<Bookmark> bookmarks = authorizeAndLoad(json.getCollectionId(), json.getBookmarkIds());
-        bookmarkService.batchAddTag(bookmarks, json.getTagId(), json.getCollectionId());
+        bookmarkService.batchEditTags(
+            bookmarks, json.getAddTagIds(), json.getRemoveTagIds(), json.getCollectionId());
         return toListJson(bookmarks);
     }
 

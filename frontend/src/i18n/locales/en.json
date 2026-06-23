@@ -527,9 +527,7 @@
     "selectAll": "Select all {count}",
     "clearSelection": "Clear selection",
     "move": "Move",
-    "addTag": "Add tag",
-    "addTagHeader": "Add tag",
-    "noTags": "No tags in this collection.",
+    "tags": "Tags",
     "copyUrls": "Copy URLs",
     "delete": "Delete",
     "moveTitle": "Move {count} bookmarks",
@@ -543,11 +541,25 @@
     "movedToastRoot": "Moved {count} bookmarks to the collection root.",
     "deletedToast": "{count} bookmarks moved to trashbin.",
     "copiedToast": "Copied {count} URLs to clipboard.",
-    "taggedToast": "Tagged {count} bookmarks with \"{tag}\".",
     "moveError": "Failed to move bookmarks. No changes were made.",
     "deleteError": "Failed to delete bookmarks. No changes were made.",
-    "tagError": "Failed to tag bookmarks. No changes were made.",
     "copyError": "Failed to copy URLs to clipboard.",
     "toggleSelection": "Toggle selection"
+  },
+  "batchTag": {
+    "title": "Edit tags",
+    "searchPlaceholder": "Find or create a tag…",
+    "create": "Create",
+    "noTagsYet": "No tags yet.",
+    "noChanges": "No changes",
+    "apply": "Apply",
+    "addTo": "add to {k}",
+    "removeFrom": "remove from {k}",
+    "cOfN": "{c} of {n}",
+    "allN": "all {n}",
+    "toastAdded": "Added {names} to {k}.",
+    "toastRemoved": "Removed {names} from {k}.",
+    "toastBoth": "Added {addNames} to {addK}, removed {removeNames} from {removeK}.",
+    "applyError": "Failed to update tags. No changes were made."
   }
 }

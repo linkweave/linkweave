@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import type { TagJson } from '@/api/generated'
+import BatchTagEditor from '@/components/bookmark/BatchTagEditor.vue'
 import MoveBookmarkDialog from '@/components/bookmark/MoveBookmarkDialog.vue'
-import { ConfirmDialog, DropdownMenuContentLw, DropdownMenuItemLw } from '@/components/ui'
+import { ConfirmDialog } from '@/components/ui'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useFolderStore } from '@/stores/folder'
 import { useNotificationStore } from '@/stores/notification'
 import { useSelectionStore } from '@/stores/selection'
-import { useTagStore } from '@/stores/tag'
 import { Copy, FolderInput, Tag, Trash2, X } from '@lucide/vue'
-import { DropdownMenuRoot, DropdownMenuTrigger } from 'radix-vue'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -16,11 +14,12 @@ const { t } = useI18n()
 const selection = useSelectionStore()
 const bookmarkStore = useBookmarkStore()
 const folderStore = useFolderStore()
-const tagStore = useTagStore()
 const notification = useNotificationStore()
 
 const showMoveDialog = ref(false)
 const showDeleteConfirm = ref(false)
+const showTagEditor = ref(false)
+const tagButton = ref<HTMLButtonElement | null>(null)
 
 const selectedIdList = computed(() => [...selection.selectedIds])
 
@@ -51,17 +50,6 @@ async function onDeleteConfirmed() {
     selection.clearAndExit()
   } catch {
     notification.error(t('batch.deleteError'))
-  }
-}
-
-async function onPickTag(tag: TagJson) {
-  const ids = selectedIdList.value
-  try {
-    await bookmarkStore.batchAddTag(ids, tag.id)
-    notification.success(t('batch.taggedToast', { count: ids.length, tag: tag.data.name }))
-    selection.clearAndExit()
-  } catch {
-    notification.error(t('batch.tagError'))
   }
 }
 
@@ -125,32 +113,18 @@ async function copyUrls() {
         <span class="hidden md:inline">{{ t('batch.move') }}</span>
       </button>
 
-      <DropdownMenuRoot>
-        <DropdownMenuTrigger as-child>
-          <button type="button" class="batch-btn" data-testid="batch-add-tag">
-            <Tag :size="14" />
-            <span class="hidden md:inline">{{ t('batch.addTag') }}</span>
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContentLw class="z-50 min-w-[186px]" align="start">
-          <div class="batch-tag-header">{{ t('batch.addTagHeader') }}</div>
-          <DropdownMenuItemLw
-            v-for="tag in tagStore.tags"
-            :key="tag.id"
-            :data-testid="`batch-tag-option-${tag.data.name}`"
-            @select="onPickTag(tag)"
-          >
-            <span
-              class="h-[9px] w-[9px] rounded-full shrink-0"
-              :style="{ background: tag.data.color }"
-            />
-            {{ tag.data.name }}
-          </DropdownMenuItemLw>
-          <div v-if="tagStore.tags.length === 0" class="batch-tag-empty">
-            {{ t('batch.noTags') }}
-          </div>
-        </DropdownMenuContentLw>
-      </DropdownMenuRoot>
+      <button
+        ref="tagButton"
+        type="button"
+        class="batch-btn"
+        :aria-haspopup="true"
+        :aria-expanded="showTagEditor"
+        data-testid="batch-add-tag"
+        @click="showTagEditor = !showTagEditor"
+      >
+        <Tag :size="14" />
+        <span class="hidden md:inline">{{ t('batch.tags') }}</span>
+      </button>
 
       <button type="button" class="batch-btn" data-testid="batch-copy-urls" @click="copyUrls">
         <Copy :size="14" />
@@ -185,6 +159,8 @@ async function copyUrls() {
     :confirm-label="t('batch.deleteConfirm')"
     @confirmed="onDeleteConfirmed"
   />
+
+  <BatchTagEditor v-model:open="showTagEditor" :anchor="tagButton" />
 </template>
 
 <style scoped>
@@ -290,21 +266,6 @@ async function copyUrls() {
   height: 20px;
   background: var(--color-border);
   margin: 0 4px;
-}
-
-.batch-tag-header {
-  padding: 6px 8px 4px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--color-muted-foreground);
-}
-
-.batch-tag-empty {
-  padding: 6px 8px;
-  font-size: 12.5px;
-  color: var(--color-muted-foreground);
 }
 
 @media (prefers-reduced-motion: reduce) {

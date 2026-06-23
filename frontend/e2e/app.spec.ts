@@ -40,7 +40,10 @@ test.describe('Authenticated', () => {
     await page.goto('/')
 
     await expect(page.getByTestId('sidebar-all-bookmarks')).toBeVisible()
-    await expect(page.locator('span').filter({ hasText: 'Tags' })).toBeVisible()
+    // Scope by testid: the batch bar's always-mounted "Tags" button
+    // (batch-add-tag) also contains a "Tags" span, so a bare text filter
+    // is ambiguous.
+    await expect(page.getByTestId('tags-toggle')).toBeVisible()
   })
 
   test('sidebar is off-screen on mobile', async ({ page }) => {

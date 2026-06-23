@@ -4,6 +4,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,6 +23,8 @@ import ch.dvbern.oss.commons.i18nl10n.I18nMessage;
 import org.linkweave.infrastructure.errorhandling.AppAuthorizationException;
 import org.linkweave.infrastructure.errorhandling.AppFailureException;
 import org.linkweave.infrastructure.errorhandling.AppFailureMessage;
+import org.linkweave.infrastructure.errorhandling.AppValidationException;
+import org.linkweave.infrastructure.errorhandling.AppValidationMessage;
 import org.linkweave.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
 import org.linkweave.api.shared.Util;
@@ -207,17 +210,58 @@ public class BookmarkService {
         }
     }
 
-    public void batchAddTag(
+    /**
+     * Tri-state batch tag edit (UC-074a): adds every tag in {@code addTagIds} and removes
+     * every tag in {@code removeTagIds} from each bookmark, in a single transaction. Either
+     * list may be empty. A tag appearing in both lists is rejected with a validation error
+     * rather than silently picking one side. All tags are validated against the collection
+     * up front so the whole edit rolls back if any is foreign.
+     */
+    public void batchEditTags(
         @NonNull List<Bookmark> bookmarks,
-        @NonNull ID<Tag> tagId,
+        @NonNull List<ID<Tag>> addTagIds,
+        @NonNull List<ID<Tag>> removeTagIds,
         @NonNull ID<Collection> collectionId
     ) {
-        Tag tag = tagRepo.getById(tagId);
-        requireTagBelongsToCollection(tag, collectionId);
+        // A direct API caller can send both lists empty (the DTO permits it).
+        // Bail out before persisting so we don't bump userMutiert / version on
+        // every bookmark for no semantic change.
+        if (addTagIds.isEmpty() && removeTagIds.isEmpty()) {
+            return;
+        }
+        // Reject contradictory requests rather than silently letting remove win:
+        // a direct API caller asking to both add and remove the same tag is a bug.
+        if (!Collections.disjoint(addTagIds, removeTagIds)) {
+            throw new AppValidationException(
+                AppValidationMessage.genericMessage("AppValidation.batchTag.overlappingTagIds"));
+        }
+        List<Tag> addTags = loadTagsOrThrow(addTagIds);
+        List<Tag> removeTags = loadTagsOrThrow(removeTagIds);
+        addTags.forEach(tag -> requireTagBelongsToCollection(tag, collectionId));
+        removeTags.forEach(tag -> requireTagBelongsToCollection(tag, collectionId));
         for (Bookmark bookmark : bookmarks) {
-            bookmark.getTags().add(tag);
+            bookmark.getTags().addAll(addTags);
+            removeTags.forEach(bookmark.getTags()::remove);
             bookmarkRepo.persist(bookmark);
         }
+    }
+
+    /**
+     * Resolves a list of tag ids in one bulk query, throwing if any id is
+     * unknown — preserving the {@code getById} semantics the batch path relied
+     * on before the bulk load. Duplicate ids in the input are tolerated
+     * (the check compares against the distinct id set).
+     */
+    @NonNull
+    private List<Tag> loadTagsOrThrow(@NonNull List<ID<Tag>> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        List<Tag> tags = tagRepo.findByIds(ids);
+        if (tags.size() != new HashSet<>(ids).size()) {
+            throw new AppFailureException(AppFailureMessage.entityNotFoundMsg(Tag.class, ids.toString()));
+        }
+        return tags;
     }
 
     private void requireFolderBelongsToCollection(@NonNull Folder folder, @NonNull ID<Collection> collectionId) {
