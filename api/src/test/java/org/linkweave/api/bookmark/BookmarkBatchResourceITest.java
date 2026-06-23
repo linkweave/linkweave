@@ -398,6 +398,39 @@ class BookmarkBatchResourceITest {
 
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldReturn500AndMutateNothing_whenBatchTagReferencesNonExistentTagId() {
+        Collection collection = fixtureService.createTestCollection();
+        Bookmark bookmark = persistBookmark(collection, "target");
+
+        // A tag id that satisfies the UUID format but was never persisted.
+        java.util.UUID ghostTagId = java.util.UUID.randomUUID();
+
+        String body = """
+            {"collectionId":"%s","addTagIds":["%s"],"removeTagIds":[],"bookmarkIds":["%s"]}
+            """.formatted(
+            collection.getId().getUUID(),
+            ghostTagId,
+            bookmark.getId().getUUID());
+
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/bookmarks/batch-tag")
+            .then()
+            .statusCode(500);
+
+        // Atomic: the unknown id surfaced before any persist, so the bookmark
+        // is untouched (no tags, no spurious mutation).
+        RestAssured.given()
+            .queryParam("collectionId", collection.getId().getUUID().toString())
+            .get("/bookmarks")
+            .then()
+            .statusCode(200)
+            .body("bookmarkList[0].data.tagIds", hasSize(0));
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldReturn400_whenBatchDeleteWithEmptyBookmarkIds() {
         Collection collection = fixtureService.createTestCollection();
 
