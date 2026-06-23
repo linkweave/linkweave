@@ -524,9 +524,7 @@
     "selectAll": "Alle {count} auswählen",
     "clearSelection": "Auswahl aufheben",
     "move": "Verschieben",
-    "addTag": "Tag hinzufügen",
-    "addTagHeader": "Tag hinzufügen",
-    "noTags": "Keine Tags in dieser Sammlung.",
+    "tags": "Tags",
     "copyUrls": "URLs kopieren",
     "delete": "Löschen",
     "moveTitle": "{count} Lesezeichen verschieben",
@@ -540,11 +538,24 @@
     "movedToastRoot": "{count} Lesezeichen in den Sammlungs-Stammordner verschoben.",
     "deletedToast": "{count} Lesezeichen in den Papierkorb verschoben.",
     "copiedToast": "{count} URLs in die Zwischenablage kopiert.",
-    "taggedToast": "{count} Lesezeichen mit \"{tag}\" getaggt.",
     "moveError": "Lesezeichen konnten nicht verschoben werden. Es wurden keine Änderungen vorgenommen.",
     "deleteError": "Lesezeichen konnten nicht gelöscht werden. Es wurden keine Änderungen vorgenommen.",
-    "tagError": "Lesezeichen konnten nicht getaggt werden. Es wurden keine Änderungen vorgenommen.",
     "copyError": "URLs konnten nicht in die Zwischenablage kopiert werden.",
     "toggleSelection": "Auswahl umschalten"
+  },
+  "batchTag": {
+    "title": "Tags bearbeiten",
+    "searchPlaceholder": "Tag finden oder erstellen…",
+    "create": "Erstellen",
+    "noTagsYet": "Noch keine Tags.",
+    "noChanges": "Keine Änderungen",
+    "apply": "Übernehmen",
+    "addTo": "zu {k} hinzufügen",
+    "removeFrom": "von {k} entfernen",
+    "cOfN": "{c} von {n}",
+    "allN": "alle {n}",
+    "toastAdded": "{names} zu {k} hinzugefügt",
+    "toastRemoved": "{names} von {k} entfernt",
+    "applyError": "Tags konnten nicht aktualisiert werden. Es wurden keine Änderungen vorgenommen."
   }
 }

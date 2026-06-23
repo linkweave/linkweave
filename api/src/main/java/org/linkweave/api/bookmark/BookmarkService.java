@@ -207,15 +207,25 @@ public class BookmarkService {
         }
     }
 
-    public void batchAddTag(
+    /**
+     * Tri-state batch tag edit (UC-074a): adds every tag in {@code addTagIds} and removes
+     * every tag in {@code removeTagIds} from each bookmark, in a single transaction. Either
+     * list may be empty. A tag appearing in both lists is removed (remove wins). All tags are
+     * validated against the collection up front so the whole edit rolls back if any is foreign.
+     */
+    public void batchEditTags(
         @NonNull List<Bookmark> bookmarks,
-        @NonNull ID<Tag> tagId,
+        @NonNull List<ID<Tag>> addTagIds,
+        @NonNull List<ID<Tag>> removeTagIds,
         @NonNull ID<Collection> collectionId
     ) {
-        Tag tag = tagRepo.getById(tagId);
-        requireTagBelongsToCollection(tag, collectionId);
+        List<Tag> addTags = addTagIds.stream().map(tagRepo::getById).toList();
+        List<Tag> removeTags = removeTagIds.stream().map(tagRepo::getById).toList();
+        addTags.forEach(tag -> requireTagBelongsToCollection(tag, collectionId));
+        removeTags.forEach(tag -> requireTagBelongsToCollection(tag, collectionId));
         for (Bookmark bookmark : bookmarks) {
-            bookmark.getTags().add(tag);
+            bookmark.getTags().addAll(addTags);
+            removeTags.forEach(bookmark.getTags()::remove);
             bookmarkRepo.persist(bookmark);
         }
     }

@@ -149,15 +149,26 @@ test.describe('Batch select (UC-074)', () => {
     await expect(batchBar(page)).not.toHaveClass(/is-open/)
   })
 
-  test('should batch add a tag to the selection', async ({ page }) => {
+  test('should batch add a tag via the editor and retain the selection (UC-074a)', async ({
+    page,
+  }) => {
+    // The bar-level contract for the tag editor: it opens anchored under the
+    // Tags button, applies in one batch, and — unlike Move/Delete — RETAINS the
+    // selection. The full tri-state matrix lives in batch-tag-editor.spec.ts.
     await selectByTitles(page, collection.collectionId, bm.one, bm.two)
 
     await page.getByTestId('batch-add-tag').click()
-    await page.getByTestId(`batch-tag-option-${tagName}`).click()
+    await expect(page.getByTestId('batch-tag-editor')).toBeVisible()
+    const row = page.getByTestId(`batch-tag-row-${tagName}`)
+    await expect(row).toHaveAttribute('aria-checked', 'false')
+    await row.click()
+    await expect(row).toHaveAttribute('aria-checked', 'true')
+    await expect(page.getByTestId('batch-tag-summary')).toHaveText(`+${tagName}`)
+    await page.getByTestId('batch-tag-apply').click()
 
-    await expect(page.getByText(`Tagged 2 bookmarks with "${tagName}".`)).toBeVisible()
-    // Success clears the selection and exits the mode.
-    await expect(batchBar(page)).not.toHaveClass(/is-open/)
+    await expect(page.getByText(`Added "${tagName}" to 2.`)).toBeVisible()
+    await expect(page.getByTestId('batch-tag-editor')).toHaveCount(0)
+    await expect(batchCount(page)).toHaveText('2 selected')
     await expect(
       cardByTitle(page, bm.one).locator(`[data-tag-name="${tagName}"]`),
     ).toBeVisible()

@@ -210,7 +210,7 @@ class BookmarkBatchResourceITest {
         Bookmark second = persistBookmark(collection, "second");
 
         String body = """
-            {"collectionId":"%s","tagId":"%s","bookmarkIds":["%s","%s"]}
+            {"collectionId":"%s","addTagIds":["%s"],"removeTagIds":[],"bookmarkIds":["%s","%s"]}
             """.formatted(
             collection.getId().getUUID(),
             tag.getId().getUUID(),
@@ -250,7 +250,7 @@ class BookmarkBatchResourceITest {
         );
 
         String body = """
-            {"collectionId":"%s","tagId":"%s","bookmarkIds":["%s"]}
+            {"collectionId":"%s","addTagIds":["%s"],"removeTagIds":[],"bookmarkIds":["%s"]}
             """.formatted(
             collection.getId().getUUID(),
             added.getId().getUUID(),
@@ -269,6 +269,51 @@ class BookmarkBatchResourceITest {
 
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldAddAndRemoveTagsInSingleBatch_whenBatchTag() {
+        Collection collection = fixtureService.createTestCollection();
+        Tag keep = fixtureService.persistTag(b -> b
+            .withCollection(collection)
+            .withName("Keep")
+            .withColor("#FF0000")
+        );
+        Tag drop = fixtureService.persistTag(b -> b
+            .withCollection(collection)
+            .withName("Drop")
+            .withColor("#0000FF")
+        );
+        Tag add = fixtureService.persistTag(b -> b
+            .withCollection(collection)
+            .withName("Add")
+            .withColor("#00FF00")
+        );
+        Bookmark bookmark = fixtureService.persistBookmark(b -> b
+            .withCollection(collection)
+            .withTitle("mixed")
+            .withUrl("https://example.com/mixed")
+            .withTags(new java.util.HashSet<>(java.util.Set.of(keep, drop)))
+        );
+
+        String body = """
+            {"collectionId":"%s","addTagIds":["%s"],"removeTagIds":["%s"],"bookmarkIds":["%s"]}
+            """.formatted(
+            collection.getId().getUUID(),
+            add.getId().getUUID(),
+            drop.getId().getUUID(),
+            bookmark.getId().getUUID());
+
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/bookmarks/batch-tag")
+            .then()
+            .statusCode(200)
+            .body("bookmarkList[0].data.tagIds", containsInAnyOrder(
+                keep.getId().getUUID().toString(),
+                add.getId().getUUID().toString()));
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldFail_whenBatchTagWithTagOfOtherCollection() {
         Collection collection = fixtureService.createTestCollection();
         Collection otherCollection = fixtureService.createTestCollection();
@@ -280,7 +325,7 @@ class BookmarkBatchResourceITest {
         Bookmark bookmark = persistBookmark(collection, "own");
 
         String body = """
-            {"collectionId":"%s","tagId":"%s","bookmarkIds":["%s"]}
+            {"collectionId":"%s","addTagIds":["%s"],"removeTagIds":[],"bookmarkIds":["%s"]}
             """.formatted(
             collection.getId().getUUID(),
             foreignTag.getId().getUUID(),
@@ -529,7 +574,7 @@ class BookmarkBatchResourceITest {
         Bookmark bookmark = persistBookmark(collection, "readonly");
 
         String body = """
-            {"collectionId":"%s","tagId":"%s","bookmarkIds":["%s"]}
+            {"collectionId":"%s","addTagIds":["%s"],"removeTagIds":[],"bookmarkIds":["%s"]}
             """.formatted(
             collection.getId().getUUID(),
             tag.getId().getUUID(),
@@ -563,7 +608,7 @@ class BookmarkBatchResourceITest {
     @Test
     void shouldReturn401_whenBatchTagNotAuthenticated() {
         String body = """
-            {"collectionId":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","tagId":"cccccccc-cccc-cccc-cccc-cccccccccccc","bookmarkIds":["bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"]}
+            {"collectionId":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","addTagIds":["cccccccc-cccc-cccc-cccc-cccccccccccc"],"removeTagIds":[],"bookmarkIds":["bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"]}
             """;
         RestAssured.given()
             .contentType(ContentType.JSON)
@@ -611,7 +656,7 @@ class BookmarkBatchResourceITest {
             .collect(Collectors.joining(","));
 
         String body = """
-            {"collectionId":"%s","tagId":"%s","bookmarkIds":[%s]}
+            {"collectionId":"%s","addTagIds":["%s"],"removeTagIds":[],"bookmarkIds":[%s]}
             """.formatted(collection.getId().getUUID(), tag.getId().getUUID(), ids);
 
         RestAssured.given()
