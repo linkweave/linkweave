@@ -87,7 +87,7 @@ onMounted(async () => {
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2 flex-wrap">
             <span class="font-medium truncate max-w-[200px]">{{ key.name }}</span>
-            <code class="text-xs text-muted-foreground font-mono">cl_{{ key.prefix }}…</code>
+            <code class="text-xs text-muted-foreground font-mono">lw_{{ key.prefix }}…</code>
             <span
               v-if="store.isExpired(key)"
               class="text-xs rounded px-1.5 py-0.5 bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"

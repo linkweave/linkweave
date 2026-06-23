@@ -43,7 +43,7 @@ A Chrome/Firefox browser extension that lets users save the current page as a bo
 | **Collection Info** | `GET /api/collections/{id}` returns bookmarks + folders + tags | `CollectionInfoJson.java`, `CollectionResource.java:23-26` |
 | **User Info** | `GET /api/auth/me` returns `UserInfoJson` with `defaultCollectionId` | `AuthResource.java:36-52` |
 | **API Client** | Generated TypeScript fetch client from OpenAPI | `frontend/src/api/generated/`, `frontend/scripts/generate-api.ts` |
-| **Cookie Domain** | `chainlink.markushofstetter.com` (prod), `local-chainlink.localhost` (dev) | `application.properties:74-75` |
+| **Cookie Domain** | `linkweave.dev` (prod), `local-linkweave.localhost` (dev) | `application.properties:74-75` |
 | **SSL** | HTTPS in dev with local certs | `application.properties:28-30` |
 | **IDs** | Custom `ID<T>` type, serialized as UUID strings | `AbstractEntity.java`, `ID.java` |
 | **Error handling** | `AppAuthException` → 401, `AppAuthorizationException` → 403, `AppValidationException` → 400 | Exception mappers in `infrastructure/exceptionmapper/` |
@@ -107,7 +107,7 @@ FolderJson { id, entityInfo, data: { collectionId, parentId?, name } }
 │                                                                     │
 │  1. User enters credentials in popup                                │
 │  2. POST /api/j_security_check { credentials: 'include' }           │
-│     → Server sets session cookie on chainlink domain                │
+│     → Server sets session cookie on linkweave domain                │
 │  3. All subsequent fetch() calls with credentials: 'include'        │
 │     → Browser includes the session cookie automatically             │
 │                                                                     │
@@ -172,7 +172,7 @@ extension/
 │   ├── background/
 │   │   └── service-worker.ts        # Background service worker
 │   ├── api/
-│   │   ├── chainlink-client.ts      # HTTP client wrapper
+│   │   ├── linkweave-client.ts      # HTTP client wrapper
 │   │   └── types.ts                 # API type definitions (mirrors DTOs)
 │   ├── auth/
 │   │   └── auth-service.ts          # Auth state management
@@ -201,7 +201,7 @@ extension/
 - Listens for messages from popup
 - Manages the extension lifecycle
 
-#### `chainlink-client.ts`
+#### `linkweave-client.ts`
 - Centralized HTTP client for all API communication
 - Handles base URL configuration (dev vs. prod)
 - Attaches `credentials: 'include'` to all requests
@@ -228,7 +228,7 @@ extension/
 - Collection selector (default pre-selected)
 - Folder dropdown (loaded from API, optional)
 - Tag multi-select (loaded from API, optional)
-- Save button → calls `chainlinkClient.createBookmark()`
+- Save button → calls `linkweaveClient.createBookmark()`
 - Success → shows `success-view.ts`
 - Error → shows inline error message
 
@@ -253,7 +253,7 @@ extension/
     "storage"
   ],
   "host_permissions": [
-    "https://chainlink.markushofstetter.com/*"
+    "https://linkweave.dev/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -275,7 +275,7 @@ extension/
 }
 ```
 
-> **Note for local development:** Add a separate manifest for dev with `host_permissions`: `["https://local-chainlink.localhost:8443/*"]`. This can be managed via a Vite env variable that swaps the manifest during build.
+> **Note for local development:** Add a separate manifest for dev with `host_permissions`: `["https://local-linkweave.localhost:8443/*"]`. This can be managed via a Vite env variable that swaps the manifest during build.
 
 ---
 
@@ -290,7 +290,7 @@ A JAX-RS `ContainerResponseFilter` that adds CORS headers to all API responses:
 ```
 Responsibilities:
 - Read Origin header from request
-- If origin matches allowed patterns (chainlink domain, chrome-extension://, moz-extension://):
+- If origin matches allowed patterns (linkweave domain, chrome-extension://, moz-extension://):
   - Set Access-Control-Allow-Origin to the request's Origin
   - Set Access-Control-Allow-Credentials: true
   - Set Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
@@ -313,9 +313,9 @@ Add configuration for allowed CORS origins:
 
 ```properties
 # CORS - Browser Extension
-chainlink.cors.allowed-origins=https://chainlink.markushofstetter.com
-%dev.chainlink.cors.allowed-origins=https://local-chainlink.localhost:8443
-chainlink.cors.allow-extension-origins=true
+linkweave.cors.allowed-origins=https://linkweave.dev
+%dev.linkweave.cors.allowed-origins=https://local-linkweave.localhost:8443
+linkweave.cors.allow-extension-origins=true
 ```
 
 ### 5.3 Config Service Update
@@ -475,10 +475,10 @@ interface FolderJson {
 }
 ```
 
-### 7.2 Client Implementation (`api/chainlink-client.ts`)
+### 7.2 Client Implementation (`api/linkweave-client.ts`)
 
 ```typescript
-class ChainlinkClient {
+class LinkWeaveClient {
   private baseUrl: string
 
   constructor(baseUrl: string) {
@@ -495,7 +495,7 @@ class ChainlinkClient {
       },
     })
     if (!response.ok) {
-      throw new ChainlinkApiError(response.status, await response.text())
+      throw new LinkWeaveApiError(response.status, await response.text())
     }
     return response.json()
   }
@@ -512,7 +512,7 @@ class ChainlinkClient {
       credentials: 'include',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     })
-    if (response.status !== 200) throw new ChainlinkApiError(401, 'Login failed')
+    if (response.status !== 200) throw new LinkWeaveApiError(401, 'Login failed')
   }
 
   async getCurrentUser(): Promise<UserInfoJson> { ... }
@@ -528,14 +528,14 @@ The extension needs to know where the LinkWeave API is running. This is configur
 ```typescript
 // src/api/config.ts
 const API_BASE_URL = import.meta.env.VITE_LINKWEAVE_API_URL
-  || 'https://chainlink.markushofstetter.com/api'
+  || 'https://linkweave.dev/api'
 
-export const apiClient = new ChainlinkClient(API_BASE_URL)
+export const apiClient = new LinkWeaveClient(API_BASE_URL)
 ```
 
 For local development:
 ```bash
-VITE_LINKWEAVE_API_URL=https://local-chainlink.localhost:8443/api npm run dev
+VITE_LINKWEAVE_API_URL=https://local-linkweave.localhost:8443/api npm run dev
 ```
 
 ---
@@ -572,7 +572,7 @@ export default defineConfig({
 
 ```json
 {
-  "name": "chainlink-extension",
+  "name": "linkweave-extension",
   "scripts": {
     "dev": "vite build --watch --mode development",
     "build": "vite build",
@@ -687,7 +687,7 @@ dist/
 | # | File | Action | Description |
 |---|------|--------|-------------|
 | 1.1 | `api/src/main/java/org/linkweave/infrastructure/cors/CorsFilter.java` | **Create** | JAX-RS `ContainerResponseFilter` that adds CORS headers. Matches origins against allowed patterns (LinkWeave domain, `chrome-extension://*`, `moz-extension://*`). Handles OPTIONS preflight. |
-| 1.2 | `api/src/main/resources/application.properties` | **Modify** | Add `chainlink.cors.allowed-origins` config property (dev + prod). |
+| 1.2 | `api/src/main/resources/application.properties` | **Modify** | Add `linkweave.cors.allowed-origins` config property (dev + prod). |
 | 1.3 | `api/src/main/java/org/linkweave/api/shared/config/ConfigService.java` | **Modify** | Add `getCorsAllowedOrigins()` and `isCorsExtensionOriginsAllowed()` methods. |
 | 1.4 | `CorsFilter` | **Test** | Unit test: verify CORS headers for allowed origins, no headers for disallowed origins, OPTIONS preflight handling. |
 
@@ -700,8 +700,8 @@ dist/
 | 2.3 | `extension/tsconfig.json` | **Create** | TypeScript config targeting ES2022, module ESNext. |
 | 2.4 | `extension/vite.config.ts` | **Create** | Vite config with multi-entry build for popup + service worker. |
 | 2.5 | `extension/manifest.json` | **Create** | MV3 manifest with permissions, host_permissions, popup, background. |
-| 2.6 | `extension/.env` | **Create** | Default env vars: `VITE_LINKWEAVE_API_URL=https://chainlink.markushofstetter.com/api`. |
-| 2.7 | `extension/.env.development` | **Create** | Dev env vars: `VITE_LINKWEAVE_API_URL=https://local-chainlink.localhost:8443/api`. |
+| 2.6 | `extension/.env` | **Create** | Default env vars: `VITE_LINKWEAVE_API_URL=https://linkweave.dev/api`. |
+| 2.7 | `extension/.env.development` | **Create** | Dev env vars: `VITE_LINKWEAVE_API_URL=https://local-linkweave.localhost:8443/api`. |
 | 2.8 | `extension/assets/icons/` | **Create** | Extension icons (16, 48, 128px). Can use the existing `frontend/src/assets/logo.svg` as a starting point. |
 
 ### Phase 3: Extension — Core Modules
@@ -710,8 +710,8 @@ dist/
 |---|------|--------|-------------|
 | 3.1 | `extension/src/api/types.ts` | **Create** | TypeScript interfaces mirroring backend DTOs. |
 | 3.2 | `extension/src/api/config.ts` | **Create** | Base URL configuration from env vars. |
-| 3.3 | `extension/src/api/chainlink-client.ts` | **Create** | HTTP client with `login()`, `getCurrentUser()`, `getCollection()`, `createBookmark()`. All requests use `credentials: 'include'`. |
-| 3.4 | `extension/src/api/errors.ts` | **Create** | `ChainlinkApiError` class with status code and message. |
+| 3.3 | `extension/src/api/linkweave-client.ts` | **Create** | HTTP client with `login()`, `getCurrentUser()`, `getCollection()`, `createBookmark()`. All requests use `credentials: 'include'`. |
+| 3.4 | `extension/src/api/errors.ts` | **Create** | `LinkWeaveApiError` class with status code and message. |
 | 3.5 | `extension/src/auth/auth-service.ts` | **Create** | Auth state management: `checkAuth()`, `login()`, `logout()`, `isAuthenticated`, `user` state. |
 | 3.6 | `extension/src/storage/extension-storage.ts` | **Create** | `chrome.storage.local` helpers for caching collection data (folders, tags) and settings. |
 | 3.7 | `extension/src/lib/dom.ts` | **Create** | Minimal DOM helpers: `el()`, `setText()`, `setClass()`, `on()`. |
@@ -739,7 +739,7 @@ dist/
 
 | # | File | Action | Description |
 |---|------|--------|-------------|
-| 6.1 | `extension/src/api/chainlink-client.test.ts` | **Create** | Unit tests for API client (mock fetch). |
+| 6.1 | `extension/src/api/linkweave-client.test.ts` | **Create** | Unit tests for API client (mock fetch). |
 | 6.2 | `extension/src/auth/auth-service.test.ts` | **Create** | Unit tests for auth state management. |
 | 6.3 | Manual testing | — | Load extension in Chrome/Firefox dev mode. Test login, save, context menu. |
 | 6.4 | `extension/README.md` | **Create** | Build instructions, development setup, how to load unpacked extension. |
@@ -768,7 +768,7 @@ dist/
 - [ ] Implement `api/types.ts` — DTO interfaces
 - [ ] Implement `api/config.ts` — base URL config
 - [ ] Implement `api/errors.ts` — error types
-- [ ] Implement `api/chainlink-client.ts` — HTTP client
+- [ ] Implement `api/linkweave-client.ts` — HTTP client
 - [ ] Implement `auth/auth-service.ts` — auth state
 - [ ] Implement `storage/extension-storage.ts` — storage helpers
 - [ ] Implement `lib/dom.ts` — DOM utilities
@@ -787,7 +787,7 @@ dist/
 - [ ] Wire context menu click to popup
 
 ### Testing
-- [ ] Write unit tests for `chainlink-client.ts`
+- [ ] Write unit tests for `linkweave-client.ts`
 - [ ] Write unit tests for `auth-service.ts`
 - [ ] Manual test: login flow
 - [ ] Manual test: save bookmark with all fields
@@ -826,13 +826,13 @@ dist/
 ## 14. Dev/Prod Configuration
 
 ### Development
-- Extension connects to `https://local-chainlink.localhost:8443/api`
+- Extension connects to `https://local-linkweave.localhost:8443/api`
 - Backend runs via `./mvnw quarkus:dev` with local SSL certs
 - Extension loaded as unpacked in Chrome developer mode
 - CORS allows `chrome-extension://*` origins
 
 ### Production
-- Extension connects to `https://chainlink.markushofstetter.com/api`
+- Extension connects to `https://linkweave.dev/api`
 - Extension packaged as `.zip` for Chrome Web Store / Firefox Add-ons
 - CORS allows `chrome-extension://*` and `moz-extension://*` origins
 - `host_permissions` point to production domain
@@ -842,10 +842,10 @@ The extension uses Vite env variables to configure the API base URL at build tim
 
 ```bash
 # Development build
-npm run build  # uses .env.development → local-chainlink.localhost
+npm run build  # uses .env.development → local-linkweave.localhost
 
 # Production build  
-npm run build -- --mode production  # uses .env → chainlink.markushofstetter.com
+npm run build -- --mode production  # uses .env → linkweave.dev
 ```
 
 ---

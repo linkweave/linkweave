@@ -15,7 +15,7 @@ Read-only offline fallback using a Service Worker
 
 Offline behavior is explicitly read-only.
 Quarkus currently is configured to use a self signed certificate and is listening on
-https://local-chainlink.localhost:8443/
+https://local-linkweave.localhost:8443/
 
 
 2. Architecture Overview

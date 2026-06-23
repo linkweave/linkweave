@@ -1,5 +1,5 @@
 {
-  "name": "chainlink-desktop",
+  "name": "linkweave-desktop",
   "version": "0.1.0",
   "private": true,
   "description": "LinkWeave desktop shell (Tauri)",

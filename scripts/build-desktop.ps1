@@ -89,10 +89,10 @@ if ($SkipSmoke) {
         Write-Error "smoke-test port $SmokePort is already in use; free it or pass --skip-smoke."
         exit 1
     }
-    $SmokeLog = "$env:TEMP\chainlink-desktop-smoke.log"
-    $SmokeDir = New-Item -ItemType Directory -Path (Join-Path $env:TEMP "chainlink-smoke-$(Get-Random)")
+    $SmokeLog = "$env:TEMP\linkweave-desktop-smoke.log"
+    $SmokeDir = New-Item -ItemType Directory -Path (Join-Path $env:TEMP "linkweave-smoke-$(Get-Random)")
     $SmokeDb = Join-Path $SmokeDir "smoke.db"
-    $SmokeFav = New-Item -ItemType Directory -Path (Join-Path $env:TEMP "chainlink-fav-$(Get-Random)")
+    $SmokeFav = New-Item -ItemType Directory -Path (Join-Path $env:TEMP "linkweave-fav-$(Get-Random)")
 
     $env:QUARKUS_PROFILE = "desktop"
     $env:QUARKUS_HTTP_HOST = "127.0.0.1"

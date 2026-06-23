@@ -23,7 +23,7 @@
 ## Main Success Scenario — Import Provided Dashboard
 
 1. Operator opens the Grafana UI and navigates to Dashboards → Import.
-2. Operator uploads the provided LinkWeave dashboard JSON file from the project repository (`docs/monitoring/grafana-provisioning/dashboards/chainlink-overview.json`).
+2. Operator uploads the provided LinkWeave dashboard JSON file from the project repository (`docs/monitoring/grafana-provisioning/dashboards/linkweave-overview.json`).
 3. Operator selects the Prometheus/VictoriaMetrics data source to bind the dashboard to.
 4. System imports the dashboard and displays it with panels populated from live metrics data.
 5. Operator sees the following dashboard sections:
@@ -107,7 +107,7 @@
 
 ### BR-001: Dashboard JSON Is a Reference Artifact
 
-The provided Grafana dashboard JSON file (`docs/monitoring/grafana-provisioning/dashboards/chainlink-overview.json`) is a reference artifact that operators can import as-is or customize. It is not required infrastructure — operators can build their own dashboards using the documented metric names.
+The provided Grafana dashboard JSON file (`docs/monitoring/grafana-provisioning/dashboards/linkweave-overview.json`) is a reference artifact that operators can import as-is or customize. It is not required infrastructure — operators can build their own dashboards using the documented metric names.
 
 ### BR-002: Dashboard Does Not Require LinkWeave Code Changes
 
@@ -125,7 +125,7 @@ The following files are provided in the project repository as reference monitori
 
 | File | Purpose |
 |---|---|
-| `docs/monitoring/grafana-provisioning/dashboards/chainlink-overview.json` | Grafana dashboard model with panels for HTTP, JVM, DB pool, business metrics, and jobs |
+| `docs/monitoring/grafana-provisioning/dashboards/linkweave-overview.json` | Grafana dashboard model with panels for HTTP, JVM, DB pool, business metrics, and jobs |
 | `docs/monitoring/docker-compose.monitoring.yml` | Optional Docker Compose stack: VictoriaMetrics (single-node) + Grafana with pre-loaded dashboard |
 | `docs/monitoring/prometheus.yml` | Example scraper configuration for VictoriaMetrics vmagent or Prometheus |
 | `docs/monitoring/README.md` | Setup instructions for the monitoring stack |

@@ -32,9 +32,9 @@
 
 1. System starts the Quarkus application.
 2. System registers a `MeterRegistry` bean that custom service classes can inject.
-3. `BookmarkService` registers a `Gauge` named `chainlink.bookmarks.total` tagged with `collection_id` that reports the total number of bookmarks in each collection.
-4. `CollectionService` registers a `Gauge` named `chainlink.collections.total` that reports the total number of collections.
-5. `CollectionAccessService` registers a `Gauge` named `chainlink.collections.shared` that reports the number of collections with at least one access grant.
+3. `BookmarkService` registers a `Gauge` named `linkweave.bookmarks.total` tagged with `collection_id` that reports the total number of bookmarks in each collection.
+4. `CollectionService` registers a `Gauge` named `linkweave.collections.total` that reports the total number of collections.
+5. `CollectionAccessService` registers a `Gauge` named `linkweave.collections.shared` that reports the number of collections with at least one access grant.
 6. System validates that no metric tag uses high-cardinality values (BR-001).
 7. All custom meters are available for scraping alongside infrastructure meters via the metrics export endpoint (UC-089).
 
@@ -45,7 +45,7 @@
 **Trigger:** A collection has no bookmarks (step 3 of custom metrics).
 **Flow:**
 
-1. The `chainlink.bookmarks.total` gauge reports `0` for that `collection_id`.
+1. The `linkweave.bookmarks.total` gauge reports `0` for that `collection_id`.
 2. The metric is still emitted (zero is a valid value, not an absence of data).
 
 ### A2: Collection Deleted After Gauge Registration
@@ -112,12 +112,12 @@ Metric recording operations (incrementing counters, recording timer values, obse
 
 ### BR-003: Metric Naming Convention
 
-All custom metrics must use the `chainlink.` prefix and follow a dot-separated hierarchical naming scheme: `chainlink.<domain>.<metric-name>`. Examples:
+All custom metrics must use the `linkweave.` prefix and follow a dot-separated hierarchical naming scheme: `linkweave.<domain>.<metric-name>`. Examples:
 
-- `chainlink.bookmarks.total`
-- `chainlink.collections.total`
-- `chainlink.collections.shared`
-- `chainlink.jobs.favicon.cleanup.duration`
+- `linkweave.bookmarks.total`
+- `linkweave.collections.total`
+- `linkweave.collections.shared`
+- `linkweave.jobs.favicon.cleanup.duration`
 
 Infrastructure metrics provided by Quarkus/Micrometer retain their default names (`http.server.requests`, `jvm.memory.used`, etc.).
 
@@ -142,9 +142,9 @@ Infrastructure metrics provided by Quarkus/Micrometer retain their default names
 
 | Metric Name | Type | Tags | Source | Description |
 |---|---|---|---|---|
-| `chainlink.bookmarks.total` | Gauge | `collection_id` | `BookmarkService` | Total bookmarks per collection |
-| `chainlink.collections.total` | Gauge | — | `CollectionService` | Total number of collections |
-| `chainlink.collections.shared` | Gauge | — | `CollectionAccessService` | Number of collections with ≥1 access grant |
+| `linkweave.bookmarks.total` | Gauge | `collection_id` | `BookmarkService` | Total bookmarks per collection |
+| `linkweave.collections.total` | Gauge | — | `CollectionService` | Total number of collections |
+| `linkweave.collections.shared` | Gauge | — | `CollectionAccessService` | Number of collections with ≥1 access grant |
 
 ### Scheduled Job Metrics (Auto-Registered by Quarkus Scheduler)
 

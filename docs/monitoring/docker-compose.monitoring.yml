@@ -22,7 +22,7 @@ services:
       - '--promscrape.config=/etc/prometheus/prometheus.yml'
       - '--retentionPeriod=60d'
     networks:
-      - chainlink-internal
+      - linkweave-internal
     restart: unless-stopped
 
   grafana:
@@ -38,11 +38,11 @@ services:
     depends_on:
       - victoriametrics
     networks:
-      - chainlink-internal
+      - linkweave-internal
     restart: unless-stopped
 
 networks:
-  chainlink-internal:
+  linkweave-internal:
 
 volumes:
   victoriametrics-data:

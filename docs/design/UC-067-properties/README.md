@@ -161,8 +161,8 @@ overlay (fixed inset-0, bg-black/55, backdrop-blur-sm)
     │   ├── Display tab
     │   │   ├── "Layout" section → grid/list icon toggle (reuses existing BookmarkLayoutToggle logic)
     │   │   └── "Properties" section → two toggle rows:
-    │   │       · "Show badges on cards"  — localStorage key: chainlink:showPropertyBadges  (default false)
-    │   │       · "Show in sidebar"       — localStorage key: chainlink:showPropertiesSidebar (default true)
+    │   │       · "Show badges on cards"  — localStorage key: linkweave:showPropertyBadges  (default false)
+    │   │       · "Show in sidebar"       — localStorage key: linkweave:showPropertiesSidebar (default true)
     │   └── Properties tab
     │       ├── hint copy + code example
     │       ├── list of PropertyDefinitionRows (name | type badge | options preview | edit | delete)
@@ -362,11 +362,11 @@ function usePersisted(key: string, defaultValue: boolean) {
 }
 
 export function useShowPropertyBadges() {
-  return usePersisted('chainlink:showPropertyBadges', false)
+  return usePersisted('linkweave:showPropertyBadges', false)
 }
 
 export function useShowPropertiesSidebar() {
-  return usePersisted('chainlink:showPropertiesSidebar', true)
+  return usePersisted('linkweave:showPropertiesSidebar', true)
 }
 ```
 

@@ -15,7 +15,7 @@ Rename the **product/codebase identity** from `chainlink` to `linkweave`. The pu
 - The deployed backend hostnames `chainlink.markushofstetter.com` / `dev-linkweave.dev` and their **OIDC cookie domains**. These are tied to DNS + the OIDC/Keycloak provider config and must be changed in lockstep with infra, not in the code-rename PR. The extension's `host_permissions` point at these and therefore **also stay** until cutover.
 - **All env-var names supplied by the prod host** (`CL_*`, `CLINK_*`, `CHAINLINK_*` secrets/paths) — they're a runtime contract with the deploy repo `~/source/IdeaProjects/docker-compose-config/chainlink` (separate git repo) + its host `.env`. Renaming them code-side without the host breaks prod. See §8a.
 
-Decisions: **D1 = yes** (code identity now, hostnames later), **D2 = yes** (rename + move DB), **D3 = yes** (Tauri bundle id), **D4 = yes** (`Cl`→`Lw`), **D5 = yes** (extension id).
+Decisions: **D1 = yes** (code identity now, hostnames later), **D2 = yes** (rename + move DB), **D3 = yes** (Tauri bundle id), **D4 = yes** (`Cl`→`Lw`), **D5 = REVISED → no** (extension is already published; changing the `id` would orphan existing installs). Keep `chainlink@markushofstetter.com`.
 
 ## 2. Canonical naming map
 
@@ -39,7 +39,7 @@ Decisions: **D1 = yes** (code identity now, hostnames later), **D2 = yes** (rena
 - DB files on disk: `developer-local-settings/chainlink.db`, `api/chainlink-test.db` — physically move/rename or the app silently creates a fresh empty DB.
 - **Browser extension** (`frontend/extension-public/manifest.json`, `frontend/src/extension/{popup,options}.html`):
   - `name` "Chainlink"→"Linkweave", `description`, `default_title`, `<title>` tags → change now (user-visible).
-  - **extension `id` `chainlink@markushofstetter.com`** → changing it changes the installed-extension identity (like the Tauri bundle id) — fine pre-launch (D5 = yes).
+  - **extension `id` `chainlink@markushofstetter.com`** → **KEEP** (D5 revised to *no*): the extension is already published, and changing the id would orphan every installed copy. *User-visible name/description/title are still renamed.*
   - `host_permissions` (`*chainlink.markushofstetter.com/*`) → **keep** (point at the backend, which stays per D1; revisit at §8).
   - `package:extension` zip filename `chainlink-ext-*` in `frontend/package.json` → `linkweave-ext-*`.
 
@@ -105,32 +105,32 @@ Scripted replace with the 3-casing map across `.md .ts .vue .html .json .yml .ya
 ### Phase 3a — Browser extension identity
 
 Hand-edit (don't blanket-replace, because of `host_permissions`):
-- `manifest.json`: `name`, `description`, `default_title`, **`id` → `linkweave@markushofstetter.com`** (D5); **leave `host_permissions` hostnames** until §8.
+- `manifest.json`: `name`, `description`, `default_title`; **`id` stays `chainlink@markushofstetter.com`** (D5 revised — extension is published); **leave `host_permissions` hostnames** until §8.
 - `popup.html` / `options.html` `<title>`.
 - `frontend/package.json`: `chainlink-ext-*` zip filename → `linkweave-ext-*`.
 - Icons (`icon-48.png` etc.) are art — swap when branding assets are ready (not blocking).
 
-## 8. Phase 4 — Deployment cutover (SEPARATE, later)
+## 8. Phase 4 — Deployment cutover — **COMPLETE**
 
-Lives in a **separate repo**: `~/source/IdeaProjects/docker-compose-config/chainlink/docker-compose.yml` (+ a host `.env` that supplies the secrets/paths). Not in the code-rename PR — coordinate all of the below together so prod doesn't break.
+Lived in a **separate repo**: `~/source/IdeaProjects/docker-compose-config/chainlink/docker-compose.yml` (+ a host `.env` that supplies the secrets/paths). All Phase-4 items are now done either in this repo or in the prod compose by the owner.
 
-**8a. Env-var contract (do NOT touch in pass 1).** These names are read from the prod `.env` via `${...}` in `application.properties`; renaming the code side without the host side breaks prod (secrets unread → OIDC/login down). Three inconsistent prefixes today:
+**8a. Env-var contract — DONE.** Host `.env` + compose env-var names flipped to `LINKWEAVE_*` by owner; code side already read that prefix. The historical `CL_*` / `CLINK_*` / `CHAINLINK_*` mix is gone.
 | Env var (host `.env` + compose) | Binds to | 
 |---|---|
-| `CLINK_API_DEPLOYMENT_ENVIRONMENT/PUBLIC_URL/INSTANCE` | `app.deployment.*` |
-| `CL_OIDC_CLIENT_SECRET` | `quarkus.oidc.credentials.secret` |
-| `CL_FORM_LOGIN_COOKIE_SECRET` | `quarkus.http.auth.session.encryption-key` |
-| `CHAINLINK_SCREENSHOT_SERVICE_URL`, `CHAINLINK_FAVICON_CACHE_DIR`, `CHAINLINK_SCREENSHOT_CACHE_DIR`, `CHAINLINK_FETCH_SKIP_DOMAINS` | `chainlink.*` config namespaces |
+| `CLINK_API_DEPLOYMENT_ENVIRONMENT/PUBLIC_URL/INSTANCE` | `app.deployment.*` (now `LINKWEAVE_API_*`) |
+| `CL_OIDC_CLIENT_SECRET` | `quarkus.oidc.credentials.secret` (now `LINKWEAVE_OIDC_CLIENT_SECRET`) |
+| `CL_FORM_LOGIN_COOKIE_SECRET` | `quarkus.http.auth.session.encryption-key` (now `LINKWEAVE_FORM_LOGIN_COOKIE_SECRET`) |
+| `CHAINLINK_SCREENSHOT_SERVICE_URL`, `CHAINLINK_FAVICON_CACHE_DIR`, `CHAINLINK_SCREENSHOT_CACHE_DIR`, `CHAINLINK_FETCH_SKIP_DOMAINS` | `linkweave.*` config namespaces (now `LINKWEAVE_SCREENSHOT_*` / `LINKWEAVE_FAVICON_*` / `LINKWEAVE_FETCH_*`) |
 
-At cutover, rename each on **both** sides + the host `.env` simultaneously. **D6**: standardize on a single prefix — **recommended `LINKWEAVE_`** (or `LW_` for brevity) — instead of the current `CL_`/`CLINK_`/`CHAINLINK_` mix.
+~~At cutover, rename each on **both** sides + the host `.env` simultaneously.~~ **D6 RESOLVED → `LINKWEAVE_`** prefix adopted across the board; both code and host `.env` are aligned.
 
-**8b. CI image names.** `git.markushofstetter.com/dividbzero/chainlink-{api,frontend,screenshot-service}` are produced by `.gitea/workflows`. Rename the workflows' image tags AND the `image:` refs in this compose in the same change, or the pull breaks.
+**8b. CI image names — DONE.** `.gitea/workflows/build.yml` produces `git.markushofstetter.com/dividbzero/linkweave-{api,frontend,screenshot-service}`; prod compose updated by owner to match.
 
-**8c. Production DB (real data!).** Compose sets `QUARKUS_DATASOURCE_JDBC_URL=jdbc:sqlite:/data/chainlink.db` with volume `/mnt/data/chainlink:/data` — so prod ignores `CHAINLINK_DB_PATH` (that default is dev-only; D2's rename is safe in pass 1 for local only). Renaming the prod DB = stop the stack, `mv /mnt/data/chainlink/chainlink.db .../linkweave.db` on the server, update the URL, restart. Or just leave the prod filename as-is — it's internal.
+**8c. Production DB — DONE.** Production DB file renamed on the server; compose `QUARKUS_DATASOURCE_JDBC_URL` points at the new path. (Volume mount `/mnt/data/...` unchanged — internal.)
 
-**8d. Other.** `container_name: chainlink-api`, external network `chainlink-internal` (needs `docker network create linkweave-internal` + recreate dependents), OIDC client redirect URIs + cookie-domain (`*chainlink.markushofstetter.com`), extension `host_permissions`, nginx upstream name. Sequence so sessions/redirects don't break.
+**8d. Other — DONE in this repo + prod compose (owner).** In-repo renames completed this pass: `screenshot-service/docker-compose.yml` (image `linkweave-screenshot-service:dev`, network `linkweave-internal`), `docs/monitoring/docker-compose.monitoring.yml` (network `linkweave-internal`), `docs/monitoring/prometheus.yml` (`job_name: linkweave`, target `linkweave:8443`), and Grafana dashboard query filters (`job="linkweave"`). OIDC client redirect URIs + cookie-domain (`*chainlink.markushofstetter.com`) were already moved to `linkweave.dev` / `dev-linkweave.dev` earlier; nginx upstream + `container_name` live in the prod compose, updated by owner.
 
-**8e. Observability identity.** The Sentry project slug `pom.xml` sentry-upload `<project>chainlink-api</project>` is **frozen — rename in the external service first**: renaming the slug code-side routes source-map uploads to a non-existent Sentry project until the project is renamed in the Sentry dashboard. Metric names (`chainlink_*`, queried by Grafana) belong here too. NOTE: `app.deployment.app-project` was renamed to `linkweave` in pass 1 — it's only an MDC log-tag value (`LoggingCommonMDCFieldsRequestFilter`), not env-driven and not a breaking contract; just update any log/Sentry dashboard filter on the old `chainlink` value.
+**8e. Observability identity — DONE.** Sentry slug `pom.xml` → `linkweave-api` / `linkweave-vue` (also renamed in the Sentry dashboard). Metric names renamed code-side to `linkweave_*` (`ApplicationMetricsService.java`) and the Grafana dashboard queries + filename/uid/tags updated to match. `app.deployment.app-project=linkweave` is an MDC log-tag value (`LoggingCommonMDCFieldsRequestFilter`), not env-driven and not a breaking contract; update any log/Sentry dashboard filter on the old `chainlink` value.
 
 ## 9. Verification gate (before merge)
 
@@ -149,9 +149,9 @@ Plus a manual smoke test: log in, load a collection, confirm the DB at the new p
 Single squashed branch; revert = drop the branch. DB is restorable from the Phase-0 backup. Mirror push is additive (no Gitea impact).
 
 ## Decisions (all resolved)
-- **D1 = yes**: Code identity now; deployment hostnames/OIDC cookie-domains + extension `host_permissions` deferred to §8.
-- **D2 = yes**: Rename DB file + `CHAINLINK_DB_PATH`→`LINKWEAVE_DB_PATH`, physically move the file.
+- **D1 = DONE**: Code identity + deployment hostnames/OIDC cookie-domains all renamed (`%dev` → `dev-linkweave.dev`, `%prod` → `linkweave.dev`); extension `host_permissions` already point at `linkweave.dev`.
+- **D2 = yes**: Rename DB file + `CHAINLINK_DB_PATH`→`LINKWEAVE_DB_PATH`, physically move the file. **Prod DB file also renamed server-side (§8c).**
 - **D3 = yes**: Change Tauri bundle identifier now (before any public desktop release).
 - **D4 = yes**: Component suffix `Cl`→`Lw` (20 components, Phase 2a).
-- **D5 = yes**: Change extension `id` to `linkweave@markushofstetter.com` now (pre-launch).
-- **D6 = OPEN**: Standardize the env-var prefix (`CL_`/`CLINK_`/`CHAINLINK_` → one prefix) at the Phase 4 cutover. Rec: `LINKWEAVE_`. *Not part of pass 1 — deployment-coupled (§8a).*
+- **D5 = REVISED → no**: Extension is already published; changing the `id` (`chainlink@markushofstetter.com`) would orphan installed copies. User-visible name/description/title still renamed in pass 1.
+- **D6 = DONE**: Standardized on `LINKWEAVE_` prefix across code + host `.env` + compose.

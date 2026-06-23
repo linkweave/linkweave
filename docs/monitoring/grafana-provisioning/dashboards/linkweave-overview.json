@@ -26,7 +26,7 @@
       "options": { "legend": { "displayMode": "list" }, "tooltip": { "mode": "multi" } },
       "targets": [
         {
-          "expr": "sum(rate(http_server_requests_seconds_count{job=\"chainlink\"}[5m]))",
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"linkweave\"}[5m]))",
           "legendFormat": "req/s"
         }
       ],
@@ -43,7 +43,7 @@
       "id": 3,
       "targets": [
         {
-          "expr": "sum(rate(http_server_requests_seconds_count{job=\"chainlink\",status=~\"5..\"}[5m])) / sum(rate(http_server_requests_seconds_count{job=\"chainlink\"}[5m]))",
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"linkweave\",status=~\"5..\"}[5m])) / sum(rate(http_server_requests_seconds_count{job=\"linkweave\"}[5m]))",
           "legendFormat": "error rate"
         }
       ],
@@ -60,15 +60,15 @@
       "id": 4,
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"chainlink\"}[5m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"linkweave\"}[5m])))",
           "legendFormat": "p50"
         },
         {
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"chainlink\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"linkweave\"}[5m])))",
           "legendFormat": "p95"
         },
         {
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"chainlink\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"linkweave\"}[5m])))",
           "legendFormat": "p99"
         }
       ],
@@ -92,7 +92,7 @@
       "id": 11,
       "targets": [
         {
-          "expr": "sum by (area) (jvm_memory_used_bytes{job=\"chainlink\"})",
+          "expr": "sum by (area) (jvm_memory_used_bytes{job=\"linkweave\"})",
           "legendFormat": "{{ area }}"
         }
       ],
@@ -109,7 +109,7 @@
       "id": 12,
       "targets": [
         {
-          "expr": "jvm_threads_live_threads{job=\"chainlink\"}",
+          "expr": "jvm_threads_live_threads{job=\"linkweave\"}",
           "legendFormat": "live threads"
         }
       ],
@@ -133,19 +133,19 @@
       "id": 21,
       "targets": [
         {
-          "expr": "jdbc_connections_active{job=\"chainlink\"}",
+          "expr": "jdbc_connections_active{job=\"linkweave\"}",
           "legendFormat": "active"
         },
         {
-          "expr": "jdbc_connections_idle{job=\"chainlink\"}",
+          "expr": "jdbc_connections_idle{job=\"linkweave\"}",
           "legendFormat": "idle"
         },
         {
-          "expr": "jdbc_connections_pending{job=\"chainlink\"}",
+          "expr": "jdbc_connections_pending{job=\"linkweave\"}",
           "legendFormat": "pending"
         },
         {
-          "expr": "jdbc_connections_max{job=\"chainlink\"}",
+          "expr": "jdbc_connections_max{job=\"linkweave\"}",
           "legendFormat": "max"
         }
       ],
@@ -170,7 +170,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "expr": "chainlink_collections_total{job=\"chainlink\"}",
+          "expr": "linkweave_collections_total{job=\"linkweave\"}",
           "legendFormat": "collections"
         }
       ],
@@ -188,7 +188,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "expr": "chainlink_collections_shared{job=\"chainlink\"}",
+          "expr": "linkweave_collections_shared{job=\"linkweave\"}",
           "legendFormat": "shared collections"
         }
       ],
@@ -206,7 +206,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "expr": "sum(chainlink_bookmarks_total{job=\"chainlink\"})",
+          "expr": "sum(linkweave_bookmarks_total{job=\"linkweave\"})",
           "legendFormat": "bookmarks"
         }
       ],
@@ -230,7 +230,7 @@
       "id": 41,
       "targets": [
         {
-          "expr": "rate(quarkus_scheduler_job_duration_seconds_sum{job=\"chainlink\"}[5m]) / rate(quarkus_scheduler_job_duration_seconds_count{job=\"chainlink\"}[5m])",
+          "expr": "rate(quarkus_scheduler_job_duration_seconds_sum{job=\"linkweave\"}[5m]) / rate(quarkus_scheduler_job_duration_seconds_count{job=\"linkweave\"}[5m])",
           "legendFormat": "{{ job_name }} avg duration"
         }
       ],
@@ -239,7 +239,7 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": ["chainlink"],
+  "tags": ["linkweave"],
   "templating": {
     "list": [
       {
@@ -259,6 +259,6 @@
   "timepicker": {},
   "timezone": "browser",
   "title": "LinkWeave",
-  "uid": "chainlink-overview",
+  "uid": "linkweave-overview",
   "version": 1
 }

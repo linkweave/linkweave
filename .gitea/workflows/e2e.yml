@@ -35,12 +35,12 @@ jobs:
       # Dedicated CI hostname keeps any future concurrent dev/CI usage from
       # colliding on cookies/storage and makes it obvious in test reports
       # that the run was an e2e run rather than dev.
-      E2E_HOST: e2e-chainlink.localhost
-      VITE_DEV_HOST: e2e-chainlink.localhost
-      PLAYWRIGHT_BASE_URL: https://e2e-chainlink.localhost:5173
+      E2E_HOST: e2e-linkweave.localhost
+      VITE_DEV_HOST: e2e-linkweave.localhost
+      PLAYWRIGHT_BASE_URL: https://e2e-linkweave.localhost:5173
       # Vite proxies /api straight at the local Quarkus instance. The cert's
       # SAN list includes 'localhost', so TLS verification works even though
-      # the browser-facing hostname is e2e-chainlink.localhost.
+      # the browser-facing hostname is e2e-linkweave.localhost.
       VITE_API_TARGET: https://localhost:8443
       # Instrument the dev server (vite-plugin-istanbul) and harvest per-test
       # coverage. The Playwright-started webServer inherits this. Report-only.

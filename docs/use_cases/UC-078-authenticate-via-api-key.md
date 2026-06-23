@@ -17,13 +17,13 @@
 ## Preconditions
 
 - The user has created at least one active API key via UC-077.
-- The client has the raw API key (e.g., stored in `~/.chainlink/config.json` or set via `CHAINLINK_API_KEY` environment variable).
+- The client has the raw API key (e.g., stored in `~/.linkweave/config.json` or set via `LINKWEAVE_API_KEY` environment variable).
 
 ## Main Success Scenario
 
-1. Client sends an HTTP request to any LinkWeave API endpoint with an `X-API-Key: cl_<64 hex chars>` header.
+1. Client sends an HTTP request to any LinkWeave API endpoint with an `X-API-Key: lw_<64 hex chars>` header.
 2. The Quarkus custom `HttpAuthenticationMechanism` (C-018) detects the `X-API-Key` header.
-3. System strips the `cl_` prefix from the header value.
+3. System strips the `lw_` prefix from the header value.
 4. System computes SHA-256 hash of the remaining value.
 5. System looks up an `api_key` record where `key_hash` matches AND `revoked_at IS NULL` AND (`expires_at IS NULL` OR `expires_at > NOW()`).
 6. A matching active, non-expired key is found.
@@ -48,7 +48,7 @@
 
 ### A2: Malformed API Key
 
-**Trigger:** The `X-API-Key` header value does not match the expected format `cl_` + 64 hex chars (step 3).
+**Trigger:** The `X-API-Key` header value does not match the expected format `lw_` + 64 hex chars (step 3).
 **Flow:**
 
 1. The authentication mechanism returns `Uni.createFrom().failure(new AuthenticationFailedException("Invalid or revoked API key"))`.
@@ -189,7 +189,7 @@ Incoming Request → Protected endpoint? (@Authenticated)
     │
     ├─ Priority 2100: ApiKeyAuthMechanism
     │   ├─ Has X-API-Key header?
-    │   │   ├─ Yes → Strip "cl_" prefix → SHA-256 hash → Lookup active key
+    │   │   ├─ Yes → Strip "lw_" prefix → SHA-256 hash → Lookup active key
     │   │   │   │  (WHERE key_hash = ? AND revoked_at IS NULL
     │   │   │   │   AND (expires_at IS NULL OR expires_at > NOW()))
     │   │   │   ├─ Found → Build SecurityIdentity → Update last_used_at → Proceed ✓

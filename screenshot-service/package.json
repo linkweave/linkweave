@@ -1,5 +1,5 @@
 {
-  "name": "chainlink-screenshot-service",
+  "name": "linkweave-screenshot-service",
   "version": "0.1.0",
   "private": true,
   "description": "Minimal Playwright-based screenshot sidecar for LinkWeave.",

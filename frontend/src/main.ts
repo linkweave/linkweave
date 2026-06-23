@@ -30,7 +30,7 @@ async function initializeApp() {
     integrations: [Sentry.browserTracingIntegration({ router })],
     tracesSampleRate: 0.2,
     tracePropagationTargets: [
-      'local-chainlink.localhost',
+      'local-linkweave.localhost',
       'dev-linkweave.dev',
       'linkweave.dev',
     ],

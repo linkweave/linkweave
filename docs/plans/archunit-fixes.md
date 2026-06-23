@@ -110,4 +110,4 @@ blast radius first within a tier**, so each step keeps the suite trending greene
   another (esp. tiers 1.1 → 1.2 and 0.1 → 2.1).
 - If a rule produces persistent false positives that aren't worth carve-outs,
   reconsider the rule itself — per UC-035 alt-flow A1, removing/changing a rule is
-  acceptable if it doesn't make sense for chainlink.
+  acceptable if it doesn't make sense for linkweave.

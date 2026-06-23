@@ -35,7 +35,7 @@ public class ArchUtil {
     /**
      * Converts a Java class name (CamelCase) to the Hibernate default physical table name
      * (snake_case): {@code AutoTagRule} → {@code auto_tag_rule}. Matches the convention
-     * used by {@code PhysicalNamingStrategyStandardImpl} which chainlink runs with.
+     * used by {@code PhysicalNamingStrategyStandardImpl} which LinkWeave runs with.
      */
     public static String tableNameOf(String simpleClassName) {
         return simpleClassName.replaceAll("(?<=[a-z0-9])(?=[A-Z])", "_").toLowerCase();
@@ -44,7 +44,7 @@ public class ArchUtil {
     /**
      * Like {@link #tableNameOf} but as a regex fragment that matches either the snake_case
      * form ({@code auto_tag_rule}) or the all-lowercase-concatenated form
-     * ({@code autotagrule}) — chainlink's constraint names mix both conventions across
+     * ({@code autotagrule}) — LinkWeave's constraint names mix both conventions across
      * migrations.
      */
     public static String tableNamePatternOf(String simpleClassName) {
