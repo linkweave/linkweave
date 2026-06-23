@@ -60,12 +60,25 @@ const posStyle = ref<Record<string, string>>({})
 
 const n = computed(() => selection.count)
 
-function countFor(tagId: string): number {
-  let c = 0
+// Reverse index tagId → count across the selection, rebuilt only when the
+// selection changes. countFor then costs O(1) per row instead of re-scanning
+// every selected bookmark for every tag (O(tags × bookmarks) per recompute),
+// and it's shared by the `rows` and `changes` computeds.
+const tagCounts = computed<Map<string, number>>(() => {
+  const counts = new Map<string, number>()
   for (const b of selection.selectedBookmarks) {
-    if (b.data.tagIds?.has(tagId)) c++
+    const ids = b.data.tagIds
+    if (ids) {
+      for (const id of ids) {
+        counts.set(id, (counts.get(id) ?? 0) + 1)
+      }
+    }
   }
-  return c
+  return counts
+})
+
+function countFor(tagId: string): number {
+  return tagCounts.value.get(tagId) ?? 0
 }
 
 // Universe = inline-created (this session, not yet committed) + every real tag
@@ -202,7 +215,16 @@ async function apply(): Promise<void> {
     for (const a of adds) {
       if (a.isNew) {
         const tmp = createdThisSession.value.find((c) => c.id === a.id)
-        if (!tmp) continue
+        // This should never happen — `adds` is derived from the same
+        // createdThisSession as the universe — but if it does, throwing is
+        // loud: falling through would send the temp id ("tmp-0") to the
+        // backend, which 500s on UUID parse and masks the real invariant
+        // violation behind a generic failure.
+        if (!tmp) {
+          throw new Error(
+            `Invariant: staged inline tag ${a.id} (${a.name}) is missing from session state`,
+          )
+        }
         // No colour sent — the backend auto-assigns from its palette, matching
         // the app's other create sites (CreateTagDialog, useTagSuggestions).
         const real = await tagStore.createTag({ collectionId, name: tmp.name })
@@ -218,21 +240,30 @@ async function apply(): Promise<void> {
     )
     resetDraft()
     close()
-  } catch {
+  } catch (err) {
+    // Log the originating failure so it isn't swallowed by the rollback path.
+    console.error('Batch tag apply failed', err)
     // Roll back any inline-created tags so a failed batch leaves no orphans.
-    // If a rollback itself fails the tag is left persisted; surface it rather
-    // than swallowing silently so the orphan isn't invisible. No refetch:
-    // these tags were just created and never applied to any bookmark, so the
-    // post-delete collection refetch (meant to drop stale tag references) is
-    // pure overhead here — patchTags already removed them from the store.
+    // No refetch: these tags were just created and never applied to any
+    // bookmark, so the post-delete collection refetch (meant to drop stale tag
+    // references) is pure overhead here — patchTags already removes them.
+    let rollbackFailures = 0
     for (const id of createdReal) {
       try {
         await tagStore.deleteTag(id, { refetch: false })
       } catch (rollbackErr) {
+        rollbackFailures++
         console.error(`Failed to roll back inline-created tag ${id}; it may be orphaned.`, rollbackErr)
       }
     }
-    notification.error(t('batchTag.applyError'))
+    // If a rollback itself failed the tag is left persisted. The plain
+    // "no changes were made" message is no longer true in that case, so warn
+    // the user that cleanup was incomplete rather than reassuring them.
+    if (rollbackFailures > 0) {
+      notification.warning(t('batchTag.applyErrorOrphans'))
+    } else {
+      notification.error(t('batchTag.applyError'))
+    }
     // Clear the stale draft / staged creates so a reopen starts clean. reopen
     // resets anyway, but making the intent explicit avoids transient stale
     // state on the always-mounted component.
@@ -247,6 +278,7 @@ function resetDraft(): void {
   draft.value = {}
   query.value = ''
   createdThisSession.value = []
+  tmpSeq = 0
 }
 
 function close(): void {
