@@ -305,6 +305,47 @@ test.describe('Batch tag editor (UC-074a)', () => {
     await expect(page.getByTestId('batch-tag-create')).toContainText(created)
   })
 
+  test('should warn about orphaned tags when the rollback itself fails', async ({ page }) => {
+    const created = `orphan-${ts}`
+    await openEditor(page, collection.collectionId, bm.a)
+
+    await page.getByTestId('batch-tag-search').fill(created)
+    await page.getByTestId('batch-tag-create').click()
+    await expect(row(page, created)).toHaveAttribute('aria-checked', 'true')
+
+    // Both the batch and the compensating delete fail → the created tag is left
+    // persisted (orphaned), so the toast must call that out rather than the
+    // reassuring "no changes were made" message.
+    await page.route('**/api/bookmarks/batch-tag', (route) =>
+      route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: '{"message":"simulated failure"}',
+      }),
+    )
+    await page.route('**/api/tags/*', (route) => {
+      if (route.request().method() === 'DELETE') {
+        return route.fulfill({
+          status: 500,
+          contentType: 'application/json',
+          body: '{"message":"simulated failure"}',
+        })
+      }
+      return route.continue()
+    })
+
+    await page.getByTestId('batch-tag-apply').click()
+
+    await expect(
+      page.getByText('Failed to update tags, and some created tags could not be cleaned up.'),
+    ).toBeVisible()
+    await expect(editor(page)).toHaveCount(0)
+    await expect(page.getByTestId('batch-count')).toHaveText('1 selected')
+
+    await page.unroute('**/api/bookmarks/batch-tag')
+    await page.unroute('**/api/tags/*')
+  })
+
   // ---- Mutating apply flows (run last) -------------------------------------
 
   test('should create a tag inline and apply it to the whole selection', async ({ page }) => {

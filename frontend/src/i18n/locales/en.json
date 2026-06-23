@@ -560,6 +560,7 @@
     "toastAdded": "Added {names} to {k}.",
     "toastRemoved": "Removed {names} from {k}.",
     "toastBoth": "Added {addNames} to {addK}, removed {removeNames} from {removeK}.",
-    "applyError": "Failed to update tags. No changes were made."
+    "applyError": "Failed to update tags. No changes were made.",
+    "applyErrorOrphans": "Failed to update tags, and some created tags could not be cleaned up."
   }
 }
