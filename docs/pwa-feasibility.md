@@ -1,6 +1,6 @@
 # PWA Feasibility Study
 
-**Requirement:** FR-091
+**Requirement:** FR-093
 **Status:** Draft
 **Date:** 2026-05-19
 **Related:** [offlinemode.md](offlinemode.md), [browser-extension.md](browser-extension.md), [cli-tool.md](cli-tool.md)
@@ -131,7 +131,7 @@ Assumes the offline mode work (FR-052–FR-061) is already delivered. PWA-specif
 
 ## 7. Recommended Next Steps
 
-1. **Ship installable PWA** as FR-091's follow-up requirement once offline mode (FR-052–FR-061) is in. Split into:
+1. **Ship installable PWA** as FR-093's follow-up requirement once offline mode (FR-052–FR-061) is in. Split into:
    - New FR: "Installable PWA" — covers icons, screenshots, Lighthouse pass.
    - New FR (optional): "Web Share Target" — mobile share-sheet integration.
 2. **Do not** commit to push notifications or offline writes in the same slice. They each merit their own feasibility/spec round.
