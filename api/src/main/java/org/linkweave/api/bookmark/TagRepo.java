@@ -39,6 +39,23 @@ public class TagRepo extends BaseRepo<Tag> {
             .fetchOne();
     }
 
+    /**
+     * Bulk lookup for batch operations — the tag-side counterpart to
+     * {@code BookmarkRepo.findByIdsWithTags}. Loads every requested id in one
+     * query instead of one {@link #getById} call per id. Unknown ids are simply
+     * absent from the result; completeness is the caller's concern.
+     */
+    @NonNull
+    public List<Tag> findByIds(@NonNull List<ID<Tag>> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        var uuids = ids.stream().map(ID::getUUID).toList();
+        return db.selectFrom(QTag.tag)
+            .where(QTag.tag.id.in(uuids))
+            .fetch();
+    }
+
     public void flush() {
         db.flush();
     }

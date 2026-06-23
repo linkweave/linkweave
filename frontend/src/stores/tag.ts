@@ -73,7 +73,8 @@ export const useTagStore = defineStore('tag', () => {
     return updated
   }
 
-  async function deleteTag(tagId: string): Promise<void> {
+  async function deleteTag(tagId: string, options: { refetch?: boolean } = {}): Promise<void> {
+    const { refetch = true } = options
     await tagApi.apiTagsTagIdDelete({ tagId })
     patchTags((list) => list.filter((t) => t.id !== tagId))
 
@@ -81,8 +82,10 @@ export const useTagStore = defineStore('tag', () => {
     // a token referencing the now-deleted tag name simply matches nothing.
 
     // Refetch so bookmarks drop their reference to the now-deleted tag. Mirrors
-    // deleteFolder and avoids a tag -> bookmark store dependency.
-    if (collectionStore.currentCollectionId) {
+    // deleteFolder and avoids a tag -> bookmark store dependency. Skippable for
+    // callers that know no bookmarks reference the tag yet (e.g. the batch-tag
+    // rollback of a just-created tag that never got applied).
+    if (refetch && collectionStore.currentCollectionId) {
       void collectionStore.fetchCollectionInfo(collectionStore.currentCollectionId)
     }
   }

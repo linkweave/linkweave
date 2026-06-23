@@ -341,6 +341,29 @@ class BookmarkBatchResourceITest {
 
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldReturnSuccessAndMutateNothing_whenBatchTagHasNoTagIds() {
+        Collection collection = fixtureService.createTestCollection();
+        Bookmark bookmark = persistBookmark(collection, "no-op");
+
+        String body = """
+            {"collectionId":"%s","addTagIds":[],"removeTagIds":[],"bookmarkIds":["%s"]}
+            """.formatted(
+            collection.getId().getUUID(),
+            bookmark.getId().getUUID());
+
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/bookmarks/batch-tag")
+            .then()
+            .statusCode(200)
+            .body("bookmarkList", hasSize(1))
+            // No tags added or removed — the early-exit leaves the bookmark alone.
+            .body("bookmarkList[0].data.tagIds", hasSize(0));
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldFail_whenBatchTagWithTagOfOtherCollection() {
         Collection collection = fixtureService.createTestCollection();
         Collection otherCollection = fixtureService.createTestCollection();

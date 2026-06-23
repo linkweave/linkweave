@@ -238,6 +238,73 @@ test.describe('Batch tag editor (UC-074a)', () => {
     await page.unroute('**/api/bookmarks/batch-tag')
   })
 
+  // The NFR-018 case above stages an existing tag (no inline create), so the
+  // rollback loop is a no-op. This one stages an inline-created tag that is
+  // already persisted by the time the batch fails — exercising the orphan-
+  // prevention branch (temp-id → real-id mapping + sequential delete on catch).
+  test('should roll back an inline-created tag and retain the selection when Apply fails', async ({
+    page,
+  }) => {
+    const created = `rollback-${ts}`
+    await openEditor(page, collection.collectionId, bm.a)
+
+    // Capture the real id the backend assigns to the inline-created tag, and
+    // record any rollback DELETE so we can assert the orphan was cleaned up.
+    let createdTagId = ''
+    await page.route('**/api/tags', async (route) => {
+      const response = await route.fetch()
+      if (route.request().method() === 'POST') {
+        const body = await response.json().catch(() => ({}))
+        if (body.id) createdTagId = body.id
+      }
+      await route.fulfill({ response })
+    })
+    const deletedTagIds: string[] = []
+    await page.route('**/api/tags/*', async (route) => {
+      if (route.request().method() === 'DELETE') {
+        deletedTagIds.push(route.request().url().split('/').pop() ?? '')
+      }
+      await route.continue()
+    })
+
+    await page.getByTestId('batch-tag-search').fill(created)
+    await page.getByTestId('batch-tag-create').click()
+    // The new tag is persisted and staged as add.
+    await expect(row(page, created)).toHaveAttribute('aria-checked', 'true')
+
+    // Now make the batch fail: the created tag is already persisted, so the
+    // rollback path must delete it to avoid leaving an orphan.
+    await page.route('**/api/bookmarks/batch-tag', (route) =>
+      route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: '{"message":"simulated failure"}',
+      }),
+    )
+
+    await page.getByTestId('batch-tag-apply').click()
+
+    await expect(page.getByText('Failed to update tags. No changes were made.')).toBeVisible()
+    await expect(editor(page)).toHaveCount(0)
+    // Selection retained despite the failed apply.
+    await expect(page.getByTestId('batch-count')).toHaveText('1 selected')
+
+    await page.unroute('**/api/bookmarks/batch-tag')
+    await page.unroute('**/api/tags')
+    await page.unroute('**/api/tags/*')
+
+    // The orphan-prevention branch ran: the created tag was deleted.
+    expect(createdTagId).toBeTruthy()
+    expect(deletedTagIds).toContain(createdTagId)
+
+    // Reopening reflects the rollback: the tag is gone from the collection, so
+    // its row is absent and Create is offered again for the same name.
+    await page.getByTestId('batch-add-tag').click()
+    await expect(row(page, created)).toHaveCount(0)
+    await page.getByTestId('batch-tag-search').fill(created)
+    await expect(page.getByTestId('batch-tag-create')).toContainText(created)
+  })
+
   // ---- Mutating apply flows (run last) -------------------------------------
 
   test('should create a tag inline and apply it to the whole selection', async ({ page }) => {

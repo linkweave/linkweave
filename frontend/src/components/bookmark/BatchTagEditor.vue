@@ -221,15 +221,22 @@ async function apply(): Promise<void> {
   } catch {
     // Roll back any inline-created tags so a failed batch leaves no orphans.
     // If a rollback itself fails the tag is left persisted; surface it rather
-    // than swallowing silently so the orphan isn't invisible.
+    // than swallowing silently so the orphan isn't invisible. No refetch:
+    // these tags were just created and never applied to any bookmark, so the
+    // post-delete collection refetch (meant to drop stale tag references) is
+    // pure overhead here — patchTags already removed them from the store.
     for (const id of createdReal) {
       try {
-        await tagStore.deleteTag(id)
+        await tagStore.deleteTag(id, { refetch: false })
       } catch (rollbackErr) {
         console.error(`Failed to roll back inline-created tag ${id}; it may be orphaned.`, rollbackErr)
       }
     }
     notification.error(t('batchTag.applyError'))
+    // Clear the stale draft / staged creates so a reopen starts clean. reopen
+    // resets anyway, but making the intent explicit avoids transient stale
+    // state on the always-mounted component.
+    resetDraft()
     close()
   } finally {
     applying.value = false
@@ -305,19 +312,22 @@ function removeListeners(): void {
 
 watch(
   () => props.open,
-  (open) => {
+  async (open) => {
     if (open) {
       resetDraft()
       reposition() // immediate (estimated height) to avoid a flash at 0,0
       addListeners()
-      nextTick(() => {
-        reposition() // accurate now that the popover is in the DOM
-        setTimeout(() => searchInput.value?.focus(), 40)
-      })
+      await nextTick()
+      reposition() // accurate now that the popover is in the DOM
+      // Wait a paint frame before focusing: the input lives inside a Teleport,
+      // so a bare nextTick (DOM patched) can still fire before the browser has
+      // laid out the teleported node enough to accept focus reliably.
+      requestAnimationFrame(() => searchInput.value?.focus())
     } else {
       removeListeners()
     }
   },
+  { immediate: true },
 )
 
 onBeforeUnmount(removeListeners)

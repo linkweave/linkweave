@@ -223,14 +223,20 @@ public class BookmarkService {
         @NonNull List<ID<Tag>> removeTagIds,
         @NonNull ID<Collection> collectionId
     ) {
+        // A direct API caller can send both lists empty (the DTO permits it).
+        // Bail out before persisting so we don't bump userMutiert / version on
+        // every bookmark for no semantic change.
+        if (addTagIds.isEmpty() && removeTagIds.isEmpty()) {
+            return;
+        }
         // Reject contradictory requests rather than silently letting remove win:
         // a direct API caller asking to both add and remove the same tag is a bug.
         if (!Collections.disjoint(addTagIds, removeTagIds)) {
             throw new AppValidationException(
                 AppValidationMessage.genericMessage("AppValidation.batchTag.overlappingTagIds"));
         }
-        List<Tag> addTags = addTagIds.stream().map(tagRepo::getById).toList();
-        List<Tag> removeTags = removeTagIds.stream().map(tagRepo::getById).toList();
+        List<Tag> addTags = loadTagsOrThrow(addTagIds);
+        List<Tag> removeTags = loadTagsOrThrow(removeTagIds);
         addTags.forEach(tag -> requireTagBelongsToCollection(tag, collectionId));
         removeTags.forEach(tag -> requireTagBelongsToCollection(tag, collectionId));
         for (Bookmark bookmark : bookmarks) {
@@ -238,6 +244,24 @@ public class BookmarkService {
             removeTags.forEach(bookmark.getTags()::remove);
             bookmarkRepo.persist(bookmark);
         }
+    }
+
+    /**
+     * Resolves a list of tag ids in one bulk query, throwing if any id is
+     * unknown — preserving the {@code getById} semantics the batch path relied
+     * on before the bulk load. Duplicate ids in the input are tolerated
+     * (the check compares against the distinct id set).
+     */
+    @NonNull
+    private List<Tag> loadTagsOrThrow(@NonNull List<ID<Tag>> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        List<Tag> tags = tagRepo.findByIds(ids);
+        if (tags.size() != new HashSet<>(ids).size()) {
+            throw new AppFailureException(AppFailureMessage.entityNotFoundMsg(Tag.class, ids.toString()));
+        }
+        return tags;
     }
 
     private void requireFolderBelongsToCollection(@NonNull Folder folder, @NonNull ID<Collection> collectionId) {
