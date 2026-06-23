@@ -213,8 +213,9 @@ public class BookmarkService {
     /**
      * Tri-state batch tag edit (UC-074a): adds every tag in {@code addTagIds} and removes
      * every tag in {@code removeTagIds} from each bookmark, in a single transaction. Either
-     * list may be empty. A tag appearing in both lists is removed (remove wins). All tags are
-     * validated against the collection up front so the whole edit rolls back if any is foreign.
+     * list may be empty. A tag appearing in both lists is rejected with a validation error
+     * rather than silently picking one side. All tags are validated against the collection
+     * up front so the whole edit rolls back if any is foreign.
      */
     public void batchEditTags(
         @NonNull List<Bookmark> bookmarks,
