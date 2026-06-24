@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useEffectiveLayout } from '@/composables/useEffectiveLayout'
 import { useBookmarkStore } from '@/stores/bookmark'
+import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useNotificationStore } from '@/stores/notification'
 import BookmarkCard from './BookmarkCard.vue'
 import BookmarkGroupedLayout from './BookmarkGroupedLayout.vue'
@@ -21,6 +22,7 @@ const previewHover = provideBookmarkPreviewHover()
 
 const { t } = useI18n()
 const bookmarkStore = useBookmarkStore()
+const searchQueryStore = useSearchQueryStore()
 const notification = useNotificationStore()
 const effectiveLayout = useEffectiveLayout()
 
@@ -117,7 +119,9 @@ async function confirmDelete() {
   </div>
 
   <div v-else-if="bookmarkStore.filteredBookmarks.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
-    <p class="text-muted-foreground">{{ t('bookmarkList.empty') }}</p>
+    <p class="text-muted-foreground">
+      {{ searchQueryStore.queryTokens.length > 0 ? t('bookmarkList.emptyNoResults') : t('bookmarkList.empty') }}
+    </p>
   </div>
 
   <!-- TransitionGroup animates batch/single removals out (UC-074: grid

@@ -352,6 +352,7 @@
   },
   "bookmarkList": {
     "empty": "Noch keine Lesezeichen. Klicken Sie auf 'Lesezeichen hinzufügen', um zu beginnen.",
+    "emptyNoResults": "Keine Lesezeichen entsprechen Ihrer Suche.",
     "loading": "Lesezeichen laden...",
     "unfiled": "Ohne Ordner"
   },
@@ -395,6 +396,7 @@
     "password": "Passwort",
     "submit": "Anmelden",
     "google": "Mit Google anmelden",
+    "or": "oder",
     "error": "Ungültige E-Mail oder Passwort.",
     "noAccount": "Noch kein Konto?",
     "register": "Konto erstellen"

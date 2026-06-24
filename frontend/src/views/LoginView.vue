@@ -83,6 +83,12 @@ const onSubmit = handleSubmit(async (values) => {
         {{ t('login.google') }}
       </ButtonLw>
 
+      <div v-if="!isDesktop" class="flex items-center gap-3" aria-hidden="true">
+        <div class="h-px flex-1 bg-gradient-to-r from-transparent to-white/25"></div>
+        <span class="text-xs font-medium uppercase tracking-wider text-white/50">{{ t('login.or') }}</span>
+        <div class="h-px flex-1 bg-gradient-to-l from-transparent to-white/25"></div>
+      </div>
+
       <form @submit.prevent="onSubmit" class="space-y-4">
         <FormFieldLw :label="t('login.email')" for-id="login-email" :error="errors.email">
           <input

@@ -355,6 +355,7 @@
   },
   "bookmarkList": {
     "empty": "No bookmarks yet. Click \"Add Bookmark\" to get started.",
+    "emptyNoResults": "No bookmarks match your search.",
     "loading": "Loading bookmarks...",
     "unfiled": "Unfiled"
   },
@@ -398,6 +399,7 @@
     "password": "Password",
     "submit": "Sign in",
     "google": "Sign in with Google",
+    "or": "or",
     "error": "Invalid email or password.",
     "noAccount": "Don't have an account?",
     "register": "Create one"
