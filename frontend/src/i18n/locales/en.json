@@ -527,6 +527,7 @@
     "toolbarLabel": "Batch actions",
     "selected": "{count} selected",
     "selectAll": "Select all {count}",
+    "selectAllShort": "All {count}",
     "clearSelection": "Clear selection",
     "move": "Move",
     "tags": "Tags",

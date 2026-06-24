@@ -524,6 +524,7 @@
     "toolbarLabel": "Stapelaktionen",
     "selected": "{count} ausgewählt",
     "selectAll": "Alle {count} auswählen",
+    "selectAllShort": "Alle {count}",
     "clearSelection": "Auswahl aufheben",
     "move": "Verschieben",
     "tags": "Tags",

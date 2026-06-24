@@ -93,19 +93,23 @@ async function copyUrls() {
         v-if="!selection.allSelected"
         type="button"
         class="batch-select-all"
+        :aria-label="t('batch.selectAll', { count: selection.totalCount })"
         data-testid="batch-select-all"
         @click="selection.selectAll()"
       >
-        {{ t('batch.selectAll', { count: selection.totalCount }) }}
+        <span class="hidden md:inline">{{ t('batch.selectAll', { count: selection.totalCount }) }}</span>
+        <span class="md:hidden">{{ t('batch.selectAllShort', { count: selection.totalCount }) }}</span>
       </button>
 
-      <span class="batch-esc-hint" aria-hidden="true">esc</span>
+      <span class="batch-esc-hint hidden md:inline-block" aria-hidden="true">esc</span>
 
       <span class="flex-1" />
 
       <button
         type="button"
         class="batch-btn"
+        :aria-label="t('batch.move')"
+        :title="t('batch.move')"
         data-testid="batch-move"
         @click="showMoveDialog = true"
       >
@@ -117,6 +121,8 @@ async function copyUrls() {
         ref="tagButton"
         type="button"
         class="batch-btn"
+        :aria-label="t('batch.tags')"
+        :title="t('batch.tags')"
         :aria-haspopup="true"
         :aria-expanded="showTagEditor"
         data-testid="batch-add-tag"
@@ -126,7 +132,14 @@ async function copyUrls() {
         <span class="hidden md:inline">{{ t('batch.tags') }}</span>
       </button>
 
-      <button type="button" class="batch-btn" data-testid="batch-copy-urls" @click="copyUrls">
+      <button
+        type="button"
+        class="batch-btn"
+        :aria-label="t('batch.copyUrls')"
+        :title="t('batch.copyUrls')"
+        data-testid="batch-copy-urls"
+        @click="copyUrls"
+      >
         <Copy :size="14" />
         <span class="hidden md:inline">{{ t('batch.copyUrls') }}</span>
       </button>
@@ -136,6 +149,8 @@ async function copyUrls() {
       <button
         type="button"
         class="batch-btn batch-btn--destructive"
+        :aria-label="t('batch.delete')"
+        :title="t('batch.delete')"
         data-testid="batch-delete"
         @click="showDeleteConfirm = true"
       >
@@ -266,6 +281,30 @@ async function copyUrls() {
   height: 20px;
   background: var(--color-border);
   margin: 0 4px;
+}
+
+/* On touch-sized viewports the labels collapse to icons, so grow the tap
+   targets toward the ~44px guideline to keep the icon-only buttons hittable. */
+@media (max-width: 767px) {
+  .batch-bar-clip.is-open {
+    max-height: 60px;
+  }
+
+  .batch-bar {
+    height: 54px;
+    padding: 0 12px;
+    gap: 6px;
+  }
+
+  .batch-clear {
+    width: 40px;
+    height: 40px;
+  }
+
+  .batch-btn {
+    height: 40px;
+    padding: 0 12px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

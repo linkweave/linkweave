@@ -42,6 +42,22 @@ async function gotoCollection(page: Page, collectionId: string) {
   await expect(page.getByTestId(/^bookmark-card-/).first()).toBeVisible()
 }
 
+/**
+ * Switches the bookmark layout. The toggle renders as a segmented button group
+ * at the `sm` breakpoint (≥640px) and collapses to a "Change layout" menu below
+ * it, so the control to click depends on the viewport (the Mobile projects run
+ * at <640px). See BookmarkLayoutToggle.vue.
+ */
+async function switchLayout(page: Page, label: 'Grid view' | 'List view') {
+  const width = page.viewportSize()?.width ?? 1280
+  if (width >= 640) {
+    await page.getByRole('button', { name: label }).click()
+  } else {
+    await page.getByRole('button', { name: 'Change layout' }).click()
+    await page.getByRole('menuitemradio', { name: label }).click()
+  }
+}
+
 /** Navigates, enters selection mode via the toolbar button, and selects the given cards. */
 async function selectByTitles(page: Page, collectionId: string, ...titles: string[]) {
   await gotoCollection(page, collectionId)
@@ -252,11 +268,11 @@ test.describe('Batch select (UC-074)', () => {
     await selectByTitles(page, collection.collectionId, bm.one)
 
     // Switch grid ⇄ list — selection (a set of ids) survives.
-    await page.getByRole('button', { name: 'List view' }).click()
+    await switchLayout(page, 'List view')
     await expect(batchCount(page)).toHaveText('1 selected')
     await expect(cardByTitle(page, bm.one)).toHaveAttribute('aria-selected', 'true')
 
-    await page.getByRole('button', { name: 'Grid view' }).click()
+    await switchLayout(page, 'Grid view')
     await expect(batchCount(page)).toHaveText('1 selected')
   })
 
