@@ -1,9 +1,9 @@
-import {initializeSession} from '@/composables/useSessionInit'
-import {useAuthStore} from '@/stores/auth'
-import {useCollectionStore} from '@/stores/collection'
+import { initializeSession } from '@/composables/useSessionInit'
+import { useAuthStore } from '@/stores/auth'
+import { useCollectionStore } from '@/stores/collection'
 import CollectionView from '@/views/CollectionView.vue'
 import LoginView from '@/views/LoginView.vue'
-import {createRouter, createWebHistory} from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -11,47 +11,52 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: CollectionView
+      component: CollectionView,
     },
     {
       path: '/collections/:id',
       name: 'collection',
-      component: CollectionView
+      component: CollectionView,
+    },
+    {
+      path: '/collections/:id/import',
+      name: 'import-review',
+      component: () => import('@/views/ImportReviewView.vue'),
     },
     {
       path: '/manage/collections',
       name: 'manage-collections',
-      component: () => import('@/views/CollectionManageView.vue')
+      component: () => import('@/views/CollectionManageView.vue'),
     },
     {
       path: '/trashbin',
       name: 'trashbin',
-      component: () => import('@/views/TrashbinView.vue')
+      component: () => import('@/views/TrashbinView.vue'),
     },
     {
       path: '/cleanup-suggestions',
       name: 'cleanup-suggestions',
-      component: () => import('@/views/CleanupSuggestionsView.vue')
+      component: () => import('@/views/CleanupSuggestionsView.vue'),
     },
     {
       path: '/login',
       name: 'login',
       meta: { public: true },
-      component: LoginView
+      component: LoginView,
     },
     {
       path: '/register',
       name: 'register',
       meta: { public: true },
-      component: () => import('@/views/RegisterView.vue')
+      component: () => import('@/views/RegisterView.vue'),
     },
     {
       path: '/privacy',
       name: 'privacy',
       meta: { public: true },
-      component: () => import('@/views/PrivacyPolicyView.vue')
-    }
-  ]
+      component: () => import('@/views/PrivacyPolicyView.vue'),
+    },
+  ],
 })
 
 router.beforeEach(async (to) => {

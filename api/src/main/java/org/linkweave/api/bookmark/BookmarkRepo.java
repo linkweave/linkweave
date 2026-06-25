@@ -16,13 +16,13 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.DateTimeExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.linkweave.api.bookmark.folder.Folder;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.collection.QCollection;
 import org.linkweave.infrastructure.db.BaseRepo;
 import org.linkweave.infrastructure.stereotypes.Repository;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 @Repository
 @RequiredArgsConstructor
@@ -211,6 +211,19 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             .from(QBookmark.bookmark)
             .where(QBookmark.bookmark.id.eq(bookmarkId.getUUID()))
             .fetchOne();
+    }
+
+    /**
+     * All non-deleted bookmark URLs in a collection. Scalar projection (no
+     * entity load, no timestamp extraction — see {@link #findUrlById}); used by
+     * import dedup to compute which incoming URLs already exist (UC-096).
+     */
+    @NonNull
+    public List<URL> findActiveUrlsByCollection(@NonNull ID<Collection> collectionId) {
+        return db.select(QBookmark.bookmark.url)
+            .from(QBookmark.bookmark)
+            .where(QBookmark.bookmark.collection.id.eq(collectionId.getUUID()).and(notDeleted()))
+            .fetch();
     }
 
     /** A bookmark's URL paired with its collection's browser fetch allowlist. */

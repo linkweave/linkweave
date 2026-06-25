@@ -92,6 +92,8 @@ rectangle "LinkWeave Bookmark Manager" {
 
     rectangle "Import" {
         usecase "UC-031\nImport Browser\nBookmarks" as UC031 <<implemented>>
+        usecase "UC-096\nReview & Select\nBefore Import" as UC096
+        UC096 .> UC031 : extends
         note right of UC031
           See bookmark-import.md
           for implementation plan
