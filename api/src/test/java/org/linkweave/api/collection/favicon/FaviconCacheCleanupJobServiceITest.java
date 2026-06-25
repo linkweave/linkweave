@@ -83,6 +83,31 @@ class FaviconCacheCleanupJobServiceITest {
     }
 
     @Test
+    void shouldEvictOldNeverClickedEvenWhenRecentClickExists() {
+        // Regression: a two-tier lastClickedAt-NULLS-LAST sort stranded ancient
+        // never-clicked bookmarks behind a recently-clicked one, tripping the
+        // cleanup's age break before the oldest entry was reached. Candidates
+        // must sort by coalesce(lastClickedAt, timestampErstellt) so the
+        // least-recently-active entry is evicted first regardless of click state.
+        Bookmark clicked = fixtureService.createTestBookmark(b -> b
+            .withUrl("https://recent-clicked.test")
+            .withLastClickedAt(OffsetDateTime.now().minusDays(1)));
+        Bookmark stale = fixtureService.createTestBookmark(b -> b.withUrl("https://stale-unclicked.test"));
+        backdateCreated(stale, 100);
+
+        String clickedOrigin = FaviconFetcherService.canonicalOrigin(clicked.getUrl());
+        String staleOrigin = FaviconFetcherService.canonicalOrigin(stale.getUrl());
+        cacheService.putSuccess(clickedOrigin, bytes(2048), "image/png");
+        cacheService.putSuccess(staleOrigin, bytes(2048), "image/png");
+
+        FaviconCacheCleanupJobService.Result result = cleanupJob.run(3000L, Duration.ofDays(28));
+
+        assertThat(result.evictedFiles()).isEqualTo(1);
+        assertThat(payloadFile(staleOrigin)).doesNotExist();
+        assertThat(payloadFile(clickedOrigin)).exists();
+    }
+
+    @Test
     void shouldNotEvict_whenAllBookmarksYoungerThanMinAge() {
         Bookmark fresh = fixtureService.createTestBookmark(b -> b.withUrl("https://fresh.test"));
         // leave timestampErstellt at default (today)

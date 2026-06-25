@@ -87,6 +87,12 @@ public class BookmarkBuilder {
     }
 
     @NonNull
+    public BookmarkBuilder withLastClickedAt(@Nullable OffsetDateTime at) {
+        bookmark.setLastClickedAt(at);
+        return this;
+    }
+
+    @NonNull
     public static Bookmark build(Consumer<BookmarkBuilder> block) {
         BookmarkBuilder builder = new BookmarkBuilder();
         block.accept(builder);

@@ -250,8 +250,11 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
     public List<Bookmark> findAllOldestFirstNotDeleted() {
         return db.selectFrom(QBookmark.bookmark)
             .where(notDeleted())
-            .orderBy(QBookmark.bookmark.lastClickedAt.asc().nullsLast())
-            .orderBy(QBookmark.bookmark.timestampErstellt.asc())
+            .orderBy(Expressions.dateTimeTemplate(
+                OffsetDateTime.class,
+                "coalesce({0}, {1})",
+                QBookmark.bookmark.lastClickedAt,
+                QBookmark.bookmark.timestampErstellt).asc())
             .fetch();
     }
 
