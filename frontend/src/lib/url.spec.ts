@@ -1,4 +1,4 @@
-import { ensureUrlProtocol } from './url'
+import { ensureUrlProtocol, normalizeUrl } from './url'
 
 describe('ensureUrlProtocol', () => {
   it('prepends https:// when no colon present', () => {
@@ -23,5 +23,24 @@ describe('ensureUrlProtocol', () => {
 
   it('trims whitespace before checking', () => {
     expect(ensureUrlProtocol('  example.com  ')).toBe('https://example.com')
+  })
+})
+
+describe('normalizeUrl', () => {
+  it('lowercases scheme and host', () => {
+    expect(normalizeUrl('HTTPS://Example.COM/Path')).toBe('https://example.com/Path')
+  })
+
+  it('treats a bare domain and a trailing root slash as equal', () => {
+    expect(normalizeUrl('https://example.com')).toBe('https://example.com')
+    expect(normalizeUrl('https://example.com/')).toBe('https://example.com')
+  })
+
+  it('strips trailing slashes from a path', () => {
+    expect(normalizeUrl('https://example.com/path/')).toBe('https://example.com/path')
+  })
+
+  it('drops the fragment and sorts query params', () => {
+    expect(normalizeUrl('https://example.com/x?b=2&a=1#frag')).toBe('https://example.com/x?a=1&b=2')
   })
 })

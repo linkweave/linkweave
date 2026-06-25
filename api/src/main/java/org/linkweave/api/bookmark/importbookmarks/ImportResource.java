@@ -1,14 +1,14 @@
 package org.linkweave.api.bookmark.importbookmarks;
 
 import java.io.IOException;
-import java.time.temporal.ChronoUnit;
 import java.io.InputStream;
-import java.time.temporal.ChronoUnit;
 import java.nio.file.Files;
 import java.time.temporal.ChronoUnit;
 
 import ch.dvbern.dvbstarter.types.id.ID;
 import io.quarkus.security.Authenticated;
+import io.smallrye.faulttolerance.api.RateLimit;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
@@ -17,17 +17,16 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import lombok.RequiredArgsConstructor;
+import org.jboss.resteasy.reactive.RestForm;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
+import org.jspecify.annotations.NonNull;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.shared.auth.AuthorizationService;
 import org.linkweave.infrastructure.errorhandling.AppFailureException;
 import org.linkweave.infrastructure.errorhandling.AppFailureMessage;
 import org.linkweave.infrastructure.errorhandling.AppValidationException;
 import org.linkweave.infrastructure.errorhandling.AppValidationMessage;
-import io.smallrye.faulttolerance.api.RateLimit;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
-import org.jboss.resteasy.reactive.RestForm;
-import org.jboss.resteasy.reactive.multipart.FileUpload;
-import org.jspecify.annotations.NonNull;
 
 @RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
@@ -39,6 +38,7 @@ public class ImportResource {
     private static final long MAX_FILE_SIZE = 5 * 1024L * 1024;
 
     private final BookmarkImportService bookmarkImportService;
+    private final ImportReviewService importReviewService;
     private final AuthorizationService authorizationService;
 
     @POST
@@ -60,6 +60,51 @@ public class ImportResource {
             throw new AppFailureException(
                 AppFailureMessage.internalError("Failed to read uploaded file: " + e.getMessage()));
         }
+    }
+
+    /**
+     * Phase 1 of reviewed import (UC-096): parse the file into a manifest and
+     * flag duplicates, without writing anything.
+     */
+    @POST
+    @Path("/preview")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    @NonNull
+    @Authenticated
+    public ImportPreviewJson previewImport(
+        @PathParam("collectionId") @NotNull @NonNull ID<Collection> collectionId,
+        @NotNull @NonNull @RestForm("file") FileUpload file
+    ) {
+        authorizationService.requireCollectionAccess(collectionId);
+
+        validateFile(file);
+
+        try (InputStream inputStream = Files.newInputStream(file.uploadedFile())) {
+            return importReviewService.preview(collectionId, inputStream);
+        } catch (IOException e) {
+            throw new AppFailureException(
+                AppFailureMessage.internalError("Failed to read uploaded file: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Phase 2 of reviewed import (UC-096): write only the folders/bookmarks the
+     * user kept, merging folders by path.
+     */
+    @POST
+    @Path("/commit")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @NonNull
+    @Authenticated
+    public ImportCommitResultJson commitImport(
+        @PathParam("collectionId") @NotNull @NonNull ID<Collection> collectionId,
+        @NotNull @NonNull @Valid ImportCommitRequestJson request
+    ) {
+        authorizationService.requireCollectionAccess(collectionId);
+
+        return importReviewService.commit(collectionId, request);
     }
 
     private void validateFile(@NonNull FileUpload file) {
