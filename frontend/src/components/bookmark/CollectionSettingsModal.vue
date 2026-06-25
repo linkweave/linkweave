@@ -1,38 +1,51 @@
 <script setup lang="ts">
-import { config } from '@/api'
 import type { PropertyDefinitionJson } from '@/api/generated'
-import { ImportResourceApi, PropertyType } from '@/api/generated'
-import { downloadBlobDirectly, extractFilenameFromContentDispositionHeader } from '@/utils/download'
+import { PropertyType } from '@/api/generated'
 import {
   ButtonLw,
   ConfirmDialog,
-  DialogLw,
   DialogFooterLw,
+  DialogLw,
   FormFieldLw,
   InputLw,
   SwitchLw,
 } from '@/components/ui'
 import { useFormDialog } from '@/composables/useFormDialog'
 import {
+  useShowPreviewPopup,
   useShowPropertiesSidebar,
   useShowPropertyBadges,
-  useShowPreviewPopup,
 } from '@/composables/usePropertyDisplayPrefs'
 import { propertyDefinitionSaveSchema } from '@/schemas/property'
 import { useCollectionStore } from '@/stores/collection'
+import { useImportStore } from '@/stores/import'
 import { useNotificationStore } from '@/stores/notification'
 import { usePropertyStore } from '@/stores/property'
 import { type BookmarkLayout, useUiStore } from '@/stores/ui'
+import { downloadBlobDirectly, extractFilenameFromContentDispositionHeader } from '@/utils/download'
+import {
+  Download,
+  Layers,
+  LayoutGrid,
+  LayoutList,
+  Loader2,
+  Pencil,
+  Plus,
+  Trash2,
+  Upload,
+} from '@lucide/vue'
 import { toTypedSchema } from '@vee-validate/zod'
-import { Download, Layers, LayoutGrid, LayoutList, Loader2, Pencil, Plus, Trash2, Upload } from '@lucide/vue'
 import { useForm } from 'vee-validate'
 import { computed, ref, toRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 const { t } = useI18n()
+const router = useRouter()
 const propertyStore = usePropertyStore()
 const collectionStore = useCollectionStore()
 const notification = useNotificationStore()
+const importStore = useImportStore()
 const ui = useUiStore()
 const showBadges = useShowPropertyBadges()
 const showSidebar = useShowPropertiesSidebar()
@@ -123,23 +136,15 @@ function handleImportFileChange(event: Event) {
   }
 }
 
-async function handleImport() {
+// Hand the chosen file to the review page (UC-096) instead of importing
+// immediately — the user reviews and selects before anything is written.
+function handleImport() {
   const collectionId = collectionStore.currentCollectionId
   if (!importSelectedFile.value || !collectionId) return
-  isImporting.value = true
-  try {
-    const api = new ImportResourceApi(config)
-    await api.apiCollectionsCollectionIdImportPost({
-      collectionId,
-      file: importSelectedFile.value,
-    })
-    importSelectedFile.value = null
-    await collectionStore.fetchCollectionInfo(collectionId)
-  } catch (err) {
-    void notification.handleApiError(err, t('import.error'))
-  } finally {
-    isImporting.value = false
-  }
+  importStore.pendingFile = importSelectedFile.value
+  importSelectedFile.value = null
+  emit('update:open', false)
+  void router.push({ name: 'import-review', params: { id: collectionId } })
 }
 
 async function handleExport() {
@@ -404,9 +409,7 @@ function optionsPreview(allowedValues: string | undefined): string {
           type="button"
           class="relative px-3.5 py-2 text-sm font-medium transition-colors"
           :class="
-            activeTab === 'data'
-              ? 'text-foreground'
-              : 'text-muted-foreground hover:text-foreground'
+            activeTab === 'data' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
           "
           data-testid="collection-settings-tab-data"
           @click="activeTab = 'data'"
@@ -506,9 +509,7 @@ function optionsPreview(allowedValues: string | undefined): string {
         >
           {{ t('collectionSettings.sectionPreview') }}
         </div>
-        <div
-          class="flex items-center justify-between gap-3 px-2.5 py-2 rounded-md bg-secondary/60"
-        >
+        <div class="flex items-center justify-between gap-3 px-2.5 py-2 rounded-md bg-secondary/60">
           <div class="min-w-0">
             <div class="text-sm font-medium">{{ t('collectionManage.screenshotEnabled') }}</div>
             <div class="text-xs text-muted-foreground mt-0.5">
@@ -524,7 +525,9 @@ function optionsPreview(allowedValues: string | undefined): string {
         </div>
         <div
           class="flex items-center justify-between gap-3 px-2.5 py-2 rounded-md transition-opacity"
-          :class="screenshotEnabled ? 'bg-secondary/60' : 'bg-secondary/30 opacity-50 pointer-events-none'"
+          :class="
+            screenshotEnabled ? 'bg-secondary/60' : 'bg-secondary/30 opacity-50 pointer-events-none'
+          "
         >
           <div class="min-w-0">
             <div class="text-sm font-medium">{{ t('collectionSettings.previewPopupToggle') }}</div>
@@ -642,9 +645,9 @@ function optionsPreview(allowedValues: string | undefined): string {
         </FormFieldLw>
 
         <div>
-          <label class="block text-sm font-medium leading-none mb-2">
+          <div class="block text-sm font-medium leading-none mb-2">
             {{ t('property.fieldType') }}
-          </label>
+          </div>
           <div class="flex flex-wrap gap-1.5">
             <button
               v-for="opt in propertyTypes"
@@ -707,7 +710,9 @@ function optionsPreview(allowedValues: string | undefined): string {
     <!-- Data tab (import + export) -->
     <div v-else-if="activeTab === 'data'" class="min-h-[380px] space-y-6">
       <section>
-        <div class="text-[11px] font-semibold uppercase tracking-[.06em] text-muted-foreground mb-2">
+        <div
+          class="text-[11px] font-semibold uppercase tracking-[.06em] text-muted-foreground mb-2"
+        >
           {{ t('collectionSettings.sectionImport') }}
         </div>
         <p class="text-xs text-muted-foreground leading-relaxed mb-3">
@@ -744,7 +749,9 @@ function optionsPreview(allowedValues: string | undefined): string {
       </section>
 
       <section>
-        <div class="text-[11px] font-semibold uppercase tracking-[.06em] text-muted-foreground mb-2">
+        <div
+          class="text-[11px] font-semibold uppercase tracking-[.06em] text-muted-foreground mb-2"
+        >
           {{ t('collectionSettings.sectionExport') }}
         </div>
         <p class="text-xs text-muted-foreground leading-relaxed mb-3">

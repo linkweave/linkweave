@@ -15,9 +15,13 @@ export function ensureUrlProtocol(value: string): string {
 /**
  * Normalize a URL for duplicate comparison per BR-080:
  * - Lowercase scheme and host
- * - Strip trailing slashes from path
+ * - Strip trailing slashes from path, including a lone root "/" so that
+ *   `example.com` and `example.com/` compare equal
  * - Sort query parameters
  * - Exclude fragment identifiers
+ *
+ * Kept in lockstep with the backend `ImportUrlNormalizer` (UC-096) so client
+ * and server agree on what counts as a duplicate.
  */
 export function normalizeUrl(url: string): string {
   try {
@@ -27,7 +31,7 @@ export function normalizeUrl(url: string): string {
       result += `:${parsed.port}`
     }
     let path = parsed.pathname
-    while (path.length > 1 && path.endsWith('/')) {
+    while (path.endsWith('/')) {
       path = path.slice(0, -1)
     }
     result += path

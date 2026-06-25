@@ -15,14 +15,33 @@
 
 import * as runtime from '../runtime';
 import type {
+  ImportCommitRequestJson,
+  ImportCommitResultJson,
+  ImportPreviewJson,
   ImportSummaryJson,
 } from '../models/index';
 import {
+    ImportCommitRequestJsonFromJSON,
+    ImportCommitRequestJsonToJSON,
+    ImportCommitResultJsonFromJSON,
+    ImportCommitResultJsonToJSON,
+    ImportPreviewJsonFromJSON,
+    ImportPreviewJsonToJSON,
     ImportSummaryJsonFromJSON,
     ImportSummaryJsonToJSON,
 } from '../models/index';
 
+export interface ImportResourceApiApiCollectionsCollectionIdImportCommitPostRequest {
+    collectionId: string;
+    importCommitRequestJson: ImportCommitRequestJson;
+}
+
 export interface ImportResourceApiApiCollectionsCollectionIdImportPostRequest {
+    collectionId: string;
+    file: Blob;
+}
+
+export interface ImportResourceApiApiCollectionsCollectionIdImportPreviewPostRequest {
     collectionId: string;
     file: Blob;
 }
@@ -31,6 +50,61 @@ export interface ImportResourceApiApiCollectionsCollectionIdImportPostRequest {
  * 
  */
 export class ImportResourceApi extends runtime.BaseAPI {
+
+    /**
+     * Creates request options for apiCollectionsCollectionIdImportCommitPost without sending the request
+     */
+    async apiCollectionsCollectionIdImportCommitPostRequestOpts(requestParameters: ImportResourceApiApiCollectionsCollectionIdImportCommitPostRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['collectionId'] == null) {
+            throw new runtime.RequiredError(
+                'collectionId',
+                'Required parameter "collectionId" was null or undefined when calling apiCollectionsCollectionIdImportCommitPost().'
+            );
+        }
+
+        if (requestParameters['importCommitRequestJson'] == null) {
+            throw new runtime.RequiredError(
+                'importCommitRequestJson',
+                'Required parameter "importCommitRequestJson" was null or undefined when calling apiCollectionsCollectionIdImportCommitPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/collections/{collectionId}/import/commit`;
+        urlPath = urlPath.replace(`{${"collectionId"}}`, encodeURIComponent(String(requestParameters['collectionId'])));
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ImportCommitRequestJsonToJSON(requestParameters['importCommitRequestJson']),
+        };
+    }
+
+    /**
+     * Commit Import
+     */
+    async apiCollectionsCollectionIdImportCommitPostRaw(requestParameters: ImportResourceApiApiCollectionsCollectionIdImportCommitPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ImportCommitResultJson>> {
+        const requestOptions = await this.apiCollectionsCollectionIdImportCommitPostRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ImportCommitResultJsonFromJSON(jsonValue));
+    }
+
+    /**
+     * Commit Import
+     */
+    async apiCollectionsCollectionIdImportCommitPost(requestParameters: ImportResourceApiApiCollectionsCollectionIdImportCommitPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ImportCommitResultJson> {
+        const response = await this.apiCollectionsCollectionIdImportCommitPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Creates request options for apiCollectionsCollectionIdImportPost without sending the request
@@ -102,6 +176,79 @@ export class ImportResourceApi extends runtime.BaseAPI {
      */
     async apiCollectionsCollectionIdImportPost(requestParameters: ImportResourceApiApiCollectionsCollectionIdImportPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ImportSummaryJson> {
         const response = await this.apiCollectionsCollectionIdImportPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for apiCollectionsCollectionIdImportPreviewPost without sending the request
+     */
+    async apiCollectionsCollectionIdImportPreviewPostRequestOpts(requestParameters: ImportResourceApiApiCollectionsCollectionIdImportPreviewPostRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['collectionId'] == null) {
+            throw new runtime.RequiredError(
+                'collectionId',
+                'Required parameter "collectionId" was null or undefined when calling apiCollectionsCollectionIdImportPreviewPost().'
+            );
+        }
+
+        if (requestParameters['file'] == null) {
+            throw new runtime.RequiredError(
+                'file',
+                'Required parameter "file" was null or undefined when calling apiCollectionsCollectionIdImportPreviewPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const consumes: runtime.Consume[] = [
+            { contentType: 'multipart/form-data' },
+        ];
+        // @ts-ignore: canConsumeForm may be unused
+        const canConsumeForm = runtime.canConsumeForm(consumes);
+
+        let formParams: { append(param: string, value: any): any };
+        let useForm = false;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        useForm = canConsumeForm;
+        if (useForm) {
+            formParams = new FormData();
+        } else {
+            formParams = new URLSearchParams();
+        }
+
+        if (requestParameters['file'] != null) {
+            formParams.append('file', requestParameters['file'] as any);
+        }
+
+
+        let urlPath = `/api/collections/{collectionId}/import/preview`;
+        urlPath = urlPath.replace(`{${"collectionId"}}`, encodeURIComponent(String(requestParameters['collectionId'])));
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: formParams,
+        };
+    }
+
+    /**
+     * Preview Import
+     */
+    async apiCollectionsCollectionIdImportPreviewPostRaw(requestParameters: ImportResourceApiApiCollectionsCollectionIdImportPreviewPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ImportPreviewJson>> {
+        const requestOptions = await this.apiCollectionsCollectionIdImportPreviewPostRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ImportPreviewJsonFromJSON(jsonValue));
+    }
+
+    /**
+     * Preview Import
+     */
+    async apiCollectionsCollectionIdImportPreviewPost(requestParameters: ImportResourceApiApiCollectionsCollectionIdImportPreviewPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ImportPreviewJson> {
+        const response = await this.apiCollectionsCollectionIdImportPreviewPostRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
