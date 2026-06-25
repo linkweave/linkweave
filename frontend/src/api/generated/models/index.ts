@@ -10,6 +10,7 @@ export * from './auto-tag-rule-list-json';
 export * from './auto-tag-rule-order-json';
 export * from './auto-tag-rule-save-json';
 export * from './bookmark-batch-delete-json';
+export * from './bookmark-batch-export-json';
 export * from './bookmark-batch-move-json';
 export * from './bookmark-batch-tag-json';
 export * from './bookmark-json';

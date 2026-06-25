@@ -300,4 +300,38 @@ test.describe('Batch select (UC-074)', () => {
 
     await page.unroute('**/api/bookmarks/batch-delete')
   })
+
+  test('should export the selection without clearing it', async ({ page }) => {
+    await selectByTitles(page, collection.collectionId, bm.one, bm.two)
+
+    // Intercept the partial-export call: the real handler would push a file
+    // download, which Playwright cannot observe directly. Instead, assert the
+    // correct payload is POSTed and the success toast + retained selection
+    // behave like the other non-mutating batch action (copy URLs).
+    let capturedBody: string | undefined
+    await page.route('**/api/collections/*/export/partial', async (route) => {
+      capturedBody = route.request().postData()
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        headers: {
+          'content-disposition': 'attachment; filename="bookmarks.html"',
+          'x-exported-count': '2',
+        },
+        body: '<!DOCTYPE NETSCAPE-Bookmark-file-1>',
+      })
+    })
+
+    await page.getByTestId('batch-export').click()
+    await expect(page.getByText('Exported 2 bookmarks.')).toBeVisible()
+    // Non-mutating: the selection is retained.
+    await expect(batchCount(page)).toHaveText('2 selected')
+    await expect(batchBar(page)).toHaveClass(/is-open/)
+
+    expect(capturedBody).toBeDefined()
+    const payload = JSON.parse(capturedBody!)
+    expect(payload.bookmarkIds).toHaveLength(2)
+
+    await page.unroute('**/api/collections/*/export/partial')
+  })
 })

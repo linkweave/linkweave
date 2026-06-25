@@ -559,6 +559,7 @@
     "move": "Move",
     "tags": "Tags",
     "copyUrls": "Copy URLs",
+    "export": "Export",
     "delete": "Delete",
     "moveTitle": "Move {count} bookmarks",
     "moveSubtitle": "Choose a destination folder in this collection.",
@@ -571,9 +572,11 @@
     "movedToastRoot": "Moved {count} bookmarks to the collection root.",
     "deletedToast": "{count} bookmarks moved to trashbin.",
     "copiedToast": "Copied {count} URLs to clipboard.",
+    "exportedToast": "Exported {count} bookmarks.",
     "moveError": "Failed to move bookmarks. No changes were made.",
     "deleteError": "Failed to delete bookmarks. No changes were made.",
     "copyError": "Failed to copy URLs to clipboard.",
+    "exportError": "Failed to export bookmarks.",
     "toggleSelection": "Toggle selection"
   },
   "batchTag": {

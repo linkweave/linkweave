@@ -1,11 +1,15 @@
 package org.linkweave.api.bookmark.export_;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import ch.dvbern.dvbstarter.types.id.ID;
@@ -46,16 +50,83 @@ public class BookmarkExportService {
         List<Folder> allFolders = folderRepo.findByCollection(collectionId);
         List<Bookmark> allBookmarks = bookmarkRepo.findByCollection(collectionId);
 
-        Map<Folder, List<Folder>> childrenByParent = buildFolderTree(allFolders);
-        Map<Folder, List<Bookmark>> bookmarksByFolder = allBookmarks.stream()
+        return render(allFolders, allBookmarks);
+    }
+
+    /**
+     * Result of a partial export: the rendered Netscape HTML plus the number of
+     * bookmarks actually written. Soft-deleted selections are dropped, so the
+     * count can be fewer than the ids requested.
+     */
+    public record PartialExport(@NonNull String html, int exportedCount) {}
+
+    /**
+     * Exports a subset of a collection's bookmarks, preserving the folder
+     * hierarchy they live in. Only folders that are an ancestor of (or equal
+     * to) at least one selected bookmark's folder are emitted — empty branches
+     * are pruned so the result round-trips cleanly through the importer.
+     *
+     * <p>Soft-deleted (trashbin) bookmarks are dropped before rendering, so a
+     * stale selection id — e.g. a bookmark trashed in another tab after it was
+     * selected — never leaks into the export. The full-export path already
+     * excludes them via {@code findByCollection}'s {@code notDeleted()} filter;
+     * this keeps the two endpoints consistent.
+     *
+     * <p>Authorization (collection access + every bookmark belongs to it) is the
+     * caller's responsibility — the resource layer loads and authorizes the
+     * bookmarks before invoking this method.
+     */
+    @NonNull
+    public PartialExport exportBookmarks(
+        @NonNull ID<Collection> collectionId,
+        @NonNull List<Bookmark> bookmarks
+    ) {
+        collectionRepo.referenceById(collectionId);
+
+        List<Bookmark> liveBookmarks = bookmarks.stream()
+            .filter(bookmark -> bookmark.getDeletedAt() == null)
+            .toList();
+
+        List<Folder> allFolders = folderRepo.findByCollection(collectionId);
+        List<Folder> neededFolders = keepAncestorFolders(allFolders, liveBookmarks);
+
+        return new PartialExport(render(neededFolders, liveBookmarks), liveBookmarks.size());
+    }
+
+    /**
+     * Keeps only folders that are on the ancestor chain of any selected
+     * bookmark's folder, so a partial export reproduces the original nesting
+     * without dragging in unrelated or empty sibling folders.
+     */
+    private List<Folder> keepAncestorFolders(@NonNull List<Folder> allFolders, @NonNull List<Bookmark> bookmarks) {
+        Set<UUID> neededIds = new HashSet<>();
+        for (Bookmark bookmark : bookmarks) {
+            Folder folder = bookmark.getFolder();
+            while (folder != null && neededIds.add(folder.getId().getUUID())) {
+                folder = folder.getParent();
+            }
+        }
+        List<Folder> neededFolders = new ArrayList<>();
+        for (Folder folder : allFolders) {
+            if (neededIds.contains(folder.getId().getUUID())) {
+                neededFolders.add(folder);
+            }
+        }
+        return neededFolders;
+    }
+
+    @NonNull
+    private String render(@NonNull List<Folder> folders, @NonNull List<Bookmark> bookmarks) {
+        Map<Folder, List<Folder>> childrenByParent = buildFolderTree(folders);
+        Map<Folder, List<Bookmark>> bookmarksByFolder = bookmarks.stream()
             .filter(b -> b.getFolder() != null)
             .collect(Collectors.groupingBy(Bookmark::getFolder, LinkedHashMap::new, Collectors.toList()));
 
-        List<Folder> rootFolders = allFolders.stream()
+        List<Folder> rootFolders = folders.stream()
             .filter(f -> f.getParent() == null)
             .sorted(Comparator.comparing(Folder::getName))
             .toList();
-        List<Bookmark> rootBookmarks = allBookmarks.stream()
+        List<Bookmark> rootBookmarks = bookmarks.stream()
             .filter(b -> b.getFolder() == null)
             .sorted(Comparator.comparing(Bookmark::getTitle))
             .toList();

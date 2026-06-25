@@ -556,6 +556,7 @@
     "move": "Verschieben",
     "tags": "Tags",
     "copyUrls": "URLs kopieren",
+    "export": "Exportieren",
     "delete": "Löschen",
     "moveTitle": "{count} Lesezeichen verschieben",
     "moveSubtitle": "Wähle einen Zielordner in dieser Sammlung.",
@@ -568,9 +569,11 @@
     "movedToastRoot": "{count} Lesezeichen in den Sammlungs-Stammordner verschoben.",
     "deletedToast": "{count} Lesezeichen in den Papierkorb verschoben.",
     "copiedToast": "{count} URLs in die Zwischenablage kopiert.",
+    "exportedToast": "{count} Lesezeichen exportiert.",
     "moveError": "Lesezeichen konnten nicht verschoben werden. Es wurden keine Änderungen vorgenommen.",
     "deleteError": "Lesezeichen konnten nicht gelöscht werden. Es wurden keine Änderungen vorgenommen.",
     "copyError": "URLs konnten nicht in die Zwischenablage kopiert werden.",
+    "exportError": "Lesezeichen konnten nicht exportiert werden.",
     "toggleSelection": "Auswahl umschalten"
   },
   "batchTag": {
