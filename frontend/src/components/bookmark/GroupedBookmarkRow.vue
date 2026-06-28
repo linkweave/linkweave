@@ -50,7 +50,7 @@ function onDragEnd() {
 
     <BookmarkRowMenu
       :bookmark="bookmark"
-      trigger-class="shrink-0 h-8 w-8 inline-flex items-center justify-center rounded transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100 hover:bg-primary hover:text-primary-foreground"
+      trigger-class="shrink-0 h-10 w-10 inline-flex items-center justify-center rounded transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100 hover:bg-primary hover:text-primary-foreground"
       icon-class="h-3.5 w-3.5"
       @edit="emit('edit', $event)"
       @move="emit('move', $event)"

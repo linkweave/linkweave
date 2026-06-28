@@ -438,6 +438,7 @@ function onRowLeave() {
           />
           <h3
             class="font-medium text-foreground leading-5 line-clamp-2 [overflow-wrap:anywhere]"
+            :title="props.bookmark.data.title"
             :class="props.layout === 'grid' ? 'min-h-10' : ''"
           >
             {{ props.bookmark.data.title }}
@@ -447,7 +448,7 @@ function onRowLeave() {
           <BookmarkRowMenu
             :bookmark="props.bookmark"
             :show-refresh-preview="previewsVisible"
-            trigger-class="ml-auto -mt-1 h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-md transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground pointer-events-auto relative z-10"
+            trigger-class="ml-auto -mt-1 h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-md transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground pointer-events-auto relative z-10"
             @edit="emit('edit', $event)"
             @move="emit('move', $event)"
             @delete="emit('delete', $event)"
@@ -479,7 +480,7 @@ function onRowLeave() {
             type="button"
             data-testid="card-folder-pill"
             :data-folder-id="props.bookmark.data.folderId"
-            class="pointer-events-auto relative z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-muted-foreground border border-dashed border-border hover:text-foreground hover:border-foreground hover:bg-secondary transition-colors"
+            class="pointer-events-auto relative z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-muted-foreground border border-dashed border-border hover:text-foreground hover:border-foreground hover:bg-secondary transition-colors min-w-0 max-w-[12rem]"
             :class="{
               'text-foreground border-solid border-foreground bg-secondary':
                 folderStore.selectedFolderId === props.bookmark.data.folderId,
@@ -487,8 +488,8 @@ function onRowLeave() {
             :title="`Filter by folder: ${getFolderName()}`"
             @click="onToggleFolderFilter"
           >
-            <Folder class="h-3 w-3" />
-            <span>in {{ getFolderName() }}</span>
+            <Folder class="h-3 w-3 shrink-0" />
+            <span class="truncate">in {{ getFolderName() }}</span>
           </button>
           <!--           Tag Pills-->
           <button

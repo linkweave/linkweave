@@ -36,7 +36,7 @@ function setRoot(el: Element | ComponentPublicInstance | null) {
     :ref="setRoot"
     class="sticky top-0 z-30 flex items-center gap-3 h-11 px-4 sm:px-6
            border-b border-border bg-background/80 backdrop-blur sm:bg-background
-           before:absolute before:-top-px before:inset-x-0 before:h-px before:bg-background sm:before:hidden"
+           before:absolute before:-top-[2px] before:inset-x-0 before:h-[2px] before:bg-background sm:before:hidden"
     data-testid="bookmark-list-toolbar"
   >
     <div class="flex-1 min-w-0 overflow-hidden">
