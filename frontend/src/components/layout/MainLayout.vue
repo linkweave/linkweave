@@ -35,7 +35,7 @@ const closeSidebar = () => {
     <HeaderLw>
       <template #leading>
         <slot name="header-leading">
-          <ButtonLw v-if="!hideSidebar" variant="ghost" size="icon" class="lg:hidden" data-testid="mobile-sidebar-toggle" @click="toggleSidebar">
+          <ButtonLw v-if="!hideSidebar" variant="ghost" size="icon" class="lg:hidden shrink-0" data-testid="mobile-sidebar-toggle" @click="toggleSidebar">
             <Menu class="h-5 w-5" />
           </ButtonLw>
         </slot>

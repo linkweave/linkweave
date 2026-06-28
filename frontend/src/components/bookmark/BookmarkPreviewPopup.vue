@@ -261,7 +261,7 @@ const host = computed(() => (active.value ? hostnameOf(active.value.bookmark.dat
           <BookmarkRowMenu
             :bookmark="active.bookmark"
             :show-refresh-preview="true"
-            trigger-class="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-primary hover:text-primary-foreground"
+            trigger-class="h-10 w-10 inline-flex items-center justify-center rounded-md hover:bg-primary hover:text-primary-foreground"
             @edit="onEdit"
             @move="onMove"
             @delete="onDelete"

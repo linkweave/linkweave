@@ -10,7 +10,7 @@ const auth = useAuthStore()
 <template>
   <header class="relative z-[60] flex items-center gap-3 sm:gap-4 px-3 sm:px-4 py-2 border-b border-border bg-card shrink-0">
     <!-- Leading: hamburger + logo + collection switcher -->
-    <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+    <div class="flex items-center gap-2 sm:gap-3 min-w-0">
       <slot name="leading" />
       <router-link to="/" class="shrink-0 cursor-pointer">
         <img :src="logoUrl" alt="" class="h-6 w-6" />
