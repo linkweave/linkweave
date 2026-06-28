@@ -14,9 +14,21 @@
 
 
 import * as runtime from '../runtime';
+import type {
+  BookmarkBatchExportJson,
+} from '../models/index';
+import {
+    BookmarkBatchExportJsonFromJSON,
+    BookmarkBatchExportJsonToJSON,
+} from '../models/index';
 
 export interface ExportResourceApiApiCollectionsCollectionIdExportGetRequest {
     collectionId: string;
+}
+
+export interface ExportResourceApiApiCollectionsCollectionIdExportPartialPostRequest {
+    collectionId: string;
+    bookmarkBatchExportJson: BookmarkBatchExportJson;
 }
 
 /**
@@ -66,6 +78,60 @@ export class ExportResourceApi extends runtime.BaseAPI {
      */
     async apiCollectionsCollectionIdExportGet(requestParameters: ExportResourceApiApiCollectionsCollectionIdExportGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiCollectionsCollectionIdExportGetRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Creates request options for apiCollectionsCollectionIdExportPartialPost without sending the request
+     */
+    async apiCollectionsCollectionIdExportPartialPostRequestOpts(requestParameters: ExportResourceApiApiCollectionsCollectionIdExportPartialPostRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['collectionId'] == null) {
+            throw new runtime.RequiredError(
+                'collectionId',
+                'Required parameter "collectionId" was null or undefined when calling apiCollectionsCollectionIdExportPartialPost().'
+            );
+        }
+
+        if (requestParameters['bookmarkBatchExportJson'] == null) {
+            throw new runtime.RequiredError(
+                'bookmarkBatchExportJson',
+                'Required parameter "bookmarkBatchExportJson" was null or undefined when calling apiCollectionsCollectionIdExportPartialPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/collections/{collectionId}/export/partial`;
+        urlPath = urlPath.replace(`{${"collectionId"}}`, encodeURIComponent(String(requestParameters['collectionId'])));
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: BookmarkBatchExportJsonToJSON(requestParameters['bookmarkBatchExportJson']),
+        };
+    }
+
+    /**
+     * Export Bookmarks Partial
+     */
+    async apiCollectionsCollectionIdExportPartialPostRaw(requestParameters: ExportResourceApiApiCollectionsCollectionIdExportPartialPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.apiCollectionsCollectionIdExportPartialPostRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Export Bookmarks Partial
+     */
+    async apiCollectionsCollectionIdExportPartialPost(requestParameters: ExportResourceApiApiCollectionsCollectionIdExportPartialPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiCollectionsCollectionIdExportPartialPostRaw(requestParameters, initOverrides);
     }
 
 }

@@ -186,6 +186,14 @@ public class BookmarkService {
         return bookmarks;
     }
 
+    /**
+     * Lenient variant of {@link #getBookmarks(List)}
+     */
+    @NonNull
+    public List<Bookmark> findBookmarks(@NonNull List<ID<Bookmark>> bookmarkIds) {
+        return bookmarkRepo.findByIdsWithTags(bookmarkIds);
+    }
+
     public void batchMoveToFolder(
         @NonNull List<Bookmark> bookmarks,
         @Nullable ID<Folder> folderId,

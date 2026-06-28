@@ -1,3 +1,16 @@
+/**
+ * Saves a `fetch` Response body as a browser download, resolving the filename
+ * from the Content-Disposition header and falling back to `fallbackFilename`.
+ * Shared by the full- and partial-export flows, which both stream HTML the
+ * generated API client cannot handle as a blob.
+ */
+export async function downloadFromResponse(response: Response, fallbackFilename: string): Promise<void> {
+  const contentDisposition = response.headers.get('Content-Disposition')
+  const filename = extractFilenameFromContentDispositionHeader(contentDisposition) ?? fallbackFilename
+  const blob = await response.blob()
+  downloadBlobDirectly(blob, filename)
+}
+
 export function downloadBlobDirectly(blob: Blob, filename?: string): void {
   if (!filename) {
     console.warn('filename is not set, the browser will open the file in a new tab')

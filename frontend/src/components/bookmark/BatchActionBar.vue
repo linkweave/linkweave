@@ -1,25 +1,33 @@
 <script setup lang="ts">
+import { config } from '@/api'
+import { ExportResourceApi } from '@/api/generated'
 import BatchTagEditor from '@/components/bookmark/BatchTagEditor.vue'
 import MoveBookmarkDialog from '@/components/bookmark/MoveBookmarkDialog.vue'
 import { ConfirmDialog } from '@/components/ui'
 import { useBookmarkStore } from '@/stores/bookmark'
+import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { useNotificationStore } from '@/stores/notification'
 import { useSelectionStore } from '@/stores/selection'
-import { Copy, FolderInput, Tag, Trash2, X } from '@lucide/vue'
+import { downloadFromResponse } from '@/utils/download'
+import { Copy, Download, FolderInput, Tag, Trash2, X } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const selection = useSelectionStore()
 const bookmarkStore = useBookmarkStore()
+const collectionStore = useCollectionStore()
 const folderStore = useFolderStore()
 const notification = useNotificationStore()
+const exportApi = new ExportResourceApi(config)
 
 const showMoveDialog = ref(false)
 const showDeleteConfirm = ref(false)
 const showTagEditor = ref(false)
 const tagButton = ref<HTMLButtonElement | null>(null)
+const isExporting = ref(false)
+const isDeleting = ref(false)
 
 const selectedIdList = computed(() => [...selection.selectedIds])
 
@@ -44,12 +52,15 @@ function onMoved(folderId?: string | null) {
 
 async function onDeleteConfirmed() {
   const ids = selectedIdList.value
+  isDeleting.value = true
   try {
     await bookmarkStore.batchDelete(ids)
     notification.success(t('batch.deletedToast', { count: ids.length }))
     selection.clearAndExit()
   } catch {
     notification.error(t('batch.deleteError'))
+  } finally {
+    isDeleting.value = false
   }
 }
 
@@ -60,6 +71,34 @@ async function copyUrls() {
     notification.success(t('batch.copiedToast', { count: urls.length }))
   } catch {
     notification.error(t('batch.copyError'))
+  }
+}
+
+// Partial export (UC-096 export counterpart): POSTs the current batch
+// selection and downloads the resulting Netscape HTML. Non-mutating, so the
+// selection is retained — same as copy URLs.
+async function exportSelection() {
+  const collectionId = collectionStore.currentCollectionId
+  if (!collectionId) return
+  const ids = selectedIdList.value
+  isExporting.value = true
+  try {
+    const { raw } = await exportApi.apiCollectionsCollectionIdExportPartialPostRaw({
+      collectionId,
+      bookmarkBatchExportJson: { bookmarkIds: ids },
+    })
+    // The server drops soft-deleted ids, so trust its count for the toast and
+    // fall back to the selection size if the header is absent/malformed.
+    const reported = Number(raw.headers.get('X-Exported-Count'))
+    const exportedCount = raw.headers.get('X-Exported-Count') !== null && Number.isFinite(reported)
+      ? reported
+      : ids.length
+    await downloadFromResponse(raw, 'bookmarks.html')
+    notification.success(t('batch.exportedToast', { count: exportedCount }))
+  } catch {
+    notification.error(t('batch.exportError'))
+  } finally {
+    isExporting.value = false
   }
 }
 </script>
@@ -144,6 +183,19 @@ async function copyUrls() {
         <span class="hidden md:inline">{{ t('batch.copyUrls') }}</span>
       </button>
 
+      <button
+        type="button"
+        class="batch-btn"
+        :aria-label="t('batch.export')"
+        :title="t('batch.export')"
+        :disabled="isExporting"
+        data-testid="batch-export"
+        @click="exportSelection"
+      >
+        <Download :size="14" />
+        <span class="hidden md:inline">{{ t('batch.export') }}</span>
+      </button>
+
       <span class="batch-divider" aria-hidden="true" />
 
       <button
@@ -151,6 +203,7 @@ async function copyUrls() {
         class="batch-btn batch-btn--destructive"
         :aria-label="t('batch.delete')"
         :title="t('batch.delete')"
+        :disabled="isDeleting"
         data-testid="batch-delete"
         @click="showDeleteConfirm = true"
       >
@@ -263,9 +316,14 @@ async function copyUrls() {
     color 0.15s;
 }
 
-.batch-btn:hover {
+.batch-btn:not(:disabled):hover {
   background: var(--color-secondary);
   color: var(--color-foreground);
+}
+
+.batch-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .batch-btn--destructive {

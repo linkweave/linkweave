@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { config } from '@/api'
 import type { PropertyDefinitionJson } from '@/api/generated'
-import { PropertyType } from '@/api/generated'
+import { ExportResourceApi, PropertyType } from '@/api/generated'
 import {
   ButtonLw,
   ConfirmDialog,
@@ -22,7 +23,7 @@ import { useImportStore } from '@/stores/import'
 import { useNotificationStore } from '@/stores/notification'
 import { usePropertyStore } from '@/stores/property'
 import { type BookmarkLayout, useUiStore } from '@/stores/ui'
-import { downloadBlobDirectly, extractFilenameFromContentDispositionHeader } from '@/utils/download'
+import { downloadFromResponse } from '@/utils/download'
 import {
   Download,
   Layers,
@@ -47,6 +48,7 @@ const collectionStore = useCollectionStore()
 const notification = useNotificationStore()
 const importStore = useImportStore()
 const ui = useUiStore()
+const exportApi = new ExportResourceApi(config)
 const showBadges = useShowPropertyBadges()
 const showSidebar = useShowPropertiesSidebar()
 const showPreviewPopup = useShowPreviewPopup()
@@ -152,15 +154,8 @@ async function handleExport() {
   if (!collectionId) return
   isExporting.value = true
   try {
-    const response = await fetch(`/api/collections/${collectionId}/export`, {
-      credentials: 'include',
-    })
-    if (!response.ok) throw new Error('Export failed')
-    const contentDisposition = response.headers.get('Content-Disposition')
-    const filename =
-      extractFilenameFromContentDispositionHeader(contentDisposition) ?? 'bookmarks.html'
-    const blob = await response.blob()
-    downloadBlobDirectly(blob, filename)
+    const { raw } = await exportApi.apiCollectionsCollectionIdExportGetRaw({ collectionId })
+    await downloadFromResponse(raw, 'bookmarks.html')
   } catch (err) {
     void notification.handleApiError(err, t('settings.exportError'))
   } finally {
