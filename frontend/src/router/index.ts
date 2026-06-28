@@ -56,6 +56,15 @@ const router = createRouter({
       meta: { public: true },
       component: () => import('@/views/PrivacyPolicyView.vue'),
     },
+    {
+      path: '/dev/sentry-test',
+      name: 'dev-sentry-test',
+      // Hidden diagnostic page — reachable regardless of auth state, but never
+      // linked in the UI. `dev` exempts it from the authenticated-redirect rule
+      // that bounces logged-in users off public routes.
+      meta: { public: true, dev: true },
+      component: () => import('@/views/DevSentryTestView.vue'),
+    },
   ],
 })
 
@@ -69,7 +78,7 @@ router.beforeEach(async (to) => {
     return { name: 'login' }
   }
 
-  if (auth.isAuthenticated && to.meta.public) {
+  if (auth.isAuthenticated && to.meta.public && !to.meta.dev) {
     return { name: 'home' }
   }
 
