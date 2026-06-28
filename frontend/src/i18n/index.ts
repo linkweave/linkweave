@@ -1,8 +1,9 @@
 import { createI18n } from 'vue-i18n'
 import en from './locales/en.json'
 import de from './locales/de.json'
+import fr from './locales/fr.json'
 
-export const SUPPORTED_LOCALES = ['en', 'de'] as const
+export const SUPPORTED_LOCALES = ['en', 'de', 'fr'] as const
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
 export const DEFAULT_LOCALE: SupportedLocale = 'en'
 
@@ -32,7 +33,8 @@ const i18n = createI18n({
   fallbackLocale: DEFAULT_LOCALE,
   messages: {
     en,
-    de
+    de,
+    fr
   }
 })
 

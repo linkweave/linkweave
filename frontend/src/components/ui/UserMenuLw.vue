@@ -86,6 +86,14 @@ function switchLocale(locale: SupportedLocale) {
           >
             EN
           </button>
+          <span class="text-muted-foreground">|</span>
+          <button
+            class="px-1 transition-colors hover:text-accent-foreground"
+            :class="localeStore.currentLocale === 'fr' ? 'underline font-semibold text-accent-foreground' : 'text-muted-foreground'"
+            @click="switchLocale('fr')"
+          >
+            FR
+          </button>
         </div>
         <DropdownMenuSeparator class="-mx-1 my-1 h-px bg-border" />
         <DropdownMenuItemLw
