@@ -19,7 +19,7 @@ public enum AppLanguages implements AppLanguage {
     EN(ULocale.forLanguageTag("en-US")),
     ;
 
-    public static final AppLanguage DEFAULT = AppLanguages.DE;
+    public static final AppLanguage DEFAULT = AppLanguages.EN;
 
     private final ULocale locale;
 
