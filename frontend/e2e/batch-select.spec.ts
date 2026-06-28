@@ -2,6 +2,9 @@ import { expect, test, type Page } from './fixtures'
 import { api, createBookmarkViaApi, type Created } from './helpers/api'
 import { loginViaApi } from './models/TestUser'
 import { useTestCollectionWithCleanup } from './helpers/testCollection'
+// Generated from the OpenAPI spec — the serializer only emits schema-defined
+// properties, so it doubles as the source of truth for the request contract.
+import { BookmarkBatchExportJsonToJSON } from '../src/api/generated'
 
 // Batch select — UC-074: selection model, batch action bar, move / delete /
 // add-tag / copy-URLs flows. Tests mutate shared seeded state (bookmarks get
@@ -308,7 +311,7 @@ test.describe('Batch select (UC-074)', () => {
     // download, which Playwright cannot observe directly. Instead, assert the
     // correct payload is POSTed and the success toast + retained selection
     // behave like the other non-mutating batch action (copy URLs).
-    let capturedBody: string | undefined
+    let capturedBody: string | null = null
     await page.route('**/api/collections/*/export/partial', async (route) => {
       capturedBody = route.request().postData()
       await route.fulfill({
@@ -328,9 +331,13 @@ test.describe('Batch select (UC-074)', () => {
     await expect(batchCount(page)).toHaveText('2 selected')
     await expect(batchBar(page)).toHaveClass(/is-open/)
 
-    expect(capturedBody).toBeDefined()
+    expect(capturedBody).not.toBeNull()
     const payload = JSON.parse(capturedBody!)
     expect(payload.bookmarkIds).toHaveLength(2)
+    // Body must conform to the OpenAPI-generated contract: round-tripping through
+    // the generated serializer strips any property not in the schema, so a stray
+    // field (e.g. a stale client sending collectionId) would break this equality.
+    expect(payload).toEqual(BookmarkBatchExportJsonToJSON(payload))
 
     await page.unroute('**/api/collections/*/export/partial')
   })
