@@ -1,5 +1,6 @@
 import { Configuration } from '@/api/generated'
 import { createOfflineMiddleware } from '@/lib/offline-middleware'
+import { createLocaleMiddleware } from '@/lib/locale-middleware'
 
 const config = new Configuration({
   basePath: '',
@@ -7,7 +8,7 @@ const config = new Configuration({
   // Marks requests as AJAX so Quarkus OIDC returns 499 instead of a 302 to the
   // IDP when the session is invalid (see quarkus.oidc.authentication.java-script-auto-redirect).
   headers: { 'X-Requested-With': 'XMLHttpRequest' },
-  middleware: [createOfflineMiddleware()],
+  middleware: [createLocaleMiddleware(), createOfflineMiddleware()],
 })
 
 export { config }
