@@ -23,7 +23,7 @@ public class ApiKeyCreateJson {
     String name;
 
     @Nullable
-    @Pattern(regexp = "^(30d|90d|1y|never)?$", message = "Must be one of: 30d, 90d, 1y, never")
+    @Pattern(regexp = "^(30d|90d|1y|never)?$", message = "{linkweave.validation.apiKeyExpiresIn}")
     @Schema(required = false, description = "Expiration period: 30d, 90d, 1y, or never. Defaults to never.")
     String expiresIn;
 }
