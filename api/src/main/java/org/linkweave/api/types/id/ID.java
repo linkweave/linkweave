@@ -15,7 +15,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
-import org.hibernate.annotations.Type;
 
 import static java.util.Objects.requireNonNull;
 
@@ -33,7 +32,6 @@ public class ID<T extends AbstractEntity<T>> implements Serializable, Comparable
     public static final Comparator<ID<?>> COMPARATOR = Comparator.<ID<?>, UUID>comparing(ID::getUUID)
         .thenComparing((ID<?> id) -> id.getEntityClazz().getName());
 
-    @Type(IDType.class)
     private final UUID uuid;
 
     @Getter
