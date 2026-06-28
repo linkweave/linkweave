@@ -2,8 +2,12 @@
 
 # Place .gitignore settings specific to your project here
 
-# Claude and Junie agent state
-.claude/
+# Claude agent: skills/agents are tracked for contributors; ignore local state
+.claude/*
+!.claude/agents/
+!.claude/skills/
+
+# Junie agent state
 .junie/
 
 # Marketing (private strategy docs)
