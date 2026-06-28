@@ -8,7 +8,7 @@ import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import ch.dvbern.dvbstarter.clock.ClockProvider;
+import org.linkweave.infrastructure.clock.ClockProvider;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;

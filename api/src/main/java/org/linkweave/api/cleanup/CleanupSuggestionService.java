@@ -3,8 +3,8 @@ package org.linkweave.api.cleanup;
 import java.util.List;
 import java.util.Objects;
 
-import ch.dvbern.dvbstarter.clock.AppClock;
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.infrastructure.clock.AppClock;
+import org.linkweave.api.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.linkweave.api.bookmark.Bookmark;
 import org.linkweave.api.bookmark.BookmarkRepo;

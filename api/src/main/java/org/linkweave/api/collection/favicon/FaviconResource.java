@@ -2,7 +2,7 @@ package org.linkweave.api.collection.favicon;
 
 import java.time.temporal.ChronoUnit;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import io.quarkus.security.Authenticated;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;

@@ -5,7 +5,7 @@ import java.util.Objects;
 
 import org.linkweave.api.shared.abstractentity.AbstractEntity;
 import org.linkweave.infrastructure.stereotypes.JaxDTO;
-import ch.dvbern.dvbstarter.i18n.datetime.DateConst;
+import org.linkweave.infrastructure.i18n.datetime.DateConst;
 import jakarta.validation.constraints.NotNull;
 import lombok.Value;
 import org.jspecify.annotations.NonNull;

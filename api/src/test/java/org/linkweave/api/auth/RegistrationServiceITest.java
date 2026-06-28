@@ -2,7 +2,7 @@ package org.linkweave.api.auth;
 
 import java.util.UUID;
 
-import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
+import org.linkweave.api.types.emailaddress.EmailAddress;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;

@@ -2,7 +2,7 @@ package org.linkweave.api.bookmark.property.json;
 
 import java.math.BigDecimal;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Value;

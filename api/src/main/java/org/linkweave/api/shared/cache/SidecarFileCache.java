@@ -12,7 +12,7 @@ import java.time.Instant;
 import java.util.HexFormat;
 import java.util.Optional;
 
-import ch.dvbern.dvbstarter.clock.AppClock;
+import org.linkweave.infrastructure.clock.AppClock;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 

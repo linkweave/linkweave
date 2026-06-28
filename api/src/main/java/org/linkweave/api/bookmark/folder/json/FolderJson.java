@@ -2,7 +2,7 @@ package org.linkweave.api.bookmark.folder.json;
 
 import java.time.OffsetDateTime;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

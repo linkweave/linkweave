@@ -18,7 +18,7 @@
 
 package org.linkweave.infrastructure.errorhandling;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import ch.dvbern.oss.commons.i18nl10n.I18nMessage;
 
 import lombok.AccessLevel;

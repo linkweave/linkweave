@@ -2,7 +2,7 @@ package org.linkweave.api.auth.apikey.json;
 
 import java.time.OffsetDateTime;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.linkweave.api.auth.apikey.ApiKey;

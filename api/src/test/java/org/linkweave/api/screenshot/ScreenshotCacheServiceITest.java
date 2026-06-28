@@ -5,7 +5,7 @@ import java.net.URL;
 import java.time.Instant;
 import java.util.UUID;
 
-import ch.dvbern.dvbstarter.clock.ClockProvider;
+import org.linkweave.infrastructure.clock.ClockProvider;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;

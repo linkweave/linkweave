@@ -1,7 +1,7 @@
 package org.linkweave.infrastructure.exceptionmapper;
 
 
-import ch.dvbern.dvbstarter.i18n.translations.TL;
+import org.linkweave.infrastructure.i18n.translations.TL;
 import com.fasterxml.jackson.core.JsonParseException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;

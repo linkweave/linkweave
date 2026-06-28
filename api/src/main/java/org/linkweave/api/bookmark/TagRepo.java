@@ -3,7 +3,7 @@ package org.linkweave.api.bookmark;
 import java.util.List;
 import java.util.Optional;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.infrastructure.db.BaseRepo;
 import org.linkweave.infrastructure.errorhandling.AppFailureException;

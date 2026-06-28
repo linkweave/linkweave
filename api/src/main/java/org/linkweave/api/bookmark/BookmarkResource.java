@@ -3,7 +3,7 @@ package org.linkweave.api.bookmark;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import io.quarkus.security.Authenticated;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;

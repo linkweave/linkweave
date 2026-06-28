@@ -2,7 +2,7 @@ package org.linkweave.api.screenshot;
 
 import java.time.temporal.ChronoUnit;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import io.quarkus.security.Authenticated;
 import io.smallrye.faulttolerance.api.RateLimit;
 import jakarta.ws.rs.GET;

@@ -1,0 +1,12 @@
+LinkWeave
+
+This product includes software developed as Maven dependencies under the
+Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0):
+
+  - DV Bern OSS commons-i18n-l10n (ch.dvbern.oss.commons-i18n-l10n)
+    Copyright DV Bern AG.
+  - DV Bern OSS commons-logging-mdc (ch.dvbern.oss.commons-logging-mdc)
+    Copyright DV Bern AG.
+
+The corresponding artifacts and their NOTICE/LICENSE files are distributed
+unmodified as binary dependencies.

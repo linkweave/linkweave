@@ -8,7 +8,7 @@ import org.linkweave.infrastructure.errorhandling.ExceptionId;
 import org.linkweave.infrastructure.errorhandling.json.AppFailureErrorJson;
 import org.linkweave.infrastructure.errorhandling.json.AppValidationErrorJson;
 import org.linkweave.infrastructure.errorhandling.json.ViolationJson;
-import ch.dvbern.dvbstarter.i18n.translations.TL;
+import org.linkweave.infrastructure.i18n.translations.TL;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.core.MediaType;

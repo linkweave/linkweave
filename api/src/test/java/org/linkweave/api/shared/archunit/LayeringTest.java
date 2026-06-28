@@ -35,7 +35,6 @@ import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.sli
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.linkweave.api.shared.archunit.ArchConst.APP_CLASSES;
 import static org.linkweave.api.shared.archunit.ArchConst.APP_PACKAGE;
-import static org.linkweave.api.shared.archunit.ArchConst.STARTER_PACKAGE;
 import static org.linkweave.api.shared.archunit.predicates.ClassPredicates.interfaceWithSuffix;
 
 @DisplayNameGeneration(ReplaceUnderscores.class)
@@ -78,7 +77,9 @@ class LayeringTest {
     public static final DescribedPredicate<JavaClass> DOC_MERGER =
         resideInAPackage("org.linkweave.api.features.briefvorlagen.briefgenerierung.docmerger..");
 
-    public static final DescribedPredicate<JavaClass> STARTER_SHARED = resideInAPackage(STARTER_PACKAGE + "..");
+    // Relocated starter value-types (ID, EmailAddress) now live here.
+    public static final DescribedPredicate<JavaClass> VALUE_TYPES =
+        resideInAPackage("org.linkweave.api.types..");
     public static final DescribedPredicate<JavaClass> STARTER_INFRASTRUCTURE =
         resideInAPackage("org.linkweave.infrastructure..");
 
@@ -98,19 +99,12 @@ class LayeringTest {
         .layer("Shared")
         .definedBy(SHARED)
         .layer("Infrastructure")
-        .definedBy(STARTER_SHARED.or(STARTER_INFRASTRUCTURE));
+        .definedBy(VALUE_TYPES.or(STARTER_INFRASTRUCTURE));
 
     @Test
     void app_package_exists() {
         assertThat(APP_CLASSES.stream().anyMatch(c -> c.getPackageName().startsWith(APP_PACKAGE + ".")))
             .as("app package %s.* contains classes", APP_PACKAGE)
-            .isTrue();
-    }
-
-    @Test
-    void starter_package_exists() {
-        assertThat(APP_CLASSES.stream().anyMatch(c -> c.getPackageName().startsWith(STARTER_PACKAGE + ".")))
-            .as("starter package %s.* contains classes", STARTER_PACKAGE)
             .isTrue();
     }
 
@@ -133,10 +127,10 @@ class LayeringTest {
             .areDeclaredInClassesThat(are(DATABASE_LAYER))
             .should()
             .onlyBeCalled()
-            .byClassesThat(are(DATABASE_LAYER).or(SERVICE)
+                .byClassesThat(are(DATABASE_LAYER).or(SERVICE)
                 .or(RESOURCE_MAPPER)
                 .or(STARTER_INFRASTRUCTURE)
-                .or(STARTER_SHARED)
+                .or(VALUE_TYPES)
                 .or(SHARED_PRINTER)
                 .or(UTIL)
                 .or(CSV_COLUMNS)
@@ -152,10 +146,10 @@ class LayeringTest {
             .areDeclaredInClassesThat(are(DATABASE_LAYER))
             .should()
             .onlyBeCalled()
-            .byClassesThat(are(DATABASE_LAYER).or(SERVICE)
+                .byClassesThat(are(DATABASE_LAYER).or(SERVICE)
                 .or(RESOURCE_MAPPER)
                 .or(STARTER_INFRASTRUCTURE)
-                .or(STARTER_SHARED)
+                .or(VALUE_TYPES)
                 .or(DOC_MERGER))
             .because("Entities should not be used in Resource Layer");
         rule.allowEmptyShould(true).check(APP_CLASSES);
@@ -167,10 +161,10 @@ class LayeringTest {
             .areDeclaredInClassesThat(are(DATABASE_LAYER))
             .should()
             .onlyBeCalled()
-            .byClassesThat(are(DATABASE_LAYER).or(SERVICE).or(UTIL)
+                .byClassesThat(are(DATABASE_LAYER).or(SERVICE).or(UTIL)
                 .or(RESOURCE_MAPPER)
                 .or(STARTER_INFRASTRUCTURE)
-                .or(STARTER_SHARED)
+                .or(VALUE_TYPES)
                 .or(SHARED_PRINTER)
                 .or(CSV_COLUMNS)
                 .or(DOC_MERGER)

@@ -2,8 +2,8 @@ package org.linkweave.api.shared.user;
 
 import java.util.Optional;
 
-import ch.dvbern.dvbstarter.runas.RunAs;
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.infrastructure.runas.RunAs;
+import org.linkweave.api.types.id.ID;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
 import lombok.RequiredArgsConstructor;

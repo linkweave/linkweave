@@ -3,7 +3,7 @@ package org.linkweave.api.testutil.builder;
 import java.util.EnumSet;
 import java.util.function.Consumer;
 
-import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
+import org.linkweave.api.types.emailaddress.EmailAddress;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import lombok.RequiredArgsConstructor;
 import org.linkweave.api.shared.auth.FachRolle;

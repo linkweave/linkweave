@@ -6,7 +6,7 @@ import org.linkweave.infrastructure.errorhandling.AppFailureMessage;
 import org.linkweave.infrastructure.errorhandling.AppValidationException;
 import org.linkweave.infrastructure.errorhandling.AppValidationMessage;
 import org.linkweave.infrastructure.errorhandling.json.AppFailureErrorJson;
-import ch.dvbern.dvbstarter.i18n.translations.TL;
+import org.linkweave.infrastructure.i18n.translations.TL;
 import io.quarkus.runtime.util.ExceptionUtil;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.core.Context;

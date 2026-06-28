@@ -2,7 +2,7 @@ package org.linkweave.infrastructure.logging;
 
 import java.util.Optional;
 
-import ch.dvbern.dvbstarter.FilterPriorities;
+import org.linkweave.infrastructure.FilterPriorities;
 import ch.dvbern.oss.commons.logging.mdc.LoggingApp;
 import ch.dvbern.oss.commons.logging.mdc.LoggingPrincipal;
 import ch.dvbern.oss.commons.logging.mdc.LoggingSource;

@@ -4,7 +4,7 @@ import java.util.stream.Collectors;
 
 import org.linkweave.infrastructure.errorhandling.AppFailureMessage;
 import org.linkweave.infrastructure.errorhandling.json.AppFailureErrorJson;
-import ch.dvbern.dvbstarter.i18n.translations.TL;
+import org.linkweave.infrastructure.i18n.translations.TL;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;

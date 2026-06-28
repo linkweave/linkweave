@@ -3,7 +3,7 @@ package org.linkweave.api.testutil.fixture;
 import java.time.OffsetDateTime;
 import java.util.function.Consumer;
 
-import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
+import org.linkweave.api.types.emailaddress.EmailAddress;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;

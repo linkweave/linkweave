@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import ch.dvbern.dvbstarter.clock.AppClock;
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.infrastructure.clock.AppClock;
+import org.linkweave.api.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.linkweave.api.auth.apikey.json.ApiKeyCreateJson;
 import org.linkweave.api.shared.user.CurrentUserService;

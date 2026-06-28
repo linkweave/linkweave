@@ -2,7 +2,7 @@ package org.linkweave.infrastructure.db;
 
 import java.util.Optional;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import jakarta.inject.Inject;
 import org.linkweave.api.shared.abstractentity.AbstractEntity;
 import org.jspecify.annotations.NonNull;

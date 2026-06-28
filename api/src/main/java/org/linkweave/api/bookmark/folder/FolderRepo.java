@@ -2,7 +2,7 @@ package org.linkweave.api.bookmark.folder;
 
 import java.util.List;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.AllArgsConstructor;
 import org.linkweave.api.collection.Collection;

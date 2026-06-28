@@ -1,6 +1,6 @@
 package org.linkweave.api.shared.abstractentity;
 
-import ch.dvbern.dvbstarter.clock.AppClock;
+import org.linkweave.infrastructure.clock.AppClock;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PrePersist;

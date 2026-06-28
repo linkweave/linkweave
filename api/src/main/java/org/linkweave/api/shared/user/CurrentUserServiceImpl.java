@@ -2,8 +2,8 @@ package org.linkweave.api.shared.user;
 
 import java.util.Optional;
 
-import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.emailaddress.EmailAddress;
+import org.linkweave.api.types.id.ID;
 import io.quarkus.security.identity.CurrentIdentityAssociation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

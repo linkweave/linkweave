@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 
-import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
+import org.linkweave.api.types.emailaddress.EmailAddress;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;

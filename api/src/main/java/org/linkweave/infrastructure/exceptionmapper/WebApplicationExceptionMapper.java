@@ -2,7 +2,7 @@ package org.linkweave.infrastructure.exceptionmapper;
 
 import org.linkweave.infrastructure.errorhandling.ExceptionId;
 import org.linkweave.infrastructure.errorhandling.json.AppFailureErrorJson;
-import ch.dvbern.dvbstarter.i18n.translations.TL;
+import org.linkweave.infrastructure.i18n.translations.TL;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import io.vertx.core.http.HttpServerRequest;

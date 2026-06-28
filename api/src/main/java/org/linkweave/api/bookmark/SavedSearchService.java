@@ -2,7 +2,7 @@ package org.linkweave.api.bookmark;
 
 import java.util.List;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.linkweave.api.bookmark.json.SavedSearchSaveJson;
 import org.linkweave.api.collection.Collection;
