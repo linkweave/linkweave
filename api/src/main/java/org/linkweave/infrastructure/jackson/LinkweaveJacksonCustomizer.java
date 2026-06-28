@@ -11,7 +11,9 @@ import org.linkweave.api.types.id.IDConverter;
 
 /**
  * Registers Jackson (de)serializers for LinkWeave's custom value types
- * ({@code ID}, {@code EmailAddress}) and applies common ObjectMapper settings.
+ * ({@code ID}, {@code EmailAddress}), applies common ObjectMapper settings, and
+ * installs the {@link StringNormalizerModule} so all Strings are trimmed and
+ * stripped of unprintable characters.
  *
  * @see <a href="https://quarkus.io/guides/rest-json#jackson">Quarkus Jackson Customization</a>
  */
@@ -26,5 +28,6 @@ public class LinkweaveJacksonCustomizer implements ObjectMapperCustomizer {
         EmailAddressConverter.registerJackson(module);
         IDConverter.registerJackson(module);
         mapper.registerModule(module);
+        mapper.registerModule(new StringNormalizerModule()); // all Strings are trimmed + unprintables removed
     }
 }
