@@ -205,6 +205,7 @@ jobs:
           COMMIT_HASH: ${{ steps.commit-hash.outputs.COMMIT_HASH }}
           VERSION: ${{ steps.version.outputs.VERSION }}
           sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
           GIT_REF: ${{ gitea.ref }}
           GIT_REF_NAME: ${{ gitea.ref_name }}
         run: |
@@ -218,7 +219,7 @@ jobs:
           docker build "${tag_args[@]}" \
             --build-arg COMMIT_HASH="${COMMIT_HASH}" \
             --build-arg VERSION="${VERSION}" \
-            --build-arg VITE_SENTRY_DSN="https://dd086e579810c04e75f2e37463ac7378@o4509425614520320.ingest.de.sentry.io/4511463699120208" \
+            --build-arg VITE_SENTRY_DSN="${VITE_SENTRY_DSN}" \
             --secret id=sentry_auth_token,env=sentry_auth_token \
             --label org.opencontainers.image.commit="${COMMIT_HASH}" \
             --label org.opencontainers.image.title="LinkWeave Frontend" \
