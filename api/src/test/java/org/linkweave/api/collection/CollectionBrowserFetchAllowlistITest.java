@@ -109,15 +109,18 @@ class CollectionBrowserFetchAllowlistITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn400_whenAllowlistContainsBareWildcard() {
+        // ARRANGE
         var col = fixtureService.createTestCollection();
         String body = """
             {"name":"X","browserFetchAllowlist":"*"}
             """;
+        // ACT
         RestAssured.given()
             .contentType("application/json")
             .body(body)
             .pathParam("id", col.getId().getUUID().toString())
             .put("/collections/{id}")
+            // ASSERT
             .then()
             .statusCode(400);
     }
@@ -125,15 +128,18 @@ class CollectionBrowserFetchAllowlistITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn400_whenAllowlistContainsScheme() {
+        // ARRANGE
         var col = fixtureService.createTestCollection();
         String body = """
             {"name":"X","browserFetchAllowlist":"https://example.com"}
             """;
+        // ACT
         RestAssured.given()
             .contentType("application/json")
             .body(body)
             .pathParam("id", col.getId().getUUID().toString())
             .put("/collections/{id}")
+            // ASSERT
             .then()
             .statusCode(400);
     }
@@ -141,15 +147,18 @@ class CollectionBrowserFetchAllowlistITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn400_whenAllowlistContainsPath() {
+        // ARRANGE
         var col = fixtureService.createTestCollection();
         String body = """
             {"name":"X","browserFetchAllowlist":"example.com/foo"}
             """;
+        // ACT
         RestAssured.given()
             .contentType("application/json")
             .body(body)
             .pathParam("id", col.getId().getUUID().toString())
             .put("/collections/{id}")
+            // ASSERT
             .then()
             .statusCode(400);
     }
@@ -157,15 +166,18 @@ class CollectionBrowserFetchAllowlistITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn400_whenAllowlistContainsBareIp() {
+        // ARRANGE
         var col = fixtureService.createTestCollection();
         String body = """
             {"name":"X","browserFetchAllowlist":"10.0.0.1"}
             """;
+        // ACT
         RestAssured.given()
             .contentType("application/json")
             .body(body)
             .pathParam("id", col.getId().getUUID().toString())
             .put("/collections/{id}")
+            // ASSERT
             .then()
             .statusCode(400);
     }
@@ -173,14 +185,17 @@ class CollectionBrowserFetchAllowlistITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn403_whenNonOwnerEditsAllowlist() {
+        // ARRANGE
         String body = """
             {"name":"X","browserFetchAllowlist":"*.example.com"}
             """;
+        // ACT
         RestAssured.given()
             .contentType("application/json")
             .body(body)
             .pathParam("id", UUID.randomUUID().toString())
             .put("/collections/{id}")
+            // ASSERT
             .then()
             .statusCode(403);
     }

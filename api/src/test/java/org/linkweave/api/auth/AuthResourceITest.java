@@ -44,13 +44,16 @@ class AuthResourceITest {
     @TestSecurity(user = "user_1", augmentors = CustomTestSecurityIdentityAugmentor.class)
     @Order(1)
     void shouldEnsureUserCreation() {
+        // ARRANGE
         augmentor.setUuid(uuid);
+        // ACT
         RestAssured.given()
             .config(RestAssured.config().redirect(RedirectConfig.redirectConfig().followRedirects(false)))
             .get("/auth/oidc-login")
             .then()
             .statusCode(303);
 
+        // ASSERT
         User user = userRepo.findByEmail(EmailAddress.fromString("email_" + uuid + "@example.com")).orElseThrow();
         assertThat(user.getEmail()).hasToString("email_" + uuid + "@example.com");
         assertThat(user.getVorname()).isEqualTo("gn" + uuid);
@@ -65,13 +68,16 @@ class AuthResourceITest {
     @TestSecurity(user = "user_2", augmentors = CustomTestSecurityIdentityAugmentor.class)
     @Order(2)
     void shouldEnsureUserCreation2() {
+        // ARRANGE
         augmentor.setUuid(uuid2);
+        // ACT
         RestAssured.given()
             .config(RestAssured.config().redirect(RedirectConfig.redirectConfig().followRedirects(false)))
             .get("/auth/oidc-login")
             .then()
             .statusCode(303);
 
+        // ASSERT
         User user = userRepo.findByEmail(EmailAddress.fromString("email_" + uuid2 + "@example.com")).orElseThrow();
         assertThat(user.getEmail()).hasToString("email_" + uuid2 + "@example.com");
         assertThat(user.getVorname()).isEqualTo("gn" + uuid2);
@@ -85,13 +91,16 @@ class AuthResourceITest {
     @TestSecurity(user = "user_3", augmentors = CustomTestSecurityIdentityAugmentor.class)
     @Order(3)
     void shouldEnsureUserCreation3() {
+        // ARRANGE
         augmentor.setUuid(uuid3);
+        // ACT
         RestAssured.given()
             .config(RestAssured.config().redirect(RedirectConfig.redirectConfig().followRedirects(false)))
             .get("/auth/oidc-login")
             .then()
             .statusCode(303);
 
+        // ASSERT
         assertThat(userRepo.findByEmail(EmailAddress.fromString("email_" + uuid + "@example.com"))).isPresent();
         assertThat(userRepo.findByEmail(EmailAddress.fromString("email_" + uuid2 + "@example.com"))).isPresent();
         User user3 = userRepo.findByEmail(EmailAddress.fromString("email_" + uuid3 + "@example.com")).orElseThrow();

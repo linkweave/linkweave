@@ -48,10 +48,13 @@ class BookmarkResourceITest {
         roles = {"BOOKMARK_READ"}
     )
     void shouldReturnEmptyList_whenCollectionHasNoBookmarks() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
+        // ACT
         RestAssured.given()
             .queryParam("collectionId", collection.getId().getUUID().toString())
             .get("/bookmarks")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("bookmarkList", hasSize(0));
@@ -63,6 +66,7 @@ class BookmarkResourceITest {
         roles = {"BOOKMARK_READ"}
     )
     void shouldReturnBookmarks_whenCollectionHasBookmarks() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -71,9 +75,11 @@ class BookmarkResourceITest {
             """.formatted(collectionId);
         RestAssured.given().contentType(ContentType.JSON).body(body).post("/bookmarks");
 
+        // ACT
         RestAssured.given()
             .queryParam("collectionId", collectionId)
             .get("/bookmarks")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("bookmarkList", hasSize(1))
@@ -86,6 +92,7 @@ class BookmarkResourceITest {
         roles = {"BOOKMARK_READ"}
     )
     void shouldReturnBookmarksOrderedByCreationDateDesc() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -96,9 +103,11 @@ class BookmarkResourceITest {
             .body("{\"collectionId\":\"%s\",\"title\":\"Second\",\"url\":\"https://second.com\"}".formatted(collectionId))
             .post("/bookmarks");
 
+        // ACT
         RestAssured.given()
             .queryParam("collectionId", collectionId)
             .get("/bookmarks")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("bookmarkList", hasSize(2))
@@ -121,13 +130,16 @@ class BookmarkResourceITest {
 
     @Test
     void shouldReturn401_whenNotAuthenticated() {
+        // ARRANGE
         String body = """
             {"collectionId":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","title":"Test","url":"https://example.com"}
             """;
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks")
+            // ASSERT
             .then()
             .statusCode(401);
     }
@@ -138,6 +150,7 @@ class BookmarkResourceITest {
         roles = {"BOOKMARK_WRITE"}
     )
     void shouldCreateBookmarkWithoutFolder_whenFolderIdIsNull() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -145,10 +158,12 @@ class BookmarkResourceITest {
             {"collectionId":"%s","title":"Unfiled Bookmark","url":"https://example.org","folderId":null}
             """.formatted(collectionId);
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("data.folderId", nullValue())
@@ -161,6 +176,7 @@ class BookmarkResourceITest {
         roles = {"BOOKMARK_WRITE"}
     )
     void shouldCreateBookmarkWithFolder_whenFolderIdProvided() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -174,10 +190,12 @@ class BookmarkResourceITest {
             {"collectionId":"%s","folderId":"%s","title":"Filed Bookmark","url":"https://example.org"}
             """.formatted(collectionId, folderId);
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("data.folderId", notNullValue())
@@ -190,6 +208,7 @@ class BookmarkResourceITest {
         roles = {"BOOKMARK_WRITE"}
     )
     void shouldCreateBookmarkWithTags_whenTagIdsProvided() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -204,10 +223,12 @@ class BookmarkResourceITest {
             {"collectionId":"%s","title":"Tagged Bookmark","url":"https://example.org","tagIds":["%s"]}
             """.formatted(collectionId, tagId);
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("data.tagIds", hasSize(1))
@@ -220,6 +241,7 @@ class BookmarkResourceITest {
         roles = {"BOOKMARK_WRITE"}
     )
     void shouldCreateBookmarkWithDescription_whenDescriptionProvided() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -227,10 +249,12 @@ class BookmarkResourceITest {
             {"collectionId":"%s","title":"Bookmark with Description","url":"https://example.org","description":"This is my description"}
             """.formatted(collectionId);
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("data.description", equalTo("This is my description"));
@@ -242,15 +266,18 @@ class BookmarkResourceITest {
         roles = {"BOOKMARK_WRITE"}
     )
     void shouldReturn403_whenUserHasNoCollectionAccess() {
+        // ARRANGE
         String nonExistentId = java.util.UUID.randomUUID().toString();
         String body = """
             {"collectionId":"%s","title":"My Bookmark","url":"https://example.com"}
             """.formatted(nonExistentId);
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks")
+            // ASSERT
             .then()
             .statusCode(403);
     }

@@ -43,6 +43,7 @@ class CleanupSuggestionResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldSoftDeleteBookmarks_whenMoveToTrash() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Bookmark bookmark = persistBookmark(collection, "stale");
 
@@ -50,6 +51,7 @@ class CleanupSuggestionResourceITest {
             {"collectionId":"%s","bookmarkIds":["%s"]}
             """.formatted(collection.getId().getUUID(), bookmark.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
@@ -57,6 +59,7 @@ class CleanupSuggestionResourceITest {
             .then()
             .statusCode(204);
 
+        // ASSERT
         RestAssured.given()
             .queryParam("collectionId", collection.getId().getUUID().toString())
             .get("/bookmarks")
@@ -68,6 +71,7 @@ class CleanupSuggestionResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldReturn403AndDeleteNothing_whenMoveToTrashContainsBookmarkOfOtherCollection() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Collection otherCollection = fixtureService.createTestCollection();
         Bookmark own = persistBookmark(collection, "own");
@@ -80,6 +84,7 @@ class CleanupSuggestionResourceITest {
             own.getId().getUUID(),
             foreign.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
@@ -87,6 +92,7 @@ class CleanupSuggestionResourceITest {
             .then()
             .statusCode(403);
 
+        // ASSERT
         // Atomic rollback: neither bookmark was deleted.
         RestAssured.given()
             .queryParam("collectionId", collection.getId().getUUID().toString())

@@ -44,16 +44,19 @@ class ImportResourceITest {
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     @Transactional
     void shouldPreserveAddDateFromImportedFile() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
         File file = getResourceFile("bookmarks-sample.html");
 
+        // ACT
         RestAssured.given()
             .multiPart("file", file, "text/html")
             .post("/collections/{collectionId}/import", collectionId)
             .then()
             .statusCode(200);
 
+        // ASSERT
         // Sample fixture has ADD_DATE="1234567890" on every <A> → 2009-02-13T23:31:30Z.
         OffsetDateTime expected = OffsetDateTime.ofInstant(Instant.ofEpochSecond(1234567890L), ZoneOffset.UTC);
         Assertions.assertThat(bookmarkRepo.findByCollection(collection.getId()))

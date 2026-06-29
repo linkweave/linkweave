@@ -247,10 +247,13 @@ test.describe('FR-072 Search Autocomplete', () => {
   })
 
   test('clicking a suggestion inserts it and keeps focus in the input', async ({ page }) => {
+    // ARRANGE
     const input = headerInput(page)
     await input.click()
     await input.fill('#quar')
+    // ACT
     await items(page).filter({ hasText: tagQuarkus }).click()
+    // ASSERT
     await expect(input).toHaveValue(`#${tagQuarkus} `)
     await expect(input).toBeFocused()
   })

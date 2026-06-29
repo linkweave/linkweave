@@ -168,11 +168,14 @@ class ApiKeyResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldRejectNameTooLong() {
+        // ARRANGE
         String longName = "x".repeat(101);
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body("{\"name\":\"" + longName + "\"}")
             .post("/auth/api-keys")
+            // ASSERT
             .then()
             .statusCode(400);
     }
@@ -216,6 +219,7 @@ class ApiKeyResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn400_whenRevokingKeyOfAnotherUser() {
+        // ARRANGE
         User otherUser = fixtureService.persistUser(u -> u.withEmail("other-apikey-" + UUID.randomUUID() + "@example.com"));
         String hash = uniqueKeyHash();
         var otherKey = fixtureService.persistApiKey(k -> k
@@ -224,8 +228,10 @@ class ApiKeyResourceITest {
             .withKeyHash(hash)
             .withKeyPrefix(hash.substring(0, 8)));
 
+        // ACT
         RestAssured.given()
             .delete("/auth/api-keys/" + otherKey.getId().getUUID())
+            // ASSERT
             .then()
             .statusCode(400);
     }

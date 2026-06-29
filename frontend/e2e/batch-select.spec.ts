@@ -251,10 +251,14 @@ test.describe('Batch select (UC-074)', () => {
   })
 
   test('should copy URLs without clearing the selection', async ({ page, context }) => {
+    // ARRANGE
     await context.grantPermissions(['clipboard-read', 'clipboard-write'])
     await selectByTitles(page, collection.collectionId, bm.one, bm.two)
 
+    // ACT
     await page.getByTestId('batch-copy-urls').click()
+
+    // ASSERT
     await expect(page.getByText('Copied 2 URLs to clipboard.')).toBeVisible()
     // Non-mutating: the selection is retained.
     await expect(batchCount(page)).toHaveText('2 selected')

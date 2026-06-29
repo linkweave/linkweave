@@ -51,11 +51,14 @@ class CollectionResourceITest {
         roles = {"BOOKMARK_READ"}
     )
     void shouldReturnCollectionInfo_whenUserHasAccess() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
 
+        // ACT
         RestAssured.given()
             .pathParam("id", collection.getId().getUUID().toString())
             .get("/collections/{id}")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("id", notNullValue())

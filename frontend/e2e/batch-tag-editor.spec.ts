@@ -205,10 +205,13 @@ test.describe('Batch tag editor (UC-074a)', () => {
   })
 
   test('should close on outside click without clearing the selection', async ({ page }) => {
+    // ARRANGE
     await openEditor(page, collection.collectionId, bm.a, bm.b)
 
+    // ACT
     // Mousedown outside the popover (on the batch bar) closes it.
     await page.getByTestId('batch-count').click()
+    // ASSERT
     await expect(editor(page)).toHaveCount(0)
     // Selection survives — only the popover closed.
     await expect(page.getByTestId('batch-count')).toHaveText('2 selected')

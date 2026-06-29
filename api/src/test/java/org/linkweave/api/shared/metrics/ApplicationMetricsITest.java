@@ -40,6 +40,7 @@ class ApplicationMetricsITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldIncludeCustomLinkweaveMetricsAfterRefresh() {
+        // ARRANGE
         // createTestBookmark creates a Collection *with* a Bookmark, so the
         // bookmarks-per-collection MultiGauge actually has a row to emit —
         // otherwise linkweave_bookmarks_total is absent and the assertion only
@@ -48,9 +49,11 @@ class ApplicationMetricsITest {
 
         metricsService.refreshMetrics();
 
+        // ACT
         RestAssured.given()
             .basePath("/q")
             .get("/metrics")
+            // ASSERT
             .then()
             .statusCode(200)
             .body(containsString("linkweave_collections_total"))

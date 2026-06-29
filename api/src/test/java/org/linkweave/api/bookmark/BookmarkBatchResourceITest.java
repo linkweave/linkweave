@@ -32,13 +32,16 @@ class BookmarkBatchResourceITest {
 
     @Test
     void shouldReturn401_whenBatchMoveNotAuthenticated() {
+        // ARRANGE
         String body = """
             {"collectionId":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","bookmarkIds":["bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"]}
             """;
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-move")
+            // ASSERT
             .then()
             .statusCode(401);
     }
@@ -46,6 +49,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldMoveAllBookmarksToFolder_whenBatchMove() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Folder folder = fixtureService.persistFolder(b -> b
             .withCollection(collection)
@@ -62,10 +66,12 @@ class BookmarkBatchResourceITest {
             first.getId().getUUID(),
             second.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-move")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("bookmarkList", hasSize(2))
@@ -76,6 +82,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldMoveBookmarksToCollectionRoot_whenBatchMoveWithoutFolderId() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Folder folder = fixtureService.persistFolder(b -> b
             .withCollection(collection)
@@ -92,10 +99,12 @@ class BookmarkBatchResourceITest {
             {"collectionId":"%s","folderId":null,"bookmarkIds":["%s"]}
             """.formatted(collection.getId().getUUID(), bookmark.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-move")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("bookmarkList", hasSize(1))
@@ -105,6 +114,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldReturn403AndMoveNothing_whenBatchMoveContainsBookmarkOfOtherCollection() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Collection otherCollection = fixtureService.createTestCollection();
         Folder folder = fixtureService.persistFolder(b -> b
@@ -122,10 +132,12 @@ class BookmarkBatchResourceITest {
             own.getId().getUUID(),
             foreign.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-move")
+            // ASSERT
             .then()
             .statusCode(403);
 
@@ -141,6 +153,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldSoftDeleteAllBookmarks_whenBatchDelete() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Bookmark first = persistBookmark(collection, "first");
         Bookmark second = persistBookmark(collection, "second");
@@ -152,10 +165,12 @@ class BookmarkBatchResourceITest {
             first.getId().getUUID(),
             second.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-delete")
+            // ASSERT
             .then()
             .statusCode(204);
 
@@ -170,6 +185,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldReturn403AndDeleteNothing_whenBatchDeleteContainsBookmarkOfOtherCollection() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Collection otherCollection = fixtureService.createTestCollection();
         Bookmark own = persistBookmark(collection, "own");
@@ -182,10 +198,12 @@ class BookmarkBatchResourceITest {
             own.getId().getUUID(),
             foreign.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-delete")
+            // ASSERT
             .then()
             .statusCode(403);
 
@@ -200,6 +218,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldAddTagToAllBookmarks_whenBatchTag() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Tag tag = fixtureService.persistTag(b -> b
             .withCollection(collection)
@@ -217,10 +236,12 @@ class BookmarkBatchResourceITest {
             first.getId().getUUID(),
             second.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-tag")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("bookmarkList", hasSize(2))
@@ -231,6 +252,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldKeepExistingTags_whenBatchTagAddsAnotherTag() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Tag existing = fixtureService.persistTag(b -> b
             .withCollection(collection)
@@ -256,10 +278,12 @@ class BookmarkBatchResourceITest {
             added.getId().getUUID(),
             bookmark.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-tag")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("bookmarkList[0].data.tagIds", containsInAnyOrder(
@@ -270,6 +294,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldAddAndRemoveTagsInSingleBatch_whenBatchTag() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Tag keep = fixtureService.persistTag(b -> b
             .withCollection(collection)
@@ -301,10 +326,12 @@ class BookmarkBatchResourceITest {
             drop.getId().getUUID(),
             bookmark.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-tag")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("bookmarkList[0].data.tagIds", containsInAnyOrder(
@@ -315,6 +342,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldReturn400_whenBatchTagAddsAndRemovesSameTag() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Tag tag = fixtureService.persistTag(b -> b
             .withCollection(collection)
@@ -331,10 +359,12 @@ class BookmarkBatchResourceITest {
             tag.getId().getUUID(),
             bookmark.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-tag")
+            // ASSERT
             .then()
             .statusCode(400);
     }
@@ -342,6 +372,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldReturnSuccessAndMutateNothing_whenBatchTagHasNoTagIds() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Bookmark bookmark = persistBookmark(collection, "no-op");
 
@@ -351,10 +382,12 @@ class BookmarkBatchResourceITest {
             collection.getId().getUUID(),
             bookmark.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-tag")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("bookmarkList", hasSize(1))
@@ -365,6 +398,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldFail_whenBatchTagWithTagOfOtherCollection() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Collection otherCollection = fixtureService.createTestCollection();
         Tag foreignTag = fixtureService.persistTag(b -> b
@@ -381,10 +415,12 @@ class BookmarkBatchResourceITest {
             foreignTag.getId().getUUID(),
             bookmark.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-tag")
+            // ASSERT
             .then()
             .statusCode(403);
 
@@ -399,6 +435,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldReturn500AndMutateNothing_whenBatchTagReferencesNonExistentTagId() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Bookmark bookmark = persistBookmark(collection, "target");
 
@@ -412,10 +449,12 @@ class BookmarkBatchResourceITest {
             ghostTagId,
             bookmark.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-tag")
+            // ASSERT
             .then()
             .statusCode(500);
 
@@ -432,16 +471,19 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldReturn400_whenBatchDeleteWithEmptyBookmarkIds() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
 
         String body = """
             {"collectionId":"%s","bookmarkIds":[]}
             """.formatted(collection.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-delete")
+            // ASSERT
             .then()
             .statusCode(400);
     }
@@ -449,6 +491,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldReturn400_whenBatchMoveExceedsMaxSize() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String ids = java.util.stream.IntStream.range(0, 501)
             .mapToObj(_ -> "\"" + java.util.UUID.randomUUID() + "\"")
@@ -458,10 +501,12 @@ class BookmarkBatchResourceITest {
             {"collectionId":"%s","folderId":null,"bookmarkIds":[%s]}
             """.formatted(collection.getId().getUUID(), ids);
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-move")
+            // ASSERT
             .then()
             .statusCode(400);
     }
@@ -469,6 +514,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldReturn403_whenMovingBookmarkOfOtherCollection() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Collection otherCollection = fixtureService.createTestCollection();
         Bookmark foreign = persistBookmark(otherCollection, "foreign");
@@ -477,10 +523,12 @@ class BookmarkBatchResourceITest {
             {"collectionId":"%s","folderId":null}
             """.formatted(collection.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .patch("/bookmarks/" + foreign.getId().getUUID() + "/move")
+            // ASSERT
             .then()
             .statusCode(403);
     }
@@ -490,6 +538,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldNotDuplicateBookmarkInResponse_whenBookmarkHasMultipleTags() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Folder folder = fixtureService.persistFolder(b -> b
             .withCollection(collection)
@@ -519,10 +568,12 @@ class BookmarkBatchResourceITest {
             folder.getId().getUUID(),
             bookmark.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-move")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("bookmarkList", hasSize(1));
@@ -531,6 +582,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldBatchMove500BookmarksWithinTransactionLimit() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Folder folder = fixtureService.persistFolder(b -> b
             .withCollection(collection)
@@ -553,11 +605,13 @@ class BookmarkBatchResourceITest {
             folder.getId().getUUID(),
             bookmarkIds);
 
+        // ACT
         long start = System.nanoTime();
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-move")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("bookmarkList", hasSize(BATCH_LOAD_SIZE))
@@ -570,6 +624,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldBatchDelete500BookmarksWithinTransactionLimit() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
 
         List<Bookmark> bookmarks = new ArrayList<>(BATCH_LOAD_SIZE);
@@ -587,11 +642,13 @@ class BookmarkBatchResourceITest {
             collection.getId().getUUID(),
             bookmarkIds);
 
+        // ACT
         long start = System.nanoTime();
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-delete")
+            // ASSERT
             .then()
             .statusCode(204);
         long elapsedMs = (System.nanoTime() - start) / 1_000_000;
@@ -612,6 +669,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn403_whenBatchMoveWithoutBookmarkWriteRole() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Bookmark bookmark = persistBookmark(collection, "readonly");
 
@@ -619,10 +677,12 @@ class BookmarkBatchResourceITest {
             {"collectionId":"%s","folderId":null,"bookmarkIds":["%s"]}
             """.formatted(collection.getId().getUUID(), bookmark.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-move")
+            // ASSERT
             .then()
             .statusCode(403);
     }
@@ -630,6 +690,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn403_whenBatchDeleteWithoutBookmarkWriteRole() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Bookmark bookmark = persistBookmark(collection, "readonly");
 
@@ -637,10 +698,12 @@ class BookmarkBatchResourceITest {
             {"collectionId":"%s","bookmarkIds":["%s"]}
             """.formatted(collection.getId().getUUID(), bookmark.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-delete")
+            // ASSERT
             .then()
             .statusCode(403);
     }
@@ -648,6 +711,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn403_whenBatchTagWithoutBookmarkWriteRole() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Tag tag = fixtureService.persistTag(b -> b
             .withCollection(collection)
@@ -663,10 +727,12 @@ class BookmarkBatchResourceITest {
             tag.getId().getUUID(),
             bookmark.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-tag")
+            // ASSERT
             .then()
             .statusCode(403);
     }
@@ -677,26 +743,32 @@ class BookmarkBatchResourceITest {
 
     @Test
     void shouldReturn401_whenBatchDeleteNotAuthenticated() {
+        // ARRANGE
         String body = """
             {"collectionId":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","bookmarkIds":["bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"]}
             """;
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-delete")
+            // ASSERT
             .then()
             .statusCode(401);
     }
 
     @Test
     void shouldReturn401_whenBatchTagNotAuthenticated() {
+        // ARRANGE
         String body = """
             {"collectionId":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","addTagIds":["cccccccc-cccc-cccc-cccc-cccccccccccc"],"removeTagIds":[],"bookmarkIds":["bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"]}
             """;
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-tag")
+            // ASSERT
             .then()
             .statusCode(401);
     }
@@ -708,6 +780,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldReturn400_whenBatchDeleteExceedsMaxSize() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String ids = java.util.stream.IntStream.range(0, 501)
             .mapToObj(_ -> "\"" + java.util.UUID.randomUUID() + "\"")
@@ -717,10 +790,12 @@ class BookmarkBatchResourceITest {
             {"collectionId":"%s","bookmarkIds":[%s]}
             """.formatted(collection.getId().getUUID(), ids);
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-delete")
+            // ASSERT
             .then()
             .statusCode(400);
     }
@@ -728,6 +803,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldReturn400_whenBatchTagExceedsMaxSize() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Tag tag = fixtureService.persistTag(b -> b
             .withCollection(collection)
@@ -742,10 +818,12 @@ class BookmarkBatchResourceITest {
             {"collectionId":"%s","addTagIds":["%s"],"removeTagIds":[],"bookmarkIds":[%s]}
             """.formatted(collection.getId().getUUID(), tag.getId().getUUID(), ids);
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-tag")
+            // ASSERT
             .then()
             .statusCode(400);
     }
@@ -757,6 +835,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldReturn403AndMoveNothing_whenBatchMoveTargetsFolderOfOtherCollection() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Collection otherCollection = fixtureService.createTestCollection();
         Folder foreignFolder = fixtureService.persistFolder(b -> b
@@ -772,10 +851,12 @@ class BookmarkBatchResourceITest {
             foreignFolder.getId().getUUID(),
             own.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-move")
+            // ASSERT
             .then()
             .statusCode(403);
 
@@ -795,6 +876,7 @@ class BookmarkBatchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldMoveBookmarksToTrashbin_whenBatchDelete() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Bookmark first = persistBookmark(collection, "trash-one");
         Bookmark second = persistBookmark(collection, "trash-two");
@@ -806,10 +888,12 @@ class BookmarkBatchResourceITest {
             first.getId().getUUID(),
             second.getId().getUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/bookmarks/batch-delete")
+            // ASSERT
             .then()
             .statusCode(204);
 

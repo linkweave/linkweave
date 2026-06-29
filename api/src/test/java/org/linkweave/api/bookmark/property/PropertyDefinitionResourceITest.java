@@ -30,10 +30,13 @@ class PropertyDefinitionResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturnEmptyList_whenCollectionHasNoDefinitions() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
+        // ACT
         RestAssured.given()
             .queryParam("collectionId", collection.getId().getUUID().toString())
             .get("/property-definitions")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("propertyDefinitions", hasSize(0));
@@ -42,6 +45,7 @@ class PropertyDefinitionResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldListExistingDefinitions() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         fixtureService.persistPropertyDefinition(b -> b
             .withCollection(collection)
@@ -56,9 +60,11 @@ class PropertyDefinitionResourceITest {
             .withSortOrder(1)
         );
 
+        // ACT
         RestAssured.given()
             .queryParam("collectionId", collection.getId().getUUID().toString())
             .get("/property-definitions")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("propertyDefinitions", hasSize(2))
@@ -69,6 +75,7 @@ class PropertyDefinitionResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldCreateDefinition() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -76,10 +83,12 @@ class PropertyDefinitionResourceITest {
             {"collectionId":"%s","name":"Priority","type":"TEXT","sortOrder":0}
             """.formatted(collectionId);
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/property-definitions")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("data.name", equalTo("Priority"))
@@ -90,6 +99,7 @@ class PropertyDefinitionResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldRejectCreate_whenNameBlank() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -97,10 +107,12 @@ class PropertyDefinitionResourceITest {
             {"collectionId":"%s","name":"","type":"TEXT","sortOrder":0}
             """.formatted(collectionId);
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/property-definitions")
+            // ASSERT
             .then()
             .statusCode(400);
     }
@@ -108,6 +120,7 @@ class PropertyDefinitionResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldUpdateDefinition() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
         PropertyDefinition def = fixtureService.persistPropertyDefinition(b -> b
@@ -121,10 +134,12 @@ class PropertyDefinitionResourceITest {
             {"collectionId":"%s","name":"NewName","type":"NUMBER","sortOrder":3}
             """.formatted(collectionId);
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .put("/property-definitions/" + def.getId().getUUID())
+            // ASSERT
             .then()
             .statusCode(200)
             .body("data.name", equalTo("NewName"))
@@ -208,6 +223,7 @@ class PropertyDefinitionResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturnZeroUsage_whenNoBookmarksUseProperty() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         PropertyDefinition def = fixtureService.persistPropertyDefinition(b -> b
             .withCollection(collection)
@@ -216,8 +232,10 @@ class PropertyDefinitionResourceITest {
             .withSortOrder(0)
         );
 
+        // ACT
         RestAssured.given()
             .get("/property-definitions/" + def.getId().getUUID() + "/usage")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("affectedBookmarks", equalTo(0));
@@ -236,14 +254,17 @@ class PropertyDefinitionResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldReturn403_whenCreatingInCollectionWithoutAccess() {
+        // ARRANGE
         String body = """
             {"collectionId":"%s","name":"Sneaky","type":"TEXT","sortOrder":0}
             """.formatted(java.util.UUID.randomUUID());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/property-definitions")
+            // ASSERT
             .then()
             .statusCode(403);
     }
@@ -279,6 +300,7 @@ class PropertyDefinitionResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldRejectDuplicatePropertyName_onUpdate() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -300,10 +322,12 @@ class PropertyDefinitionResourceITest {
             {"collectionId":"%s","name":"Status","type":"NUMBER","sortOrder":1}
             """.formatted(collectionId);
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .put("/property-definitions/" + target.getId().getUUID())
+            // ASSERT
             .then()
             .statusCode(400)
             .body("violations[0].message", equalTo("A property with this name already exists in the collection."));

@@ -33,6 +33,7 @@ class ForeignKeysITest {
     @Transactional
     @TestSecurity(user = "test@example.com", roles = {"USER", "BOOKMARK_READ", "BOOKMARK_WRITE"})
     void shouldThrowExceptionOnDeleteWhenReferencedByBookmark() {
+        // ARRANGE
         // Setup: Create a Collection
         Collection collection = CollectionBuilder.build(b -> b
             .withName("FK-Test-Collection")
@@ -63,10 +64,12 @@ class ForeignKeysITest {
         em.clear();
 
         // Execution and Verification: Try to delete the tag directly, which should fail due to FK constraint
+        // ACT
         Tag loadedTag = em.find(Tag.class, tag.getId().getUUID());
         em.remove(loadedTag);
 
         // Assertion: flush should trigger the database constraint violation
+        // ASSERT
         Assertions.assertThrows(PersistenceException.class, em::flush,
             "Expected PersistenceException due to SQLite foreign key constraint violation");
     }

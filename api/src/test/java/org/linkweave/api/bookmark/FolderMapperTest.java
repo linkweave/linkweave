@@ -26,6 +26,7 @@ class FolderMapperTest {
 
     @Test
     void toJson_shouldMapFolderWithoutParent() {
+        // ARRANGE
         Collection collection = createTestCollection();
 
         Folder folder = FolderBuilder.build(b -> b
@@ -34,8 +35,10 @@ class FolderMapperTest {
         );
         EntityTestHelper.initEntityInfo(folder);
 
+        // ACT
         var result = FolderMapper.toJson(folder);
 
+        // ASSERT
         Assertions.assertThat(result.getId()).isEqualTo(folder.getId());
         Assertions.assertThat(result.getData().getCollectionId()).isEqualTo(collection.getId());
         Assertions.assertThat(result.getData().getName()).isEqualTo("Test Folder");
@@ -46,6 +49,7 @@ class FolderMapperTest {
 
     @Test
     void toJson_shouldMapFolderWithParent() {
+        // ARRANGE
         Collection collection = createTestCollection();
 
         Folder parent = FolderBuilder.build(b -> b
@@ -61,8 +65,10 @@ class FolderMapperTest {
         );
         EntityTestHelper.initEntityInfo(child);
 
+        // ACT
         var result = FolderMapper.toJson(child);
 
+        // ASSERT
         Assertions.assertThat(result.getData().getCollectionId()).isEqualTo(collection.getId());
         Assertions.assertThat(result.getData().getParentId()).isEqualTo(parent.getId());
         Assertions.assertThat(result.getData().getName()).isEqualTo("Child Folder");

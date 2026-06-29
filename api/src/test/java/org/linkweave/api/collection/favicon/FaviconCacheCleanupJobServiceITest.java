@@ -50,19 +50,23 @@ class FaviconCacheCleanupJobServiceITest {
 
     @Test
     void shouldDoNothing_whenCacheBelowThreshold() {
+        // ARRANGE
         Bookmark bookmark = fixtureService.createTestBookmark(b -> b.withUrl("https://example-below.test"));
         backdateCreated(bookmark, 60);
         String origin = FaviconFetcherService.canonicalOrigin(bookmark.getUrl());
         cacheService.putSuccess(origin, bytes(64), "image/png");
 
+        // ACT
         FaviconCacheCleanupJobService.Result result = cleanupJob.run(1024L * 1024L, Duration.ofDays(28));
 
+        // ASSERT
         assertThat(result.evictedFiles()).isZero();
         assertThat(payloadFile(origin)).exists();
     }
 
     @Test
     void shouldEvictOldestFirst_untilThresholdMet() {
+        // ARRANGE
         Bookmark older = fixtureService.createTestBookmark(b -> b.withUrl("https://older.test"));
         Bookmark newer = fixtureService.createTestBookmark(b -> b.withUrl("https://newer.test"));
         backdateCreated(older, 100);
@@ -75,8 +79,10 @@ class FaviconCacheCleanupJobServiceITest {
 
         // Budget is 3000 bytes; cache holds 4096 + 4096 (and metadata sidecars); after evicting
         // the older entry the size drops below the threshold so iteration stops.
+        // ACT
         FaviconCacheCleanupJobService.Result result = cleanupJob.run(3000L, Duration.ofDays(28));
 
+        // ASSERT
         assertThat(result.evictedFiles()).isEqualTo(1);
         assertThat(payloadFile(oldOrigin)).doesNotExist();
         assertThat(payloadFile(newOrigin)).exists();
@@ -84,6 +90,7 @@ class FaviconCacheCleanupJobServiceITest {
 
     @Test
     void shouldEvictOldNeverClickedEvenWhenRecentClickExists() {
+        // ARRANGE
         // Regression: a two-tier lastClickedAt-NULLS-LAST sort stranded ancient
         // never-clicked bookmarks behind a recently-clicked one, tripping the
         // cleanup's age break before the oldest entry was reached. Candidates
@@ -100,8 +107,10 @@ class FaviconCacheCleanupJobServiceITest {
         cacheService.putSuccess(clickedOrigin, bytes(2048), "image/png");
         cacheService.putSuccess(staleOrigin, bytes(2048), "image/png");
 
+        // ACT
         FaviconCacheCleanupJobService.Result result = cleanupJob.run(3000L, Duration.ofDays(28));
 
+        // ASSERT
         assertThat(result.evictedFiles()).isEqualTo(1);
         assertThat(payloadFile(staleOrigin)).doesNotExist();
         assertThat(payloadFile(clickedOrigin)).exists();
@@ -109,13 +118,16 @@ class FaviconCacheCleanupJobServiceITest {
 
     @Test
     void shouldNotEvict_whenAllBookmarksYoungerThanMinAge() {
+        // ARRANGE
         Bookmark fresh = fixtureService.createTestBookmark(b -> b.withUrl("https://fresh.test"));
         // leave timestampErstellt at default (today)
         String origin = FaviconFetcherService.canonicalOrigin(fresh.getUrl());
         cacheService.putSuccess(origin, bytes(8192), "image/png");
 
+        // ACT
         FaviconCacheCleanupJobService.Result result = cleanupJob.run(1L, Duration.ofDays(28));
 
+        // ASSERT
         assertThat(result.evictedFiles()).isZero();
         assertThat(payloadFile(origin)).exists();
     }

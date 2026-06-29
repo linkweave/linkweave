@@ -244,6 +244,7 @@ class TagResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldDeleteTag() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -259,11 +260,13 @@ class TagResourceITest {
             .statusCode(200)
             .extract().path("id");
 
+        // ACT
         RestAssured.given()
             .delete("/tags/" + tagId)
             .then()
             .statusCode(204);
 
+        // ASSERT
         RestAssured.given()
             .queryParam("collectionId", collectionId)
             .get("/tags")
@@ -275,6 +278,7 @@ class TagResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldDeleteTagAndPreserveBookmarks() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -286,11 +290,13 @@ class TagResourceITest {
             .body("{\"collectionId\":\"%s\",\"title\":\"BM\",\"url\":\"https://x.com\",\"tagIds\":[\"%s\"]}".formatted(collectionId, tagId))
             .post("/bookmarks").then().statusCode(200);
 
+        // ACT
         RestAssured.given()
             .delete("/tags/" + tagId)
             .then()
             .statusCode(204);
 
+        // ASSERT
         RestAssured.given()
             .queryParam("collectionId", collectionId)
             .get("/bookmarks")
@@ -302,6 +308,7 @@ class TagResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldDeleteTagFromAllBookmarks() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -313,11 +320,13 @@ class TagResourceITest {
             .body("{\"collectionId\":\"%s\",\"title\":\"BM\",\"url\":\"https://x.com\",\"tagIds\":[\"%s\"]}".formatted(collectionId, tagId))
             .post("/bookmarks").then().statusCode(200);
 
+        // ACT
         RestAssured.given()
             .delete("/tags/" + tagId)
             .then()
             .statusCode(204);
 
+        // ASSERT
         RestAssured.given()
             .queryParam("collectionId", collectionId)
             .get("/bookmarks")

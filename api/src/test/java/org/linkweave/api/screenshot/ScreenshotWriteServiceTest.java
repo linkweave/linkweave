@@ -44,10 +44,13 @@ class ScreenshotWriteServiceTest {
 
     @Test
     void shouldTruncateFetchedDescriptionToColumnLimit() {
+        // ARRANGE
         String oversized = "x".repeat(DbConst.DB_TEXTAREA_MAX_LENGTH_5000 + 100);
 
+        // ACT
         String result = ScreenshotWriteService.descriptionToBackfill(null, oversized);
 
+        // ASSERT
         assertThat(result).hasSize(DbConst.DB_TEXTAREA_MAX_LENGTH_5000);
     }
 }

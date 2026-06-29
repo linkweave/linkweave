@@ -42,10 +42,13 @@ test.describe('Collection Management', () => {
   })
 
   test('should create a new collection', async ({ page }) => {
+    // ARRANGE
     const manage = new CollectionManagePageObject(page)
     const name = `Test Collection ${`${Date.now()}-${Math.random().toString(36).slice(2, 6)}`}`
 
+    // ACT
     await manage.createCollection(name)
+    // ASSERT
     await manage.expectCollectionVisible(name)
   })
 
@@ -90,13 +93,16 @@ test.describe('Collection Management', () => {
   })
 
   test('should set a collection as default', async ({ page }) => {
+    // ARRANGE
     const manage = new CollectionManagePageObject(page)
     const name = `Make Default ${`${Date.now()}-${Math.random().toString(36).slice(2, 6)}`}`
 
     await manage.createCollection(name)
     const collectionId = await manage.getCollectionIdByName(name)
 
+    // ACT
     await manage.setAsDefault(collectionId)
+    // ASSERT
     await expect(manage.collectionSetDefaultBtn(collectionId)).not.toBeVisible()
   })
 

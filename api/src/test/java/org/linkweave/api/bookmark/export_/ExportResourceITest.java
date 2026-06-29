@@ -77,6 +77,7 @@ class ExportResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = { "BOOKMARK_WRITE" })
     void shouldExportCollectionWithFoldersAndBookmarks() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -96,6 +97,7 @@ class ExportResourceITest {
             .withTitle("Root BM")
             .withUrl("https://root.com"));
 
+        // ACT
         String html = RestAssured.given()
             .accept("text/html")
             .get("/collections/{collectionId}/export", collectionId)
@@ -103,6 +105,7 @@ class ExportResourceITest {
             .statusCode(200)
             .extract().asString();
 
+        // ASSERT
         assertHtmlContainsNetscapeHeader(html);
         assertContainsFolder(html, "Parent Folder");
         assertContainsFolder(html, "Child Folder");
@@ -115,9 +118,11 @@ class ExportResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = { "BOOKMARK_WRITE" })
     void shouldExportEmptyCollection() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
+        // ACT
         String html = RestAssured.given()
             .accept("text/html")
             .get("/collections/{collectionId}/export", collectionId)
@@ -125,6 +130,7 @@ class ExportResourceITest {
             .statusCode(200)
             .extract().asString();
 
+        // ASSERT
         assertHtmlContainsNetscapeHeader(html);
         assert html.contains("<DL><p>");
         assert html.contains("</DL><p>");
@@ -179,6 +185,7 @@ class ExportResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = { "BOOKMARK_WRITE" })
     void shouldSkipUnknownBookmarkIdsInPartialExport() {
+        // ARRANGE
         // A read-only export degrades gracefully: a hard-purged / never-existing
         // id is skipped rather than aborting the whole export of the valid ones.
         Collection collection = fixtureService.createTestCollection();
@@ -189,6 +196,7 @@ class ExportResourceITest {
             .withUrl("https://live.com"));
         String unknownId = java.util.UUID.randomUUID().toString();
 
+        // ACT
         String html = RestAssured.given()
             .contentType("application/json")
             .body(partialExportBody(live.getId().getUUID().toString(), unknownId))
@@ -199,6 +207,7 @@ class ExportResourceITest {
             .header("X-Exported-Count", "1")
             .extract().asString();
 
+        // ASSERT
         assertContainsBookmark(html, "Live BM", "https://live.com");
     }
 
@@ -219,6 +228,7 @@ class ExportResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = { "BOOKMARK_WRITE" })
     void shouldExportOnlySelectedBookmarks() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -229,6 +239,7 @@ class ExportResourceITest {
             .withTitle("Skipped BM")
             .withUrl("https://skipped.com"));
 
+        // ACT
         String html = RestAssured.given()
             .contentType("application/json")
             .body(partialExportBody(kept.getId().getUUID().toString()))
@@ -240,6 +251,7 @@ class ExportResourceITest {
             .header("Content-Disposition", containsString("attachment"))
             .extract().asString();
 
+        // ASSERT
         assertHtmlContainsNetscapeHeader(html);
         assertContainsBookmark(html, "Kept BM", "https://kept.com");
         assert !html.contains("Skipped BM") : "unselected bookmark must not be exported";
@@ -249,6 +261,7 @@ class ExportResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = { "BOOKMARK_WRITE" })
     void shouldPreserveFolderAncestorsAndPruneEmptyBranchesInPartialExport() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -268,6 +281,7 @@ class ExportResourceITest {
             .withTitle("Deep BM")
             .withUrl("https://deep.com"));
 
+        // ACT
         String html = RestAssured.given()
             .contentType("application/json")
             .body(partialExportBody(deep.getId().getUUID().toString()))
@@ -277,6 +291,7 @@ class ExportResourceITest {
             .statusCode(200)
             .extract().asString();
 
+        // ASSERT
         // Ancestors of the selected bookmark's folder are kept.
         assertContainsFolder(html, "Grandparent");
         assertContainsFolder(html, "Parent");
@@ -289,6 +304,7 @@ class ExportResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = { "BOOKMARK_WRITE" })
     void shouldNotExportSoftDeletedBookmarks() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -308,6 +324,7 @@ class ExportResourceITest {
             .then()
             .statusCode(204);
 
+        // ACT
         String html = RestAssured.given()
             .contentType("application/json")
             .body(partialExportBody(live.getId().getUUID().toString(), trashed.getId().getUUID().toString()))
@@ -318,6 +335,7 @@ class ExportResourceITest {
             .header("X-Exported-Count", "1")
             .extract().asString();
 
+        // ASSERT
         assertContainsBookmark(html, "Live BM", "https://live.com");
         assert !html.contains("Trashed BM") : "soft-deleted bookmark must not be exported";
         assert !html.contains("https://trashed.com");

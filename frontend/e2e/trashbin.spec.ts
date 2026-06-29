@@ -76,11 +76,14 @@ test.describe('Trashbin', () => {
   })
 
   test('should purge a bookmark permanently', async ({ page }) => {
+    // ARRANGE
     await gotoCollection(page, collection)
     await navigateToTrashbin(page)
 
     const trashbin = new TrashbinPageObject(page)
+    // ACT
     await trashbin.purgeBookmark(bookmarkBId)
+    // ASSERT
     await trashbin.expectBookmarkNotVisible(bookmarkBId)
   })
 

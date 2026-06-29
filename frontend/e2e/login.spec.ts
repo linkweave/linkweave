@@ -15,24 +15,30 @@ test.describe('Login Flow', () => {
   })
 
   test('should show error message with invalid credentials', async ({ page }) => {
+    // ARRANGE
     const loginPage = new LoginPageObject(page)
     await loginPage.goto()
 
+    // ACT
     await loginPage.login('wrong@example.com', 'wrong-password')
 
+    // ASSERT
     // Error message should be visible
     await loginPage.expectErrorVisible()
   })
 
   test('should login successfully and redirect to home', async ({ page }) => {
+    // ARRANGE
     const loginPage = new LoginPageObject(page)
     const appPage = new AppPageObject(page)
 
     await loginPage.goto()
 
+    // ACT
     // Use test credentials from application.properties
     await loginPage.login('alice@example.com', 'alice')
 
+    // ASSERT
     // Should be redirected to home (which might then redirect to a collection)
     // We check if we are no longer on the login page
     await loginPage.expectNotOnLoginPage()

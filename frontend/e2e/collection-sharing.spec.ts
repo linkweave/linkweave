@@ -58,14 +58,17 @@ test.describe('Collection Sharing', () => {
   })
 
   test('should enable invite button when email is entered', async ({ page }) => {
+    // ARRANGE
     const manage = new CollectionManagePageObject(page)
     const share = new ShareCollectionPageObject(page)
 
     await manage.navigate()
     await share.openShareDialog(collectionId)
 
+    // ACT
     // alice@example.com is a stable seeded invitee.
     await share.emailInput.fill('alice@example.com')
+    // ASSERT
     await expect(share.inviteBtn).toBeEnabled()
   })
 

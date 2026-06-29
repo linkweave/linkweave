@@ -45,6 +45,7 @@ class AutoProvisionITest {
         roles = { "BOOKMARK_WRITE" }
     )
     void shouldAutoProvisionDefaultCollectionForNewUser() {
+        // ARRANGE
         User newuser = fixtureService.persistUser(userBuilder -> {
             UUID uuid = UUID.randomUUID();
             userBuilder
@@ -53,8 +54,10 @@ class AutoProvisionITest {
                 .withNachname(uuid + "_nachname");
         });
 
+        // ACT
         collectionService.getDefaultCollectionOrAutoprovision(newuser);
 
+        // ASSERT
         var collections = collectionRepo.findByOwner(newuser.getId());
         Assertions.assertThat(collections).hasSize(1);
         var created = collections.getFirst();
@@ -76,6 +79,7 @@ class AutoProvisionITest {
     )
     void shouldNotCreateDuplicateCollectionsOnSecondProvision() {
 
+        // ARRANGE
         User testusr = fixtureService.persistUser(userBuilder -> {
             UUID uuid = UUID.randomUUID();
             userBuilder
@@ -84,9 +88,11 @@ class AutoProvisionITest {
                 .withNachname(uuid + "_nachname");
         });
 
+        // ACT
         collectionService.getDefaultCollectionOrAutoprovision(testusr);
         collectionService.getDefaultCollectionOrAutoprovision(testusr);
 
+        // ASSERT
         var collections = collectionRepo.findByOwner(testusr.getId());
         Assertions.assertThat(collections).hasSize(1);
         var created = collections.getFirst();

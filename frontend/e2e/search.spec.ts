@@ -53,9 +53,12 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should filter by single term', async ({ page }) => {
+    // ARRANGE
     await gotoCollection(page, collection)
+    // ACT
     await search(page, 'Production')
 
+    // ASSERT
     await expectBookmarkVisible(page, bookmarks[0].title)
     await expectBookmarkVisible(page, bookmarks[1].title)
     await expectBookmarkNotVisible(page, bookmarks[2].title)
@@ -63,9 +66,12 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should combine multiple terms with AND logic', async ({ page }) => {
+    // ARRANGE
     await gotoCollection(page, collection)
+    // ACT
     await search(page, `Production API`)
 
+    // ASSERT
     await expectBookmarkVisible(page, bookmarks[0].title)
     await expectBookmarkNotVisible(page, bookmarks[1].title)
     await expectBookmarkNotVisible(page, bookmarks[2].title)
@@ -73,9 +79,12 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should match term against tag name', async ({ page }) => {
+    // ARRANGE
     await gotoCollection(page, collection)
+    // ACT
     await search(page, `API ${tagDev}`)
 
+    // ASSERT
     await expectBookmarkVisible(page, bookmarks[2].title)
     await expectBookmarkNotVisible(page, bookmarks[0].title)
     await expectBookmarkNotVisible(page, bookmarks[1].title)
@@ -83,9 +92,12 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should treat quoted phrase as single term', async ({ page }) => {
+    // ARRANGE
     await gotoCollection(page, collection)
+    // ACT
     await search(page, `'Production Frontend'`)
 
+    // ASSERT
     await expectBookmarkVisible(page, bookmarks[1].title)
     await expectBookmarkNotVisible(page, bookmarks[0].title)
     await expectBookmarkNotVisible(page, bookmarks[2].title)
@@ -93,9 +105,12 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should combine quoted phrase with another term', async ({ page }) => {
+    // ARRANGE
     await gotoCollection(page, collection)
+    // ACT
     await search(page, `'Production Frontend' ${tagProd}`)
 
+    // ASSERT
     await expectBookmarkVisible(page, bookmarks[1].title)
     await expectBookmarkNotVisible(page, bookmarks[0].title)
     await expectBookmarkNotVisible(page, bookmarks[2].title)
@@ -103,9 +118,12 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should show empty results when terms do not all match', async ({ page }) => {
+    // ARRANGE
     await gotoCollection(page, collection)
+    // ACT
     await search(page, `Standalone ${tagProd}`)
 
+    // ASSERT
     await expectBookmarkNotVisible(page, bookmarks[0].title)
     await expectBookmarkNotVisible(page, bookmarks[1].title)
     await expectBookmarkNotVisible(page, bookmarks[2].title)
@@ -125,9 +143,12 @@ test.describe('Multi-Term Search', () => {
   })
 
   test('should match term against URL', async ({ page }) => {
+    // ARRANGE
     await gotoCollection(page, collection)
+    // ACT
     await search(page, `standalone.example.com`)
 
+    // ASSERT
     await expectBookmarkVisible(page, bookmarks[3].title)
     await expectBookmarkNotVisible(page, bookmarks[0].title)
     await expectBookmarkNotVisible(page, bookmarks[1].title)

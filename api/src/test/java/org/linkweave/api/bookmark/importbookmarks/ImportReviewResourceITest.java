@@ -164,6 +164,7 @@ class ImportReviewResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldClampOverlongAndBlankNamesInsteadOf500() {
+        // ARRANGE
         // A crafted commit with a blank or >255-char name must not blow up on
         // persist (Bookmark.title is @NotBlank @Size(255)) — it's clamped/defaulted.
         Collection collection = fixtureService.createTestCollection();
@@ -174,6 +175,7 @@ class ImportReviewResourceITest {
             Map.of("id", "b0", "type", "BOOKMARK", "name", "", "url", "https://blank-title.example.com"),
             Map.of("id", "b1", "type", "BOOKMARK", "name", longName, "url", "https://long-title.example.com"));
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(Map.of("skipDuplicates", false, "nodes", nodes))
@@ -182,6 +184,7 @@ class ImportReviewResourceITest {
             .statusCode(200)
             .body("imported", equalTo(2));
 
+        // ASSERT
         Assertions.assertThat(bookmarkRepo.findByCollection(collection.getId()))
             .hasSize(2)
             .allSatisfy(b -> {
@@ -194,6 +197,7 @@ class ImportReviewResourceITest {
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     @Transactional
     void shouldClampOverlongAndBlankFolderNamesInsteadOf500() {
+        // ARRANGE
         // Folder.name is @NotBlank @Size(255) too — a crafted commit with a
         // blank or over-long folder name must be defaulted/clamped, not 500.
         Collection collection = fixtureService.createTestCollection();
@@ -210,6 +214,7 @@ class ImportReviewResourceITest {
                     "id", "b1", "type", "BOOKMARK", "name", "InLong",
                     "url", "https://long-folder.example.com"))));
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(Map.of("skipDuplicates", false, "nodes", nodes))
@@ -219,6 +224,7 @@ class ImportReviewResourceITest {
             .body("imported", equalTo(2))
             .body("foldersCreated", equalTo(2));
 
+        // ASSERT
         Assertions.assertThat(folderRepo.findByCollection(collection.getId()))
             .hasSize(2)
             .allSatisfy(f -> {

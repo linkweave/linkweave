@@ -32,13 +32,16 @@ class ScreenshotCacheServiceITest {
 
     @Test
     void shouldRoundTripSuccessEntry() throws Exception {
+        // ARRANGE
         URL url = URI.create("https://example.com/round-trip-" + UUID.randomUUID()).toURL();
         String key = ScreenshotCacheService.keyFor(url);
         byte[] payload = "fake-jpeg".getBytes();
 
+        // ACT
         cache.putSuccess(key, payload, "image/jpeg");
 
         try {
+            // ASSERT
             var loaded = cache.get(key);
             Assertions.assertThat(loaded).isPresent();
             Assertions.assertThat(loaded.get().bytes()).isEqualTo(payload);
@@ -51,12 +54,15 @@ class ScreenshotCacheServiceITest {
 
     @Test
     void shouldReturnNegativeFlagForNegativeEntry() throws Exception {
+        // ARRANGE
         URL url = URI.create("https://example.com/negative-" + UUID.randomUUID()).toURL();
         String key = ScreenshotCacheService.keyFor(url);
 
+        // ACT
         cache.putNegative(key);
 
         try {
+            // ASSERT
             var loaded = cache.get(key);
             Assertions.assertThat(loaded).isPresent();
             Assertions.assertThat(loaded.get().negative()).isTrue();
@@ -204,13 +210,16 @@ class ScreenshotCacheServiceITest {
 
     @Test
     void shouldReportBytesFreedOnDelete() throws Exception {
+        // ARRANGE
         URL url = URI.create("https://example.com/freed-" + UUID.randomUUID()).toURL();
         String key = ScreenshotCacheService.keyFor(url);
         byte[] payload = new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
         cache.putSuccess(key, payload, "image/jpeg");
+        // ACT
         long freed = cache.deleteForKey(key);
 
+        // ASSERT
         Assertions.assertThat(freed).isGreaterThanOrEqualTo(payload.length);
         Assertions.assertThat(cache.get(key)).isEmpty();
     }

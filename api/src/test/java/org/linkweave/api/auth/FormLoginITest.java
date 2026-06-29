@@ -46,14 +46,17 @@ class FormLoginITest {
 
     @Test
     void shouldRejectLoginWithWrongPassword() {
+        // ARRANGE
         String email = "wrong-" + UUID.randomUUID() + "@test.com";
         registerUser(email, "correct-password");
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.URLENC)
             .formParam("j_username", email)
             .formParam("j_password", "wrong-password")
             .post("/j_security_check")
+            // ASSERT
             .then()
             .statusCode(401);
     }
@@ -134,12 +137,14 @@ class FormLoginITest {
 
     @Test
     void shouldGetCorrectRolesFromFormLogin() throws Exception {
+        // ARRANGE
         String email = "roles-" + UUID.randomUUID() + "@test.com";
         String password = "roles-password";
         registerUser(email, password);
 
         String cookie = loginAndGetCookie(email, password);
 
+        // ACT
         String meJson = RestAssured.given()
             .cookie("linkweave-credential", cookie)
             .get("/auth/me")
@@ -148,6 +153,7 @@ class FormLoginITest {
             .extract()
             .asString();
 
+        // ASSERT
         UserInfoJson userInfo = objectMapper.readValue(meJson, UserInfoJson.class);
         assertThat(userInfo.permissions()).contains(Permission.BOOKMARK_READ, Permission.BOOKMARK_WRITE);
     }
