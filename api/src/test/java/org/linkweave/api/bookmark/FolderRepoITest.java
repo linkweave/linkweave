@@ -38,13 +38,16 @@ class FolderRepoITest {
         roles = { "BOOKMARK_WRITE" }
     )
     void saveFolder_shouldSaveFolder() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
 
+        // ACT
         Folder testFolder = fixtureService.persistFolder(b -> b
             .withCollection(collection)
             .withName("Test Folder")
         );
 
+        // ASSERT
         var allFolders = folderRepo.findAll();
         Assertions.assertThat(allFolders).anyMatch(f -> f.getId().equals(testFolder.getId()));
         Assertions.assertThat(folderRepo.findById(testFolder.getId())).isPresent();
@@ -56,6 +59,7 @@ class FolderRepoITest {
         roles = { "BOOKMARK_WRITE" }
     )
     void findById_shouldReturnFolder_whenFolderExists() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
 
         Folder testFolder = fixtureService.persistFolder(b -> b
@@ -63,8 +67,10 @@ class FolderRepoITest {
             .withName("Test Folder")
         );
 
+        // ACT
         var foundFolder = folderRepo.findById(testFolder.getId());
 
+        // ASSERT
         Assertions.assertThat(foundFolder).isPresent();
         Assertions.assertThat(foundFolder.get().getName()).isEqualTo("Test Folder");
         Assertions.assertThat(foundFolder.get().getId()).isEqualTo(testFolder.getId());
@@ -76,10 +82,13 @@ class FolderRepoITest {
         roles = { "BOOKMARK_WRITE" }
     )
     void findById_shouldReturnEmpty_whenFolderDoesNotExist() {
+        // ARRANGE
         var nonExistentId = org.linkweave.api.types.id.ID.of(java.util.UUID.randomUUID(), Folder.class);
 
+        // ACT
         var foundFolder = folderRepo.findById(nonExistentId);
 
+        // ASSERT
         Assertions.assertThat(foundFolder).isEmpty();
     }
 
@@ -89,6 +98,7 @@ class FolderRepoITest {
         roles = { "BOOKMARK_WRITE" }
     )
     void getById_shouldReturnFolder_whenFolderExists() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
 
         Folder testFolder = fixtureService.persistFolder(b -> b
@@ -96,8 +106,10 @@ class FolderRepoITest {
             .withName("Test Folder")
         );
 
+        // ACT
         var foundFolder = folderRepo.getById(testFolder.getId());
 
+        // ASSERT
         Assertions.assertThat(foundFolder).isNotNull();
         Assertions.assertThat(foundFolder.getName()).isEqualTo("Test Folder");
         Assertions.assertThat(foundFolder.getId()).isEqualTo(testFolder.getId());
@@ -109,6 +121,7 @@ class FolderRepoITest {
         roles = { "BOOKMARK_WRITE" }
     )
     void findAll_shouldReturnAllFolders() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
 
         Folder folder1 = fixtureService.persistFolder(b -> b
@@ -121,8 +134,10 @@ class FolderRepoITest {
             .withName("Folder 2")
         );
 
+        // ACT
         var allFolders = folderRepo.findAll();
 
+        // ASSERT
         Assertions.assertThat(allFolders)
             .anyMatch(f -> f.getName().equals("Folder 1") && f.getId().equals(folder1.getId()))
             .anyMatch(f -> f.getName().equals("Folder 2") && f.getId().equals(folder2.getId()));
@@ -135,6 +150,7 @@ class FolderRepoITest {
     )
     @Transactional
     void updateFolder_shouldUpdateFolder() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
 
         Folder testFolder = fixtureService.persistFolder(b -> b
@@ -142,9 +158,11 @@ class FolderRepoITest {
             .withName("Original Name")
         );
 
+        // ACT
         Folder foundFolder = folderRepo.getById(testFolder.getId());
         foundFolder.setName("Updated Name");
 
+        // ASSERT
         var updatedFolder = folderRepo.getById(testFolder.getId());
 
         Assertions.assertThat(updatedFolder.getName()).isEqualTo("Updated Name");
@@ -157,6 +175,7 @@ class FolderRepoITest {
         roles = { "BOOKMARK_WRITE" }
     )
     void deleteFolder_shouldRemoveFolder() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
 
         Folder testFolder = fixtureService.persistFolder(b -> b
@@ -166,8 +185,10 @@ class FolderRepoITest {
 
         var folderId = testFolder.getId();
 
+        // ACT
         folderRepo.remove(folderId);
 
+        // ASSERT
         var deletedFolder = folderRepo.findById(folderId);
         Assertions.assertThat(deletedFolder).isEmpty();
     }
@@ -178,6 +199,7 @@ class FolderRepoITest {
         roles = { "BOOKMARK_WRITE" }
     )
     void findByCollection_shouldReturnFoldersForCollection() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
 
         Folder folder1 = fixtureService.persistFolder(b -> b
@@ -190,8 +212,10 @@ class FolderRepoITest {
             .withName("Folder 2")
         );
 
+        // ACT
         var folders = folderRepo.findByCollection(collection.getId());
 
+        // ASSERT
         Assertions.assertThat(folders)
             .anyMatch(f -> f.getName().equals("Folder 1") && f.getId().equals(folder1.getId()))
             .anyMatch(f -> f.getName().equals("Folder 2") && f.getId().equals(folder2.getId()));

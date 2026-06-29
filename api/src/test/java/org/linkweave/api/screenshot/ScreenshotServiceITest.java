@@ -26,6 +26,7 @@ class ScreenshotServiceITest {
 
     @Test
     void shouldNotCaptureNorNegativelyCacheOnRefreshWhenHostMatchesAllowlist() {
+        // ARRANGE
         // The user-initiated refresh path must honour the collection allowlist,
         // not just the scheduled job — otherwise "refresh" on an intranet host
         // would write the negative entry the allowlist is meant to prevent.
@@ -37,8 +38,10 @@ class ScreenshotServiceITest {
             .withUrl("https://intranet.local/page-" + UUID.randomUUID()));
         String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
 
+        // ACT
         boolean refreshed = screenshotService.refreshScreenshot(bookmark.getId());
 
+        // ASSERT
         Assertions.assertThat(refreshed)
             .as("allowlisted host cannot be captured by the backend")
             .isFalse();
@@ -49,6 +52,7 @@ class ScreenshotServiceITest {
 
     @Test
     void shouldNotNegativelyCacheOnCaptureWhenHostMatchesAllowlist() {
+        // ARRANGE
         Collection allowlisted = fixtureService.createTestCollection(b -> b
             .withScreenshotEnabled(true)
             .withBrowserFetchAllowlist("*.corp.internal"));
@@ -57,8 +61,10 @@ class ScreenshotServiceITest {
             .withUrl("https://wiki.corp.internal/x-" + UUID.randomUUID()));
         String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
 
+        // ACT
         boolean captured = screenshotService.captureNow(bookmark.getId());
 
+        // ASSERT
         Assertions.assertThat(captured).isFalse();
         Assertions.assertThat(cache.get(key)).isEmpty();
     }

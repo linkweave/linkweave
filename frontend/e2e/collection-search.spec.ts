@@ -41,9 +41,12 @@ test.describe('Collection Search', () => {
   })
 
   test('should filter collections by search query', async ({ page }) => {
+    // ARRANGE
     const searchInput = page.locator('input[placeholder*="Search collections"]')
+    // ACT
     await searchInput.fill('Alpha')
 
+    // ASSERT
     await expect(page.locator('[data-testid^="collection-row-"]', { hasText: alpha })).toBeVisible()
     await expect(
       page.locator('[data-testid^="collection-row-"]', { hasText: beta }),
@@ -54,16 +57,22 @@ test.describe('Collection Search', () => {
   })
 
   test('should show no results message when nothing matches', async ({ page }) => {
+    // ARRANGE
     const searchInput = page.locator('input[placeholder*="Search collections"]')
+    // ACT
     await searchInput.fill('NonexistentCollectionXYZ')
 
+    // ASSERT
     await expect(page.getByText('No collections match your search')).toBeVisible()
   })
 
   test('should be case-insensitive', async ({ page }) => {
+    // ARRANGE
     const searchInput = page.locator('input[placeholder*="Search collections"]')
+    // ACT
     await searchInput.fill('gamma archive')
 
+    // ASSERT
     await expect(page.locator('[data-testid^="collection-row-"]', { hasText: gamma })).toBeVisible()
     await expect(
       page.locator('[data-testid^="collection-row-"]', { hasText: alpha }),

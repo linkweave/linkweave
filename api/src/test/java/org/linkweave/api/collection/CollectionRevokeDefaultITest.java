@@ -35,6 +35,7 @@ class CollectionRevokeDefaultITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldReassignDefaultWhenRevokedCollectionWasDefault() {
+        // ARRANGE
         var owner = fixtureService.persistUser(b -> b
             .withEmail(UUID.randomUUID() + "@ex.com")
             .withVorname("Owner")
@@ -66,9 +67,11 @@ class CollectionRevokeDefaultITest {
             .getCollection().getId()
         ).isEqualTo(sharedCollection.getId());
 
+        // ACT
         // Owner revokes member's access
         collectionService.revokeAccess(sharedCollection.getId(), member.getId());
 
+        // ASSERT
         // Member still has exactly one default — their own autoprovisionned collection
         var accessesAfterRevoke = collectionAccessRepo.findByUser(member.getId());
         Assertions.assertThat(accessesAfterRevoke).hasSize(1);
@@ -78,6 +81,7 @@ class CollectionRevokeDefaultITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldKeepDefaultUnchangedWhenRevokingNonDefaultAccess() {
+        // ARRANGE
         var owner = fixtureService.persistUser(b -> b
             .withEmail(UUID.randomUUID() + "@ex.com")
             .withVorname("Owner")
@@ -96,9 +100,11 @@ class CollectionRevokeDefaultITest {
         var sharedCollection = collectionService.createCollection("Shared", owner);
         collectionService.shareWithUser(sharedCollection.getId(), member.getEmail(), owner);
 
+        // ACT
         // Owner revokes member's access to the shared (non-default) collection
         collectionService.revokeAccess(sharedCollection.getId(), member.getId());
 
+        // ASSERT
         // Member's own default collection is still the default
         var remaining = collectionAccessRepo.findByUser(member.getId());
         Assertions.assertThat(remaining).hasSize(1);

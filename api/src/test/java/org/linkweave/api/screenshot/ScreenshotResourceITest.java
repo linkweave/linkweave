@@ -24,6 +24,7 @@ class ScreenshotResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn403_whenGetScreenshotWithMismatchedCollectionId() {
+        // ARRANGE
         // collectionA: the test user has access
         Collection collectionA = fixtureService.createTestCollection(b -> b.withName("Collection A"));
 
@@ -40,9 +41,11 @@ class ScreenshotResourceITest {
         );
 
         // IDOR attack: supply collectionA (has access) but bookmark belongs to collectionB (no access)
+        // ACT
         RestAssured.given()
             .get("/collections/{cid}/bookmarks/{bid}/screenshot",
                 collectionA.getId().getUUID(), bookmarkInB.getId().getUUID())
+            // ASSERT
             .then()
             .statusCode(403);
     }
@@ -50,6 +53,7 @@ class ScreenshotResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn403_whenGetScreenshotWithWrongCollectionDespiteHavingAccessToBoth() {
+        // ARRANGE
         // User has access to BOTH collections, but the path says collectionA while bookmark is in collectionB.
         // requireSameCollection catches this mismatch even though requireAccessTo would pass.
         Collection collectionA = fixtureService.createTestCollection(b -> b.withName("Collection A"));
@@ -60,9 +64,11 @@ class ScreenshotResourceITest {
             .withUrl("https://b.example.com")
         );
 
+        // ACT
         RestAssured.given()
             .get("/collections/{cid}/bookmarks/{bid}/screenshot",
                 collectionA.getId().getUUID(), bookmarkInB.getId().getUUID())
+            // ASSERT
             .then()
             .statusCode(403);
     }
@@ -70,6 +76,7 @@ class ScreenshotResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturnNoContent_whenUserHasAccessButNoScreenshotCached() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Bookmark bookmark = fixtureService.persistBookmark(b -> b
             .withCollection(collection)
@@ -77,9 +84,11 @@ class ScreenshotResourceITest {
             .withUrl("https://example.com")
         );
 
+        // ACT
         RestAssured.given()
             .get("/collections/{cid}/bookmarks/{bid}/screenshot",
                 collection.getId().getUUID(), bookmark.getId().getUUID())
+            // ASSERT
             .then()
             .statusCode(204);
     }
@@ -87,6 +96,7 @@ class ScreenshotResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn403_whenRefreshScreenshotWithMismatchedCollectionId() {
+        // ARRANGE
         Collection collectionA = fixtureService.createTestCollection(b -> b.withName("Collection A"));
 
         User alice = userRepo.findByEmail(EmailAddress.fromString("alice@example.com")).orElseThrow();
@@ -100,9 +110,11 @@ class ScreenshotResourceITest {
             .withUrl("https://alice.example.com")
         );
 
+        // ACT
         RestAssured.given()
             .post("/collections/{cid}/bookmarks/{bid}/screenshot/refresh",
                 collectionA.getId().getUUID(), bookmarkInB.getId().getUUID())
+            // ASSERT
             .then()
             .statusCode(403);
     }
@@ -110,6 +122,7 @@ class ScreenshotResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn403_whenGetScreenshotForCollectionWithoutAccess() {
+        // ARRANGE
         User alice = userRepo.findByEmail(EmailAddress.fromString("alice@example.com")).orElseThrow();
         Collection otherCollection = fixtureService.persistCollection(b -> b
             .withOwner(alice)
@@ -121,9 +134,11 @@ class ScreenshotResourceITest {
             .withUrl("https://alice.example.com")
         );
 
+        // ACT
         RestAssured.given()
             .get("/collections/{cid}/bookmarks/{bid}/screenshot",
                 java.util.UUID.randomUUID(), bookmark.getId().getUUID())
+            // ASSERT
             .then()
             .statusCode(403);
     }

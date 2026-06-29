@@ -35,6 +35,7 @@ class CollectionAccessRepoITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturnNonNegativeCountAfterCreatingSharedCollection() {
+        // ARRANGE
         User owner = userRepo.findByEmail(EmailAddress.fromString("test@example.com")).orElseThrow();
         User alice = userRepo.findByEmail(EmailAddress.fromString("alice@example.com")).orElseThrow();
 
@@ -57,8 +58,10 @@ class CollectionAccessRepoITest {
             .withDefault(false)
         );
 
+        // ACT
         long after = collectionAccessRepo.countSharedCollections();
 
+        // ASSERT
         assertThat(after).isNotNegative();
         assertThat(after).isGreaterThanOrEqualTo(before);
     }

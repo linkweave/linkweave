@@ -63,9 +63,12 @@ class UtilTest {
 
         @Test
         void shouldConvertValidUri() {
+            // ARRANGE
             URI uri = URI.create("https://example.com");
+            // ACT
             URL url = Util.parseURI(uri);
 
+            // ASSERT
             assertThat(url).hasToString("https://example.com");
         }
 

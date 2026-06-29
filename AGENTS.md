@@ -51,6 +51,7 @@ All access checks are performed in the **Resource layer** using `AuthorizationSe
 - **Resources**: Resources are responsible for exposing the services to the outside world. They never return entites but rather DTOs ending in Json Naming convention: `ClassNameResource`
 - Test naming: unit tests `ClassNameTest`, integration tests `ClassNameIT` or `*IntegrationTest`
 - Test methods: descriptive camelCase starting with `should`
+- **Test structure (AAA):** structure tests with `// ARRANGE` / `// ACT` / `// ASSERT` phase comments (all caps). Apply them only to multi-statement test bodies whose phases are clearly separable (setup → the action under test → verification); skip one-liners and expressions where arrange/act/assert are fused. For RestAssured tests, put `// ACT` before `RestAssured.given()` and `// ASSERT` immediately before the `.then()` in the fluent chain. ArchUnit tests (build a rule then `rule.check(...)`) and single-expression assertions are left without the comments.
 - Use `@TestSecurity` when testing persistence/services that depend on current user
 - Most entities extend `AbstractEntity` which auto-sets `userErstellt` and `userMutiert` via `CurrentUserService`
 - Use `@AllArgsConstructor` for entity classes to ensure all fields are initialized

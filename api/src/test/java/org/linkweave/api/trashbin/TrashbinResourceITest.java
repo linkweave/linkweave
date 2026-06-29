@@ -28,6 +28,7 @@ class TrashbinResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ", "BOOKMARK_WRITE"})
     void shouldSoftDeleteBookmark_andShowItInTrashbin() {
+        // ARRANGE
         RestAssured.given().delete("/trashbin");
 
         Collection collection = fixtureService.createTestCollection();
@@ -40,8 +41,10 @@ class TrashbinResourceITest {
             .post("/bookmarks").then().statusCode(200)
             .extract().path("id");
 
+        // ACT
         RestAssured.given().delete("/bookmarks/" + created).then().statusCode(204);
 
+        // ASSERT
         RestAssured.given()
             .queryParam("collectionId", collectionId)
             .get("/bookmarks").then().statusCode(200)
@@ -55,15 +58,18 @@ class TrashbinResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ", "BOOKMARK_WRITE"})
     void shouldRestoreBookmark_fromTrashbin() {
+        // ARRANGE
         Bookmark bookmark = fixtureService.createTestBookmark(b -> b.withTitle("Restorable"));
         RestAssured.given().delete("/bookmarks/" + bookmark.getId().getUUID()).then().statusCode(204);
 
+        // ACT
         RestAssured.given()
             .post("/trashbin/bookmarks/" + bookmark.getId().getUUID() + "/restore")
             .then().statusCode(200)
             .body("data.title", equalTo("Restorable"))
             .body("deletedAt", equalTo(null));
 
+        // ASSERT
         RestAssured.given().get("/trashbin").then().statusCode(200)
             .body("bookmarks.id", org.hamcrest.Matchers.not(hasItem(bookmark.getId().getUUID().toString())));
     }
@@ -71,13 +77,16 @@ class TrashbinResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ", "BOOKMARK_WRITE"})
     void shouldPurgeBookmark_permanently() {
+        // ARRANGE
         Bookmark bookmark = fixtureService.createTestBookmark(b -> b.withTitle("Purgeable"));
         RestAssured.given().delete("/bookmarks/" + bookmark.getId().getUUID()).then().statusCode(204);
 
+        // ACT
         RestAssured.given()
             .delete("/trashbin/bookmarks/" + bookmark.getId().getUUID())
             .then().statusCode(204);
 
+        // ASSERT
         RestAssured.given().get("/trashbin").then().statusCode(200)
             .body("bookmarks.id", org.hamcrest.Matchers.not(hasItem(bookmark.getId().getUUID().toString())));
     }
@@ -85,13 +94,16 @@ class TrashbinResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ", "BOOKMARK_WRITE"})
     void shouldEmptyTrashbin() {
+        // ARRANGE
         Bookmark a = fixtureService.createTestBookmark(b -> b.withTitle("A"));
         Bookmark c = fixtureService.createTestBookmark(b -> b.withTitle("C"));
         RestAssured.given().delete("/bookmarks/" + a.getId().getUUID()).then().statusCode(204);
         RestAssured.given().delete("/bookmarks/" + c.getId().getUUID()).then().statusCode(204);
 
+        // ACT
         RestAssured.given().delete("/trashbin").then().statusCode(204);
 
+        // ASSERT
         RestAssured.given().get("/trashbin").then().statusCode(200)
             .body("bookmarks", hasSize(0))
             .body("folders", hasSize(0));

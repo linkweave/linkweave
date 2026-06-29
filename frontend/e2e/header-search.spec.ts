@@ -89,12 +89,15 @@ test.describe('Header Search', () => {
   })
 
   test('mobile: tapping the search icon opens the overlay with a focused input', async ({ page }) => {
+    // ARRANGE
     await page.setViewportSize({ width: 375, height: 667 })
     await page.goto(`/collections/${collectionId}`)
 
     const searchIconButton = page.getByTestId('mobile-search-trigger')
+    // ACT
     await searchIconButton.click()
 
+    // ASSERT
     // Overlay input is now visible and focused
     const overlayInput = page.locator('[data-search-input]').last()
     await expect(overlayInput).toBeVisible()

@@ -48,9 +48,12 @@ class StringNormalizerModuleTest {
 
     @Test
     void shouldRemoveUnprintableControlCharactersOnSerialize() throws Exception {
+        // ARRANGE
         // NUL (0x00) and BEL (0x07) embedded between the printable characters.
         String value = "ab" + (char) 0x00 + "c" + (char) 0x07 + "d";
+        // ACT
         String json = customizedMapper().writeValueAsString(new Box(value));
+        // ASSERT
         assertThat(json).isEqualTo("{\"value\":\"abcd\"}");
     }
 

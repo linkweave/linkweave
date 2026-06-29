@@ -46,6 +46,7 @@ class ScreenshotCaptureJobServiceITest {
 
     @Test
     void shouldSkipBookmarksFromCollectionsWithScreenshotsDisabled() {
+        // ARRANGE
         Collection disabled = fixtureService.createTestCollection(b -> b.withScreenshotEnabled(false));
         Bookmark bookmark = fixtureService.persistBookmark(builder -> builder
             .withCollection(disabled)
@@ -53,16 +54,19 @@ class ScreenshotCaptureJobServiceITest {
         );
         String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
 
+        // ACT
         job.run(50);
 
         // The disabled-collection bookmark must never have been touched. Other
         // tests may have left enabled-collection bookmarks behind; we don't
         // care about those — only that *this* URL got no cache entry.
+        // ASSERT
         Assertions.assertThat(cache.get(key)).isEmpty();
     }
 
     @Test
     void shouldRespectBatchBudget() {
+        // ARRANGE
         Collection enabled = fixtureService.createTestCollection(b -> b.withScreenshotEnabled(true));
         for (int i = 0; i < 5; i++) {
             fixtureService.persistBookmark(builder -> builder
@@ -71,15 +75,18 @@ class ScreenshotCaptureJobServiceITest {
             );
         }
 
+        // ACT
         var result = job.run(2);
 
         // Capture loop must stop at the budget regardless of how many cache
         // misses remain.
+        // ASSERT
         Assertions.assertThat(result.captured() + result.failed()).isEqualTo(2);
     }
 
     @Test
     void shouldSkipBookmarksWithFreshCacheEntry() {
+        // ARRANGE
         Collection enabled = fixtureService.createTestCollection(b -> b.withScreenshotEnabled(true));
         Bookmark cached = fixtureService.persistBookmark(builder -> builder
             .withCollection(enabled)
@@ -90,11 +97,13 @@ class ScreenshotCaptureJobServiceITest {
         cache.putSuccess(key, sentinel, "image/jpeg");
 
         try {
+            // ACT
             job.run(50);
 
             // If the job re-fetched, the cache entry would now be a negative
             // entry (sidecar unreachable in tests). A fresh cache hit must be
             // preserved unchanged.
+            // ASSERT
             var loaded = cache.get(key);
             Assertions.assertThat(loaded).isPresent();
             Assertions.assertThat(loaded.get().negative()).isFalse();
@@ -106,6 +115,7 @@ class ScreenshotCaptureJobServiceITest {
 
     @Test
     void shouldNoOpWithZeroBudget() {
+        // ARRANGE
         Collection enabled = fixtureService.createTestCollection(b -> b.withScreenshotEnabled(true));
         Bookmark bookmark = fixtureService.persistBookmark(builder -> builder
             .withCollection(enabled)
@@ -113,8 +123,10 @@ class ScreenshotCaptureJobServiceITest {
         );
         String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
 
+        // ACT
         var result = job.run(0);
 
+        // ASSERT
         Assertions.assertThat(result.captured()).isZero();
         Assertions.assertThat(result.scanned()).isZero();
         Assertions.assertThat(cache.get(key)).isEmpty();
@@ -135,6 +147,7 @@ class ScreenshotCaptureJobServiceITest {
 
     @Test
     void shouldPagePastAFullyBlockedPageToReachWork() {
+        // ARRANGE
         // Block every pre-existing pending bookmark so only our target is uncached.
         blockAllExistingPendingBookmarks();
 
@@ -161,8 +174,10 @@ class ScreenshotCaptureJobServiceITest {
 
         // Run with limit == pageSize: without pagination the job would load the 3 blocked
         // bookmarks, skip all of them, and stop — never reaching the target.
+        // ACT
         job.run(pageSize);
 
+        // ASSERT
         Assertions.assertThat(cache.get(targetKey))
             .as("job must page past the fully-blocked first page to reach the target")
             .isPresent();
@@ -170,17 +185,21 @@ class ScreenshotCaptureJobServiceITest {
 
     @Test
     void shouldStopOnEmptyPage() {
+        // ARRANGE
         // Block everything pending so the very next page query returns nothing.
         blockAllExistingPendingBookmarks();
 
+        // ACT
         var result = job.run(10);
 
+        // ASSERT
         Assertions.assertThat(result.captured()).isZero();
         Assertions.assertThat(result.failed()).isZero();
     }
 
     @Test
     void shouldStopOnPartialPage() {
+        // ARRANGE
         blockAllExistingPendingBookmarks();
 
         Collection enabled = fixtureService.createTestCollection(b -> b.withScreenshotEnabled(true));
@@ -193,15 +212,18 @@ class ScreenshotCaptureJobServiceITest {
             );
         }
 
+        // ACT
         var result = job.run(5);
 
         // Both bookmarks were attempted (sidecar unreachable → failed) and the loop
         // stopped without spinning — captured + failed == 2, not 5.
+        // ASSERT
         Assertions.assertThat(result.captured() + result.failed()).isEqualTo(2);
     }
 
     @Test
     void shouldSkipBookmarkWhoseHostMatchesCollectionAllowlist() {
+        // ARRANGE
         // Host is in the collection's favicon allowlist → the backend can't reach
         // it (the browser loads it directly). The job must not attempt capture and
         // must not leave a negative cache entry that would re-trigger every TTL.
@@ -213,8 +235,10 @@ class ScreenshotCaptureJobServiceITest {
             .withUrl("https://intranet.local/page-" + UUID.randomUUID()));
         String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
 
+        // ACT
         job.run(50);
 
+        // ASSERT
         Assertions.assertThat(cache.get(key))
             .as("allowlisted host must not be captured nor negatively cached")
             .isEmpty();
@@ -222,6 +246,7 @@ class ScreenshotCaptureJobServiceITest {
 
     @Test
     void shouldStillCaptureBookmarkWhoseHostIsNotInCollectionAllowlist() {
+        // ARRANGE
         // Same collection has an allowlist, but this bookmark's host is not in it
         // → the job proceeds and a cache entry appears (success or negative
         // depending on sidecar availability), which is proof a capture was tried.
@@ -233,8 +258,10 @@ class ScreenshotCaptureJobServiceITest {
             .withUrl("https://example.com/not-listed-" + UUID.randomUUID()));
         String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
 
+        // ACT
         job.run(50);
 
+        // ASSERT
         Assertions.assertThat(cache.get(key))
             .as("non-allowlisted host must still be attempted")
             .isPresent();
@@ -242,6 +269,7 @@ class ScreenshotCaptureJobServiceITest {
 
     @Test
     void shouldRecaptureWhenPreviousCaptureIsOlderThanSuccessTtl() {
+        // ARRANGE
         blockAllExistingPendingBookmarks();
 
         Collection enabled = fixtureService.createTestCollection(b -> b.withScreenshotEnabled(true));
@@ -256,8 +284,10 @@ class ScreenshotCaptureJobServiceITest {
             .withScreenshotCapturedAt(stale));
         String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
 
+        // ACT
         job.run(50);
 
+        // ASSERT
         Assertions.assertThat(cache.get(key))
             .as("a capture older than the success TTL must be re-attempted")
             .isPresent();
@@ -265,6 +295,7 @@ class ScreenshotCaptureJobServiceITest {
 
     @Test
     void shouldSkipBookmarksWithNonNullScreenshotCapturedAt() {
+        // ARRANGE
         Collection enabled = fixtureService.createTestCollection(b -> b.withScreenshotEnabled(true));
         Bookmark bookmark = fixtureService.persistBookmark(builder -> builder
             .withCollection(enabled)
@@ -273,9 +304,11 @@ class ScreenshotCaptureJobServiceITest {
         );
         String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
 
+        // ACT
         job.run(50);
 
         // The DB query filters this bookmark out — no cache entry means no attempt was made.
+        // ASSERT
         Assertions.assertThat(cache.get(key)).isEmpty();
     }
 }

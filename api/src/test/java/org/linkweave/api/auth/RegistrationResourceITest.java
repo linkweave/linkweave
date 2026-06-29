@@ -22,6 +22,7 @@ class RegistrationResourceITest {
 
     @Test
     void shouldRegisterViaApiAndCreateUserInDatabase() {
+        // ARRANGE
         String email = uniqueEmail();
         String body = """
             {
@@ -32,6 +33,7 @@ class RegistrationResourceITest {
             }
             """.formatted(email);
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
@@ -39,6 +41,7 @@ class RegistrationResourceITest {
             .then()
             .statusCode(200);
 
+        // ASSERT
         User user = userRepo.findByEmail(EmailAddress.fromString(email)).orElseThrow();
         assertThat(user.getVorname()).isEqualTo("Max");
         assertThat(user.getNachname()).isEqualTo("Mustermann");
@@ -85,6 +88,7 @@ class RegistrationResourceITest {
 
     @Test
     void shouldReturnBadRequestForMissingEmail() {
+        // ARRANGE
         String body = """
             {
                 "password": "password-12345",
@@ -93,16 +97,19 @@ class RegistrationResourceITest {
             }
             """;
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/auth/register")
+            // ASSERT
             .then()
             .statusCode(400);
     }
 
     @Test
     void shouldReturnBadRequestForMissingPassword() {
+        // ARRANGE
         String body = """
             {
                 "email": "%s",
@@ -111,16 +118,19 @@ class RegistrationResourceITest {
             }
             """.formatted(uniqueEmail());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/auth/register")
+            // ASSERT
             .then()
             .statusCode(400);
     }
 
     @Test
     void shouldReturnBadRequestForShortPassword() {
+        // ARRANGE
         String body = """
             {
                 "email": "%s",
@@ -130,16 +140,19 @@ class RegistrationResourceITest {
             }
             """.formatted(uniqueEmail());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/auth/register")
+            // ASSERT
             .then()
             .statusCode(400);
     }
 
     @Test
     void shouldReturnBadRequestForMissingVorname() {
+        // ARRANGE
         String body = """
             {
                 "email": "%s",
@@ -148,16 +161,19 @@ class RegistrationResourceITest {
             }
             """.formatted(uniqueEmail());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/auth/register")
+            // ASSERT
             .then()
             .statusCode(400);
     }
 
     @Test
     void shouldReturnBadRequestForMissingNachname() {
+        // ARRANGE
         String body = """
             {
                 "email": "%s",
@@ -166,16 +182,19 @@ class RegistrationResourceITest {
             }
             """.formatted(uniqueEmail());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/auth/register")
+            // ASSERT
             .then()
             .statusCode(400);
     }
 
     @Test
     void shouldNotRequireAuthentication() {
+        // ARRANGE
         String body = """
             {
                 "email": "%s",
@@ -185,10 +204,12 @@ class RegistrationResourceITest {
             }
             """.formatted(uniqueEmail());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/auth/register")
+            // ASSERT
             .then()
             .statusCode(200);
     }

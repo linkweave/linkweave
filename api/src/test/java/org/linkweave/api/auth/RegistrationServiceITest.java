@@ -28,10 +28,13 @@ class RegistrationServiceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"USER"})
     void shouldRegisterNewUserWithHashedPassword() {
+        // ARRANGE
         String email = uniqueEmail();
 
+        // ACT
         User user = registrationService.register(email, "secret1234", "Max", "Mustermann");
 
+        // ASSERT
         assertThat(user.getEmail()).isEqualTo(EmailAddress.fromString(email));
         assertThat(user.getVorname()).isEqualTo("Max");
         assertThat(user.getNachname()).isEqualTo("Mustermann");
@@ -48,11 +51,14 @@ class RegistrationServiceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"USER"})
     void shouldHashPasswordWithBcrypt() {
+        // ARRANGE
         String email = uniqueEmail();
         String plainPassword = "my-secure-password!";
 
+        // ACT
         registrationService.register(email, plainPassword, "Ada", "Lovelace");
 
+        // ASSERT
         User persisted = userRepo.findByEmail(EmailAddress.fromString(email)).orElseThrow();
         assertThat(BcryptUtil.matches(plainPassword, persisted.getPassword())).isTrue();
         assertThat(BcryptUtil.matches("wrong-password", persisted.getPassword())).isFalse();
@@ -72,10 +78,13 @@ class RegistrationServiceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"USER"})
     void shouldAssignUserRole() {
+        // ARRANGE
         String email = uniqueEmail();
 
+        // ACT
         User user = registrationService.register(email, "password123", "Jane", "Doe");
 
+        // ASSERT
         assertThat(user.getFachRollen()).containsExactly(
             org.linkweave.api.shared.auth.FachRolle.USER
         );
@@ -84,10 +93,13 @@ class RegistrationServiceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"USER"})
     void shouldPersistUserInDatabase() {
+        // ARRANGE
         String email = uniqueEmail();
 
+        // ACT
         registrationService.register(email, "password123", "Jane", "Doe");
 
+        // ASSERT
         User found = userRepo.findByEmail(EmailAddress.fromString(email)).orElseThrow();
         assertThat(found.getVorname()).isEqualTo("Jane");
         assertThat(found.getNachname()).isEqualTo("Doe");
@@ -97,11 +109,14 @@ class RegistrationServiceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"USER"})
     void shouldNotStorePasswordInPlaintext() {
+        // ARRANGE
         String email = uniqueEmail();
         String plainPassword = "super-secret-123";
 
+        // ACT
         registrationService.register(email, plainPassword, "Test", "User");
 
+        // ASSERT
         User persisted = userRepo.findByEmail(EmailAddress.fromString(email)).orElseThrow();
         assertThat(persisted.getPassword()).doesNotContain(plainPassword);
         assertThat(persisted.getPassword()).startsWith("$2");

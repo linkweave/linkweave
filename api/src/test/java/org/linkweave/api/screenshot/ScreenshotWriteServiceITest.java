@@ -46,12 +46,15 @@ class ScreenshotWriteServiceITest {
 
     @Test
     void shouldPersistCaptureFromAnonymousThreadAndStampSystemAdmin() {
+        // ARRANGE
         ID<Bookmark> bookmarkId = fixture.createBookmark(null);
 
         // No security context here — mirrors the scheduled capture job. Throws
         // (and rolls back) if applyCapture is not @RunAs system admin.
+        // ACT
         writer.applyCapture(bookmarkId, CAPTURED_AT, "Scraped from the page");
 
+        // ASSERT
         Bookmark reloaded = bookmarkRepo.getById(bookmarkId);
         Assertions.assertThat(reloaded.getScreenshotCapturedAt())
             .as("stamp persisted despite no logged-in user")
@@ -66,10 +69,13 @@ class ScreenshotWriteServiceITest {
 
     @Test
     void shouldNotOverwriteAnExistingDescription() {
+        // ARRANGE
         ID<Bookmark> bookmarkId = fixture.createBookmark("User wrote this");
 
+        // ACT
         writer.applyCapture(bookmarkId, CAPTURED_AT, "Scraped from the page");
 
+        // ASSERT
         Bookmark reloaded = bookmarkRepo.getById(bookmarkId);
         Assertions.assertThat(reloaded.getDescription())
             .as("user-supplied description is preserved")

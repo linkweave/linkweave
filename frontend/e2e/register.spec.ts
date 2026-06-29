@@ -11,9 +11,11 @@ test.describe('Registration Flow', () => {
   })
 
   test('should show password mismatch error', async ({ page }) => {
+    // ARRANGE
     const registerPage = new RegisterPageObject(page)
     await registerPage.goto()
 
+    // ACT
     await registerPage.firstNameInput.fill('Test')
     await registerPage.lastNameInput.fill('User')
     await registerPage.emailInput.fill('mismatch@example.com')
@@ -21,26 +23,33 @@ test.describe('Registration Flow', () => {
     await registerPage.confirmPasswordInput.fill('different456')
     await registerPage.confirmPasswordInput.blur()
 
+    // ASSERT
     await expect(registerPage.passwordMismatchError).toBeVisible()
   })
 
   test('should show required field errors on submit with empty fields', async ({ page }) => {
+    // ARRANGE
     const registerPage = new RegisterPageObject(page)
     await registerPage.goto()
 
+    // ACT
     await registerPage.submitButton.click()
 
+    // ASSERT
     await expect(page.getByText('First name is required', { exact: true })).toBeVisible()
     await expect(page.getByText('Email is required', { exact: true })).toBeVisible()
     await expect(page.getByText('Password is required', { exact: true })).toBeVisible()
   })
 
   test('should navigate to login page via sign in link', async ({ page }) => {
+    // ARRANGE
     const registerPage = new RegisterPageObject(page)
     await registerPage.goto()
 
+    // ACT
     await registerPage.signInLink.click()
 
+    // ASSERT
     const loginPage = new LoginPageObject(page)
     await loginPage.expectOnLoginPage()
   })

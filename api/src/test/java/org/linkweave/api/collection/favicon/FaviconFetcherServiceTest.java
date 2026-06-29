@@ -20,28 +20,35 @@ class FaviconFetcherServiceTest {
 
     @Test
     void shouldResolveRootRelativeHrefAgainstRedirectedHost() {
+        // ARRANGE
         // Bookmark origin was https://example.com, but the request redirected to
         // www.example.com — the base passed in is the final URL.
         URI base = URI.create("https://www.example.com/home");
         String html = "<head><link rel=\"icon\" href=\"/static/icon.png\"></head>";
 
+        // ACT
         URI icon = FaviconFetcherService.parseIconLink(html, base);
 
+        // ASSERT
         assertThat(icon).isEqualTo(URI.create("https://www.example.com/static/icon.png"));
     }
 
     @Test
     void shouldResolveDocumentRelativeHrefAgainstRedirectedPath() {
+        // ARRANGE
         URI base = URI.create("https://www.example.com/blog/");
         String html = "<head><link rel=\"icon\" href=\"favicon.png\"></head>";
 
+        // ACT
         URI icon = FaviconFetcherService.parseIconLink(html, base);
 
+        // ASSERT
         assertThat(icon).isEqualTo(URI.create("https://www.example.com/blog/favicon.png"));
     }
 
     @Test
     void shouldPreferSvgIconOverLargerRasterIcon() {
+        // ARRANGE
         URI base = URI.create("https://example.com");
         String html = """
             <head>
@@ -50,8 +57,10 @@ class FaviconFetcherServiceTest {
             </head>
             """;
 
+        // ACT
         URI icon = FaviconFetcherService.parseIconLink(html, base);
 
+        // ASSERT
         assertThat(icon).isEqualTo(URI.create("https://example.com/icon.svg"));
     }
 

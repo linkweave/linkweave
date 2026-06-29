@@ -22,11 +22,14 @@ class ExceptionMapperITest {
 
     @Test
     void shouldReturn400_whenJsonIsMalformed() {
+        // ARRANGE
         String body = "{not valid json";
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .post("/dev/time-travel")
+            // ASSERT
             .then()
             .statusCode(400)
             .body("id", notNullValue())

@@ -24,6 +24,7 @@ class FaviconResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn403_whenGetFaviconWithMismatchedCollectionId() {
+        // ARRANGE
         Collection collectionA = fixtureService.createTestCollection(b -> b.withName("Collection A"));
 
         User alice = userRepo.findByEmail(EmailAddress.fromString("alice@example.com")).orElseThrow();
@@ -38,9 +39,11 @@ class FaviconResourceITest {
         );
 
         // IDOR: supply collectionA (has access) but bookmark belongs to collectionB (no access)
+        // ACT
         RestAssured.given()
             .get("/collections/{cid}/bookmarks/{bid}/favicon",
                 collectionA.getId().getUUID(), bookmarkInB.getId().getUUID())
+            // ASSERT
             .then()
             .statusCode(403);
     }
@@ -48,6 +51,7 @@ class FaviconResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturnNoContent_whenUserHasAccessButNoFaviconCached() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         Bookmark bookmark = fixtureService.persistBookmark(b -> b
             .withCollection(collection)
@@ -55,9 +59,11 @@ class FaviconResourceITest {
             .withUrl("https://example.com")
         );
 
+        // ACT
         RestAssured.given()
             .get("/collections/{cid}/bookmarks/{bid}/favicon",
                 collection.getId().getUUID(), bookmark.getId().getUUID())
+            // ASSERT
             .then()
             .statusCode(204);
     }
@@ -65,6 +71,7 @@ class FaviconResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn403_whenGetFaviconForCollectionWithoutAccess() {
+        // ARRANGE
         User alice = userRepo.findByEmail(EmailAddress.fromString("alice@example.com")).orElseThrow();
         Collection otherCollection = fixtureService.persistCollection(b -> b
             .withOwner(alice)
@@ -76,9 +83,11 @@ class FaviconResourceITest {
             .withUrl("https://alice.example.com")
         );
 
+        // ACT
         RestAssured.given()
             .get("/collections/{cid}/bookmarks/{bid}/favicon",
                 java.util.UUID.randomUUID(), bookmark.getId().getUUID())
+            // ASSERT
             .then()
             .statusCode(403);
     }

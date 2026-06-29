@@ -49,19 +49,23 @@ class ScreenshotCacheCleanupJobServiceITest {
 
     @Test
     void shouldDoNothing_whenCacheBelowThreshold() {
+        // ARRANGE
         Bookmark bookmark = fixtureService.createTestBookmark(b -> b.withUrl("https://example-below.test"));
         backdateCreated(bookmark, 60);
         String key = ScreenshotCacheService.keyFor(bookmark.getUrl());
         cacheService.putSuccess(key, bytes(64), "image/jpeg");
 
+        // ACT
         ScreenshotCacheCleanupJobService.Result result = cleanupJob.run(1024L * 1024L, Duration.ofDays(28));
 
+        // ASSERT
         assertThat(result.evictedFiles()).isZero();
         assertThat(payloadFile(key)).exists();
     }
 
     @Test
     void shouldEvictOldestFirst_untilThresholdMet() {
+        // ARRANGE
         Bookmark older = fixtureService.createTestBookmark(b -> b.withUrl("https://older.test"));
         Bookmark newer = fixtureService.createTestBookmark(b -> b.withUrl("https://newer.test"));
         backdateCreated(older, 100);
@@ -72,8 +76,10 @@ class ScreenshotCacheCleanupJobServiceITest {
         cacheService.putSuccess(oldKey, bytes(2048), "image/jpeg");
         cacheService.putSuccess(newKey, bytes(2048), "image/jpeg");
 
+        // ACT
         ScreenshotCacheCleanupJobService.Result result = cleanupJob.run(3000L, Duration.ofDays(28));
 
+        // ASSERT
         assertThat(result.evictedFiles()).isEqualTo(1);
         assertThat(payloadFile(oldKey)).doesNotExist();
         assertThat(payloadFile(newKey)).exists();
@@ -81,12 +87,15 @@ class ScreenshotCacheCleanupJobServiceITest {
 
     @Test
     void shouldNotEvict_whenAllBookmarksYoungerThanMinAge() {
+        // ARRANGE
         Bookmark fresh = fixtureService.createTestBookmark(b -> b.withUrl("https://fresh.test"));
         String key = ScreenshotCacheService.keyFor(fresh.getUrl());
         cacheService.putSuccess(key, bytes(8192), "image/jpeg");
 
+        // ACT
         ScreenshotCacheCleanupJobService.Result result = cleanupJob.run(1L, Duration.ofDays(28));
 
+        // ASSERT
         assertThat(result.evictedFiles()).isZero();
         assertThat(payloadFile(key)).exists();
     }

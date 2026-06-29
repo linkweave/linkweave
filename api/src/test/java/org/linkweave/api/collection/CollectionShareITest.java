@@ -48,14 +48,17 @@ class CollectionShareITest {
     @Test
     @Order(2)
     void shouldReturn401_whenShareNotAuthenticated() {
+        // ARRANGE
         String body = """
             {"email":"someone@example.com"}
             """;
+        // ACT
         RestAssured.given()
             .contentType("application/json")
             .body(body)
             .pathParam("id", UUID.randomUUID().toString())
             .post("/collections/{id}/members")
+            // ASSERT
             .then()
             .statusCode(401);
     }
@@ -152,14 +155,17 @@ class CollectionShareITest {
     @Order(9)
     @TestSecurity(user = ALICE, roles = {"BOOKMARK_READ"})
     void shouldReturn403_whenShareAsMember() {
+        // ARRANGE
         String body = """
             {"email":"someone@example.com"}
             """;
+        // ACT
         RestAssured.given()
             .contentType("application/json")
             .body(body)
             .pathParam("id", collectionId)
             .post("/collections/{id}/members")
+            // ASSERT
             .then()
             .statusCode(403);
     }
@@ -168,11 +174,14 @@ class CollectionShareITest {
     @Order(10)
     @TestSecurity(user = ALICE, roles = {"BOOKMARK_READ"})
     void shouldReturn403_whenRevokeAsMember() {
+        // ARRANGE
         User alice = userRepo.findByEmail(EmailAddress.fromString(ALICE)).orElseThrow();
+        // ACT
         RestAssured.given()
             .pathParam("id", collectionId)
             .pathParam("userId", alice.getId().getUUID().toString())
             .delete("/collections/{id}/members/{userId}")
+            // ASSERT
             .then()
             .statusCode(403);
     }
@@ -181,14 +190,17 @@ class CollectionShareITest {
     @Order(11)
     @TestSecurity(user = OWNER, roles = {"BOOKMARK_READ"})
     void shouldReturnError_whenShareWithSelf() {
+        // ARRANGE
         String body = """
             {"email":"test@example.com"}
             """;
+        // ACT
         RestAssured.given()
             .contentType("application/json")
             .body(body)
             .pathParam("id", collectionId)
             .post("/collections/{id}/members")
+            // ASSERT
             .then()
             .statusCode(400)
             .body("violations[0].key", equalTo("ShareCannotShareWithSelf"));
@@ -198,14 +210,17 @@ class CollectionShareITest {
     @Order(12)
     @TestSecurity(user = OWNER, roles = {"BOOKMARK_READ"})
     void shouldReturnError_whenShareWithNonexistentUser() {
+        // ARRANGE
         String body = """
             {"email":"nonexistent@example.com"}
             """;
+        // ACT
         RestAssured.given()
             .contentType("application/json")
             .body(body)
             .pathParam("id", collectionId)
             .post("/collections/{id}/members")
+            // ASSERT
             .then()
             .statusCode(400)
             .body("violations[0].key", equalTo("ShareUserNotFound"));
@@ -215,14 +230,17 @@ class CollectionShareITest {
     @Order(13)
     @TestSecurity(user = OWNER, roles = {"BOOKMARK_READ"})
     void shouldReturnError_whenShareWithUserWhoAlreadyHasAccess() {
+        // ARRANGE
         String body = """
             {"email":"alice@example.com"}
             """;
+        // ACT
         RestAssured.given()
             .contentType("application/json")
             .body(body)
             .pathParam("id", collectionId)
             .post("/collections/{id}/members")
+            // ASSERT
             .then()
             .statusCode(400)
             .body("violations[0].key", equalTo("ShareAlreadyHasAccess"));
@@ -232,11 +250,14 @@ class CollectionShareITest {
     @Order(14)
     @TestSecurity(user = OWNER, roles = {"BOOKMARK_READ"})
     void shouldRevokeMemberAccess() {
+        // ARRANGE
         User alice = userRepo.findByEmail(EmailAddress.fromString(ALICE)).orElseThrow();
+        // ACT
         RestAssured.given()
             .pathParam("id", collectionId)
             .pathParam("userId", alice.getId().getUUID().toString())
             .delete("/collections/{id}/members/{userId}")
+            // ASSERT
             .then()
             .statusCode(204);
     }
@@ -258,14 +279,17 @@ class CollectionShareITest {
     @Order(16)
     @TestSecurity(user = OWNER, roles = {"BOOKMARK_READ"})
     void shouldReturn400_whenShareWithInvalidEmail() {
+        // ARRANGE
         String body = """
             {"email":"not-an-email"}
             """;
+        // ACT
         RestAssured.given()
             .contentType("application/json")
             .body(body)
             .pathParam("id", collectionId)
             .post("/collections/{id}/members")
+            // ASSERT
             .then()
             .statusCode(400);
     }

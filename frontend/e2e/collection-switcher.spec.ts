@@ -38,17 +38,23 @@ test.describe('Collection Switcher', () => {
   })
 
   test('should show default badge next to default collection', async ({ page }) => {
+    // ARRANGE
     const switcher = new CollectionSwitcherPageObject(page)
 
+    // ACT
     await switcher.openSwitcher()
+    // ASSERT
     const badges = page.locator('[data-testid^="collection-default-badge-"]')
     await expect(badges).toHaveCount(1)
   })
 
   test('should show "This is the default" when on default collection', async ({ page }) => {
+    // ARRANGE
     const switcher = new CollectionSwitcherPageObject(page)
 
+    // ACT
     await switcher.openSwitcher()
+    // ASSERT
     await switcher.expectShowsThisIsDefault()
     await switcher.expectSetAsDefaultDisabled()
   })

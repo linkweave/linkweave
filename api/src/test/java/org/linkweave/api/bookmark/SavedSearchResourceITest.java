@@ -165,6 +165,7 @@ class SavedSearchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldRejectMovingBetweenCollections() {
+        // ARRANGE
         Collection source = fixtureService.createTestCollection();
         Collection target = fixtureService.createTestCollection();
         String sourceId = source.getId().getUUID().toString();
@@ -179,6 +180,7 @@ class SavedSearchResourceITest {
             {"collectionId":"%s","name":"Movable","query":"#x"}
             """.formatted(targetId);
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(moveBody)
@@ -186,6 +188,7 @@ class SavedSearchResourceITest {
             .then()
             .statusCode(403);
 
+        // ASSERT
         // The saved search must still belong to the source collection.
         RestAssured.given()
             .queryParam("collectionId", sourceId)
@@ -199,6 +202,7 @@ class SavedSearchResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldDeleteSavedSearch() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -206,11 +210,13 @@ class SavedSearchResourceITest {
             .body("{\"collectionId\":\"%s\",\"name\":\"ToDelete\",\"query\":\"#x\"}".formatted(collectionId))
             .post("/saved-searches").then().statusCode(200).extract().path("id");
 
+        // ACT
         RestAssured.given()
             .delete("/saved-searches/" + id)
             .then()
             .statusCode(204);
 
+        // ASSERT
         RestAssured.given()
             .queryParam("collectionId", collectionId)
             .get("/saved-searches")

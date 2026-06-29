@@ -42,22 +42,28 @@ class FileCacheCleanupUtilTest {
 
     @Test
     void shouldSumFlatFileSizes(@TempDir Path tmp) throws IOException {
+        // ARRANGE
         Files.write(tmp.resolve("a.bin"), new byte[100]);
         Files.write(tmp.resolve("b.meta"), new byte[42]);
 
+        // ACT
         long total = FileCacheCleanupUtil.computeDirectorySize(tmp, LoggerFactory.getLogger(getClass()));
 
+        // ASSERT
         assertThat(total).isEqualTo(142L);
     }
 
     @Test
     void shouldIgnoreSubdirectories(@TempDir Path tmp) throws IOException {
+        // ARRANGE
         Files.write(tmp.resolve("flat.bin"), new byte[10]);
         Path nested = Files.createDirectory(tmp.resolve("nested"));
         Files.write(nested.resolve("deep.bin"), new byte[999]);
 
+        // ACT
         long total = FileCacheCleanupUtil.computeDirectorySize(tmp, LoggerFactory.getLogger(getClass()));
 
+        // ASSERT
         assertThat(total).isEqualTo(10L);
     }
 }

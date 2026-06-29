@@ -82,6 +82,7 @@ test.describe('Favicon Allowlist', () => {
   })
 
   test('should reject invalid favicon allowlist patterns', async ({ page }) => {
+    // ARRANGE
     const manage = new CollectionManagePageObject(page)
     await manage.navigate()
 
@@ -92,9 +93,11 @@ test.describe('Favicon Allowlist', () => {
     // Enter a bare IPv4 address (invalid pattern)
     await manage.editFaviconAllowlistInput.fill('192.168.1.1')
 
+    // ACT
     // Submit to trigger validation
     await page.getByTestId('collection-edit-submit-btn').click()
 
+    // ASSERT
     // Validation error should appear
     await expect(page.getByText(/invalid pattern/i)).toBeVisible()
 

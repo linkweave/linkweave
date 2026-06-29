@@ -30,6 +30,7 @@ class BookmarkPropertyValueResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldSetTextPropertyOnBookmark() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -51,10 +52,12 @@ class BookmarkPropertyValueResourceITest {
             {"propertyValues":[{"definitionId":"%s","valueText":"High"}]}
             """.formatted(definitionId);
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .put("/bookmarks/" + bookmarkId + "/properties")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("id", equalTo(bookmarkId));
@@ -63,6 +66,7 @@ class BookmarkPropertyValueResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldSetBooleanPropertyOnBookmark() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -84,10 +88,12 @@ class BookmarkPropertyValueResourceITest {
             {"propertyValues":[{"definitionId":"%s","valueBoolean":true}]}
             """.formatted(definitionId);
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .put("/bookmarks/" + bookmarkId + "/properties")
+            // ASSERT
             .then()
             .statusCode(200);
     }
@@ -95,6 +101,7 @@ class BookmarkPropertyValueResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldSetNumberPropertyOnBookmark() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -116,10 +123,12 @@ class BookmarkPropertyValueResourceITest {
             {"propertyValues":[{"definitionId":"%s","valueNumber":4.5}]}
             """.formatted(definitionId);
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .put("/bookmarks/" + bookmarkId + "/properties")
+            // ASSERT
             .then()
             .statusCode(200);
     }
@@ -127,6 +136,7 @@ class BookmarkPropertyValueResourceITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldSetMultiplePropertiesOnBookmark() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
 
@@ -156,10 +166,12 @@ class BookmarkPropertyValueResourceITest {
             ]}
             """.formatted(textDef.getId().getUUID().toString(), boolDef.getId().getUUID().toString());
 
+        // ACT
         RestAssured.given()
             .contentType(ContentType.JSON)
             .body(body)
             .put("/bookmarks/" + bookmarkId + "/properties")
+            // ASSERT
             .then()
             .statusCode(200);
     }

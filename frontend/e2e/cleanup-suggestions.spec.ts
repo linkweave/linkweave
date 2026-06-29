@@ -123,11 +123,14 @@ test.describe('Cleanup Suggestions', () => {
   })
 
   test('should select all and move to trash', async ({ page }) => {
+    // ARRANGE
     await gotoCollection(page, collection)
     await navigateToCleanupSuggestions(page)
 
     const cleanup = new CleanupSuggestionsPageObject(page)
+    // ACT
     await cleanup.selectAllAndMoveToTrash()
+    // ASSERT
     await expect(cleanup.emptyState).toBeVisible()
   })
 })

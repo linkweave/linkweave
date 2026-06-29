@@ -28,6 +28,7 @@ class CollectionResourceListAndDefaultITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldListCollectionsIncludingNewlyCreatedOnes() {
+        // ARRANGE
         var col1 = fixtureService.createTestCollection();
         var owner = col1.getOwner();
 
@@ -39,8 +40,10 @@ class CollectionResourceListAndDefaultITest {
             .withDefault(false)
         );
 
+        // ACT
         RestAssured.given()
             .get("/collections")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("collections.id", hasItems(col1.getId().getUUID().toString(), col2.getId().getUUID().toString()))
@@ -50,10 +53,13 @@ class CollectionResourceListAndDefaultITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldIncludeIsDefaultAndRoleFieldsInList() {
+        // ARRANGE
         var col = fixtureService.createTestCollection();
 
+        // ACT
         RestAssured.given()
             .get("/collections")
+            // ASSERT
             .then()
             .statusCode(200)
             .body("collections.findAll { it.id == '" + col.getId().getUUID() + "' }.size()", equalTo(1))

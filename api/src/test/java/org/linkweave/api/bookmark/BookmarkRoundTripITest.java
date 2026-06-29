@@ -31,13 +31,16 @@ class BookmarkRoundTripITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldRoundTrip_bookmarksSampleFile() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
         File file = getResourceFile("bookmarks-sample.html");
 
+        // ACT
         RestAssured.given()
             .multiPart("file", file, "text/html")
             .post("/collections/{collectionId}/import", collectionId)
+            // ASSERT
             .then()
             .statusCode(200)
             .body("foldersCreated", equalTo(2))
@@ -63,13 +66,16 @@ class BookmarkRoundTripITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldRoundTrip_bookmarksWithRootFile() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
         File file = getResourceFile("bookmarks-with-root.html");
 
+        // ACT
         RestAssured.given()
             .multiPart("file", file, "text/html")
             .post("/collections/{collectionId}/import", collectionId)
+            // ASSERT
             .then()
             .statusCode(200)
             .body("foldersCreated", equalTo(1))
@@ -95,13 +101,16 @@ class BookmarkRoundTripITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldRoundTrip_emptyBookmarksFile() {
+        // ARRANGE
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();
         File file = getResourceFile("bookmarks-empty.html");
 
+        // ACT
         RestAssured.given()
             .multiPart("file", file, "text/html")
             .post("/collections/{collectionId}/import", collectionId)
+            // ASSERT
             .then()
             .statusCode(200)
             .body("foldersCreated", equalTo(0))

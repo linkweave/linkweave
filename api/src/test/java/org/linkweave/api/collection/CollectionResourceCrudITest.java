@@ -19,13 +19,16 @@ class CollectionResourceCrudITest {
 
     @Test
     void shouldReturn401_whenCreateCollectionNotAuthenticated() {
+        // ARRANGE
         String body = """
             {"name":"New Collection"}
             """;
+        // ACT
         RestAssured.given()
             .contentType("application/json")
             .body(body)
             .post("/collections")
+            // ASSERT
             .then()
             .statusCode(401);
     }
@@ -58,27 +61,33 @@ class CollectionResourceCrudITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn400_whenCreateCollectionWithEmptyName() {
+        // ARRANGE
         String body = """
             {"name":""}
             """;
+        // ACT
         RestAssured.given()
             .contentType("application/json")
             .body(body)
             .post("/collections")
+            // ASSERT
             .then()
             .statusCode(400);
     }
 
     @Test
     void shouldReturn401_whenUpdateCollectionNotAuthenticated() {
+        // ARRANGE
         String body = """
             {"name":"Updated"}
             """;
+        // ACT
         RestAssured.given()
             .contentType("application/json")
             .body(body)
             .pathParam("id", UUID.randomUUID().toString())
             .put("/collections/{id}")
+            // ASSERT
             .then()
             .statusCode(401);
     }
@@ -86,14 +95,17 @@ class CollectionResourceCrudITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn403_whenUpdateCollectionWithoutAccess() {
+        // ARRANGE
         String body = """
             {"name":"Updated"}
             """;
+        // ACT
         RestAssured.given()
             .contentType("application/json")
             .body(body)
             .pathParam("id", UUID.randomUUID().toString())
             .put("/collections/{id}")
+            // ASSERT
             .then()
             .statusCode(403);
     }
@@ -157,15 +169,18 @@ class CollectionResourceCrudITest {
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn400_whenUpdateCollectionWithEmptyName() {
+        // ARRANGE
         var col = fixtureService.createTestCollection();
         String body = """
             {"name":""}
             """;
+        // ACT
         RestAssured.given()
             .contentType("application/json")
             .body(body)
             .pathParam("id", col.getId().getUUID().toString())
             .put("/collections/{id}")
+            // ASSERT
             .then()
             .statusCode(400);
     }

@@ -22,9 +22,12 @@ class NetscapeBookmarkParserTest {
 
     @Test
     void shouldParseSampleBookmarks() throws Exception {
+        // ARRANGE
         try (InputStream is = loadFixture("bookmarks-sample.html")) {
+            // ACT
             ParsedImportResult result = parser.parse(is);
 
+            // ASSERT
             Assertions.assertThat(result.rootFolders()).hasSize(1);
             Assertions.assertThat(result.rootBookmarks()).isEmpty();
 
@@ -49,9 +52,12 @@ class NetscapeBookmarkParserTest {
 
     @Test
     void shouldParseBookmarksWithRootLevelLinks() throws Exception {
+        // ARRANGE
         try (InputStream is = loadFixture("bookmarks-with-root.html")) {
+            // ACT
             ParsedImportResult result = parser.parse(is);
 
+            // ASSERT
             Assertions.assertThat(result.rootBookmarks()).hasSize(2);
             Assertions.assertThat(result.rootBookmarks().get(0).getTitle()).isEqualTo("Root Bookmark 1");
             Assertions.assertThat(result.rootBookmarks().get(0).getDescription()).isEqualTo("Root bookmark 1 description");
@@ -66,9 +72,12 @@ class NetscapeBookmarkParserTest {
 
     @Test
     void shouldParseEmptyBookmarksFile() throws Exception {
+        // ARRANGE
         try (InputStream is = loadFixture("bookmarks-empty.html")) {
+            // ACT
             ParsedImportResult result = parser.parse(is);
 
+            // ASSERT
             Assertions.assertThat(result.rootFolders()).isEmpty();
             Assertions.assertThat(result.rootBookmarks()).isEmpty();
         }
@@ -85,6 +94,7 @@ class NetscapeBookmarkParserTest {
 
     @Test
     void shouldReturnNullAddedAt_whenAddDateMissingOrInvalid() throws Exception {
+        // ARRANGE
         String html = """
             <!DOCTYPE NETSCAPE-Bookmark-file-1>
             <DL><p>
@@ -94,7 +104,9 @@ class NetscapeBookmarkParserTest {
                 <DT><A HREF="https://zero.example.com" ADD_DATE="0">Zero date</A>
             </DL>
             """;
+        // ACT
         ParsedImportResult result = parser.parse(new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8)));
+        // ASSERT
         Assertions.assertThat(result.rootBookmarks())
             .extracting(ParsedBookmark::getAddedAt)
             .containsExactly(null, null, null, null);

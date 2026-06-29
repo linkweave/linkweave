@@ -42,7 +42,7 @@ class UserServiceITest {
 
     @Test
     void shouldHardDeleteUserAndAllOwnedData() throws Exception {
-        // Arrange — register a fresh victim user and seed their owned data.
+        // ARRANGE — register a fresh victim user and seed their owned data.
         String suffix = UUID.randomUUID().toString();
         String victimEmail = "victim-" + suffix + "@example.com";
         User victim = registrationService.register(victimEmail, "test-password-123", "V", "Ictim");
@@ -86,10 +86,10 @@ class UserServiceITest {
         assertThat(bookmarkRepo.findById(bookmarkId)).isPresent();
         assertThat(collectionAccessRepo.findByUser(victimId)).isNotEmpty();
 
-        // Act
+        // ACT
         userService.hardDeleteUser(victimId);
 
-        // Assert — victim and everything they owned is gone.
+        // ASSERT — victim and everything they owned is gone.
         assertThat(userRepo.findById(victimId)).isEmpty();
         assertThat(collectionRepo.findById(ownedCollectionId)).isEmpty();
         assertThat(folderRepo.findById(folderId)).isEmpty();

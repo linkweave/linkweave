@@ -52,6 +52,7 @@ class DesktopWebRootRouteITest {
 
     @Test
     void shouldNotServeFilesThroughEscapingSymlink() {
+        // ARRANGE
         // A symlink inside the web-root pointing outside it must not leak the target's contents.
         var link = DesktopWebRootTestProfile.WEB_ROOT.resolve(DesktopWebRootTestProfile.ESCAPING_SYMLINK);
         Assumptions.assumeTrue(Files.exists(link, LinkOption.NOFOLLOW_LINKS),
@@ -60,8 +61,10 @@ class DesktopWebRootRouteITest {
         // The escape must be rejected and fall through to the SPA fallback (index.html, 200) —
         // asserting the status + index marker proves that, rather than passing trivially because
         // the body happened not to contain the secret.
+        // ACT
         given().basePath("").redirects().follow(false)
             .get("/" + DesktopWebRootTestProfile.ESCAPING_SYMLINK)
+            // ASSERT
             .then()
             .statusCode(200)
             .body(containsString(DesktopWebRootTestProfile.INDEX_MARKER))
