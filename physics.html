@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bouncing Ball in Rotating Hexagon</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: sans-serif;
+    }
+    canvas {
+      border: 2px solid #333;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    .controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      background: rgba(0,0,0,0.5);
+      padding: 10px;
+      border-radius: 5px;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="controls">
+  Physics: Gravity + Wall Rotation Velocity
+</div>
+<canvas id="canvas"></canvas>
+
+<script>
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  // Configuration
+  canvas.width = 800;
+  canvas.height = 800;
+
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+
+  const hexRadius = 300;
+  let hexRotation = 0;
+  const rotationSpeed = 0.015; // Radians per frame
+
+  const gravity = 0.25;
+  const friction = 0.98; // Energy retained after bounce (restitution)
+  const wallFriction = 0.99; // Air resistance/friction
+
+  let ball = {
+    x: centerX,
+    y: centerY,
+    vx: 5,
+    vy: 0,
+    radius: 15,
+    color: '#3498db'
+  };
+
+  function getHexagonVertices(angle) {
+    const vertices = [];
+    for (let i = 0; i < 6; i++) {
+      const theta = angle + (i * Math.PI * 2) / 6;
+      vertices.push({
+        x: centerX + hexRadius * Math.cos(theta),
+        y: centerY + hexRadius * Math.sin(theta)
+      });
+    }
+    return vertices;
+  }
+
+  function update() {
+    // Apply gravity
+    ball.vy += gravity;
+
+    // Apply air resistance
+    ball.vx *= wallFriction;
+    ball.vy *= wallFriction;
+
+    // Update position
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+
+    // Rotate hexagon
+    hexRotation += rotationSpeed;
+
+    const vertices = getHexagonVertices(hexRotation);
+
+    // Collision detection with the 6 walls
+    for (let i = 0; i < 6; i++) {
+      const p1 = vertices[i];
+      const p2 = vertices[(i + 1) % 6];
+
+      // Vector of the wall segment
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+
+      // Length of the wall squared
+      const segmentLenSq = dx * dx + dy * dy;
+
+      // Find closest point on the line segment to the ball center
+      // projection t = [(ball - p1) . (p2 - p1)] / |p2 - p1|^2
+      let t = ((ball.x - p1.x) * dx + (ball.y - p1.y) * dy) / segmentLenSq;
+      t = Math.max(0, Math.min(1, t)); // Clamp to segment
+
+      const closestX = p1.x + t * dx;
+      const closestY = p1.y + t * dy;
+
+      // Distance from ball to closest point
+      const distDx = ball.x - closestX;
+      const distDy = ball.y - closestY;
+      const distance = Math.sqrt(distDx * distDx + distDy * distDy);
+
+      if (distance < ball.radius) {
+        // 1. Calculate Normal Vector of the wall
+        // The normal is perpendicular to the segment (dx, dy)
+        let nx = -dy / Math.sqrt(segmentLenSq);
+        let ny = dx / Math.sqrt(segmentLenSq);
+
+        // Ensure normal points towards the center of the hexagon
+        const toCenterDirX = centerX - closestX;
+        const toCenterDirY = centerY - closestY;
+        if (nx * toCenterDirX + ny * toCenterDirY < 0) {
+          nx = -nx;
+          ny = -ny;
+        }
+
+        // 2. Calculate Wall Velocity at impact point (due to rotation)
+        // Tangential velocity v = omega * r, perpendicular to radius from center
+        const rx = closestX - centerX;
+        const ry = closestY - centerY;
+        const wallVx = -rotationSpeed * ry;
+        const wallVy = rotationSpeed * rx;
+
+        // 3. Resolve Collision (Reflection)
+        // Relative velocity: how the ball is moving relative to the moving wall
+        const relVx = ball.vx - wallVx;
+        const relVy = ball.vy - wallVy;
+
+        // Dot product of relative velocity and normal
+        const dot = relVx * nx + relVy * ny;
+
+        // Only bounce if the ball is moving towards the wall
+        if (dot < 0) {
+          // Reflect relative velocity: v_new = v - 2(v.n)n
+          const newRelVx = (relVx - 2 * dot * nx) * friction;
+          const newRelVy = (relVy - 2 * dot * ny) * friction;
+
+          // Absolute velocity: add wall velocity back in
+          ball.vx = newRelVx + wallVx;
+          ball.vy = newRelVy + wallVy;
+
+          // 4. Prevent clipping/sticking
+          // Push the ball out of the wall along the normal
+          const overlap = ball.radius - distance;
+          ball.x += nx * overlap;
+          ball.y += ny * overlap;
+        }
+      }
+    }
+  }
+
+  function draw() {
+    // Clear canvas
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const vertices = getHexagonVertices(hexRotation);
+
+    // Draw Hexagon
+    ctx.beginPath();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#ecf0f1';
+    ctx.moveTo(vertices[0].x, vertices[0].y);
+    for (let i = 1; i < 6; i++) {
+      ctx.lineTo(vertices[i].x, vertices[i].y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    // Draw Ball
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+    ctx.fillStyle = ball.color;
+    ctx.fill();
+    // Add a little shine to the ball
+    ctx.beginPath();
+    ctx.arc(ball.x - ball.radius*0.3, ball.y - ball.radius*0.3, ball.radius/4, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.fill();
+
+    requestAnimationFrame(() => {
+      update();
+      draw();
+    });
+  }
+
+  // Start simulation
+  draw();
+</script>
+
+</body>
+</html>

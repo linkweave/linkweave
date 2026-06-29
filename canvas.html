@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Canvas Particle Demo</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden; /* Prevent scrollbars */
+      background-color: #050505; /* Deep dark background */
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    #ui {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: rgba(255, 255, 255, 0.7);
+      pointer-events: none; /* Let clicks pass through to canvas */
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    h1 { margin: 0; font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; }
+    p { margin: 5px 0; font-size: 0.9rem; opacity: 0.6; }
+  </style>
+</head>
+<body>
+
+<div id="ui">
+  <h1>Neural Constellation</h1>
+  <p>Move your mouse to repel the particles</p>
+</div>
+
+<canvas id="canvas1"></canvas>
+
+<script>
+  const canvas = document.getElementById('canvas1');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  let particlesArray = [];
+  const numberOfParticles = 150; // Adjust for density
+  const connectionDistance = 150; // Max distance for lines
+  const mouseRadius = 150;       // Interaction area
+
+  const mouse = {
+    x: null,
+    y: null
+  }
+
+  window.addEventListener('mousemove', function(event) {
+    mouse.x = event.x;
+    mouse.y = event.y;
+  });
+
+  window.addEventListener('resize', function() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    init(); // Re-initialize particles on resize
+  });
+
+  class Particle {
+    constructor(x, y, directionX, directionY, size, color) {
+      this.x = x;
+      this.y = y;
+      this.directionX = directionX;
+      this.directionY = directionY;
+      this.size = size;
+      this.color = color;
+    }
+
+    // Method to draw individual particle
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+    }
+
+    // Check particle position, mouse position, and update movement
+    update() {
+      // Check if particle is still within canvas
+      if (this.x > canvas.width || this.x < 0) {
+        this.directionX = -this.directionX;
+      }
+      if (this.y > canvas.height || this.y < 0) {
+        this.directionY = -this.directionY;
+      }
+
+      // Mouse Interaction (Repulsion logic)
+      let dx = mouse.x - this.x;
+      let dy = mouse.y - this.y;
+      let distance = Math.sqrt(dx*dx + dy*dy);
+
+      if (distance < mouseRadius) {
+        if (mouse.x < this.x && this.x < canvas.width - this.size * 10) {
+          this.x += 3;
+        }
+        if (mouse.x > this.x && this.x > this.size * 10) {
+          this.x -= 3;
+        }
+        if (mouse.y < this.y && this.y < canvas.height - this.size * 10) {
+          this.y += 3;
+        }
+        if (mouse.y > this.y && this.y > this.size * 10) {
+          this.y -= 3;
+        }
+      }
+
+      // Move particle
+      this.x += this.directionX;
+      this.y += this.directionY;
+
+      this.draw();
+    }
+  }
+
+  function init() {
+    particlesArray = [];
+    for (let i = 0; i < numberOfParticles; i++) {
+      let size = (Math.random() * 3) + 1;
+      let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+      let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+      let directionX = (Math.random() * 2) - 1; // Random velocity X
+      let directionY = (Math.random() * 2) - 1; // Random velocity Y
+      let color = '#ffffff';
+
+      particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+    }
+  }
+
+  // Function to connect particles with lines
+  function connect() {
+    let opacityValue = 1;
+    for (let a = 0; a < particlesArray.length; a++) {
+      for (let b = a; b < particlesArray.length; b++) {
+        let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x))
+          + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
+
+        if (distance < (canvas.width / 7) * (canvas.height / 7)) {
+          opacityValue = 1 - (distance / 20000); // Calculate line transparency based on distance
+          ctx.strokeStyle = `rgba(140, 190, 255, ${opacityValue})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+          ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    // We use a semi-transparent clear to create a slight "motion blur" effect
+    // instead of ctx.clearRect()
+    ctx.fillStyle = 'rgba(5, 5, 5, 0.2)';
+    ctx.fillRect(0, 0, innerWidth, innerHeight);
+
+    for (let i = 0; i < particlesArray.length; i++) {
+      particlesArray[i].update();
+    }
+    connect();
+  }
+
+  init();
+  animate();
+</script>
+</body>
+</html>
