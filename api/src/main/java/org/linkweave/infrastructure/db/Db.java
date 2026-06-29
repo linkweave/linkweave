@@ -4,7 +4,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ConstructorExpression;
 import com.querydsl.core.types.EntityPath;

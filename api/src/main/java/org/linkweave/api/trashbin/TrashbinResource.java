@@ -3,7 +3,7 @@ package org.linkweave.api.trashbin;
 import java.util.List;
 import java.time.temporal.ChronoUnit;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import io.quarkus.security.Authenticated;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.DELETE;

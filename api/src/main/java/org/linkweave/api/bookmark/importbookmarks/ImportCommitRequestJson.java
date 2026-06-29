@@ -2,7 +2,7 @@ package org.linkweave.api.bookmark.importbookmarks;
 
 import java.util.List;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;

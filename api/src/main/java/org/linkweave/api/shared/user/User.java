@@ -7,8 +7,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.emailaddress.EmailAddress;
+import org.linkweave.api.types.id.ID;
 import io.quarkus.security.jpa.Password;
 import io.quarkus.security.jpa.Roles;
 import io.quarkus.security.jpa.UserDefinition;

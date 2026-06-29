@@ -3,7 +3,7 @@ package org.linkweave.api.bookmark;
 import java.util.Collections;
 import java.util.UUID;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import jakarta.persistence.EntityManager;

@@ -1,6 +1,6 @@
 package org.linkweave.api.bookmark;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ForeignKey;

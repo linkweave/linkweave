@@ -1,6 +1,6 @@
 package org.linkweave.infrastructure.logging;
 
-import ch.dvbern.dvbstarter.FilterPriorities;
+import org.linkweave.infrastructure.FilterPriorities;
 import ch.dvbern.oss.commons.logging.mdc.jaxrsfilter.CommonMDCFieldResponseFilterHelper;
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.RequestScoped;

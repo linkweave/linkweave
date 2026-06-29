@@ -2,7 +2,7 @@ package org.linkweave.infrastructure.exceptionmapper;
 
 import org.linkweave.infrastructure.errorhandling.AppValidationException;
 import org.linkweave.infrastructure.errorhandling.AppValidationMessage;
-import ch.dvbern.dvbstarter.i18n.translations.TL;
+import org.linkweave.infrastructure.i18n.translations.TL;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;

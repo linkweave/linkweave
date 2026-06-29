@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import com.querydsl.core.types.Path;
 import com.tngtech.archunit.core.domain.JavaClass.Predicates;
 import com.tngtech.archunit.core.domain.JavaMethod;
@@ -62,7 +62,7 @@ class IdClassTest {
 
     @NonNull
     private ArchCondition<JavaMethod> haveOnlyIdParamsWithTypeID() {
-        return new ArchCondition<JavaMethod>("have only id params with type ch.dvbern.dvbstarter.types.id.ID") {
+        return new ArchCondition<JavaMethod>("have only id params with type org.linkweave.api.types.id.ID") {
             @Override
             public void check(JavaMethod method, ConditionEvents events) {
                 final Parameter[] parameters = method.reflect().getParameters();
@@ -85,7 +85,7 @@ class IdClassTest {
                         events.add(SimpleConditionEvent.violated(
                             method,
                             "Id-Parameter " + (parameter.getName()) + " of method " +
-                                method.getFullName() + " is not of type ch.dvbern.dvbstarter.types.id.ID. "
+                                method.getFullName() + " is not of type org.linkweave.api.types.id.ID. "
                                 + "If this is a false positive, annotate the parameter with @IgnoreForIdClassTest."));
                     }
                 }
@@ -95,7 +95,7 @@ class IdClassTest {
 
     @NonNull
     private ArchCondition<JavaMethod> haveOnlyIdCollectionParamsWithTypeID() {
-        return new ArchCondition<JavaMethod>("have only id params with type ch.dvbern.dvbstarter.types.id.ID") {
+        return new ArchCondition<JavaMethod>("have only id params with type org.linkweave.api.types.id.ID") {
             @Override
             public void check(JavaMethod method, ConditionEvents events) {
                 final Parameter[] parameters = method.reflect().getParameters();
@@ -125,7 +125,7 @@ class IdClassTest {
                         events.add(SimpleConditionEvent.violated(
                             method,
                             "Id-Collection-Parameter " + (parameter.getName()) + " of method " +
-                                method.getFullName() + " is not of type ch.dvbern.dvbstarter.types.id.ID. "
+                                method.getFullName() + " is not of type org.linkweave.api.types.id.ID. "
                                 + "If this is a false positive, annotate the parameter with @IgnoreForIdClassTest."));
                     }
                 }

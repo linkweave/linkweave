@@ -3,7 +3,7 @@ package org.linkweave.api.auth;
 import java.net.URI;
 import java.time.temporal.ChronoUnit;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import io.quarkus.oidc.OidcSession;
 import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;

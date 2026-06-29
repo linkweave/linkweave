@@ -2,8 +2,8 @@ package org.linkweave.api.screenshot;
 
 import java.time.OffsetDateTime;
 
-import ch.dvbern.dvbstarter.runas.RunAs;
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.infrastructure.runas.RunAs;
+import org.linkweave.api.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.linkweave.api.bookmark.Bookmark;
 import org.linkweave.api.bookmark.BookmarkRepo;

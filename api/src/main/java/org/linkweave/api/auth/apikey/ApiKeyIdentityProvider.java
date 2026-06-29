@@ -3,7 +3,7 @@ package org.linkweave.api.auth.apikey;
 import java.time.OffsetDateTime;
 import java.util.Set;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import io.quarkus.security.AuthenticationFailedException;
 import io.quarkus.security.identity.AuthenticationRequestContext;
 import io.quarkus.security.identity.IdentityProvider;

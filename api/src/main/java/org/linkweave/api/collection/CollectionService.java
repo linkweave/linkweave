@@ -3,8 +3,8 @@ package org.linkweave.api.collection;
 import java.util.Comparator;
 import java.util.List;
 
-import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.emailaddress.EmailAddress;
+import org.linkweave.api.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.linkweave.api.benutzer.UserRepo;

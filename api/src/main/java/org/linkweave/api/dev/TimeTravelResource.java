@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 
-import ch.dvbern.dvbstarter.clock.ClockProvider;
+import org.linkweave.infrastructure.clock.ClockProvider;
 import io.quarkus.arc.profile.UnlessBuildProfile;
 import jakarta.annotation.security.PermitAll;
 import jakarta.validation.constraints.NotNull;

@@ -10,8 +10,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import ch.dvbern.dvbstarter.clock.AppClock;
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.infrastructure.clock.AppClock;
+import org.linkweave.api.types.id.ID;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.DateTimeExpression;
 import com.querydsl.core.types.dsl.Expressions;

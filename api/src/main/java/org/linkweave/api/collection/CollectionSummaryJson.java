@@ -2,7 +2,7 @@ package org.linkweave.api.collection;
 
 import java.util.UUID;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.querydsl.core.annotations.QueryProjection;
 import jakarta.validation.constraints.NotNull;

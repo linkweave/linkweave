@@ -1,6 +1,6 @@
 package org.linkweave.api.shared.auth;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import org.linkweave.api.collection.Collection;
 import org.jspecify.annotations.NonNull;
 

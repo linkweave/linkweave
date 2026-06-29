@@ -2,7 +2,7 @@ package org.linkweave.api.bookmark.property;
 
 import java.util.List;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import org.linkweave.api.bookmark.Bookmark;
 import org.linkweave.api.bookmark.QBookmark;
 import org.linkweave.api.collection.Collection;

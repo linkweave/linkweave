@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import ch.dvbern.dvbstarter.clock.AppClock;
-import ch.dvbern.dvbstarter.runas.RunAs;
-import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.infrastructure.clock.AppClock;
+import org.linkweave.infrastructure.runas.RunAs;
+import org.linkweave.api.types.emailaddress.EmailAddress;
+import org.linkweave.api.types.id.ID;
 import com.querydsl.core.types.Predicate;
 import jakarta.persistence.EntityGraph;
 import jakarta.persistence.NonUniqueResultException;

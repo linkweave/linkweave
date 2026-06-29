@@ -7,7 +7,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Id;

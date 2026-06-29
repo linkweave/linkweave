@@ -3,7 +3,7 @@ package org.linkweave.api.auth;
 import java.util.EnumSet;
 import java.util.HashSet;
 
-import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
+import org.linkweave.api.types.emailaddress.EmailAddress;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;

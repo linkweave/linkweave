@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.linkweave.api.bookmark.Bookmark;
 import org.linkweave.api.bookmark.BookmarkRepo;

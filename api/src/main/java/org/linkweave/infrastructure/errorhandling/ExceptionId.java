@@ -7,7 +7,7 @@ import java.util.Base64;
 import java.util.Objects;
 import java.util.UUID;
 
-import ch.dvbern.dvbstarter.openapi.OpenApiConst;
+import org.linkweave.infrastructure.openapi.OpenApiConst;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import jakarta.validation.constraints.NotEmpty;

@@ -3,7 +3,7 @@ package org.linkweave.api.collection.favicon;
 import java.net.URL;
 import java.util.Optional;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.linkweave.api.bookmark.Bookmark;

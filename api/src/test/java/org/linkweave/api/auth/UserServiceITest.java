@@ -3,8 +3,8 @@ package org.linkweave.api.auth;
 import java.net.URI;
 import java.util.UUID;
 
-import ch.dvbern.dvbstarter.types.emailaddress.EmailAddress;
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.emailaddress.EmailAddress;
+import org.linkweave.api.types.id.ID;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import jakarta.inject.Inject;

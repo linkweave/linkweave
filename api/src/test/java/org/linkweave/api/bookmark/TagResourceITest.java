@@ -69,6 +69,36 @@ class TagResourceITest {
 
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
+    void shouldTrimSurroundingWhitespaceFromTagName() {
+        Collection collection = fixtureService.createTestCollection();
+        String collectionId = collection.getId().getUUID().toString();
+
+        // Name is padded with leading/trailing whitespace; the global JSON
+        // StringNormalizerModule must trim it before it ever reaches the service.
+        String body = """
+            {"collectionId":"%s","name":"  Spaced Tag  "}
+            """.formatted(collectionId);
+
+        String tagId = RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/tags")
+            .then()
+            .statusCode(200)
+            .body("data.name", equalTo("Spaced Tag"))
+            .extract().path("id");
+
+        // And confirm the trimmed value is what was actually persisted.
+        RestAssured.given()
+            .queryParam("collectionId", collectionId)
+            .get("/tags")
+            .then()
+            .statusCode(200)
+            .body("tagList.find { it.id == '%s' }.data.name".formatted(tagId), equalTo("Spaced Tag"));
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_WRITE"})
     void shouldCreateTag_withProvidedColor() {
         Collection collection = fixtureService.createTestCollection();
         String collectionId = collection.getId().getUUID().toString();

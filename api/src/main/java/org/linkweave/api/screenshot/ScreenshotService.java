@@ -3,8 +3,8 @@ package org.linkweave.api.screenshot;
 import java.net.URL;
 import java.util.Optional;
 
-import ch.dvbern.dvbstarter.clock.AppClock;
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.infrastructure.clock.AppClock;
+import org.linkweave.api.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;

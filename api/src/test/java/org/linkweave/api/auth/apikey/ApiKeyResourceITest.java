@@ -4,9 +4,9 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import ch.dvbern.dvbstarter.clock.AppClock;
-import ch.dvbern.dvbstarter.clock.ClockProvider;
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.infrastructure.clock.AppClock;
+import org.linkweave.infrastructure.clock.ClockProvider;
+import org.linkweave.api.types.id.ID;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;

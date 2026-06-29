@@ -2,7 +2,7 @@ package org.linkweave.infrastructure.exceptionmapper;
 
 import org.linkweave.infrastructure.errorhandling.AppAuthException;
 import org.linkweave.infrastructure.errorhandling.json.AppFailureErrorJson;
-import ch.dvbern.dvbstarter.i18n.translations.TL;
+import org.linkweave.infrastructure.i18n.translations.TL;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;

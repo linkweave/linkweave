@@ -16,7 +16,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.shared.abstractentity.AbstractEntity;
 import org.linkweave.api.shared.auth.BelongsToCollection;

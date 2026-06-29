@@ -11,7 +11,6 @@ import lombok.experimental.UtilityClass;
 public class ArchConst {
 
     public static final String APP_PACKAGE = "org.linkweave";
-    public static final String STARTER_PACKAGE = "ch.dvbern.dvbstarter";
 
     // Excludes both Hibernate's "EntityName_.class" JPA static metamodel and the
     // jakarta.data "_EntityName.class" variant -- both are framework-generated.
@@ -32,10 +31,10 @@ public class ArchConst {
     );
 
     public static final JavaClasses APP_CLASSES = new ClassFileImporter(IMPORT_OPTIONS)
-        .importPackages(APP_PACKAGE, STARTER_PACKAGE);
+        .importPackages(APP_PACKAGE);
 
     public static final JavaClasses TEST_CLASSES = new ClassFileImporter(IMPORT_OPTIONS_FOR_TESTS)
-        .importPackages(APP_PACKAGE, STARTER_PACKAGE);
+        .importPackages(APP_PACKAGE);
 
     @UtilityClass
     public static class Pattern {

@@ -3,7 +3,7 @@ package org.linkweave.api.collection;
 import java.util.List;
 import java.util.Optional;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import lombok.RequiredArgsConstructor;

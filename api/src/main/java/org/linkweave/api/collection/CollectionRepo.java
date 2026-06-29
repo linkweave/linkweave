@@ -3,7 +3,7 @@ package org.linkweave.api.collection;
 import java.util.List;
 import java.util.Optional;
 
-import ch.dvbern.dvbstarter.types.id.ID;
+import org.linkweave.api.types.id.ID;
 import lombok.AllArgsConstructor;
 import org.linkweave.api.shared.user.User;
 import org.linkweave.infrastructure.db.BaseRepo;

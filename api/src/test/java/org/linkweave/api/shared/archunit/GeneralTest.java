@@ -1,8 +1,8 @@
 package org.linkweave.api.shared.archunit;
 
 import org.linkweave.infrastructure.db.BaseRepo;
-import ch.dvbern.dvbstarter.clock.AppClock;
-import ch.dvbern.dvbstarter.i18n.datetime.DateUtil;
+import org.linkweave.infrastructure.clock.AppClock;
+import org.linkweave.infrastructure.i18n.datetime.DateUtil;
 import org.linkweave.api.shared.abstractentity.AbstractEntityListener;
 import org.linkweave.api.shared.archunit.predicates.MethodPredicates;
 import com.tngtech.archunit.library.GeneralCodingRules;
@@ -139,7 +139,7 @@ class GeneralTest {
             .orShould()
             .callMethod(ZonedDateTime.class, "now")
             .as("java.time.X.now() shouldn't be used")
-            .because("we use ch.dvbern.dvbstarter.clock.AppClock instead to enable testing with 'time travel'");
+            .because("we use org.linkweave.infrastructure.clock.AppClock instead to enable testing with 'time travel'");
 
         rule.check(ArchConst.APP_CLASSES);
     }

@@ -4,7 +4,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import ch.dvbern.dvbstarter.clock.AppClock;
+import org.linkweave.infrastructure.clock.AppClock;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

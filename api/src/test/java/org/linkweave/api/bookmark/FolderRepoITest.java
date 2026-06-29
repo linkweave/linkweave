@@ -76,7 +76,7 @@ class FolderRepoITest {
         roles = { "BOOKMARK_WRITE" }
     )
     void findById_shouldReturnEmpty_whenFolderDoesNotExist() {
-        var nonExistentId = ch.dvbern.dvbstarter.types.id.ID.of(java.util.UUID.randomUUID(), Folder.class);
+        var nonExistentId = org.linkweave.api.types.id.ID.of(java.util.UUID.randomUUID(), Folder.class);
 
         var foundFolder = folderRepo.findById(nonExistentId);
 
