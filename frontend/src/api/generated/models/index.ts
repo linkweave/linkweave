@@ -45,6 +45,7 @@ export * from './import-node-type';
 export * from './import-preview-json';
 export * from './import-summary-json';
 export * from './move-to-trash-json';
+export * from './permission';
 export * from './property-definition-json';
 export * from './property-definition-list-json';
 export * from './property-definition-save-json';

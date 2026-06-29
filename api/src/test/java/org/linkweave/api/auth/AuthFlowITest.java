@@ -2,6 +2,7 @@ package org.linkweave.api.auth;
 
 import java.util.List;
 
+import org.linkweave.api.shared.auth.Permission;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
@@ -70,7 +71,7 @@ class AuthFlowITest {
         UserInfoJson userInfoJson = objectMapper.readValue(json, UserInfoJson.class);
 
         assertThat(userInfoJson.email()).isEqualTo("test@example.com");
-        assertThat(userInfoJson.roles()).containsAll(List.of("BOOKMARK_READ", "BOOKMARK_WRITE"));
+        assertThat(userInfoJson.permissions()).containsAll(List.of(Permission.BOOKMARK_READ, Permission.BOOKMARK_WRITE));
         assertThat(userInfoJson.defaultCollectionId()).isNotNull();
     }
 

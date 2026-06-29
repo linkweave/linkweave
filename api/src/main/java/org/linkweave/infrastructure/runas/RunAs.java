@@ -8,7 +8,7 @@ import jakarta.interceptor.InterceptorBinding;
 
 /**
  * Run-as functionality for Quarkus: execute an intercepted method under a synthetic
- * security identity with the given username and roles.
+ * security identity with the given username and permissions.
  *
  * @see <a href="https://github.com/quarkusio/quarkus/issues/11392">quarkus#11392</a>
  */

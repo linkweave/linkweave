@@ -2,6 +2,7 @@ package org.linkweave.api.auth;
 
 import java.util.UUID;
 
+import org.linkweave.api.shared.auth.Permission;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
@@ -39,7 +40,7 @@ class FormLoginITest {
         assertThat(userInfo.email()).isEqualTo(email);
         assertThat(userInfo.firstName()).isEqualTo("E2E");
         assertThat(userInfo.lastName()).isEqualTo("Tester");
-        assertThat(userInfo.roles()).contains("BOOKMARK_READ", "BOOKMARK_WRITE");
+        assertThat(userInfo.permissions()).contains(Permission.BOOKMARK_READ, Permission.BOOKMARK_WRITE);
         assertThat(userInfo.defaultCollectionId()).isNotNull();
     }
 
@@ -148,7 +149,7 @@ class FormLoginITest {
             .asString();
 
         UserInfoJson userInfo = objectMapper.readValue(meJson, UserInfoJson.class);
-        assertThat(userInfo.roles()).contains("BOOKMARK_READ", "BOOKMARK_WRITE");
+        assertThat(userInfo.permissions()).contains(Permission.BOOKMARK_READ, Permission.BOOKMARK_WRITE);
     }
 
     private void registerUser(String email, String password) {
