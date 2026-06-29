@@ -150,9 +150,13 @@ Model-suggested tags appear in a dedicated "Suggested Tags" section, distinct fr
 
 When suggestions are accepted, any tags the user has already selected manually are preserved.
 
-### BR-080: Local-Only Processing
+### BR-080: Local-Only Processing (Local Provider)
 
-Bookmark text is sent only to the locally-hosted model service (default model: gemma 2B). No bookmark data leaves the host for the purpose of tag suggestion.
+When the **local provider** (Ollama, the default) is used, bookmark text is sent only to the locally-hosted model service (default model: gemma 2B) and no bookmark data leaves the host for the purpose of tag suggestion. If an operator opts into a **hosted provider** (BR-084), this guarantee no longer applies — bookmark text is sent to that provider.
+
+### BR-084: Pluggable LLM Provider
+
+The LLM provider is operator-configurable (FR-097): `ollama` (local, default) or `openai` (a hosted OpenAI-compatible API such as z.ai). The provider choice is invisible to the user — suggestions look and behave identically — and is always constrained to the collection's existing tags by re-validation, regardless of provider. Selecting a hosted provider is an explicit operator decision with the privacy trade-off in BR-080.
 
 ### BR-083: Feature Flag with Rule-Based Fallback
 
@@ -165,3 +169,13 @@ The model is loaded on demand when the first suggestion request arrives and is k
 ### BR-082: Collection Scope
 
 Suggestions are scoped to the collection the bookmark belongs to. The model's vocabulary is exactly that collection's tags; tags from other collections are never used or suggested.
+
+## Notes / Future Considerations
+
+### Considered: quarkus-langchain4j (deferred)
+
+We evaluated building the LLM integration on [quarkus-langchain4j](https://docs.quarkiverse.io/quarkus-langchain4j/dev/index.html) instead of hand-rolled REST clients. It would remove transport/JSON-parsing boilerplate (a declarative `@RegisterAiService` interface), make providers config-driven, and add retries/timeouts/observability for free.
+
+**Why deferred:** for this feature it isn't clearly easier, and it weakens our key correctness lever. Our strongest guarantee on the Ollama path is the *dynamic*, per-collection JSON-Schema `enum` of the collection's tags, generated at call time so the model physically cannot emit an off-list tag. LangChain4j's declarative structured output derives its schema from the *static* return type, so a per-call enum isn't expressible declaratively — we'd fall back to "list allowed tags in the prompt + re-validate" for the Ollama path too (correct, since we already re-validate, but a downgrade from strict generation-time constraint). Combined with the current implementation being small, working, and tested, the boilerplate saved doesn't justify the new dependency or the lost constraint today.
+
+**Revisit if** any of these become true: we want built-in retries/observability without writing them; we plan to add several more providers (Gemini, Mistral, Anthropic, …); or we start needing tool-calling / RAG. At that point its declarative model and provider matrix would pay off. The current `LlmTaggingClient` seam keeps this swap low-risk.

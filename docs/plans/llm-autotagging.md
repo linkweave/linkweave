@@ -15,7 +15,8 @@ The design deliberately mirrors the **screenshot sidecar** ([screenshot-previews
 - **Idle unload**: the model is evicted from memory after a configurable inactivity window, reclaiming ~1.6 GB.
 - **Constrained output**: the model can only return tags that already exist in the collection — enforced, not merely prompted.
 - **Best-effort & non-blocking**: bookmark create / edit / import always succeed even if the model is down (BR-077).
-- **Local-only**: bookmark text never leaves the host (BR-080).
+- **Local-only by default**: with the Ollama provider, bookmark text never leaves the host (BR-080). A hosted provider is opt-in (see *Providers*).
+- **Pluggable provider** (FR-097): local Ollama or any hosted OpenAI-compatible API (e.g. z.ai GLM), chosen by config behind one interface.
 
 ## Non-goals
 
@@ -23,7 +24,8 @@ The design deliberately mirrors the **screenshot sidecar** ([screenshot-previews
 - GPU inference / model fine-tuning. CPU inference of a 2B model is acceptable for on-demand tagging.
 - **Persisting suggestions.** Suggestions are computed on demand and not stored; only an *accepted* tag persists (via `Bookmark.tags`). No suggestion entity, no migration, no background job. See *Why no persistence* below.
 - Blocking the create/edit form on inference. The suggest call is its own request; the UI renders rule chips immediately and folds in AI chips when the call returns.
-- Multi-model routing or hosted-API fallback (e.g. Claude). Explicitly out — this is the self-hosted path.
+- The Anthropic/Claude SDK. A hosted option is supported via the generic **OpenAI-compatible** API (which z.ai exposes); we do not add the Anthropic SDK.
+- Automatic multi-provider failover / load-balancing. Exactly one provider is active per deployment (config-selected); there's no runtime fan-out across providers.
 
 ---
 
@@ -113,6 +115,23 @@ Pulled weights land in the `ollama-models` volume, so it's a one-time cost acros
 - **Configurable** via `linkweave.autotag.keep-alive`; `0` = unload-after-each (lowest memory, slowest), `-1` = always resident (fastest, ~1.6 GB pinned).
 
 This is entirely Ollama-native; the API only chooses the `keep_alive` value and optionally warms.
+
+---
+
+## Providers (FR-097)
+
+`LlmTaggingClient` is the seam; a single bean `LlmTaggingClientImpl` dispatches on `linkweave.autotag.provider`:
+
+| Provider | `provider=` | Transport | Model from | Constraint mechanism | Data leaves host? |
+|---|---|---|---|---|---|
+| **Ollama** (default) | `ollama` | `OllamaClient` → local `/api/chat` | `linkweave.autotag.model` | native `format` JSON-Schema **enum** (strict) | No |
+| **OpenAI-compatible** | `openai` | `OpenAiClient` → `/chat/completions` | `linkweave.autotag.openai.model` | `response_format: json_object` + allowed list in prompt | **Yes** |
+
+- **z.ai (GLM Coding Plan)** is the motivating hosted case: it speaks the OpenAI-compatible chat-completions API. Configure `provider=openai`, `openai.base-url=https://api.z.ai/api/paas/v4`, `openai.model=glm-4.6`, and `LINKWEAVE_AUTOTAG_API_KEY=<key>`. Any other OpenAI-compatible endpoint (OpenAI, OpenRouter, …) works the same way.
+- **Why not strict enum for the hosted path?** Not all OpenAI-compatible providers honor a `json_schema` enum, so the hosted path uses the widely-supported `json_object` mode and lists the allowed tags in the prompt. Correctness is still guaranteed because the **service re-validates** every returned name against the vocabulary (below) and drops anything off-list — so even a non-compliant provider can't introduce tags.
+- **Selection is per-deployment** (config-selected, effective at startup). Exactly one provider is active; there's no runtime fan-out.
+- **Secret handling:** the API key is read from config (`linkweave.autotag.openai.api-key`, sourced from an env var), passed as a bearer header per call, and never logged.
+- **Privacy:** `provider=openai` sends bookmark text to the hosted endpoint — an explicit operator choice that forfeits the local-only guarantee (BR-080). The default stays local.
 
 ---
 
@@ -283,22 +302,30 @@ user opens "Add bookmark" ──▶ POST /autotag/warm-up ──▶ OllamaClient
 ## Configuration reference
 
 ```properties
-# Master switch
+# Master switch + provider selection
 linkweave.autotag.llm.enabled=true
+linkweave.autotag.provider=ollama                 # ollama (local) | openai (hosted)
+linkweave.autotag.max-vocab=0                     # cap vocabulary size; 0 = no cap
 
-# Ollama service URL (loopback in dev; internal compose host in prod)
+# --- Ollama (provider = ollama) ---
+linkweave.autotag.model=gemma2:2b
+linkweave.autotag.keep-alive=15m                  # 0 = unload each call, -1 = always resident
 linkweave.autotag.service-url=http://localhost:11434
 quarkus.rest-client.ollama.url=${linkweave.autotag.service-url}
 quarkus.rest-client.ollama.connect-timeout=3000
 quarkus.rest-client.ollama.read-timeout=30000     # cold-start load + inference
 
-# Model + lifecycle
-linkweave.autotag.model=gemma2:2b
-linkweave.autotag.keep-alive=15m                  # 0 = unload each call, -1 = always resident
-linkweave.autotag.max-vocab=64                    # cap enum size; 0 = no cap (v1: no cap)
+# --- OpenAI-compatible hosted provider (provider = openai), e.g. z.ai GLM ---
+linkweave.autotag.openai.model=glm-4.6
+linkweave.autotag.openai.api-key=${LINKWEAVE_AUTOTAG_API_KEY:}   # secret, from env
+linkweave.autotag.openai.base-url=https://api.z.ai/api/paas/v4
+quarkus.rest-client.openai-autotag.url=${linkweave.autotag.openai.base-url}
+quarkus.rest-client.openai-autotag.connect-timeout=3000
+quarkus.rest-client.openai-autotag.read-timeout=30000
 
-# Disabled in tests (no Ollama container in CI)
-%test.linkweave.autotag.llm.enabled=false
+# In tests the real clients are never reached — a fake LlmTaggingClient is
+# installed per-test via QuarkusMock.installMockForType(...). The flag is left at
+# its default; the disabled-path test opts out with a QuarkusTestProfile.
 ```
 
 ---
@@ -308,8 +335,8 @@ linkweave.autotag.max-vocab=64                    # cap enum size; 0 = no cap (v
 ### Backend
 - `BookmarkAutoTagLlmServiceTest` — mock `LlmTaggingClient`; assert returned names map to `Tag` ids and **out-of-vocabulary names are dropped**.
 - `BookmarkAutoTagResourceITest` — `@TestSecurity`; assert auth is enforced (403 on no access) and the endpoint returns the constrained tag DTOs (no persistence to assert — nothing is stored).
-- WireMock standing in for Ollama: assert the request carries the correct `format` enum and `keep_alive`, and that a 5xx / timeout yields **an empty suggestion list and no thrown error** (BR-077).
-- Feature-flag off (`linkweave.autotag.llm.enabled=false`, FR-096): assert the suggest endpoints return empty / 204 and make **no** call to `OllamaClient` (verify the WireMock stub is never hit) — the rule-based fallback path.
+- Fake `LlmTaggingClient` (installed via `QuarkusMock.installMockForType`): assert out-of-vocabulary names are dropped, the full collection vocabulary is offered to the model, and a model failure surfaces as **an empty suggestion list and no thrown error** (BR-077). (WireMock isn't a project dependency, so the seam is the interface rather than the HTTP layer.)
+- Feature-flag off (FR-096, via a `QuarkusTestProfile`): assert the service returns empty and makes **no** call to the model — the rule-based fallback path.
 - ArchUnit: service/repo never inject `AuthorizationService` or `OllamaClient` for auth; resource always guards.
 
 ### Frontend
@@ -331,16 +358,21 @@ linkweave.autotag.max-vocab=64                    # cap enum size; 0 = no cap (v
 
 ## Critical files (quick index)
 
-### New files to create
-- `api/.../autotag/llm/OllamaClient.java` — REST client (pattern: `ScreenshotSidecarClient`)
-- `api/.../autotag/llm/LlmTaggingClient.java` — interface (mockable seam)
-- `api/.../autotag/llm/BookmarkAutoTagLlmService.java` — stateless orchestration (no persistence)
+### Backend files (implemented)
+- `api/.../autotag/llm/LlmTaggingClient.java` — provider-agnostic interface (mockable seam)
+- `api/.../autotag/llm/LlmTaggingClientImpl.java` — dispatches on `provider` to Ollama or OpenAI-compatible
+- `api/.../autotag/llm/OllamaClient.java` — Ollama REST client (pattern: `ScreenshotSidecarClient`)
+- `api/.../autotag/llm/OpenAiClient.java` — OpenAI-compatible REST client (z.ai etc.)
+- `api/.../autotag/llm/BookmarkAutoTagLlmService.java` — stateless orchestration, `@NoTransactionService`
 - `api/.../autotag/BookmarkAutoTagResource.java` — `suggest-tags` + `warm-up` endpoints
+- `api/.../autotag/json/SuggestTagsJson.java` — compose-form request body
 - `ollama/Dockerfile` + `ollama/entrypoint.sh` (pull gemma2:2b) + `ollama/docker-compose.yml`
 
-### Existing files to modify
+### Existing files modified
 - `application.properties` — config block above
-- `ConfigService` — `isAutoTagLlmEnabled()`, model, keep-alive, max-vocab accessors
+- `ConfigService` — `isAutotagLlmEnabled()`, `isAutotagProviderOpenAi()`, model, keep-alive, max-vocab, openai model/api-key accessors
+
+### Frontend files (not yet implemented — awaiting design input)
 - `frontend/src/lib/auto-tag-rules.ts` / `useTagSuggestions` — append on-demand LLM suggestions after built-in + custom rules, dedup by tag (built-in → custom → LLM)
 - "Suggested Tags" component — call `suggest-tags`, merge with live rule chips, per-chip source label (rule vs. AI); accept uses the existing tag-apply path
 

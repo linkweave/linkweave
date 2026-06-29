@@ -1,0 +1,34 @@
+services:
+  ollama:
+    build: .
+    image: linkweave-ollama:dev
+    init: true
+    # gemma2:2b is ~1.6 GB resident; cap with headroom for the load spike.
+    mem_limit: 2g
+    cpus: 2.0
+    restart: unless-stopped
+    environment:
+      # Consumed by entrypoint.sh; keep in sync with linkweave.autotag.model.
+      LINKWEAVE_AUTOTAG_MODEL: gemma2:2b
+    volumes:
+      - ollama-models:/root/.ollama   # persist pulled weights across restarts
+    # Local dev: bind to loopback only so quarkus:dev (running on the host) can
+    # reach Ollama at http://localhost:11434. For production, drop this `ports:`
+    # block and put both the API and ollama on the same internal compose network
+    # — ollama should not be reachable from outside the host.
+    ports:
+      - "127.0.0.1:11434:11434"
+    networks:
+      - linkweave-internal
+    healthcheck:
+      test: ["CMD", "ollama", "ps"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  ollama-models:
+
+networks:
+  linkweave-internal:
