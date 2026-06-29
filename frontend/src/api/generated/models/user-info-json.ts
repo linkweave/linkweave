@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { Permission } from './permission';
+import {
+    PermissionFromJSON,
+    PermissionFromJSONTyped,
+    PermissionToJSON,
+    PermissionToJSONTyped,
+} from './permission';
 import type { UserSettingsJson } from './user-settings-json';
 import {
     UserSettingsJsonFromJSON,
@@ -47,10 +54,10 @@ export interface UserInfoJson {
     lastName: string;
     /**
      * 
-     * @type {Set<string>}
+     * @type {Set<Permission>}
      * @memberof UserInfoJson
      */
-    roles: Set<string>;
+    permissions: Set<Permission>;
     /**
      * 
      * @type {string}
@@ -72,7 +79,7 @@ export function instanceOfUserInfoJson(value: object): value is UserInfoJson {
     if (!('email' in value) || value['email'] === undefined) return false;
     if (!('firstName' in value) || value['firstName'] === undefined) return false;
     if (!('lastName' in value) || value['lastName'] === undefined) return false;
-    if (!('roles' in value) || value['roles'] === undefined) return false;
+    if (!('permissions' in value) || value['permissions'] === undefined) return false;
     if (!('defaultCollectionId' in value) || value['defaultCollectionId'] === undefined) return false;
     if (!('settings' in value) || value['settings'] === undefined) return false;
     return true;
@@ -91,7 +98,7 @@ export function UserInfoJsonFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'email': json['email'],
         'firstName': json['firstName'],
         'lastName': json['lastName'],
-        'roles': new Set(json['roles']),
+        'permissions': (new Set((json['permissions'] as Array<any>).map(PermissionFromJSON))),
         'defaultCollectionId': json['defaultCollectionId'],
         'settings': UserSettingsJsonFromJSON(json['settings']),
     };
@@ -111,7 +118,7 @@ export function UserInfoJsonToJSONTyped(value?: UserInfoJson | null, ignoreDiscr
         'email': value['email'],
         'firstName': value['firstName'],
         'lastName': value['lastName'],
-        'roles': Array.from(value['roles'] as Set<any>),
+        'permissions': (Array.from(value['permissions'] as Set<any>).map(PermissionToJSON)),
         'defaultCollectionId': value['defaultCollectionId'],
         'settings': UserSettingsJsonToJSON(value['settings']),
     };

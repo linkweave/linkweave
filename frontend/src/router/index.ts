@@ -1,3 +1,4 @@
+import { Permission } from '@/api/generated'
 import { initializeSession } from '@/composables/useSessionInit'
 import { useAuthStore } from '@/stores/auth'
 import { useCollectionStore } from '@/stores/collection'
@@ -56,6 +57,15 @@ const router = createRouter({
       meta: { public: true },
       component: () => import('@/views/PrivacyPolicyView.vue'),
     },
+    {
+      path: '/dev/sentry-test',
+      name: 'dev-sentry-test',
+      // Hidden diagnostic page — never linked in the UI. Restricted to users
+      // whose security identity carries the SUPPORT permission; unauthenticated
+      // or unauthorized users are redirected away.
+      meta: { requiresPermission: Permission.Support },
+      component: () => import('@/views/DevSentryTestView.vue'),
+    },
   ],
 })
 
@@ -70,6 +80,12 @@ router.beforeEach(async (to) => {
   }
 
   if (auth.isAuthenticated && to.meta.public) {
+    return { name: 'home' }
+  }
+
+  // Unauthenticated users are already bounced to login above, so reaching here
+  // without the permission means an authenticated-but-unauthorized user.
+  if (to.meta.requiresPermission && !auth.user?.permissions.has(to.meta.requiresPermission)) {
     return { name: 'home' }
   }
 

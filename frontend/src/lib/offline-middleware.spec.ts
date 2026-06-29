@@ -3,6 +3,7 @@ import 'fake-indexeddb/auto'
 import {
   CollectionInfoJsonFromJSON,
   CollectionSummaryListJsonFromJSON,
+  Permission,
 } from '@/api/generated'
 import type { CollectionInfoJson, CollectionSummaryJson, UserInfoJson } from '@/api/generated'
 import {
@@ -17,7 +18,7 @@ const fakeUser: UserInfoJson = {
   email: 'alice@example.com',
   firstName: 'Alice',
   lastName: 'User',
-  roles: new Set(['USER']),
+  permissions: new Set([Permission.BookmarkRead, Permission.BookmarkWrite]),
   defaultCollectionId: 'col-1',
   settings: { offlineCachingEnabled: true, savedSearchesEnabled: true },
 }

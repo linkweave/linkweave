@@ -1,7 +1,9 @@
 package org.linkweave.api.auth;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.linkweave.api.types.id.ID;
 import jakarta.transaction.Transactional;
@@ -17,6 +19,7 @@ import org.linkweave.api.collection.CollectionAccess;
 import org.linkweave.api.collection.CollectionAccessRepo;
 import org.linkweave.api.collection.CollectionRepo;
 import org.linkweave.api.collection.CollectionService;
+import org.linkweave.api.shared.auth.Permission;
 import org.linkweave.api.shared.user.CurrentUserService;
 import org.linkweave.api.shared.user.User;
 import org.linkweave.infrastructure.errorhandling.AppAuthException;
@@ -43,11 +46,15 @@ public class UserService {
         User user = currentUserService.findCurrentUser().orElseThrow(AppAuthException::new);
         Collection collection = collectionService.getDefaultCollectionOrAutoprovision(user);
         UserSettingsJson settings = userSettingsService.getSettingsForUser(user);
+        Set<Permission> permissions = roles.stream()
+            .map(Permission::fromName)
+            .flatMap(Optional::stream)
+            .collect(Collectors.toUnmodifiableSet());
         return new UserInfoJson(
             email,
             user.getVorname(),
             user.getNachname(),
-            roles,
+            permissions,
             collection.getId(),
             settings
         );
