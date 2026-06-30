@@ -2,7 +2,6 @@
 import type { BookmarkJson } from '@/api/generated'
 import AutoTagRulesDialog from '@/components/autotagrule/AutoTagRulesDialog.vue'
 import {
-  ButtonLw,
   CollapsibleLw,
   DialogLw,
   DialogFooterLw,
@@ -14,7 +13,8 @@ import {
 import { useDuplicateCheck } from '@/composables/useDuplicateCheck'
 import { useFormDialog } from '@/composables/useFormDialog'
 import { usePropsExpandedPref } from '@/composables/usePropsExpandedPref'
-import { useTagSuggestions } from '@/composables/useTagSuggestions'
+import SuggestedTagsSection from '@/components/bookmark/SuggestedTagsSection.vue'
+import TagCombobox from '@/components/bookmark/TagCombobox.vue'
 import {
   decodePropertyValue,
   encodePropertyValueMap,
@@ -22,12 +22,10 @@ import {
 } from '@/lib/propertyValueMapper'
 import { ensureUrlProtocol } from '@/lib/url'
 import { bookmarkSaveSchema } from '@/schemas/bookmark'
-import { useAutoTagRuleStore } from '@/stores/autoTagRule'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useFolderStore } from '@/stores/folder'
 import { useNotificationStore } from '@/stores/notification'
 import { usePropertyStore } from '@/stores/property'
-import { useTagStore } from '@/stores/tag'
 import { toTypedSchema } from '@vee-validate/zod'
 import { Box, ChevronDown, Pencil, Plus } from '@lucide/vue'
 import { useForm } from 'vee-validate'
@@ -38,8 +36,6 @@ import BookmarkPropertyInput from './BookmarkPropertyInput.vue'
 const { t } = useI18n()
 const bookmarkStore = useBookmarkStore()
 const folderStore = useFolderStore()
-const tagStore = useTagStore()
-const autoTagRuleStore = useAutoTagRuleStore()
 const propertyStore = usePropertyStore()
 const notification = useNotificationStore()
 
@@ -150,29 +146,16 @@ useFormDialog(toRef(props, 'open'), () => {
   }
 })
 
-const tagsRef = computed(() => tagStore.tags)
 const effectiveCollectionId = computed(
   () => props.bookmark?.data.collectionId ?? props.collectionId ?? '',
 )
-const customRulesRef = computed(() =>
-  autoTagRuleStore.rules.map((r) => ({
-    pattern: r.data.pattern,
-    tagNames: r.data.tagNames,
-    enabled: r.data.enabled,
-  })),
-)
-const {
-  suggestions,
-  selectedNames,
-  toggle: toggleSuggestion,
-  acceptInto,
-} = useTagSuggestions({
-  url,
-  tags: tagsRef,
-  collectionId: effectiveCollectionId,
-  createTag: tagStore.createTag,
-  customRules: customRulesRef,
-})
+const appliedTagIds = computed(() => tagIds.value ?? new Set<string>())
+
+function onAddTags(ids: string[]) {
+  const next = new Set(tagIds.value ?? new Set<string>())
+  for (const id of ids) next.add(id)
+  tagIds.value = next
+}
 
 const bookmarkIdRef = computed(() => props.bookmark?.id)
 const bookmarksRef = computed(() => bookmarkStore.bookmarks)
@@ -182,14 +165,6 @@ const { duplicates } = useDuplicateCheck(url, bookmarksRef, {
   folders: foldersRef,
 })
 
-async function onAcceptSuggestions() {
-  try {
-    await acceptInto(tagIds)
-  } catch (err) {
-    notification.handleApiError(err, t('bookmark.tagSuggestionError'))
-  }
-}
-
 function onUrlBlur() {
   if (typeof url.value === 'string') {
     url.value = ensureUrlProtocol(url.value)
@@ -197,17 +172,6 @@ function onUrlBlur() {
 }
 
 const rulesManagerOpen = ref(false)
-
-function toggleTagId(tagId: string) {
-  const current = tagIds.value ?? new Set<string>()
-  const next = new Set(current)
-  if (next.has(tagId)) {
-    next.delete(tagId)
-  } else {
-    next.add(tagId)
-  }
-  tagIds.value = next
-}
 
 const filledCount = computed(() =>
   propertyStore.definitions.filter((pd) => {
@@ -354,30 +318,8 @@ const onSubmit = handleSubmit(async (values) => {
       </FormFieldLw>
 
       <div class="space-y-2">
-        <label class="block text-sm font-medium leading-none">{{ t('bookmark.tags') }}</label>
-        <div class="flex flex-wrap gap-1.5">
-          <button
-            v-for="tag in tagStore.tags"
-            :key="tag.id"
-            type="button"
-            class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs transition-opacity"
-            :class="tagIds?.has(tag.id) ? 'opacity-100' : 'opacity-40'"
-            :style="{ backgroundColor: tag.data.color ?? '#64748b', color: 'white' }"
-            @click="toggleTagId(tag.id)"
-          >
-            {{ tag.data.name }}
-          </button>
-        </div>
-        <p v-if="tagStore.tags.length === 0" class="text-xs text-muted-foreground">
-          {{ t('tag.none') }}
-        </p>
-      </div>
-
-      <div data-testid="suggested-tags-section" class="space-y-2 min-h-[5.5rem]">
         <div class="flex items-center justify-between">
-          <label class="block text-sm font-medium leading-none">{{
-            t('bookmark.suggestedTags')
-          }}</label>
+          <label class="block text-sm font-medium leading-none">{{ t('bookmark.tags') }}</label>
           <button
             type="button"
             class="text-xs text-primary hover:underline"
@@ -388,37 +330,23 @@ const onSubmit = handleSubmit(async (values) => {
             {{ t('bookmark.manageRules') }}
           </button>
         </div>
-        <template v-if="suggestions.length > 0">
-          <div class="flex flex-wrap gap-1.5">
-            <button
-              v-for="suggestion in suggestions"
-              :key="suggestion.name"
-              type="button"
-              :data-testid="`suggested-tag-${suggestion.name}`"
-              class="inline-flex items-center gap-1 rounded-full border border-dashed border-input px-2.5 py-0.5 text-xs transition-opacity"
-              :class="selectedNames.has(suggestion.name) ? 'opacity-100' : 'opacity-40'"
-              @click="toggleSuggestion(suggestion.name)"
-            >
-              <span>{{ suggestion.name }}</span>
-              <span v-if="!suggestion.existingTagId" class="text-muted-foreground">
-                {{ t('bookmark.suggestionWillCreate') }}
-              </span>
-            </button>
-          </div>
-          <div class="flex justify-end">
-            <ButtonLw
-              type="button"
-              variant="outline"
-              size="sm"
-              data-testid="accept-suggestions-btn"
-              :disabled="selectedNames.size === 0"
-              @click="onAcceptSuggestions"
-            >
-              {{ t('bookmark.acceptSuggestions') }}
-            </ButtonLw>
-          </div>
-        </template>
+        <TagCombobox
+          v-model="tagIds"
+          :collection-id="effectiveCollectionId"
+          :id-prefix="idPrefix"
+        />
       </div>
+
+      <SuggestedTagsSection
+        :open="!!open"
+        :is-edit="isEdit"
+        :collection-id="effectiveCollectionId"
+        :title="title"
+        :url="url"
+        :description="description"
+        :applied-tag-ids="appliedTagIds"
+        @add-tags="onAddTags"
+      />
 
       <template v-if="propertyStore.definitions.length > 0">
         <!-- Collapsible header (6+ props) or static divider (≤5 props) -->
