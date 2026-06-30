@@ -234,7 +234,7 @@ async function onAllBookmarksDrop(event: DragEvent) {
           aria-hidden="true"
         />
       </button>
-      <CollapsibleLw :open="propertiesExpanded">
+      <CollapsibleLw :open="propertiesExpanded" fill>
       <ul
         class="px-2 pb-2 overflow-y-auto flex-1 min-h-0"
         data-testid="sidebar-properties"
@@ -269,6 +269,7 @@ async function onAllBookmarksDrop(event: DragEvent) {
 
     <!-- Tags Section -->
     <div
+      data-testid="sidebar-tags-section"
       :class="[
         showPropertiesSection || showSmartCollectionsSection ? '' : 'mt-auto',
         'min-h-0 flex flex-col border-t border-border max-h-[50%]',
@@ -291,14 +292,14 @@ async function onAllBookmarksDrop(event: DragEvent) {
           aria-hidden="true"
         />
       </button>
-      <CollapsibleLw :open="tagsExpanded">
+      <CollapsibleLw :open="tagsExpanded" fill>
         <TagList
-          class-name="px-2 pb-2 overflow-y-auto min-h-0"
+          class-name="px-2 pb-2 overflow-y-auto flex-1 min-h-0"
           :collection-id="collectionId"
         />
       </CollapsibleLw>
     </div>
-    <div class="border-t border-border shrink-0">
+    <div data-testid="sidebar-footer" class="border-t border-border shrink-0">
       <div class="p-3 flex items-center justify-between">
         <BuildversionLw />
       </div>
