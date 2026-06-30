@@ -75,8 +75,13 @@ public class LlmTaggingClientImpl implements LlmTaggingClient {
         if (!ensureModelPulled()) {
             return;
         }
-        ollamaClient.generate(new OllamaClient.GenerateRequest(
-            config.getAutotagModel(), config.getAutotagKeepAlive()));
+        try {
+            ollamaClient.generate(new OllamaClient.GenerateRequest(
+                config.getAutotagModel(), config.getAutotagKeepAlive()));
+        } catch (RuntimeException e) {
+            invalidateModelAfterFailure("warm-up generate", e);
+            throw e;
+        }
     }
 
     /**
@@ -135,6 +140,19 @@ public class LlmTaggingClientImpl implements LlmTaggingClient {
         });
     }
 
+    /**
+     * Clears {@link #modelPulled} and re-arms the background pull after a
+     * chat/generate call fails. Ollama can lose a model that was pulled
+     * successfully earlier, this will trigger a repull
+     */
+    private void invalidateModelAfterFailure(@NonNull String operation, @NonNull RuntimeException cause) {
+        if (modelPulled.compareAndSet(true, false)) {
+            LOG.warn("Ollama {} failed ({}); re-pulling model '{}' before the next suggestion",
+                operation, cause.getMessage(), config.getAutotagModel());
+            triggerPullAsync();
+        }
+    }
+
     // --- Ollama: native structured output via the `format` JSON-Schema enum ---
 
     private @NonNull List<String> suggestViaOllama(
@@ -155,7 +173,13 @@ public class LlmTaggingClientImpl implements LlmTaggingClient {
             config.getAutotagKeepAlive());
 
         logModelRequest("Ollama", request);
-        OllamaClient.ChatResponse response = ollamaClient.chat(request);
+        OllamaClient.ChatResponse response;
+        try {
+            response = ollamaClient.chat(request);
+        } catch (RuntimeException e) {
+            invalidateModelAfterFailure("chat", e);
+            throw e;
+        }
         if (response.message() == null || response.message().content() == null) {
             LOG.debug("Ollama chat response had no message content");
             return List.of();

@@ -90,6 +90,33 @@ class LlmTaggingClientImplTest {
     }
 
     @Test
+    void shouldRePullAfterTheModelIsLostMidRun() throws Exception {
+        // ARRANGE — warm the model so suggestions are served.
+        PullState pull = new PullState(false);
+        ChatState chat = new ChatState();
+        LlmTaggingClientImpl client = newClient(pullClient(pull), chatClient(chat));
+        Assertions.assertThat(client.suggest(List.of("rust"), "content")).isEmpty();
+        Assertions.assertThat(awaitServed(client)).containsExactly("rust");
+        Assertions.assertThat(pull.count.get()).isOne();
+
+        // ACT — Ollama loses the weights (volume cleared / model deleted), so the
+        // chat call now fails on an otherwise-warm client.
+        chat.failing = true;
+        Assertions.assertThatThrownBy(() -> client.suggest(List.of("rust"), "content"))
+            .as("a lost model surfaces as a runtime failure for the service to swallow")
+            .isInstanceOf(RuntimeException.class);
+
+        // ASSERT — the failure invalidates the resident-model flag and re-arms the
+        // pull, so once the model is back the next suggestion re-pulls and serves
+        // (rather than failing forever until a JVM restart).
+        chat.failing = false;
+        Assertions.assertThat(awaitServed(client)).containsExactly("rust");
+        Assertions.assertThat(pull.count.get())
+            .as("model is re-pulled after being lost mid-run")
+            .isEqualTo(2);
+    }
+
+    @Test
     void shouldReturnTagsFromHostedProviderWithBearerHeaderAndPrompt() {
         // ARRANGE
         OpenAiState openAi = new OpenAiState();
@@ -246,6 +273,9 @@ class LlmTaggingClientImplTest {
             (proxy, method, args) -> {
                 switch (method.getName()) {
                     case "chat" -> {
+                        if (state.failing) {
+                            throw new RuntimeException("model 'gemma2:2b' not found");
+                        }
                         state.count.incrementAndGet();
                         return new OllamaClient.ChatResponse(
                             new OllamaClient.Message("assistant", "{\"tags\":[\"rust\"]}"), true);
@@ -288,6 +318,7 @@ class LlmTaggingClientImplTest {
 
     private static final class ChatState {
         final AtomicInteger count = new AtomicInteger();
+        volatile boolean failing = false;
     }
 
     private static final class OpenAiState {
