@@ -206,6 +206,43 @@ public class ConfigService {
     @ConfigProperty(name = "linkweave.sentry.frontend-project-id", defaultValue = "4511463699120208")
     String sentryFrontendProject;
 
+    // LLM auto-tagging (FR-095). The master switch (FR-096) lets the whole
+    // feature be left out; the system then falls back to client-side rule
+    // suggestions (UC-045).
+    @ConfigProperty(name = "linkweave.autotag.llm.enabled", defaultValue = "true")
+    boolean autotagLlmEnabled;
+
+    // Provider selection (FR-097): "ollama" (local) or "openai" (any
+    // OpenAI-compatible hosted API, e.g. z.ai GLM Coding Plan).
+    @ConfigProperty(name = "linkweave.autotag.provider", defaultValue = "ollama")
+    String autotagProvider;
+
+    @ConfigProperty(name = "linkweave.autotag.model", defaultValue = "gemma2:2b")
+    String autotagModel;
+
+    // Ollama keep_alive: idle window the model stays resident after the last
+    // call. "0" unloads immediately, "-1" keeps it resident forever.
+    @ConfigProperty(name = "linkweave.autotag.keep-alive", defaultValue = "15m")
+    String autotagKeepAlive;
+
+    // Cap on the enum vocabulary sent to the model; 0 = no cap.
+    @ConfigProperty(name = "linkweave.autotag.max-vocab", defaultValue = "0")
+    int autotagMaxVocab;
+
+    // OpenAI-compatible hosted provider (used when provider = openai). The base
+    // URL is set via quarkus.rest-client.openai-autotag.url. The API key is a
+    // secret — source it from an env var, never commit it.
+    @ConfigProperty(name = "linkweave.autotag.openai.model", defaultValue = "glm-4.6")
+    String autotagOpenAiModel;
+
+    @ConfigProperty(name = "linkweave.autotag.openai.api-key")
+    Optional<String> autotagOpenAiApiKey;
+
+    /** True when the hosted OpenAI-compatible provider is selected. */
+    public boolean isAutotagProviderOpenAi() {
+        return "openai".equalsIgnoreCase(autotagProvider);
+    }
+
 
 
 

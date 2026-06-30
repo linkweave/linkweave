@@ -29,8 +29,17 @@ export async function createBookmarkViaUi(
   await expect(dialog).toBeVisible()
   await dialog.locator('#create-bookmark-title').fill(title)
   await dialog.locator('#create-bookmark-url').fill(url)
-  for (const tagName of tagNames) {
-    await dialog.locator('button').filter({ hasText: tagName }).click()
+  if (tagNames.length > 0) {
+    // Tags are selected through the combobox: open it, toggle each existing
+    // tag's checklist row, then close the popover (toggle the trigger) and wait
+    // for it to disappear before submitting.
+    const trigger = dialog.getByTestId('create-bookmark-tags-trigger')
+    await trigger.click()
+    for (const tagName of tagNames) {
+      await page.getByTestId(`tags-row-${tagName}`).click()
+    }
+    await trigger.click()
+    await expect(page.getByTestId('create-bookmark-tags-popover')).toBeHidden()
   }
   await dialog.locator('button[type="submit"]').click()
   await expect(dialog).not.toBeVisible()

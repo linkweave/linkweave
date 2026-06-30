@@ -33,6 +33,12 @@
      against the secondary background; the dark theme uses violet-400. */
   --color-property: #7c3aed;
 
+  /* AI-source accent for AI Suggested Tags (sparkle icon, group label, washes,
+     selected AI chip). Violet, deliberately distinct from --color-primary
+     (blue) and tag-dot colours. Light-mode values darkened for contrast. */
+  --ai: #8b5cf6;
+  --ai-strong: #7c3aed;
+
   /* Accent color for Smart Collections (sidebar funnel icon, save trigger,
      active-saved-search pill). Teal — distinct from Tags (--primary blue) and
      Properties (--color-property purple). Light-mode value tuned for contrast
@@ -81,6 +87,8 @@
   --color-ring: #3b82f6;
   --color-sidebar: #1e2028;
   --color-property: #a78bfa;
+  --ai: #a78bfa;
+  --ai-strong: #8b5cf6;
   --color-ss: oklch(64% 0.10 188deg);
   --color-remove: #e08a5b;
   --color-duplicate: #e0a350;

@@ -3,6 +3,7 @@
 export * from './api-key-resource-api';
 export * from './auth-resource-api';
 export * from './auto-tag-rule-resource-api';
+export * from './bookmark-auto-tag-resource-api';
 export * from './bookmark-property-value-resource-api';
 export * from './bookmark-resource-api';
 export * from './cleanup-suggestion-resource-api';
