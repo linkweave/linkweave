@@ -10,6 +10,7 @@ import java.util.UUID;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
+import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import org.linkweave.api.autotag.llm.FakeLlmTaggingClient;
 import org.linkweave.api.autotag.llm.LlmTaggingClient;
@@ -62,6 +63,20 @@ class BookmarkAutoTagResourceITest {
 
     @Test
     @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldReturnActiveProviderOnWarmUp() {
+        Collection collection = fixtureService.createTestCollection();
+
+        given()
+            .post("/collections/{cid}/autotag/warm-up", collection.getId().getUUID())
+            .then()
+            .statusCode(200)
+            .body("provider", is("ollama"))
+            .body("model", is("gemma2:2b"))
+            .body("onDevice", is(true));
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
     void shouldReturn403ForBookmarkInCollectionWithoutAccess() {
         User alice = userRepo.findByEmail(EmailAddress.fromString("alice@example.com")).orElseThrow();
         Collection otherCollection = fixtureService.persistCollection(b -> b
@@ -75,6 +90,54 @@ class BookmarkAutoTagResourceITest {
         given()
             .post("/collections/{cid}/autotag/bookmarks/{bid}/suggest-tags",
                 UUID.randomUUID(), bookmark.getId().getUUID())
+            .then()
+            .statusCode(403);
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldReturnConstrainedSuggestionsForText() {
+        // ARRANGE
+        Collection collection = fixtureService.createTestCollection();
+        fixtureService.persistTag(b -> b.withCollection(collection).withName("rust"));
+        fixtureService.persistTag(b -> b.withCollection(collection).withName("databases"));
+        fake.namesToReturn = List.of("rust", "not-a-real-tag");
+
+        String body = """
+            {"title":"Async Rust","url":"https://example.com/rust"}
+            """;
+
+        // ACT
+        given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/collections/{cid}/autotag/suggest-tags", collection.getId().getUUID())
+            // ASSERT
+            .then()
+            .statusCode(200)
+            .body("tagList.size()", is(1))
+            .body("tagList.data.name", hasItem("rust"));
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldReturn403ForTextInCollectionWithoutAccess() {
+        // ARRANGE
+        User alice = userRepo.findByEmail(EmailAddress.fromString("alice@example.com")).orElseThrow();
+        Collection otherCollection = fixtureService.persistCollection(b -> b
+            .withOwner(alice)
+            .withName("Alice's Collection"));
+
+        String body = """
+            {"title":"Alice's Bookmark","url":"https://alice.example.com"}
+            """;
+
+        // ACT
+        given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .post("/collections/{cid}/autotag/suggest-tags", otherCollection.getId().getUUID())
+            // ASSERT
             .then()
             .statusCode(403);
     }

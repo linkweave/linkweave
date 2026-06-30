@@ -13,8 +13,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
+import org.linkweave.api.autotag.json.AutotagLLMProviderJson;
 import org.linkweave.api.autotag.json.SuggestTagsJson;
 import org.linkweave.api.autotag.llm.BookmarkAutoTagLlmService;
 import org.linkweave.api.bookmark.Bookmark;
@@ -77,12 +77,12 @@ public class BookmarkAutoTagResource {
 
     @POST
     @Path("/warm-up")
+    @Produces(MediaType.APPLICATION_JSON)
     @Authenticated
     @NonNull
-    public Response warmUp(@PathParam("collectionId") @NonNull ID<Collection> collectionId) {
+    public AutotagLLMProviderJson warmUp(@PathParam("collectionId") @NonNull ID<Collection> collectionId) {
         authorizationService.requireCollectionAccess(collectionId);
-        autoTagLlmService.warmUp();
-        return Response.noContent().build();
+        return autoTagLlmService.warmUp();
     }
 
     private static @NonNull TagListJson toList(@NonNull List<Tag> tags) {

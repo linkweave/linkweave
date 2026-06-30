@@ -22,7 +22,7 @@ public class FakeLlmTaggingClient extends LlmTaggingClientImpl {
     public final AtomicBoolean warmUpCalled = new AtomicBoolean(false);
 
     public FakeLlmTaggingClient() {
-        super(null, null);
+        super(null, null, null);
     }
 
     public void reset() {

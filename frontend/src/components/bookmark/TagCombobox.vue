@@ -166,7 +166,7 @@ watch(open, (isOpen) => {
       <PopoverContent
         align="start"
         :side-offset="6"
-        class="tc-pop z-[300]"
+        class="z-[300] rounded-[11px] border border-border bg-popover text-popover-foreground shadow-[0_18px_50px_rgba(0,0,0,0.45)]"
         :style="{ width: 'var(--radix-popover-trigger-width)' }"
         :data-testid="`${idPrefix}-tags-popover`"
         @open-auto-focus="onOpenAutoFocus"
@@ -297,14 +297,6 @@ watch(open, (isOpen) => {
   gap: 4px;
   font-size: 12px;
   color: var(--color-muted-foreground);
-}
-
-.tc-pop {
-  border-radius: 11px;
-  border: 1px solid var(--color-border);
-  background: var(--color-popover);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
-  color: var(--color-popover-foreground);
 }
 
 .tc-search {

@@ -9,6 +9,8 @@ import java.net.URL;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.context.ManagedExecutor;
+import org.linkweave.api.autotag.json.AutotagLLMProviderJson;
 import org.linkweave.api.bookmark.Bookmark;
 import org.linkweave.api.bookmark.BookmarkService;
 import org.linkweave.api.bookmark.Tag;
@@ -47,6 +49,7 @@ public class BookmarkAutoTagLlmService {
     private final TagRepo tagRepo;
     private final BookmarkService bookmarkService;
     private final LlmTaggingClient llmTaggingClient;
+    private final ManagedExecutor managedExecutor;
 
     /**
      * Convenience overload for a persisted bookmark: loads it and extracts the
@@ -116,19 +119,37 @@ public class BookmarkAutoTagLlmService {
             .toList();
     }
 
-    /** Best-effort warm-up so the next suggestion call isn't cold. Never throws. */
-    public void warmUp() {
-        if (!configService.isAutotagLlmEnabled()) {
-            return;
+    /**
+     * Returns the active provider/model so the frontend badge can label itself
+     * (FR-097), and kicks off a best-effort model preload so the next suggestion
+     * call isn't cold. The preload runs off the request thread: the first-ever
+     * Ollama run pulls the model (minutes), and the badge shouldn't wait on it.
+     * The provider info is config-derived, so it's returned immediately. Never
+     * throws.
+     */
+    public @NonNull AutotagLLMProviderJson warmUp() {
+        if (configService.isAutotagLlmEnabled()) {
+            managedExecutor.execute(() -> {
+                try {
+                    llmTaggingClient.warmUp();
+                } catch (RuntimeException e) {
+                    LOG.debug("LLM warm-up failed: {}", e.getMessage());
+                }
+            });
         }
-        try {
-            llmTaggingClient.warmUp();
-        } catch (RuntimeException e) {
-            LOG.debug("LLM warm-up failed: {}", e.getMessage());
-        }
+        return providerInfo();
     }
 
-    private static @NonNull String buildContent(
+    /** Active provider descriptor, derived purely from config (no model call). */
+    private @NonNull AutotagLLMProviderJson providerInfo() {
+        boolean openAi = configService.isAutotagProviderOpenAi();
+        String model = openAi
+            ? configService.getAutotagOpenAiModel()
+            : configService.getAutotagModel();
+        return new AutotagLLMProviderJson(openAi ? "openai" : "ollama", model, !openAi);
+    }
+    @NonNull
+    private static  String buildContent(
         @Nullable String title, @Nullable String url, @Nullable String description) {
         StringBuilder sb = new StringBuilder();
         if (title != null && !title.isBlank()) {

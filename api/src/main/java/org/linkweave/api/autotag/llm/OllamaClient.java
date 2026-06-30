@@ -2,6 +2,7 @@ package org.linkweave.api.autotag.llm;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
@@ -56,6 +57,8 @@ public interface OllamaClient {
 
     record Options(double temperature) {}
 
+    /** Ollama returns extra fields (model, created_at, timing stats); ignore them. */
+    @JsonIgnoreProperties(ignoreUnknown = true)
     record ChatResponse(@Nullable Message message, boolean done) {}
 
     record GenerateRequest(
@@ -63,5 +66,6 @@ public interface OllamaClient {
         @JsonProperty("keep_alive") @NonNull String keepAlive
     ) {}
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     record GenerateResponse(boolean done) {}
 }

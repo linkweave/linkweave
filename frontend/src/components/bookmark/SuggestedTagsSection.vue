@@ -8,7 +8,7 @@ import { compileCustomRules, suggestAllTagNames } from '@/lib/tag-suggester'
 import { useAutoTagRuleStore } from '@/stores/autoTagRule'
 import { useNotificationStore } from '@/stores/notification'
 import { useTagStore } from '@/stores/tag'
-import { RefreshCw, ShieldCheck, Sparkles, Zap } from '@lucide/vue'
+import { Check, Cloud, RefreshCw, ShieldCheck, Sparkles, Zap } from '@lucide/vue'
 import { computed, ref, toRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -42,13 +42,23 @@ const titleRef = toRef(props, 'title')
 const descriptionRef = toRef(props, 'description')
 const collectionIdRef = toRef(props, 'collectionId')
 
-const { aiState, aiSuggestions, warmUp, regenerate, retrieve, markHandled, reset } =
+const { aiState, aiSuggestions, provider, warmUp, regenerate, retrieve, markHandled, reset } =
   useAiTagSuggestions({
     collectionId: collectionIdRef,
     title: titleRef,
     url: urlRef,
     description: descriptionRef,
   })
+
+// Badge label from the active provider (set by warm-up). Null until it resolves;
+// honest about hosted providers, where the "on-device" claim wouldn't hold.
+const providerLabel = computed(() => {
+  const p = provider.value
+  if (!p) return null
+  return p.onDevice
+    ? t('bookmark.aiPrivate', { model: p.model })
+    : t('bookmark.aiCloud', { model: p.model })
+})
 
 // --- Rule suggestions (client-side, instant) ---
 const compiledCustom = computed(() =>
@@ -126,8 +136,9 @@ watch(
   () => props.open,
   (open) => {
     if (!open) return
-    const handled = props.url?.trim() ? props.url.trim() : null
-    reset(handled)
+    // Pre-mark as handled when opening on an existing URL (Edit) so it doesn't
+    // auto-fire on open; a fresh Add (no URL yet) stays armed.
+    reset(!!props.url?.trim())
     selectedRuleNames.value = new Set()
     selectedAiIds.value = new Set()
     justApplied.value = false
@@ -195,7 +206,7 @@ function onRetrieve() {
     >
       <Sparkles :size="13" />
       <span>{{ t('bookmark.retrieveSuggestions') }}</span>
-      <span class="ai-retrieve-meta">· {{ t('bookmark.aiOnDevice') }}</span>
+      <span v-if="providerLabel" class="ai-retrieve-meta">· {{ providerLabel }}</span>
       <span v-if="justApplied" class="ai-applied">{{ t('bookmark.suggestionsApplied') }}</span>
     </button>
 
@@ -207,9 +218,10 @@ function onRetrieve() {
           {{ t('bookmark.suggestedTags') }}
           <span v-if="selectedCount > 0" class="ai-count">{{ selectedCount }}</span>
         </span>
-        <span class="ai-privacy">
-          <ShieldCheck :size="12" />
-          {{ t('bookmark.aiOnDevice') }}
+        <span v-if="providerLabel" class="ai-privacy">
+          <ShieldCheck v-if="provider?.onDevice" :size="12" />
+          <Cloud v-else :size="12" />
+          {{ providerLabel }}
         </span>
       </header>
 
@@ -231,6 +243,7 @@ function onRetrieve() {
             <span class="chip-dot" :style="{ background: chip.color ?? 'var(--color-muted-foreground)' }" />
             <span>{{ chip.name }}</span>
             <span v-if="!chip.existingTagId" class="chip-new">{{ t('bookmark.suggestionWillCreate') }}</span>
+            <span class="chip-box"><Check v-if="selectedRuleNames.has(chip.name)" :size="11" /></span>
           </button>
         </div>
       </div>
@@ -279,9 +292,18 @@ function onRetrieve() {
         </div>
 
         <!-- empty -->
-        <p v-else-if="aiState === 'empty'" class="ai-empty" data-testid="ai-empty">
-          {{ t('bookmark.aiEmpty') }}
-        </p>
+        <div v-else-if="aiState === 'empty'" class="ai-empty" data-testid="ai-empty">
+          <span>{{ t('bookmark.aiEmpty') }}</span>
+          <button
+            type="button"
+            class="ai-regen"
+            data-testid="ai-retry"
+            @click="regenerate"
+          >
+            <RefreshCw :size="11" />
+            {{ t('bookmark.retry') }}
+          </button>
+        </div>
 
         <!-- ok: chips -->
         <div v-else class="ai-chips">
@@ -298,6 +320,7 @@ function onRetrieve() {
             <Sparkles :size="11" class="chip-src chip-src--ai" />
             <span class="chip-dot" :style="{ background: chip.color }" />
             <span>{{ chip.name }}</span>
+            <span class="chip-box"><Check v-if="selectedAiIds.has(chip.id)" :size="11" /></span>
           </button>
           <span v-if="groups.ai.length === 0" class="ai-empty">{{ t('bookmark.aiEmpty') }}</span>
         </div>
@@ -441,21 +464,28 @@ function onRetrieve() {
   align-items: center;
   gap: 5px;
   height: 28px;
-  padding: 0 10px;
+  padding: 0 6px 0 10px;
   border-radius: 9999px;
   border: 1px solid var(--color-border);
   background: var(--color-secondary);
   color: var(--color-foreground);
   font-size: 12px;
   cursor: pointer;
-  transition: opacity 0.12s ease;
+  transition: opacity 0.12s ease, background 0.14s ease, border-color 0.14s ease;
 }
 .chip--rule {
+  --chip-accent: var(--color-primary);
   border-color: color-mix(in oklab, var(--color-primary) 55%, var(--color-border));
 }
 .chip--ai {
+  --chip-accent: var(--ai-strong);
   border-color: color-mix(in oklab, var(--ai) 55%, var(--color-border));
   background: color-mix(in oklab, var(--ai) 8%, var(--color-secondary));
+}
+/* Selected chip: accent-tinted body (the dimming below handles the off state). */
+.chip:not(.chip--off) {
+  background: color-mix(in oklab, var(--chip-accent) 12%, var(--color-secondary));
+  border-color: color-mix(in oklab, var(--chip-accent) 45%, var(--color-border));
 }
 .chip--off {
   opacity: 0.55;
@@ -475,6 +505,24 @@ function onRetrieve() {
 .chip-new {
   color: var(--color-muted-foreground);
   font-size: 10.5px;
+}
+/* Trailing checkbox: empty box when off, accent-filled with a check when selected. */
+.chip-box {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 1px;
+  border-radius: 5px;
+  border: 1.5px solid var(--color-border);
+  color: transparent;
+  flex-shrink: 0;
+  transition: background 0.14s ease, border-color 0.14s ease;
+}
+.chip:not(.chip--off) .chip-box {
+  background: var(--chip-accent);
+  border-color: var(--chip-accent);
+  color: #fff;
 }
 
 /* Shimmer skeleton */
@@ -526,6 +574,9 @@ function onRetrieve() {
   color: var(--color-muted-foreground);
 }
 .ai-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 6px;
   font-size: 12px;
   color: var(--color-muted-foreground);

@@ -2,6 +2,7 @@ package org.linkweave.api.autotag.llm;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.HeaderParam;
@@ -39,9 +40,14 @@ public interface OpenAiClient {
         double temperature
     ) {}
 
+    // Response records ignore the many extra fields providers return (id, usage,
+    // finish_reason, role, …); we only read what we need.
+    @JsonIgnoreProperties(ignoreUnknown = true)
     record Message(@NonNull String role, @NonNull String content) {}
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     record ChatCompletionResponse(@Nullable List<Choice> choices) {}
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     record Choice(@Nullable Message message) {}
 }

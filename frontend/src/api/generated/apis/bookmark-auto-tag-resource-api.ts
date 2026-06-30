@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  AutotagLLMProviderJson,
   SuggestTagsJson,
   TagListJson,
 } from '../models/index';
 import {
+    AutotagLLMProviderJsonFromJSON,
+    AutotagLLMProviderJsonToJSON,
     SuggestTagsJsonFromJSON,
     SuggestTagsJsonToJSON,
     TagListJsonFromJSON,
@@ -182,21 +185,17 @@ export class BookmarkAutoTagResourceApi extends runtime.BaseAPI {
     /**
      * Warm Up
      */
-    async apiCollectionsCollectionIdAutotagWarmUpPostRaw(requestParameters: BookmarkAutoTagResourceApiApiCollectionsCollectionIdAutotagWarmUpPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async apiCollectionsCollectionIdAutotagWarmUpPostRaw(requestParameters: BookmarkAutoTagResourceApiApiCollectionsCollectionIdAutotagWarmUpPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AutotagLLMProviderJson>> {
         const requestOptions = await this.apiCollectionsCollectionIdAutotagWarmUpPostRequestOpts(requestParameters);
         const response = await this.request(requestOptions, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => AutotagLLMProviderJsonFromJSON(jsonValue));
     }
 
     /**
      * Warm Up
      */
-    async apiCollectionsCollectionIdAutotagWarmUpPost(requestParameters: BookmarkAutoTagResourceApiApiCollectionsCollectionIdAutotagWarmUpPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async apiCollectionsCollectionIdAutotagWarmUpPost(requestParameters: BookmarkAutoTagResourceApiApiCollectionsCollectionIdAutotagWarmUpPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AutotagLLMProviderJson> {
         const response = await this.apiCollectionsCollectionIdAutotagWarmUpPostRaw(requestParameters, initOverrides);
         return await response.value();
     }

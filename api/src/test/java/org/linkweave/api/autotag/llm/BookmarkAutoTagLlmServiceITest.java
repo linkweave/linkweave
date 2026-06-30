@@ -7,6 +7,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
+import org.linkweave.api.autotag.json.AutotagLLMProviderJson;
 import org.linkweave.api.bookmark.Tag;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.testutil.fixture.FixtureService;
@@ -68,9 +69,18 @@ class BookmarkAutoTagLlmServiceITest {
     }
 
     @Test
-    void shouldWarmUpModel() {
-        service.warmUp();
+    void shouldReturnActiveProviderAndPreloadModelOnWarmUp() throws InterruptedException {
+        AutotagLLMProviderJson info = service.warmUp();
 
+        Assertions.assertThat(info.getProvider()).isEqualTo("ollama");
+        Assertions.assertThat(info.getModel()).isEqualTo("gemma2:2b");
+        Assertions.assertThat(info.isOnDevice()).isTrue();
+
+        // The preload runs off the request thread; poll briefly for it to land.
+        long deadline = System.currentTimeMillis() + 2_000;
+        while (!fake.warmUpCalled.get() && System.currentTimeMillis() < deadline) {
+            Thread.sleep(10);
+        }
         Assertions.assertThat(fake.warmUpCalled).isTrue();
     }
 }
