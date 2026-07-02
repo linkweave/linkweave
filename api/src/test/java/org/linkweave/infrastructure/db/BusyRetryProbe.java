@@ -36,7 +36,18 @@ public class BusyRetryProbe {
     }
 
     public static RuntimeException busyFailure() {
+        return busyFailure(SQLiteErrorCode.SQLITE_BUSY_SNAPSHOT);
+    }
+
+    public static RuntimeException busyFailure(SQLiteErrorCode code) {
         return new RuntimeException("simulated hibernate wrapper",
-            new SQLiteException("[SQLITE_BUSY_SNAPSHOT] database is locked", SQLiteErrorCode.SQLITE_BUSY_SNAPSHOT));
+            new SQLiteException("[" + code.name() + "] database is locked", code));
+    }
+
+    /** Busy failure reachable only via {@code getSuppressed()}, as Narayana attaches it on commit. */
+    public static RuntimeException suppressedBusyFailure() {
+        RuntimeException wrapper = new RuntimeException("simulated commit failure");
+        wrapper.addSuppressed(new SQLiteException("[SQLITE_BUSY] database is locked", SQLiteErrorCode.SQLITE_BUSY));
+        return wrapper;
     }
 }

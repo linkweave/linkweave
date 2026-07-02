@@ -80,8 +80,7 @@ public class SqliteBusyRetryInterceptor {
 
     static boolean isSqliteBusy(Throwable failure) {
         for (Throwable t = failure; t != null; t = t.getCause() == t ? null : t.getCause()) {
-            if (t instanceof SQLiteException sqlite
-                && (sqlite.getResultCode().code & 0xff) == SQLiteErrorCode.SQLITE_BUSY.code) {
+            if (t instanceof SQLiteException sqlite && isBusyCode(sqlite.getResultCode())) {
                 return true;
             }
             for (Throwable suppressed : t.getSuppressed()) {
@@ -91,5 +90,16 @@ public class SqliteBusyRetryInterceptor {
             }
         }
         return false;
+    }
+
+    /**
+     * Matches any BUSY flavor. Per the SQLite result-code convention
+     * (https://sqlite.org/rescode.html), the least significant 8 bits of an extended result code
+     * are its primary result code — e.g. {@code SQLITE_BUSY_SNAPSHOT} = 517 = {@code (2 << 8) | 5}
+     * extends {@code SQLITE_BUSY} = 5. Masking keeps this future-proof for busy variants this
+     * driver version does not know yet.
+     */
+    static boolean isBusyCode(SQLiteErrorCode resultCode) {
+        return (resultCode.code & 0xff) == SQLiteErrorCode.SQLITE_BUSY.code;
     }
 }
