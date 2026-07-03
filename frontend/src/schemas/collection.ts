@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { CollectionRole } from '@/api/generated'
 import type { TFunction } from './types'
 
 export const collectionCreateSchema = (t: TFunction) =>
@@ -60,6 +61,7 @@ export const collectionShareSchema = (t: TFunction) =>
       .string()
       .min(1, t('validation.required', { field: 'Email' }))
       .email(t('validation.email')),
+    role: z.enum([CollectionRole.Member, CollectionRole.Admin]).default(CollectionRole.Member),
   })
 
 export type CollectionShareInput = z.infer<ReturnType<typeof collectionShareSchema>>

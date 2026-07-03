@@ -18,8 +18,9 @@
  * @export
  */
 export const CollectionRole = {
-    Owner: 'OWNER',
-    Member: 'MEMBER'
+    Member: 'MEMBER',
+    Admin: 'ADMIN',
+    Owner: 'OWNER'
 } as const;
 export type CollectionRole = typeof CollectionRole[keyof typeof CollectionRole];
 

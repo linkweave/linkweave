@@ -1,15 +1,20 @@
-import {config} from '@/api'
-import type {CollectionInfoJson, CollectionMemberJson, CollectionSettingsJson, CollectionSummaryJson} from '@/api/generated'
-import {CollectionResourceApi} from '@/api/generated'
-import {SYSTEM_DEFAULT_SORT} from '@/utils/bookmarkSort'
-import {useCollectionSettingsWriter} from '@/composables/useCollectionSettingsWriter'
+import { config } from '@/api'
+import type {
+  CollectionInfoJson,
+  CollectionMemberJson,
+  CollectionSettingsJson,
+  CollectionSummaryJson,
+} from '@/api/generated'
+import { CollectionResourceApi, CollectionRole } from '@/api/generated'
+import { useCollectionSettingsWriter } from '@/composables/useCollectionSettingsWriter'
 import * as offlineCache from '@/lib/offline-cache'
-import {navigate} from '@/lib/routerNavigation'
-import {registerStoreReset} from '@/lib/storeReset'
-import {useAuthStore} from '@/stores/auth'
-import {useNotificationStore} from '@/stores/notification'
-import {defineStore} from 'pinia'
-import {computed, ref, watch} from 'vue'
+import { navigate } from '@/lib/routerNavigation'
+import { registerStoreReset } from '@/lib/storeReset'
+import { useAuthStore } from '@/stores/auth'
+import { useNotificationStore } from '@/stores/notification'
+import { SYSTEM_DEFAULT_SORT } from '@/utils/bookmarkSort'
+import { defineStore } from 'pinia'
+import { computed, ref, watch } from 'vue'
 
 const collectionApi = new CollectionResourceApi(config)
 
@@ -32,7 +37,9 @@ export const useCollectionStore = defineStore('collection', () => {
   // so that unrelated settings changes — e.g. flipping layout — don't
   // invalidate downstream computeds that depend on the sort.
   const sortField = computed(() => settings.value?.sortField ?? SYSTEM_DEFAULT_SORT.field)
-  const sortDirection = computed(() => settings.value?.sortDirection ?? SYSTEM_DEFAULT_SORT.direction)
+  const sortDirection = computed(
+    () => settings.value?.sortDirection ?? SYSTEM_DEFAULT_SORT.direction,
+  )
 
   const hasSortOverride = computed(
     () => settings.value?.sortField != null || settings.value?.sortDirection != null,
@@ -50,16 +57,12 @@ export const useCollectionStore = defineStore('collection', () => {
       notification.handleApiError(err, 'Failed to reset sort preference')
     }
   }
-  const defaultCollectionId = computed(() =>
-    collections.value.find(c => c.isDefault)?.id ?? null
-  )
+  const defaultCollectionId = computed(() => collections.value.find((c) => c.isDefault)?.id ?? null)
 
   const filteredCollections = computed(() => {
     if (!searchQuery.value) return collections.value
     const query = searchQuery.value.toLowerCase()
-    return collections.value.filter(c =>
-      c.name?.toLowerCase().includes(query)
-    )
+    return collections.value.filter((c) => c.name?.toLowerCase().includes(query))
   })
 
   const collectionsFetched = ref(false)
@@ -73,7 +76,9 @@ export const useCollectionStore = defineStore('collection', () => {
       collections.value = (await collectionApi.apiCollectionsGet()).collections
       const auth = useAuthStore()
       if (auth.user?.email) {
-        offlineCache.saveCollections(auth.user.email, collections.value).catch(err => console.error('Failed to cache collections for offline use:', err))
+        offlineCache
+          .saveCollections(auth.user.email, collections.value)
+          .catch((err) => console.error('Failed to cache collections for offline use:', err))
       }
     } catch (err) {
       console.error('Failed to fetch collections:', err)
@@ -99,7 +104,9 @@ export const useCollectionStore = defineStore('collection', () => {
       settings.value = fetchedSettings
       const auth = useAuthStore()
       if (auth.user?.email && collectionInfo.value) {
-        offlineCache.saveCollectionInfo(auth.user.email, collectionInfo.value).catch(err => console.error('Failed to cache collection info for offline use:', err))
+        offlineCache
+          .saveCollectionInfo(auth.user.email, collectionInfo.value)
+          .catch((err) => console.error('Failed to cache collection info for offline use:', err))
       }
     } catch (err) {
       console.error('Failed to fetch collection info:', err)
@@ -114,9 +121,9 @@ export const useCollectionStore = defineStore('collection', () => {
   async function setDefaultCollection(collectionId: string) {
     try {
       await collectionApi.apiCollectionsIdDefaultPut({ id: collectionId })
-      collections.value = collections.value.map(c => ({
+      collections.value = collections.value.map((c) => ({
         ...c,
-        isDefault: c.id === collectionId
+        isDefault: c.id === collectionId,
       }))
 
       const auth = useAuthStore()
@@ -174,7 +181,7 @@ export const useCollectionStore = defineStore('collection', () => {
       }
       await fetchCollections()
       if (wasCurrentCollection) {
-        const fallback = collections.value.find(c => c.isDefault) ?? collections.value[0]
+        const fallback = collections.value.find((c) => c.isDefault) ?? collections.value[0]
         if (fallback?.id) {
           switchCollection(fallback.id)
         }
@@ -193,19 +200,23 @@ export const useCollectionStore = defineStore('collection', () => {
     navigate({ name: 'collection', params: { id: collectionId } })
   }
 
-  const {updateSettings} = useCollectionSettingsWriter(settings, () => currentCollectionId.value)
+  const { updateSettings } = useCollectionSettingsWriter(settings, () => currentCollectionId.value)
 
-  watch(currentCollectionId, (id, _prevId) => {
-    if (id) {
-      fetchCollectionInfo(id)
-      if (!collectionsFetched.value) {
-        collectionsFetched.value = true
-        fetchCollections()
+  watch(
+    currentCollectionId,
+    (id, _prevId) => {
+      if (id) {
+        fetchCollectionInfo(id)
+        if (!collectionsFetched.value) {
+          collectionsFetched.value = true
+          fetchCollections()
+        }
+      } else {
+        collectionInfo.value = null
       }
-    } else {
-      collectionInfo.value = null
-    }
-  }, { immediate: true })
+    },
+    { immediate: true },
+  )
 
   async function fetchMembers(collectionId: string): Promise<CollectionMemberJson[]> {
     try {
@@ -218,11 +229,15 @@ export const useCollectionStore = defineStore('collection', () => {
     }
   }
 
-  async function shareWithUser(collectionId: string, email: string): Promise<CollectionMemberJson | null> {
+  async function shareWithUser(
+    collectionId: string,
+    email: string,
+    role?: CollectionRole,
+  ): Promise<CollectionMemberJson | null> {
     try {
       return await collectionApi.apiCollectionsIdMembersPost({
         id: collectionId,
-        collectionShareJson: { email },
+        collectionShareJson: { email, role },
       })
     } catch (err) {
       console.error('Failed to share collection:', err)
@@ -237,6 +252,46 @@ export const useCollectionStore = defineStore('collection', () => {
       console.error('Failed to revoke access:', err)
       throw err
     }
+  }
+
+  async function changeMemberRole(
+    collectionId: string,
+    userId: string,
+    role: CollectionRole,
+  ): Promise<CollectionMemberJson | null> {
+    try {
+      return await collectionApi.apiCollectionsIdMembersUserIdPut({
+        id: collectionId,
+        userId,
+        collectionMemberRoleJson: { role },
+      })
+    } catch (err) {
+      console.error('Failed to change member role:', err)
+      throw err
+    }
+  }
+
+  // Update the cached role for a collection without a full refetch — used after a
+  // self-step-down so the UI immediately reflects the viewer's lost privileges.
+  function setCollectionRole(collectionId: string, role: CollectionRole) {
+    collections.value = collections.value.map((c) => (c.id === collectionId ? { ...c, role } : c))
+  }
+
+  // The viewer's own role on a collection — single source of truth for the
+  // permission-gating helpers below (avoids each component re-deriving it).
+  function roleFor(collectionId: string | null | undefined): CollectionRole | undefined {
+    if (!collectionId) return undefined
+    return collections.value.find((c) => c.id === collectionId)?.role
+  }
+
+  function isCollectionOwner(collectionId: string | null | undefined): boolean {
+    return roleFor(collectionId) === CollectionRole.Owner
+  }
+
+  // Owner or admin — the roles allowed to manage members and collection settings.
+  function canManageCollection(collectionId: string | null | undefined): boolean {
+    const role = roleFor(collectionId)
+    return role === CollectionRole.Owner || role === CollectionRole.Admin
   }
 
   function reset() {
@@ -274,6 +329,11 @@ export const useCollectionStore = defineStore('collection', () => {
     fetchMembers,
     shareWithUser,
     revokeAccess,
+    changeMemberRole,
+    setCollectionRole,
+    roleFor,
+    isCollectionOwner,
+    canManageCollection,
     collectionsFetched,
   }
 })

@@ -90,14 +90,12 @@ type Tab = 'display' | 'preview' | 'properties' | 'data'
 const activeTab = ref<Tab>('display')
 
 // --- Preview tab (screenshot capture) -------------------------------------
-// `screenshotEnabled` is a backend collection property, owner-only. We surface
-// it here (moved out of the collection-manage "Edit" dialog) so all
-// collection-scoped settings live behind the gear icon. The tab is hidden for
-// non-owners, who can't change it.
-const isOwner = computed(
-  () =>
-    collectionStore.collections.find((c) => c.id === collectionStore.currentCollectionId)?.role ===
-    'OWNER',
+// `screenshotEnabled` is a backend collection property, editable by the owner
+// or an admin (but not plain members). We surface it here (moved out of the
+// collection-manage "Edit" dialog) so all collection-scoped settings live behind
+// the gear icon. The tab is hidden for members, who can't change it.
+const canManageCollection = computed(() =>
+  collectionStore.canManageCollection(collectionStore.currentCollectionId),
 )
 
 // Local mirror so the switch flips instantly; reconciled from the store after
@@ -358,7 +356,7 @@ function optionsPreview(allowedValues: string | undefined): string {
           />
         </button>
         <button
-          v-if="isOwner"
+          v-if="canManageCollection"
           type="button"
           class="relative px-3.5 py-2 text-sm font-medium transition-colors"
           :class="

@@ -57,6 +57,17 @@ test.describe('Collection Sharing', () => {
     await expect(share.inviteBtn).toBeDisabled()
   })
 
+  test('should show role selector defaulting to Member for owner', async ({ page }) => {
+    const manage = new CollectionManagePageObject(page)
+    const share = new ShareCollectionPageObject(page)
+
+    await manage.navigate()
+    await share.openShareDialog(collectionId)
+
+    await expect(share.inviteRoleSelect).toBeVisible()
+    await expect(share.inviteRoleSelect).toHaveValue('MEMBER')
+  })
+
   test('should enable invite button when email is entered', async ({ page }) => {
     // ARRANGE
     const manage = new CollectionManagePageObject(page)

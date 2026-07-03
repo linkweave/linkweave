@@ -5,10 +5,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.linkweave.api.types.id.ID;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.linkweave.api.benutzer.UserRepo;
 import org.linkweave.api.bookmark.BookmarkService;
 import org.linkweave.api.bookmark.TagService;
@@ -22,9 +22,9 @@ import org.linkweave.api.collection.CollectionService;
 import org.linkweave.api.shared.auth.Permission;
 import org.linkweave.api.shared.user.CurrentUserService;
 import org.linkweave.api.shared.user.User;
+import org.linkweave.api.types.id.ID;
 import org.linkweave.infrastructure.errorhandling.AppAuthException;
 import org.linkweave.infrastructure.stereotypes.Service;
-import org.jspecify.annotations.NonNull;
 
 @Service
 @RequiredArgsConstructor
@@ -51,6 +51,7 @@ public class UserService {
             .flatMap(Optional::stream)
             .collect(Collectors.toUnmodifiableSet());
         return new UserInfoJson(
+            user.getId(),
             email,
             user.getVorname(),
             user.getNachname(),

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import CreateCollectionDialog from '@/components/collection/CreateCollectionDialog.vue'
-import EditCollectionDialog from '@/components/collection/EditCollectionDialog.vue'
 import DeleteCollectionDialog from '@/components/collection/DeleteCollectionDialog.vue'
+import EditCollectionDialog from '@/components/collection/EditCollectionDialog.vue'
 import ShareCollectionDialog from '@/components/collection/ShareCollectionDialog.vue'
 import { MainLayout } from '@/components/layout'
 import { ButtonLw, ResponsiveButton, SearchBar } from '@/components/ui'
@@ -27,6 +27,12 @@ const deletingName = ref('')
 const shareOpen = ref(false)
 const sharingCollectionId = ref('')
 const sharingCollectionName = ref('')
+
+function roleLabel(role?: string) {
+  if (role === 'OWNER') return t('collectionManage.owner')
+  if (role === 'ADMIN') return t('collectionManage.admin')
+  return t('collectionManage.member')
+}
 
 onMounted(async () => {
   await collectionStore.fetchCollections()
@@ -141,7 +147,7 @@ function goBack() {
               </span>
             </div>
             <div class="text-xs text-muted-foreground mt-0.5">
-              {{ t('collectionManage.role') }}: {{ col.role }}
+              {{ t('collectionManage.role') }}: {{ roleLabel(col.role) }}
             </div>
           </div>
 
@@ -157,7 +163,7 @@ function goBack() {
               <Star class="h-4 w-4" />
             </ButtonLw>
             <ButtonLw
-              v-if="col.role === 'OWNER'"
+              v-if="collectionStore.canManageCollection(col.id)"
               variant="ghost"
               size="icon"
               :data-testid="`collection-share-btn-${col.id}`"
@@ -167,12 +173,12 @@ function goBack() {
               <Users class="h-4 w-4" />
             </ButtonLw>
             <ButtonLw
-              v-if="col.role === 'OWNER'"
+              v-if="collectionStore.canManageCollection(col.id)"
               variant="ghost"
               size="icon"
               :data-testid="`collection-edit-btn-${col.id}`"
               :title="t('common.edit')"
-              @click="openEdit(col.id!, col.name ?? '', true)"
+              @click="openEdit(col.id!, col.name ?? '', collectionStore.isCollectionOwner(col.id))"
             >
               <Pencil class="h-4 w-4" />
             </ButtonLw>

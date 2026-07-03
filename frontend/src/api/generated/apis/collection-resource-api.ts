@@ -19,6 +19,7 @@ import type {
   CollectionInfoJson,
   CollectionMemberJson,
   CollectionMemberListJson,
+  CollectionMemberRoleJson,
   CollectionSettingsJson,
   CollectionShareJson,
   CollectionSummaryJson,
@@ -34,6 +35,8 @@ import {
     CollectionMemberJsonToJSON,
     CollectionMemberListJsonFromJSON,
     CollectionMemberListJsonToJSON,
+    CollectionMemberRoleJsonFromJSON,
+    CollectionMemberRoleJsonToJSON,
     CollectionSettingsJsonFromJSON,
     CollectionSettingsJsonToJSON,
     CollectionShareJsonFromJSON,
@@ -70,6 +73,12 @@ export interface CollectionResourceApiApiCollectionsIdMembersPostRequest {
 export interface CollectionResourceApiApiCollectionsIdMembersUserIdDeleteRequest {
     id: string;
     userId: string;
+}
+
+export interface CollectionResourceApiApiCollectionsIdMembersUserIdPutRequest {
+    id: string;
+    userId: string;
+    collectionMemberRoleJson: CollectionMemberRoleJson;
 }
 
 export interface CollectionResourceApiApiCollectionsIdPutRequest {
@@ -419,6 +428,69 @@ export class CollectionResourceApi extends runtime.BaseAPI {
      */
     async apiCollectionsIdMembersUserIdDelete(requestParameters: CollectionResourceApiApiCollectionsIdMembersUserIdDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiCollectionsIdMembersUserIdDeleteRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Creates request options for apiCollectionsIdMembersUserIdPut without sending the request
+     */
+    async apiCollectionsIdMembersUserIdPutRequestOpts(requestParameters: CollectionResourceApiApiCollectionsIdMembersUserIdPutRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiCollectionsIdMembersUserIdPut().'
+            );
+        }
+
+        if (requestParameters['userId'] == null) {
+            throw new runtime.RequiredError(
+                'userId',
+                'Required parameter "userId" was null or undefined when calling apiCollectionsIdMembersUserIdPut().'
+            );
+        }
+
+        if (requestParameters['collectionMemberRoleJson'] == null) {
+            throw new runtime.RequiredError(
+                'collectionMemberRoleJson',
+                'Required parameter "collectionMemberRoleJson" was null or undefined when calling apiCollectionsIdMembersUserIdPut().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/collections/{id}/members/{userId}`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+        urlPath = urlPath.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId'])));
+
+        return {
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CollectionMemberRoleJsonToJSON(requestParameters['collectionMemberRoleJson']),
+        };
+    }
+
+    /**
+     * Change Member Role
+     */
+    async apiCollectionsIdMembersUserIdPutRaw(requestParameters: CollectionResourceApiApiCollectionsIdMembersUserIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CollectionMemberJson>> {
+        const requestOptions = await this.apiCollectionsIdMembersUserIdPutRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CollectionMemberJsonFromJSON(jsonValue));
+    }
+
+    /**
+     * Change Member Role
+     */
+    async apiCollectionsIdMembersUserIdPut(requestParameters: CollectionResourceApiApiCollectionsIdMembersUserIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CollectionMemberJson> {
+        const response = await this.apiCollectionsIdMembersUserIdPutRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**

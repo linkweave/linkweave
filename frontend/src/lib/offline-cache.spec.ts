@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
-import { Permission } from '@/api/generated'
 import type { CollectionInfoJson, CollectionSummaryJson, UserInfoJson } from '@/api/generated'
+import { Permission } from '@/api/generated'
 import {
   getLastSyncedAt,
   loadCollectionInfo,
@@ -14,6 +14,7 @@ import {
 } from './offline-cache'
 
 const fakeUser: UserInfoJson = {
+  id: 'user-1',
   email: 'alice@example.com',
   firstName: 'Alice',
   lastName: 'User',
