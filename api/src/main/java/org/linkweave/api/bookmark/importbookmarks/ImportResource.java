@@ -26,9 +26,11 @@ import org.linkweave.infrastructure.errorhandling.AppFailureException;
 import org.linkweave.infrastructure.errorhandling.AppFailureMessage;
 import org.linkweave.infrastructure.errorhandling.AppValidationException;
 import org.linkweave.infrastructure.errorhandling.AppValidationMessage;
+import org.linkweave.infrastructure.db.RetryOnSqliteBusy;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 
 @RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
+@RetryOnSqliteBusy
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated

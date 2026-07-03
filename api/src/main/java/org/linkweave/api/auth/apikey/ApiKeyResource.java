@@ -20,10 +20,12 @@ import lombok.RequiredArgsConstructor;
 import org.linkweave.api.auth.apikey.json.ApiKeyCreateJson;
 import org.linkweave.api.auth.apikey.json.ApiKeyListJson;
 import org.linkweave.api.shared.auth.AuthorizationService;
+import org.linkweave.infrastructure.db.RetryOnSqliteBusy;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
 @RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
+@RetryOnSqliteBusy
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated

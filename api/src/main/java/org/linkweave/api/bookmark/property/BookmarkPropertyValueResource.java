@@ -21,10 +21,12 @@ import org.linkweave.api.bookmark.json.BookmarkJson;
 import org.linkweave.api.bookmark.property.json.BookmarkPropertyValueListJson;
 import org.linkweave.api.shared.auth.AuthorizationService;
 import org.linkweave.api.shared.config.ConfigService;
+import org.linkweave.infrastructure.db.RetryOnSqliteBusy;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
 @RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
+@RetryOnSqliteBusy
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated

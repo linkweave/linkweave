@@ -30,10 +30,12 @@ import org.linkweave.api.bookmark.json.BookmarkSaveJson;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.shared.auth.AuthorizationService;
 import io.smallrye.faulttolerance.api.RateLimit;
+import org.linkweave.infrastructure.db.RetryOnSqliteBusy;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
 @RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
+@RetryOnSqliteBusy(attempts = 8)
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated
@@ -112,6 +114,7 @@ public class BookmarkResource {
 
     @POST
     @Path("/batch-move")
+    @RetryOnSqliteBusy(attempts = 12)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
@@ -124,6 +127,7 @@ public class BookmarkResource {
 
     @POST
     @Path("/batch-delete")
+    @RetryOnSqliteBusy(attempts = 12)
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("BOOKMARK_WRITE")
     public void batchDelete(@NotNull @Valid @NonNull BookmarkBatchDeleteJson json) {
@@ -133,6 +137,7 @@ public class BookmarkResource {
 
     @POST
     @Path("/batch-tag")
+    @RetryOnSqliteBusy(attempts = 12)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
