@@ -22,7 +22,7 @@ import org.linkweave.infrastructure.stereotypes.JaxDTO;
  */
 @JaxDTO
 public record ImportPreviewJson(
-    @NotNull @NonNull @Valid @Schema(required = true) List<ImportNodeJson> tree,
+    @NotNull @NonNull @Schema(required = true) List<@Valid ImportNodeJson> tree,
     @Schema(required = true) int totalBookmarks,
     @Schema(required = true) int totalFolders,
     @Schema(required = true) int duplicateCount,

@@ -33,6 +33,6 @@ public record ImportCommitRequestJson(
     @Nullable ID<Folder> destinationFolderId,
     @Schema(required = true) boolean skipDuplicates,
     @Nullable String fileName,
-    @NotNull @NonNull @Valid @Schema(required = true) List<ImportNodeJson> nodes
+    @NotNull @NonNull @Schema(required = true) List<@Valid ImportNodeJson> nodes
 ) {
 }

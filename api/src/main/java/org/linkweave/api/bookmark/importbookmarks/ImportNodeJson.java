@@ -33,6 +33,6 @@ public record ImportNodeJson(
     @Nullable String url,
     @Nullable Long addDate,
     @Schema(required = true) boolean duplicate,
-    @Nullable @Valid List<ImportNodeJson> children
+    @Nullable List<@Valid ImportNodeJson> children
 ) {
 }
