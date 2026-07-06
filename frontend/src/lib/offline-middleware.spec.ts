@@ -7,7 +7,7 @@ import {
   Permission,
 } from '@/api/generated'
 import { purgeAll, saveCollectionInfo, saveCollections, saveUserInfo } from './offline-cache'
-import { createOfflineMiddleware } from './offline-middleware'
+import { createOfflineMiddleware, setSessionExpiredHandler } from './offline-middleware'
 
 const fakeUser: UserInfoJson = {
   id: 'user-1',
@@ -95,5 +95,65 @@ describe('offline-middleware onError cache fallback', () => {
     const ctx = { ...makeErrorContext('/api/collections'), init: { method: 'POST' } as RequestInit }
     const res = await middleware.onError!(ctx)
     expect(res).toBeUndefined()
+  })
+})
+
+function makeResponseContext(url: string, method: string, status: number) {
+  return {
+    fetch: (() => Promise.reject(new Error('not used'))) as unknown as typeof fetch,
+    url,
+    init: { method } as RequestInit,
+    response: new Response(null, { status }),
+  }
+}
+
+describe('offline-middleware session expiry detection', () => {
+  let expiredCalls: number
+
+  beforeEach(() => {
+    expiredCalls = 0
+    setSessionExpiredHandler(() => {
+      expiredCalls++
+    })
+  })
+
+  afterEach(() => {
+    setSessionExpiredHandler(null)
+  })
+
+  it('should fire session-expired handler on 499 for POST requests', async () => {
+    const middleware = createOfflineMiddleware()
+    await middleware.post!(makeResponseContext('/api/tags', 'POST', 499))
+    expect(expiredCalls).toBe(1)
+  })
+
+  it('should fire session-expired handler on 401 for DELETE requests', async () => {
+    const middleware = createOfflineMiddleware()
+    await middleware.post!(makeResponseContext('/api/bookmarks/b-1', 'DELETE', 401))
+    expect(expiredCalls).toBe(1)
+  })
+
+  it('should fire session-expired handler on 499 for GET requests', async () => {
+    const middleware = createOfflineMiddleware()
+    await middleware.post!(makeResponseContext('/api/collections', 'GET', 499))
+    expect(expiredCalls).toBe(1)
+  })
+
+  it('should not fire session-expired handler for /api/auth/ paths', async () => {
+    const middleware = createOfflineMiddleware()
+    await middleware.post!(makeResponseContext('/api/auth/logout', 'POST', 499))
+    expect(expiredCalls).toBe(0)
+  })
+
+  it('should not fire session-expired handler on successful responses', async () => {
+    const middleware = createOfflineMiddleware()
+    await middleware.post!(makeResponseContext('/api/tags', 'POST', 200))
+    expect(expiredCalls).toBe(0)
+  })
+
+  it('should not fire session-expired handler on 403 authorization failures', async () => {
+    const middleware = createOfflineMiddleware()
+    await middleware.post!(makeResponseContext('/api/tags', 'POST', 403))
+    expect(expiredCalls).toBe(0)
   })
 })
