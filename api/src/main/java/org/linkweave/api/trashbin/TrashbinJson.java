@@ -19,13 +19,11 @@ public class TrashbinJson {
 
     @NotNull
     @NonNull
-    @Valid
     @Schema(required = true)
-    List<BookmarkJson> bookmarks;
+    List<@Valid BookmarkJson> bookmarks;
 
     @NotNull
     @NonNull
-    @Valid
     @Schema(required = true)
-    List<FolderJson> folders;
+    List<@Valid FolderJson> folders;
 }
