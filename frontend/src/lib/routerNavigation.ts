@@ -18,3 +18,8 @@ export function registerRouter(instance: Router): void {
 export function navigate(to: RouteLocationRaw): void {
   void router?.push(to)
 }
+
+/** Full path (path + query + hash) of the active route, or null before registration. */
+export function currentFullPath(): string | null {
+  return router?.currentRoute.value.fullPath ?? null
+}

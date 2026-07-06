@@ -456,7 +456,8 @@
     "or": "oder",
     "error": "Ungültige E-Mail oder Passwort.",
     "noAccount": "Noch kein Konto?",
-    "register": "Konto erstellen"
+    "register": "Konto erstellen",
+    "sessionExpired": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an."
   },
   "register": {
     "title": "Konto erstellen",

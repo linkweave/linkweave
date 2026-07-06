@@ -1,5 +1,6 @@
 import { Permission } from '@/api/generated'
 import { initializeSession } from '@/composables/useSessionInit'
+import { consumePostLoginRedirect, savePostLoginRedirect } from '@/lib/postLoginRedirect'
 import { useAuthStore } from '@/stores/auth'
 import { useCollectionStore } from '@/stores/collection'
 import CollectionView from '@/views/CollectionView.vue'
@@ -75,7 +76,23 @@ router.beforeEach(async (to) => {
   const auth = useAuthStore()
   const collection = useCollectionStore()
 
+  // Post-login landing (UC-099): if a session expiry captured a return
+  // target, send the user back there instead of the default landing. Both
+  // login flows funnel through here — form login pushes `/` (home) and the
+  // OIDC round trip reloads the SPA at `/`; an authenticated user on a
+  // public page (e.g. still on /login) is the same moment. Unresolvable
+  // targets fall through to the default landing (UC-099 A3).
+  if (auth.isAuthenticated && (to.meta.public || to.name === 'home')) {
+    const returnTarget = consumePostLoginRedirect()
+    if (returnTarget && router.resolve(returnTarget).matched.length > 0) {
+      return returnTarget
+    }
+  }
+
   if (!auth.isAuthenticated && !to.meta.public) {
+    // Deep link or reload with a dead session: capture the target so the
+    // user lands back here after signing in (UC-099).
+    savePostLoginRedirect(to.fullPath)
     return { name: 'login' }
   }
 
