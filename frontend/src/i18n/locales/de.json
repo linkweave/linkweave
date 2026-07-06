@@ -266,6 +266,8 @@
     "deleteConfirm": "Möchten Sie diese Sammlung wirklich löschen? Alle Lesezeichen, Ordner und Tags darin werden dauerhaft gelöscht.",
     "deleteError": "Sammlung konnte nicht gelöscht werden.",
     "owner": "Besitzer",
+    "admin": "Admin",
+    "member": "Mitglied",
     "default": "Standard",
     "shared": "Geteilt",
     "role": "Rolle",
@@ -281,6 +283,7 @@
     "shareInviteBtn": "Einladen",
     "shareOwnerBadge": "Besitzer",
     "shareMemberBadge": "Mitglied",
+    "shareAdminBadge": "Admin",
     "shareRevokeBtn": "Entfernen",
     "shareRevokeConfirm": "{name} aus dieser Sammlung entfernen?",
     "shareSuccess": "Einladung gesendet.",
@@ -289,7 +292,13 @@
     "shareSelfError": "Sie können eine Sammlung nicht mit sich selbst teilen.",
     "shareNoMembers": "Nur Sie haben Zugriff auf diese Sammlung.",
     "shareLoadError": "Mitglieder konnten nicht geladen werden.",
-    "shareInviteError": "Benutzer konnte nicht eingeladen werden."
+    "shareInviteError": "Benutzer konnte nicht eingeladen werden.",
+    "shareRevokeError": "Mitglied konnte nicht entfernt werden.",
+    "shareInviteRole": "Rolle",
+    "shareInviteRoleMember": "Mitglied",
+    "shareInviteRoleAdmin": "Admin",
+    "shareRoleChangeError": "Rolle konnte nicht geändert werden.",
+    "editLoadError": "Die Einstellungen der Sammlung konnten nicht geladen werden. Bitte schließen Sie den Dialog und versuchen Sie es erneut."
   },
   "collectionSwitcher": {
     "collections": "Sammlungen",

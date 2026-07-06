@@ -2,16 +2,18 @@ package org.linkweave.api.auth;
 
 import java.util.Set;
 
-import org.linkweave.api.types.id.ID;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.shared.auth.Permission;
+import org.linkweave.api.shared.user.User;
+import org.linkweave.api.types.id.ID;
 import org.linkweave.infrastructure.stereotypes.JaxDTO;
-import org.jspecify.annotations.NonNull;
 
 @JaxDTO
 public record UserInfoJson(
+    @NotNull @NonNull ID<User> id,
     @NotNull @NonNull String email,
     @NotNull @NonNull String firstName,
     @NotNull @NonNull String lastName,

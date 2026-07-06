@@ -2,13 +2,13 @@ package org.linkweave.infrastructure.errorhandling;
 
 import java.util.List;
 
-import org.linkweave.api.types.id.ID;
 import ch.dvbern.oss.commons.i18nl10n.I18nMessage;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.linkweave.api.types.id.ID;
 
 @Value
 @AllArgsConstructor(staticName = "of", access = AccessLevel.PRIVATE)
@@ -229,6 +229,34 @@ public class AppValidationMessage {
         return of(
             "ShareAlreadyHasAccess",
             I18nMessage.of("AppValidation.SHARE_ALREADY_HAS_ACCESS")
+        );
+    }
+
+    public static @NonNull AppValidationMessage shareCannotAssignOwner() {
+        return of(
+            "ShareCannotAssignOwner",
+            I18nMessage.of("AppValidation.SHARE_CANNOT_ASSIGN_OWNER")
+        );
+    }
+
+    public static @NonNull AppValidationMessage cannotRevokeOwner() {
+        return of(
+            "CannotRevokeOwner",
+            I18nMessage.of("AppValidation.CANNOT_REVOKE_OWNER")
+        );
+    }
+
+    public static @NonNull AppValidationMessage cannotChangeOwnerRole() {
+        return of(
+            "CannotChangeOwnerRole",
+            I18nMessage.of("AppValidation.CANNOT_CHANGE_OWNER_ROLE")
+        );
+    }
+
+    public static @NonNull AppValidationMessage collectionMemberNotFound() {
+        return of(
+            "CollectionMemberNotFound",
+            I18nMessage.of("AppValidation.COLLECTION_MEMBER_NOT_FOUND")
         );
     }
 

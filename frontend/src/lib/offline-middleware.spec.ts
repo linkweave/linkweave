@@ -1,20 +1,16 @@
 // @vitest-environment happy-dom
 import 'fake-indexeddb/auto'
+import type { CollectionInfoJson, CollectionSummaryJson, UserInfoJson } from '@/api/generated'
 import {
   CollectionInfoJsonFromJSON,
   CollectionSummaryListJsonFromJSON,
   Permission,
 } from '@/api/generated'
-import type { CollectionInfoJson, CollectionSummaryJson, UserInfoJson } from '@/api/generated'
-import {
-  purgeAll,
-  saveCollectionInfo,
-  saveCollections,
-  saveUserInfo,
-} from './offline-cache'
+import { purgeAll, saveCollectionInfo, saveCollections, saveUserInfo } from './offline-cache'
 import { createOfflineMiddleware } from './offline-middleware'
 
 const fakeUser: UserInfoJson = {
+  id: 'user-1',
   email: 'alice@example.com',
   firstName: 'Alice',
   lastName: 'User',

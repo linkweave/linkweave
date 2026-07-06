@@ -1,19 +1,22 @@
 package org.linkweave.api.shared.auth;
 
-import org.linkweave.api.types.id.ID;
+import java.util.Optional;
+
 import ch.dvbern.oss.commons.i18nl10n.I18nMessage;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.linkweave.api.auth.apikey.ApiKey;
 import org.linkweave.api.auth.apikey.ApiKeyRepo;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.collection.CollectionAccessRepo;
 import org.linkweave.api.collection.CollectionRole;
 import org.linkweave.api.shared.user.CurrentUserService;
+import org.linkweave.api.shared.user.User;
+import org.linkweave.api.types.id.ID;
 import org.linkweave.infrastructure.errorhandling.AppAuthorizationException;
 import org.linkweave.infrastructure.errorhandling.AppValidationException;
 import org.linkweave.infrastructure.errorhandling.AppValidationMessage;
 import org.linkweave.infrastructure.stereotypes.Service;
-import org.jspecify.annotations.NonNull;
 
 @Service
 @RequiredArgsConstructor
@@ -104,5 +107,43 @@ public class AuthorizationService {
                 I18nMessage.of("AppAuthorization.NO_OWNER_ACCESS", "collectionId", collectionId.getUUID().toString())
             );
         }
+    }
+
+    /**
+     * Requires the current user to hold at least the {@link CollectionRole#ADMIN}
+     * role on the collection. Used for member management and configuration changes
+     * that admins may perform (everything except delete/rename, which stay owner-only).
+     *
+     * @return the caller's resolved role, so callers that also need it for a
+     * finer-grained follow-up check don't have to re-query.
+     */
+    @NonNull
+    public CollectionRole requireAdminOrOwner(@NonNull ID<Collection> collectionId) {
+        var role = currentRole(collectionId);
+        if (role.isEmpty() || !role.get().isAtLeast(CollectionRole.ADMIN)) {
+            throw new AppAuthorizationException(
+                I18nMessage.of("AppAuthorization.NO_ADMIN_ACCESS", "collectionId", collectionId.getUUID().toString())
+            );
+        }
+        return role.get();
+    }
+
+    /**
+     * @return the current user's role on the collection, or empty if they have no access.
+     */
+    @NonNull
+    public Optional<CollectionRole> currentRole(@NonNull ID<Collection> collectionId) {
+        var currentUserId = currentUserService.currentUserID();
+        return collectionAccessRepo.findRole(currentUserId, collectionId);
+    }
+
+    /**
+     * @return the given user's role on the collection, or empty if they have no access.
+     * Lets the resource layer make target-dependent authorization decisions (e.g. only
+     * an owner may remove another admin) without the service performing the check itself.
+     */
+    @NonNull
+    public Optional<CollectionRole> roleOf(@NonNull ID<Collection> collectionId, @NonNull ID<User> userId) {
+        return collectionAccessRepo.findRole(userId, collectionId);
     }
 }

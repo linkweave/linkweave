@@ -41,9 +41,17 @@ describe('collectionDeleteSchema', () => {
 })
 
 describe('collectionShareSchema', () => {
-  it('should accept valid email', () => {
+  it('should accept valid email and default role to MEMBER', () => {
     expect(collectionShareSchema(t).parse({ email: 'user@example.com' })).toEqual({
       email: 'user@example.com',
+      role: 'MEMBER',
+    })
+  })
+
+  it('should accept an explicit ADMIN role', () => {
+    expect(collectionShareSchema(t).parse({ email: 'user@example.com', role: 'ADMIN' })).toEqual({
+      email: 'user@example.com',
+      role: 'ADMIN',
     })
   })
 
@@ -53,6 +61,10 @@ describe('collectionShareSchema', () => {
 
   it('should reject invalid email', () => {
     expect(() => collectionShareSchema(t).parse({ email: 'not-email' })).toThrow()
+  })
+
+  it('should reject a role outside the member/admin set', () => {
+    expect(() => collectionShareSchema(t).parse({ email: 'user@example.com', role: 'OWNER' })).toThrow()
   })
 })
 

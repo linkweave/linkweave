@@ -3,10 +3,10 @@ package org.linkweave.api.collection;
 import java.util.Comparator;
 import java.util.List;
 
-import org.linkweave.api.types.emailaddress.EmailAddress;
-import org.linkweave.api.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.linkweave.api.benutzer.UserRepo;
 import org.linkweave.api.bookmark.AutoTagRuleService;
 import org.linkweave.api.bookmark.BookmarkService;
@@ -17,11 +17,11 @@ import org.linkweave.api.bookmark.property.PropertyDefinitionService;
 import org.linkweave.api.collection.favicon.BrowserFetchAllowlist;
 import org.linkweave.api.shared.user.CurrentUserService;
 import org.linkweave.api.shared.user.User;
+import org.linkweave.api.types.emailaddress.EmailAddress;
+import org.linkweave.api.types.id.ID;
 import org.linkweave.infrastructure.errorhandling.AppValidationException;
 import org.linkweave.infrastructure.errorhandling.AppValidationMessage;
 import org.linkweave.infrastructure.stereotypes.Service;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 @Service
 @RequiredArgsConstructor
@@ -109,9 +109,14 @@ public class CollectionService {
         @NonNull String name,
         @Nullable String browserFetchAllowlist,
         boolean screenshotEnabled,
-        @NonNull User user) {
+        @NonNull User user,
+        @Nullable CollectionRole callerRole
+    ) {
         Collection collection = collectionRepo.getById(collectionId);
-        collection.setName(name);
+        // Renaming a collection is owner-only; admins keep the existing name.
+        if (callerRole == CollectionRole.OWNER) {
+            collection.setName(name);
+        }
         BrowserFetchAllowlist parsed = BrowserFetchAllowlist.parse(browserFetchAllowlist);
         collection.setBrowserFetchAllowlist(parsed.patterns().isEmpty() ? null : String.join("\n", parsed.patterns()));
         collection.setScreenshotEnabled(screenshotEnabled);
@@ -183,11 +188,19 @@ public class CollectionService {
     public CollectionMemberJson shareWithUser(
         @NonNull ID<Collection> collectionId,
         @NonNull EmailAddress targetEmail,
+        @Nullable CollectionRole requestedRole,
         @NonNull User currentUser
     ) {
 
         if (targetEmail.equals(currentUser.getEmail())) {
             throw new AppValidationException(AppValidationMessage.shareCannotShareWithSelf());
+        }
+
+        CollectionRole effectiveRole = requestedRole == null ? CollectionRole.MEMBER : requestedRole;
+        // A collection has exactly one (immutable) owner — OWNER can never be granted here.
+        // Who may grant ADMIN is enforced in the resource layer.
+        if (effectiveRole == CollectionRole.OWNER) {
+            throw new AppValidationException(AppValidationMessage.shareCannotAssignOwner());
         }
 
         var targetUser = userRepo.findByEmail(targetEmail)
@@ -201,7 +214,7 @@ public class CollectionService {
         CollectionAccess access = new CollectionAccess(
             collectionRepo.getById(collectionId),
             targetUser,
-            CollectionRole.MEMBER,
+            effectiveRole,
             false
         );
         collectionAccessRepo.persistAndFlush(access);
@@ -210,12 +223,20 @@ public class CollectionService {
             targetUser.getId(),
             targetUser.getEmail().getAddress(),
             targetUser.getVornameName(),
-            CollectionRole.MEMBER
+            effectiveRole
         );
     }
 
     public void revokeAccess(@NonNull ID<Collection> collectionId, @NonNull ID<User> targetUserId) {
-        CollectionAccess accessToRevoke = collectionAccessRepo.findByUserAndCollection(targetUserId, collectionId);
+        CollectionAccess accessToRevoke = collectionAccessRepo
+            .findByUserAndCollectionOptional(targetUserId, collectionId)
+            .orElseThrow(() -> new AppValidationException(AppValidationMessage.collectionMemberNotFound()));
+
+        // The owner can never be removed — a collection must always remain manageable.
+        // Whether an admin may remove another admin is enforced in the resource layer.
+        if (accessToRevoke.getRole() == CollectionRole.OWNER) {
+            throw new AppValidationException(AppValidationMessage.cannotRevokeOwner());
+        }
 
         if (accessToRevoke.isDefault()) {
             var userAccesses = collectionAccessRepo.findByUser(targetUserId);
@@ -225,6 +246,40 @@ public class CollectionService {
                 .ifPresent(next -> collectionAccessRepo.setDefaultForUser(targetUserId, next.getCollection().getId()));
         }
         collectionAccessRepo.remove(accessToRevoke.getId());
+    }
+
+    /**
+     * Changes an existing member's role between {@code MEMBER} and {@code ADMIN}.
+     * The OWNER's role is immutable and {@code OWNER} cannot be assigned here.
+     * Who may trigger a given transition (owner-only, except an admin stepping
+     * themselves down) is enforced in the resource layer.
+     */
+    @NonNull
+    public CollectionMemberJson changeMemberRole(
+        @NonNull ID<Collection> collectionId,
+        @NonNull ID<User> targetUserId,
+        @NonNull CollectionRole newRole
+    ) {
+        if (newRole == CollectionRole.OWNER) {
+            throw new AppValidationException(AppValidationMessage.cannotChangeOwnerRole());
+        }
+
+        CollectionAccess target = collectionAccessRepo
+            .findByUserAndCollectionOptional(targetUserId, collectionId)
+            .orElseThrow(() -> new AppValidationException(AppValidationMessage.collectionMemberNotFound()));
+        if (target.getRole() == CollectionRole.OWNER) {
+            throw new AppValidationException(AppValidationMessage.cannotChangeOwnerRole());
+        }
+
+        // target is already managed; the UPDATE is flushed by the surrounding transaction.
+        target.setRole(newRole);
+
+        return new CollectionMemberJson(
+            target.getUser().getId(),
+            target.getUser().getEmail().getAddress(),
+            target.getUser().getVornameName(),
+            newRole
+        );
     }
 }
 

@@ -266,6 +266,8 @@
     "deleteConfirm": "Voulez-vous vraiment supprimer cette collection ? Tous les favoris, dossiers et tags quʼelle contient seront supprimés définitivement.",
     "deleteError": "Échec de la suppression de la collection.",
     "owner": "Propriétaire",
+    "admin": "Admin",
+    "member": "Membre",
     "default": "Par défaut",
     "shared": "Partagée",
     "role": "Rôle",
@@ -281,6 +283,7 @@
     "shareInviteBtn": "Inviter",
     "shareOwnerBadge": "Propriétaire",
     "shareMemberBadge": "Membre",
+    "shareAdminBadge": "Admin",
     "shareRevokeBtn": "Retirer",
     "shareRevokeConfirm": "Retirer {name} de cette collection ?",
     "shareSuccess": "Invitation envoyée.",
@@ -289,7 +292,13 @@
     "shareSelfError": "Vous ne pouvez pas partager une collection avec vous-même.",
     "shareNoMembers": "Vous seul avez accès à cette collection.",
     "shareLoadError": "Échec du chargement des membres.",
-    "shareInviteError": "Échec de lʼinvitation de lʼutilisateur."
+    "shareInviteError": "Échec de lʼinvitation de lʼutilisateur.",
+    "shareRevokeError": "Échec du retrait du membre.",
+    "shareInviteRole": "Rôle",
+    "shareInviteRoleMember": "Membre",
+    "shareInviteRoleAdmin": "Admin",
+    "shareRoleChangeError": "Échec du changement de rôle.",
+    "editLoadError": "Impossible de charger les paramètres de la collection. Veuillez fermer et réessayer."
   },
   "collectionSwitcher": {
     "collections": "Collections",

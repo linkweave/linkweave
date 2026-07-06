@@ -27,6 +27,7 @@ export * from './collection-create-json';
 export * from './collection-info-json';
 export * from './collection-member-json';
 export * from './collection-member-list-json';
+export * from './collection-member-role-json';
 export * from './collection-role';
 export * from './collection-settings-json';
 export * from './collection-share-json';

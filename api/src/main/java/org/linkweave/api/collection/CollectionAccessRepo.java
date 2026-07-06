@@ -3,16 +3,16 @@ package org.linkweave.api.collection;
 import java.util.List;
 import java.util.Optional;
 
-import org.linkweave.api.types.id.ID;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.linkweave.api.shared.user.User;
+import org.linkweave.api.types.id.ID;
 import org.linkweave.infrastructure.db.BaseRepo;
 import org.linkweave.infrastructure.errorhandling.AppFailureException;
 import org.linkweave.infrastructure.errorhandling.AppFailureMessage;
 import org.linkweave.infrastructure.stereotypes.Repository;
-import org.jspecify.annotations.NonNull;
 
 @Repository
 @RequiredArgsConstructor
@@ -40,10 +40,17 @@ public class CollectionAccessRepo extends BaseRepo<CollectionAccess> {
 
     @NonNull
     public CollectionAccess findByUserAndCollection(@NonNull ID<User> userId, @NonNull ID<Collection> collectionId) {
+        return findByUserAndCollectionOptional(userId, collectionId)
+            .orElseThrow(() -> new AppFailureException(AppFailureMessage.entityNotFoundMsg( CollectionAccess.class, "no collection access for user and collection")));
+    }
+
+    @NonNull
+    public Optional<CollectionAccess> findByUserAndCollectionOptional(
+        @NonNull ID<User> userId, @NonNull ID<Collection> collectionId) {
         return db.selectFrom(QCollectionAccess.collectionAccess)
             .where(QCollectionAccess.collectionAccess.user.id.eq(userId.getUUID()))
             .where(QCollectionAccess.collectionAccess.collection.id.eq(collectionId.getUUID()))
-            .fetchOne().orElseThrow(() -> new AppFailureException(AppFailureMessage.entityNotFoundMsg( CollectionAccess.class, "no collection access for user and collection")));
+            .fetchOne();
     }
 
     @NonNull

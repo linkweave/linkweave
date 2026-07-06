@@ -4,11 +4,13 @@ export class ShareCollectionPageObject {
   readonly page: Page
   readonly emailInput: Locator
   readonly inviteBtn: Locator
+  readonly inviteRoleSelect: Locator
 
   constructor(page: Page) {
     this.page = page
     this.emailInput = page.getByTestId('share-email-input')
     this.inviteBtn = page.getByTestId('share-invite-btn')
+    this.inviteRoleSelect = page.getByTestId('share-invite-role-select')
   }
 
   async openShareDialog(collectionId: string) {

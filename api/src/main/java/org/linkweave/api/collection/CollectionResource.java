@@ -2,8 +2,8 @@ package org.linkweave.api.collection;
 
 import java.time.temporal.ChronoUnit;
 
-import org.linkweave.api.types.id.ID;
 import io.quarkus.security.Authenticated;
+import io.smallrye.faulttolerance.api.RateLimit;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -13,13 +13,13 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.linkweave.api.shared.auth.AuthorizationService;
 import org.linkweave.api.shared.user.CurrentUserService;
 import org.linkweave.api.shared.user.User;
-import io.smallrye.faulttolerance.api.RateLimit;
+import org.linkweave.api.types.id.ID;
 import org.linkweave.infrastructure.db.RetryOnSqliteBusy;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
-import org.jspecify.annotations.NonNull;
 
 @RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
 @RetryOnSqliteBusy
@@ -81,10 +81,12 @@ public class CollectionResource {
         @PathParam("id") ID<Collection> id,
         @Valid CollectionUpdateJson json
     ) {
-        authorizationService.requireOwnerAccess(id);
+        // Name change is owner-only; allowlist + screenshot toggle are admin-or-owner.
+        var callerRole = authorizationService.requireAdminOrOwner(id);
         var currentUser = currentUserService.currentUser();
         return collectionService.updateCollection(
-            id, json.getName(), json.getBrowserFetchAllowlist(), json.isScreenshotEnabled(), currentUser);
+            id, json.getName(), json.getBrowserFetchAllowlist(), json.isScreenshotEnabled(),
+            currentUser, callerRole);
     }
 
     @DELETE
@@ -101,7 +103,7 @@ public class CollectionResource {
     @NonNull
     @Authenticated
     public CollectionMemberListJson listMembers(@PathParam("id") ID<Collection> id) {
-        authorizationService.requireOwnerAccess(id);
+        authorizationService.requireAdminOrOwner(id);
         return new CollectionMemberListJson(collectionService.listMembers(id));
     }
 
@@ -113,9 +115,34 @@ public class CollectionResource {
         @PathParam("id") ID<Collection> id,
         @Valid CollectionShareJson collectionShareJson
     ) {
-        authorizationService.requireOwnerAccess(id);
+        authorizationService.requireAdminOrOwner(id);
+        // Only the owner may grant the ADMIN role; admins may only invite members.
+        if (collectionShareJson.getRole() == CollectionRole.ADMIN) {
+            authorizationService.requireOwnerAccess(id);
+        }
         var currentUser = currentUserService.currentUser();
-        return collectionService.shareWithUser(id, collectionShareJson.getEmail(), currentUser);
+        return collectionService.shareWithUser(
+            id, collectionShareJson.getEmail(), collectionShareJson.getRole(), currentUser);
+    }
+
+    @PUT
+    @Path("{id}/members/{userId}")
+    @NonNull
+    @Authenticated
+    public CollectionMemberJson changeMemberRole(
+        @PathParam("id") ID<Collection> id,
+        @PathParam("userId") ID<User> userId,
+        @Valid CollectionMemberRoleJson roleJson
+    ) {
+        authorizationService.requireAdminOrOwner(id);
+        // A non-owner (admin) may only step *themselves* down to MEMBER; any other
+        // role change is owner-only.
+        var currentUserId = currentUserService.currentUserID();
+        boolean selfStepDown = userId.equals(currentUserId) && roleJson.getRole() == CollectionRole.MEMBER;
+        if (!selfStepDown) {
+            authorizationService.requireOwnerAccess(id);
+        }
+        return collectionService.changeMemberRole(id, userId, roleJson.getRole());
     }
 
     @GET
@@ -154,7 +181,11 @@ public class CollectionResource {
         @PathParam("id") ID<Collection> id,
         @PathParam("userId") ID<User> userId
     ) {
-        authorizationService.requireOwnerAccess(id);
+        authorizationService.requireAdminOrOwner(id);
+        // Admins may remove members but not other admins; only the owner can remove an admin.
+        if (authorizationService.roleOf(id, userId).filter(r -> r == CollectionRole.ADMIN).isPresent()) {
+            authorizationService.requireOwnerAccess(id);
+        }
         collectionService.revokeAccess(id, userId);
     }
 

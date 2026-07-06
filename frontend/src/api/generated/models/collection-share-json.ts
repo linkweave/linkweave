@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CollectionRole } from './collection-role';
+import {
+    CollectionRoleFromJSON,
+    CollectionRoleFromJSONTyped,
+    CollectionRoleToJSON,
+    CollectionRoleToJSONTyped,
+} from './collection-role';
+
 /**
  * 
  * @export
@@ -25,7 +33,15 @@ export interface CollectionShareJson {
      * @memberof CollectionShareJson
      */
     email: string;
+    /**
+     * 
+     * @type {CollectionRole}
+     * @memberof CollectionShareJson
+     */
+    role?: CollectionRole;
 }
+
+
 
 /**
  * Check if a given object implements the CollectionShareJson interface.
@@ -46,6 +62,7 @@ export function CollectionShareJsonFromJSONTyped(json: any, ignoreDiscriminator:
     return {
         
         'email': json['email'],
+        'role': json['role'] == null ? undefined : CollectionRoleFromJSON(json['role']),
     };
 }
 
@@ -61,6 +78,7 @@ export function CollectionShareJsonToJSONTyped(value?: CollectionShareJson | nul
     return {
         
         'email': value['email'],
+        'role': CollectionRoleToJSON(value['role']),
     };
 }
 

@@ -2,15 +2,14 @@ package org.linkweave.api.collection;
 
 import java.util.UUID;
 
-import org.linkweave.api.types.emailaddress.EmailAddress;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
-import org.linkweave.api.testutil.fixture.FixtureService;
-import org.linkweave.infrastructure.db.DatabaseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.linkweave.api.testutil.fixture.FixtureService;
+import org.linkweave.infrastructure.db.DatabaseService;
 
 @QuarkusTest
 class CollectionRevokeDefaultITest {
@@ -53,7 +52,7 @@ class CollectionRevokeDefaultITest {
 
         // Owner creates a second collection and shares it with member
         var sharedCollection = collectionService.createCollection("Shared", owner);
-        collectionService.shareWithUser(sharedCollection.getId(), member.getEmail(), owner);
+        collectionService.shareWithUser(sharedCollection.getId(), member.getEmail(), CollectionRole.MEMBER, owner);
 
         // Member sets the shared collection as their default
         collectionService.setDefaultCollection(sharedCollection.getId(), member);
@@ -98,7 +97,7 @@ class CollectionRevokeDefaultITest {
 
         // Owner shares a collection with member, but member does NOT set it as default
         var sharedCollection = collectionService.createCollection("Shared", owner);
-        collectionService.shareWithUser(sharedCollection.getId(), member.getEmail(), owner);
+        collectionService.shareWithUser(sharedCollection.getId(), member.getEmail(), CollectionRole.MEMBER, owner);
 
         // ACT
         // Owner revokes member's access to the shared (non-default) collection
