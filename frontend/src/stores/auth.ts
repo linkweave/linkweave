@@ -3,10 +3,13 @@ import { ref, computed } from 'vue'
 import { AuthResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import type { UserInfoJson } from '@/api/generated'
+import i18n from '@/i18n'
 import * as offlineCache from '@/lib/offline-cache'
 import { setSessionExpiredHandler } from '@/lib/offline-middleware'
-import { navigate } from '@/lib/routerNavigation'
+import { clearPostLoginRedirect, savePostLoginRedirect } from '@/lib/postLoginRedirect'
+import { currentFullPath, navigate } from '@/lib/routerNavigation'
 import { resetAllStores } from '@/lib/storeReset'
+import { useNotificationStore } from '@/stores/notification'
 
 const authApi = new AuthResourceApi(config)
 
@@ -24,12 +27,23 @@ export const useAuthStore = defineStore('auth', () => {
   let fetchPromise: Promise<boolean> | null = null
   let sessionExpiryHandled = false
 
-  setSessionExpiredHandler(() => {
+  setSessionExpiredHandler(handleSessionExpired)
+
+  /**
+   * Single pathway for session expiry (UC-098 BR-098-3) — used by both the
+   * reactive 401/499 middleware detection and the proactive tab-focus probe.
+   * Captures the current route so login can return there (UC-099), tells the
+   * user why they are being bounced, then logs out.
+   */
+  function handleSessionExpired() {
     if (sessionExpiryHandled) return
     if (user.value === null) return
     sessionExpiryHandled = true
-    void logout()
-  })
+    const returnTarget = currentFullPath()
+    if (returnTarget) savePostLoginRedirect(returnTarget)
+    useNotificationStore().info(i18n.global.t('login.sessionExpired'))
+    void logout({ keepReturnTarget: true })
+  }
 
   async function fetchCurrentUser(): Promise<boolean> {
     if (fetchPromise) {
@@ -55,12 +69,15 @@ export const useAuthStore = defineStore('auth', () => {
     return fetchPromise
   }
 
-  async function logout() {
+  async function logout(opts?: { keepReturnTarget?: boolean }) {
     try {
       await authApi.apiAuthLogoutPost()
     } catch {
       // cookie is cleared by server, ignore errors
     } finally {
+      // A deliberate logout must not resurrect the previous session's page
+      // after the next login (UC-099 A2) — only expiry keeps the target.
+      if (!opts?.keepReturnTarget) clearPostLoginRedirect()
       const email = user.value?.email
       resetAllStores()
       user.value = null
@@ -87,6 +104,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     displayName,
     fetchCurrentUser,
+    handleSessionExpired,
     logout,
     updateDefaultCollectionId
   }

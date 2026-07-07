@@ -459,7 +459,8 @@
     "or": "or",
     "error": "Invalid email or password.",
     "noAccount": "Don't have an account?",
-    "register": "Create one"
+    "register": "Create one",
+    "sessionExpired": "Your session has expired. Please sign in again."
   },
   "register": {
     "title": "Create Account",

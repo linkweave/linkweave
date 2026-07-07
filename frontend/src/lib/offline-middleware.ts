@@ -104,8 +104,11 @@ export function createOfflineMiddleware(): Middleware {
 
       // 499 is Quarkus OIDC's "unauthenticated AJAX request" response (see
       // quarkus.oidc.authentication.java-script-auto-redirect=false) — semantically
-      // identical to 401 for our purposes.
-      if ((status === 401 || status === 499) && isGet) {
+      // identical to 401 for our purposes. Checked for every method: mutations
+      // (create tag/bookmark, …) hit this too when the session expires, and the
+      // user must be sent back to the login page rather than see a dead button.
+      // Authorization failures are 403, so 401/499 is unambiguous here.
+      if (status === 401 || status === 499) {
         try {
           const url = new URL(context.url, window.location.href)
           if (!url.pathname.startsWith('/api/auth/')) {

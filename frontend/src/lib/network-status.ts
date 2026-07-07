@@ -66,21 +66,48 @@ export function setBrowserOffline(value: boolean) {
   browserOffline.value = value
 }
 
+const SPOT_CHECK_THROTTLE_MS = 30_000
+let lastSpotCheckAt = 0
+
+/**
+ * Detects the server going down while the app is idle: reachability is
+ * otherwise only discovered passively from failing requests, so a server
+ * that dies while no traffic flows stays undetected until the next user
+ * action. Deliberately separate from `probe()` — that one is the recovery
+ * loop and must keep its backoff semantics. A network failure only counts
+ * when the browser itself is online; browser-offline has its own detection.
+ */
+async function spotCheck() {
+  const now = Date.now()
+  if (now - lastSpotCheckAt < SPOT_CHECK_THROTTLE_MS) return
+  lastSpotCheckAt = now
+  try {
+    const res = await fetch(PROBE_PATH, { credentials: 'omit', cache: 'no-store' })
+    if (UPSTREAM_DOWN_STATUSES.has(res.status)) markServerUnreachable()
+  } catch {
+    if (navigator.onLine) markServerUnreachable()
+  }
+}
+
 let listenersInstalled = false
 export function installNetworkStatusListeners(opts: { onServerBack?: () => void } = {}) {
   if (opts.onServerBack) onServerReachableAgain = opts.onServerBack
   if (listenersInstalled) return
   listenersInstalled = true
 
-  const probeIfUnreachable = () => {
-    if (!serverUnreachable.value) return
-    stopPolling()
-    pollAttempt = 0
-    probe()
+  const probeOnFocus = () => {
+    if (serverUnreachable.value) {
+      // already known-down: restart the recovery poller immediately, unthrottled
+      stopPolling()
+      pollAttempt = 0
+      probe()
+      return
+    }
+    void spotCheck()
   }
 
-  window.addEventListener('focus', probeIfUnreachable)
+  window.addEventListener('focus', probeOnFocus)
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') probeIfUnreachable()
+    if (document.visibilityState === 'visible') probeOnFocus()
   })
 }

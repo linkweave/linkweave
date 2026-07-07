@@ -8,16 +8,25 @@ import {ref} from 'vue'
 import SidebarLw from './SidebarLw.vue'
 import HeaderLw from './HeaderLw.vue'
 import CollectionSwitcher from './CollectionSwitcher.vue'
+import {installSessionExpiryWatch} from '@/lib/session-watch'
+import {useAuthStore} from '@/stores/auth'
 import {useOfflineStore} from '@/stores/offline'
 
 withDefaults(defineProps<{ hideSidebar?: boolean }>(), { hideSidebar: false })
 
 const sidebarOpen = ref(false)
 const offline = useOfflineStore()
+const auth = useAuthStore()
 
 onMounted(() => {
   offline.setupListeners()
   offline.loadLastSyncTime()
+  // MainLayout only wraps authenticated views, so wiring here keeps the
+  // probe away from publicly accessible pages (UC-098 A4); isActive guards the rest.
+  installSessionExpiryWatch({
+    isSessionAvailable: () => auth.isAuthenticated,
+    onExpired: auth.handleSessionExpired,
+  })
 })
 
 const toggleSidebar = () => {
