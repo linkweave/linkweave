@@ -92,7 +92,8 @@
     "logout": "Se déconnecter",
     "settings": "Paramètres",
     "trashbin": "Corbeille",
-    "cleanupSuggestions": "Suggestions de nettoyage"
+    "cleanupSuggestions": "Suggestions de nettoyage",
+    "adminUsers": "Gestion des utilisateurs"
   },
   "trashbin": {
     "title": "Corbeille",
@@ -626,5 +627,34 @@
     "toastBoth": "{addNames} ajouté(s) à {addK}, {removeNames} retiré(s) de {removeK}.",
     "applyError": "Échec de la mise à jour des tags. Aucune modification nʼa été apportée.",
     "applyErrorOrphans": "Échec de la mise à jour des tags, et certains tags créés nʼont pas pu être nettoyés."
+  },
+  "admin": {
+    "title": "Gestion des utilisateurs",
+    "intro": "Liste de tous les utilisateurs. Réinitialisez le mot de passe d'un utilisateur à une valeur aléatoire s'il ne peut plus se connecter.",
+    "searchPlaceholder": "Rechercher par nom ou e-mail…",
+    "refresh": "Recharger",
+    "noUsers": "Aucun utilisateur trouvé.",
+    "noResults": "Aucun utilisateur ne correspond à votre recherche.",
+    "loadError": "Échec du chargement des utilisateurs.",
+    "inactive": "inactif",
+    "provider": "Connexion",
+    "providerForm": "Formulaire (mot de passe)",
+    "providerOidc": "SSO (Google / OIDC)",
+    "roleUser": "Utilisateur",
+    "roleSupport": "Support",
+    "roleAdmin": "Admin système",
+    "resetAction": "Réinitialiser le mot de passe",
+    "confirmTitle": "Réinitialiser le mot de passe ?",
+    "confirmBody": "Réinitialiser le mot de passe de {name} ? Un nouveau mot de passe aléatoire sera généré et affiché une seule fois.",
+    "confirmWarning": "L'ancien mot de passe cessera immédiatement de fonctionner. Pour les comptes SSO, seule la connexion par formulaire est concernée.",
+    "confirmSubmit": "Réinitialiser le mot de passe",
+    "resetSuccess": "Mot de passe réinitialisé pour {name}.",
+    "resetError": "Échec de la réinitialisation du mot de passe.",
+    "resultTitle": "Nouveau mot de passe",
+    "resultBody": "Copiez ce mot de passe maintenant et partagez-le de manière sécurisée avec l'utilisateur. Il ne sera plus affiché.",
+    "resultWarning": "Quiconque possède ce mot de passe peut se connecter en tant que cet utilisateur jusqu'à ce qu'il soit modifié.",
+    "copy": "Copier",
+    "copied": "Copié",
+    "notAuthorizedHint": "Vous n'avez pas la permission de gérer les utilisateurs."
   }
 }

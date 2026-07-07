@@ -92,7 +92,8 @@
     "logout": "Abmelden",
     "settings": "Einstellungen",
     "trashbin": "Papierkorb",
-    "cleanupSuggestions": "Aufräumvorschläge"
+    "cleanupSuggestions": "Aufräumvorschläge",
+    "adminUsers": "Benutzerverwaltung"
   },
   "trashbin": {
     "title": "Papierkorb",
@@ -623,5 +624,34 @@
     "toastBoth": "{addNames} zu {addK} hinzugefügt, {removeNames} von {removeK} entfernt.",
     "applyError": "Tags konnten nicht aktualisiert werden. Es wurden keine Änderungen vorgenommen.",
     "applyErrorOrphans": "Tags konnten nicht aktualisiert werden, und einige erstellte Tags konnten nicht bereinigt werden."
+  },
+  "admin": {
+    "title": "Benutzerverwaltung",
+    "intro": "Liste aller Benutzer. Setzen Sie das Passwort eines Benutzers auf einen zufälligen Wert zurück, wenn er sich nicht mehr anmelden kann.",
+    "searchPlaceholder": "Nach Name oder E-Mail suchen…",
+    "refresh": "Aktualisieren",
+    "noUsers": "Keine Benutzer gefunden.",
+    "noResults": "Keine Benutzer entsprechen Ihrer Suche.",
+    "loadError": "Benutzer konnten nicht geladen werden.",
+    "inactive": "inaktiv",
+    "provider": "Anmeldung",
+    "providerForm": "Formular (Passwort)",
+    "providerOidc": "SSO (Google / OIDC)",
+    "roleUser": "Benutzer",
+    "roleSupport": "Support",
+    "roleAdmin": "System-Admin",
+    "resetAction": "Passwort zurücksetzen",
+    "confirmTitle": "Passwort zurücksetzen?",
+    "confirmBody": "Passwort für {name} zurücksetzen? Ein neues zufälliges Passwort wird generiert und einmalig angezeigt.",
+    "confirmWarning": "Das bisherige Passwort funktioniert sofort nicht mehr. Bei SSO-Konten ist nur die Formular-Anmeldung betroffen.",
+    "confirmSubmit": "Passwort zurücksetzen",
+    "resetSuccess": "Passwort für {name} zurückgesetzt.",
+    "resetError": "Passwort konnte nicht zurückgesetzt werden.",
+    "resultTitle": "Neues Passwort",
+    "resultBody": "Kopieren Sie dieses Passwort jetzt und teilen Sie es dem Benutzer sicher mit. Es wird nicht erneut angezeigt.",
+    "resultWarning": "Jeder mit diesem Passwort kann sich als dieser Benutzer anmelden, bis es geändert wird.",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "notAuthorizedHint": "Sie haben keine Berechtigung zur Benutzerverwaltung."
   }
 }

@@ -92,7 +92,8 @@
     "logout": "Sign out",
     "settings": "Settings",
     "trashbin": "Trashbin",
-    "cleanupSuggestions": "Cleanup Suggestions"
+    "cleanupSuggestions": "Cleanup Suggestions",
+    "adminUsers": "Manage Users"
   },
   "trashbin": {
     "title": "Trashbin",
@@ -626,5 +627,34 @@
     "toastBoth": "Added {addNames} to {addK}, removed {removeNames} from {removeK}.",
     "applyError": "Failed to update tags. No changes were made.",
     "applyErrorOrphans": "Failed to update tags, and some created tags could not be cleaned up."
+  },
+  "admin": {
+    "title": "Manage Users",
+    "intro": "List of all users. Reset a user's password to a random value if they can no longer sign in.",
+    "searchPlaceholder": "Search by name or email…",
+    "refresh": "Reload",
+    "noUsers": "No users found.",
+    "noResults": "No users match your search.",
+    "loadError": "Failed to load users.",
+    "inactive": "inactive",
+    "provider": "Login",
+    "providerForm": "Form (password)",
+    "providerOidc": "SSO (Google / OIDC)",
+    "roleUser": "User",
+    "roleSupport": "Support",
+    "roleAdmin": "System Admin",
+    "resetAction": "Reset password",
+    "confirmTitle": "Reset password?",
+    "confirmBody": "Reset the password for {name}? A new random password will be generated and shown once.",
+    "confirmWarning": "The previous password will stop working immediately. If this account signs in via SSO, only form login is affected.",
+    "confirmSubmit": "Reset password",
+    "resetSuccess": "Password reset for {name}.",
+    "resetError": "Failed to reset password.",
+    "resultTitle": "New password",
+    "resultBody": "Copy this password now and share it securely with the user. It will not be shown again.",
+    "resultWarning": "Anyone with this password can sign in as this user until they change it.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "notAuthorizedHint": "You do not have permission to manage users."
   }
 }

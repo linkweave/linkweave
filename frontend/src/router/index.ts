@@ -31,6 +31,14 @@ const router = createRouter({
       component: () => import('@/views/CollectionManageView.vue'),
     },
     {
+      path: '/admin/users',
+      name: 'admin-users',
+      // Restricted to users whose security identity carries the SUPPORT
+      // permission. The router guard in beforeEach bounces anyone else to home.
+      meta: { requiresPermission: Permission.Support },
+      component: () => import('@/views/AdminView.vue'),
+    },
+    {
       path: '/trashbin',
       name: 'trashbin',
       component: () => import('@/views/TrashbinView.vue'),

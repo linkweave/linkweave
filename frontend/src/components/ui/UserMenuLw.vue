@@ -6,11 +6,12 @@ import {
 } from 'radix-vue'
 import DropdownMenuContentLw from '@/components/ui/DropdownMenuContentLw.vue'
 import DropdownMenuItemLw from '@/components/ui/DropdownMenuItemLw.vue'
-import { ChevronDown, LogOut, Settings, Trash2, Sparkles } from '@lucide/vue'
+import { ChevronDown, LogOut, Settings, Shield, Trash2, Sparkles } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
 import { useCollectionStore } from '@/stores/collection'
 import { useTrashbinStore } from '@/stores/trashbin'
+import { Permission } from '@/api/generated'
 import type { SupportedLocale } from '@/i18n'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -25,6 +26,7 @@ const routerInstance = useRouter()
 
 const isSettingsOpen = ref(false)
 const avatarBg = computed(() => avatarColor(auth.displayName))
+const canAccessAdmin = computed(() => !!auth.user?.permissions.has(Permission.Support))
 
 onMounted(() => {
   trashbinStore.refreshCount().catch(() => {})
@@ -40,6 +42,10 @@ function openCleanupSuggestions() {
   if (collectionId) {
     routerInstance.push({ name: 'cleanup-suggestions', query: { collectionId } })
   }
+}
+
+function openAdminUsers() {
+  routerInstance.push({ name: 'admin-users' })
 }
 
 function switchLocale(locale: SupportedLocale) {
@@ -96,6 +102,14 @@ function switchLocale(locale: SupportedLocale) {
           </button>
         </div>
         <DropdownMenuSeparator class="-mx-1 my-1 h-px bg-border" />
+        <DropdownMenuItemLw
+          v-if="canAccessAdmin"
+          data-testid="user-menu-admin-users"
+          @select="openAdminUsers"
+        >
+          <Shield class="h-4 w-4" />
+          <span class="flex-1">{{ $t('header.adminUsers') }}</span>
+        </DropdownMenuItemLw>
         <DropdownMenuItemLw
           data-testid="user-menu-cleanup-suggestions"
           @select="openCleanupSuggestions"
