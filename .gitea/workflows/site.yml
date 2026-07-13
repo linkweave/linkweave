@@ -1,0 +1,46 @@
+name: Site
+
+# Builds and type-checks the marketing landing page (site/). The site is
+# deployed as static files via Cloudflare Pages, not as a Docker image —
+# this job only guards against regressions (broken build, type errors).
+
+on:
+  push:
+    branches: [main]
+    paths: ['site/**']
+  pull_request:
+    branches: [main]
+    paths: ['site/**']
+
+concurrency:
+  group: site-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: site/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: site
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check Astro components
+        working-directory: site
+        run: pnpm run check
+
+      - name: Build
+        working-directory: site
+        run: pnpm run build

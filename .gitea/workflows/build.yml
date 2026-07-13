@@ -265,18 +265,23 @@ jobs:
           DOCKER_BUILDKIT: "1"
           IMAGE: git.markushofstetter.com/dividbzero/linkweave-screenshot-service
           COMMIT_HASH: ${{ steps.commit-hash.outputs.COMMIT_HASH }}
+          GIT_REF: ${{ gitea.ref }}
+          GIT_REF_NAME: ${{ gitea.ref_name }}
         run: |
           set -euo pipefail
-          docker build \
-            -t "${IMAGE}:latest" \
-            -t "${IMAGE}:${COMMIT_HASH}" \
+          tags=("${IMAGE}:latest" "${IMAGE}:${COMMIT_HASH}")
+          if [[ "$GIT_REF" == refs/tags/v* ]]; then
+            tags+=("${IMAGE}:${GIT_REF_NAME}")
+          fi
+          tag_args=()
+          for t in "${tags[@]}"; do tag_args+=(-t "$t"); done
+          docker build "${tag_args[@]}" \
             --label org.opencontainers.image.commit="${COMMIT_HASH}" \
             --label org.opencontainers.image.title="LinkWeave Screenshot Service" \
             --label org.opencontainers.image.description="Playwright-based screenshot sidecar for LinkWeave" \
             --label org.opencontainers.image.source="https://github.com/linkweave/linkweave" \
             .
-          docker push "${IMAGE}:latest"
-          docker push "${IMAGE}:${COMMIT_HASH}"
+          for t in "${tags[@]}"; do docker push "$t"; done
 
   # Mirror the tag-build images to GHCR so public consumers can pull them
   # without access to the private Gitea registry. Deliberately NOT in the
