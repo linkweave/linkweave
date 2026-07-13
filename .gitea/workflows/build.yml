@@ -119,6 +119,7 @@ jobs:
             --label org.opencontainers.image.commit="${COMMIT_HASH}" \
             --label org.opencontainers.image.title="LinkWeave API" \
             --label org.opencontainers.image.description="Quarkus-based Java backend for LinkWeave" \
+            --label org.opencontainers.image.source="https://github.com/linkweave/linkweave" \
             .
           for t in "${tags[@]}"; do docker push "$t"; done
 
@@ -224,6 +225,7 @@ jobs:
             --label org.opencontainers.image.commit="${COMMIT_HASH}" \
             --label org.opencontainers.image.title="LinkWeave Frontend" \
             --label org.opencontainers.image.description="Vue.js frontend for LinkWeave" \
+            --label org.opencontainers.image.source="https://github.com/linkweave/linkweave" \
             .
           for t in "${tags[@]}"; do docker push "$t"; done
 
@@ -271,9 +273,72 @@ jobs:
             --label org.opencontainers.image.commit="${COMMIT_HASH}" \
             --label org.opencontainers.image.title="LinkWeave Screenshot Service" \
             --label org.opencontainers.image.description="Playwright-based screenshot sidecar for LinkWeave" \
+            --label org.opencontainers.image.source="https://github.com/linkweave/linkweave" \
             .
           docker push "${IMAGE}:latest"
           docker push "${IMAGE}:${COMMIT_HASH}"
+
+  # Mirror the tag-build images to GHCR so public consumers can pull them
+  # without access to the private Gitea registry. Deliberately NOT in the
+  # deploy job's needs: a GHCR outage or token problem must never block a
+  # production deploy whose primary-registry artifacts are already pushed.
+  # Needs Gitea secrets GHCR_USERNAME + GHCR_TOKEN (classic GitHub PAT with
+  # write:packages for the linkweave org — GHCR does not accept fine-grained
+  # PATs).
+  mirror-ghcr:
+    needs: [build, build-frontend, build-screenshot-sidecar]
+    if: startsWith(gitea.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image:
+          - linkweave-api
+          - linkweave-frontend
+          - linkweave-screenshot-service
+    steps:
+      - name: Get commit hash
+        id: commit-hash
+        run: |
+          hash="${{ gitea.sha }}"
+          echo "COMMIT_HASH=${hash::7}" >> $GITEA_OUTPUT
+
+      # Log in via the docker CLI (not docker/login-action) — same reasoning
+      # as the build jobs (IPv6 auth path, Node action crash on this runner).
+      - name: Log in to source and target registries
+        env:
+          REGISTRY: git.markushofstetter.com
+          REGISTRY_USER: ${{ gitea.actor }}
+          REGISTRY_TOKEN: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        run: |
+          set -euo pipefail
+          for v in REGISTRY_TOKEN GHCR_USERNAME GHCR_TOKEN; do
+            if [[ -z "${!v}" ]]; then
+              echo "$v secret is empty — cannot mirror to ghcr.io" >&2
+              exit 1
+            fi
+          done
+          echo "$REGISTRY_TOKEN" | docker login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+
+      - name: Mirror image to GHCR
+        env:
+          SRC: git.markushofstetter.com/dividbzero/${{ matrix.image }}
+          DEST: ghcr.io/linkweave/${{ matrix.image }}
+          COMMIT_HASH: ${{ steps.commit-hash.outputs.COMMIT_HASH }}
+          GIT_REF_NAME: ${{ gitea.ref_name }}
+        run: |
+          set -euo pipefail
+          docker pull "${SRC}:${COMMIT_HASH}"
+          # Tag parity: latest + commit hash + the v-prefixed release tag
+          # exactly as on the primary registry (true mirror — swap the host,
+          # keep the tag), plus the unprefixed semver that the public compose
+          # quick start and GHCR conventions expect.
+          for tag in latest "$COMMIT_HASH" "$GIT_REF_NAME" "${GIT_REF_NAME#v}"; do
+            docker tag "${SRC}:${COMMIT_HASH}" "${DEST}:${tag}"
+            docker push "${DEST}:${tag}"
+          done
 
   build-extension:
     runs-on: ubuntu-latest
