@@ -2,6 +2,8 @@
 
 A self-hosted bookmark manager for organizing web resources with folders, tags, and shared collections.
 
+Learn more at [about.linkweave.dev](https://about.linkweave.dev).
+
 ## Features
 
 - **Bookmarks** — Save, edit, and delete bookmarks with URLs, titles, and descriptions
