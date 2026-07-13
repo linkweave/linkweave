@@ -21,8 +21,11 @@ const {
     <meta name="generator" content={Astro.generator} />
 
     <!-- Set before paint: CSS only applies the hidden fade-in initial state
-         under html.js, so content stays visible when JS is off or fails. -->
-    <script is:inline>document.documentElement.classList.add('js');</script>
+         under html.js, so content stays visible when JS is off, fails, or
+         the browser lacks IntersectionObserver (the reveal mechanism). -->
+    <script is:inline>
+      if ('IntersectionObserver' in window) document.documentElement.classList.add('js');
+    </script>
 
     <title>{title}</title>
     <meta name="description" content={description} />
