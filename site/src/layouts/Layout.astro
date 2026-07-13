@@ -1,0 +1,64 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'LinkWeave — Self-Hosted Bookmark Manager',
+  description = 'LinkWeave is a self-hosted bookmark manager with nested folders, tags, collections, local AI tagging, offline mode, and full data ownership. Your links, your server, your rules.',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/logo-mark.png" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- Set before paint: CSS only applies the hidden fade-in initial state
+         under html.js, so content stays visible when JS is off, fails, or
+         the browser lacks IntersectionObserver (the reveal mechanism). -->
+    <script is:inline>
+      if ('IntersectionObserver' in window) document.documentElement.classList.add('js');
+    </script>
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content="/screenshots/main-grid.png" />
+    <meta property="og:url" content="https://about.linkweave.dev" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content="/screenshots/main-grid.png" />
+  </head>
+  <body>
+    <slot />
+
+    <script>
+      // Fade-in on scroll
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+            }
+          });
+        },
+        { threshold: 0.1 }
+      );
+      document.querySelectorAll('.fade-in').forEach((el) => observer.observe(el));
+    </script>
+  </body>
+</html>

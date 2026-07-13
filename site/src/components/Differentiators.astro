@@ -1,0 +1,96 @@
+---
+const differentiators = [
+  {
+    badge: 'vs. Raindrop.io & SaaS tools',
+    title: 'Truly self-hosted. No subscriptions, no lock-in.',
+    description:
+      'Raindrop.io is polished — but it\'s closed-source and can\'t be self-hosted. Your bookmarks live on their servers, and the free tier withholds full-text search, web archival, and AI behind a paywall. LinkWeave runs on your own infrastructure with a single SQLite file. Every feature is available from day one, with no tiered gating.',
+    points: [
+      'SQLite database file — no separate database server to install or maintain',
+      'BSL license converts to AGPL-3.0 on 2030-01-01 — no perpetual lock-in',
+      'Form-based auth with bcrypt, plus Google OIDC if you want it',
+      'Operator metrics via Micrometer — Prometheus & Grafana ready',
+    ],
+  },
+  {
+    badge: 'AI tagging, but predictable',
+    title: 'Tag suggestions that never invent new tags',
+    description:
+      'Karakeep and Linkwarden both offer AI tagging — including local Ollama, which LinkWeave supports too. The difference is control: LinkWeave constrains the model to your collection\'s existing tag vocabulary via a JSON-schema enum, so it can never hallucinate a tag you\'ve never used. Suggestions land in a review section and are never auto-applied. And if you don\'t want an LLM at all, rule-based URL-pattern tagging works entirely without one.',
+    points: [
+      'Vocabulary-constrained: suggestions drawn only from your existing tags',
+      'Suggestions are never auto-applied — explicit review required',
+      'Default Ollama provider runs fully local; optional hosted provider available',
+      'Rule-based URL-pattern tagging works without any LLM at all',
+    ],
+  },
+  {
+    badge: 'Beyond tags-only',
+    title: 'Nested folders AND structured properties',
+    description:
+      'Most self-hosted bookmark managers — Linkding, Shiori, wallabag — use tags or flat lists. LinkWeave gives you deeply nested folder hierarchies with drag-and-drop, AND typed key-value properties (text, number, date, select, multi-select, boolean) for structured metadata like priority or reading status. Filter by both, combined with AND logic.',
+    points: [
+      'Drag-and-drop reorganization of folders and bookmarks',
+      'Breadcrumb navigation through nested folder trees',
+      'Properties defined at the collection level, editable per bookmark',
+      'Property filters combine with tag, folder, and text search',
+    ],
+  },
+  {
+    badge: 'For search power-users',
+    title: 'A search operator language, not just a text box',
+    description:
+      'Type structured queries directly in the search bar: #vue, -#deprecated, folder:recipes, created:>today-30d. Autocomplete suggests operators, tag names, property values, and folder names as you type. Save any query as a Smart Collection that lives in your sidebar and always reflects live data.',
+    points: [
+      'Negation with - prefix: -#deprecated, -folder:archive',
+      'Date ranges and relative dates: created:>today-30d',
+      'Client-side evaluation — instant, no server round-trip',
+      'Saved searches appear as virtual folders in the sidebar',
+    ],
+  },
+];
+---
+
+<section id="differentiators" class="section-dark py-24">
+  <div class="mx-auto max-w-7xl px-6">
+    <div class="mx-auto max-w-2xl text-center">
+      <h2 class="text-4xl font-bold tracking-tight sm:text-5xl">
+        Why LinkWeave, not another tool?
+      </h2>
+      <p class="mt-4 text-lg text-[var(--color-dark-muted-foreground)]">
+        We studied the landscape — from Raindrop.io to Karakeep to Linkwarden —
+        and built something that combines the best ideas with a relentless focus
+        on data ownership and privacy.
+      </p>
+    </div>
+
+    <div class="mt-16 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {
+        differentiators.map((d, i) => (
+          <div
+            class="fade-in rounded-2xl border border-[var(--color-dark-border)] bg-[var(--color-dark-card)] p-8"
+            style={`transition-delay: ${i * 80}ms`}
+          >
+            <span class="inline-block rounded-full bg-[var(--color-dark-primary)]/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-dark-primary)]">
+              {d.badge}
+            </span>
+            <h3 class="mt-4 text-2xl font-bold">{d.title}</h3>
+            <p class="mt-4 text-base leading-relaxed text-[var(--color-dark-muted-foreground)]">
+              {d.description}
+            </p>
+            <ul class="mt-6 space-y-3">
+              {d.points.map((point) => (
+                <li class="flex items-start gap-3">
+                  <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="text-sm text-[var(--color-dark-foreground)]/90">{point}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

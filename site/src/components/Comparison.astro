@@ -1,0 +1,148 @@
+---
+// Accurate comparison based on docs/marketing/market-analysis.md
+const competitors = [
+  {
+    name: 'LinkWeave',
+    selfHosted: true,
+    nestedFolders: true,
+    collections: true,
+    aiTagging: 'local/cloud',
+    properties: true,
+    searchOps: true,
+    offline: true,
+    license: 'BSL → AGPL',
+    db: 'SQLite',
+    highlight: true,
+  },
+  {
+    name: 'Raindrop.io',
+    selfHosted: false,
+    nestedFolders: true,
+    collections: true,
+    aiTagging: 'cloud (Pro)',
+    properties: false,
+    searchOps: false,
+    offline: false,
+    license: 'Proprietary',
+    db: 'Hosted',
+  },
+  {
+    name: 'Karakeep',
+    selfHosted: true,
+    nestedFolders: false,
+    collections: true,
+    aiTagging: 'local/cloud',
+    properties: false,
+    searchOps: false,
+    offline: false,
+    license: 'AGPL-3.0',
+    db: 'SQLite',
+  },
+  {
+    name: 'Linkwarden',
+    selfHosted: true,
+    nestedFolders: false,
+    collections: true,
+    aiTagging: 'local/cloud',
+    properties: false,
+    searchOps: false,
+    offline: false,
+    license: 'AGPL-3.0',
+    db: 'PostgreSQL',
+  },
+  {
+    name: 'Linkding',
+    selfHosted: true,
+    nestedFolders: false,
+    collections: false,
+    aiTagging: 'none',
+    properties: false,
+    searchOps: false,
+    offline: false,
+    license: 'MIT',
+    db: 'SQLite',
+  },
+];
+
+const rows = [
+  { key: 'selfHosted', label: 'Self-hosted', type: 'bool' },
+  { key: 'nestedFolders', label: 'Nested folder hierarchy', type: 'bool' },
+  { key: 'collections', label: 'Collections with sharing', type: 'bool' },
+  { key: 'aiTagging', label: 'AI auto-tagging', type: 'text' },
+  { key: 'properties', label: 'Typed bookmark properties', type: 'bool' },
+  { key: 'searchOps', label: 'Search operator language', type: 'bool' },
+  { key: 'offline', label: 'Full offline mode', type: 'bool' },
+  { key: 'db', label: 'Database', type: 'text' },
+  { key: 'license', label: 'License', type: 'text' },
+];
+---
+
+<section id="comparison" class="py-24">
+  <div class="mx-auto max-w-7xl px-6">
+    <div class="mx-auto max-w-2xl text-center">
+      <h2 class="text-4xl font-bold tracking-tight sm:text-5xl">
+        How we compare
+      </h2>
+      <p class="mt-4 text-lg text-[var(--color-muted-foreground)]">
+        An honest look at where LinkWeave stands alongside the most popular
+        bookmark managers. Data compiled from public documentation as of 2026.
+      </p>
+    </div>
+
+    <div class="fade-in mt-12 overflow-x-auto">
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="border-b-2 border-[var(--color-border)]">
+            <th class="p-4 text-left text-sm font-semibold text-[var(--color-muted-foreground)]">Feature</th>
+            {
+              competitors.map((c) => (
+                <th class={`p-4 text-center text-sm font-bold ${c.highlight ? 'text-[var(--color-primary)]' : ''}`}>
+                  {c.name}
+                </th>
+              ))
+            }
+          </tr>
+        </thead>
+        <tbody>
+          {
+            rows.map((row) => (
+              <tr class="border-b border-[var(--color-border)]">
+                <td class="p-4 text-sm font-medium">{row.label}</td>
+                {competitors.map((c) => {
+                  const value = c[row.key as keyof typeof c];
+                  if (row.type === 'bool') {
+                    const isTrue = value === true;
+                    return (
+                      <td class={`p-4 text-center ${c.highlight ? 'bg-[var(--color-primary)]/5' : ''}`}>
+                        {isTrue ? (
+                          <svg class="mx-auto h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                          </svg>
+                        ) : (
+                          <svg class="mx-auto h-5 w-5 text-[var(--color-muted-foreground)]/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                          </svg>
+                        )}
+                      </td>
+                    );
+                  }
+                  return (
+                    <td class={`p-4 text-center text-sm ${c.highlight ? 'bg-[var(--color-primary)]/5 font-semibold' : 'text-[var(--color-muted-foreground)]'}`}>
+                      {value}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <p class="mt-6 text-center text-sm text-[var(--color-muted-foreground)]">
+      Every product here is excellent in its own way. LinkWeave focuses on
+      data ownership, structured organization, and local-first AI. Pick the
+      tool that fits your workflow.
+    </p>
+  </div>
+</section>

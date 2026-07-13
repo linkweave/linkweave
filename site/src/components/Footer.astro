@@ -1,0 +1,30 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-[var(--color-dark-border)] bg-[var(--color-dark-background)] py-12">
+  <div class="mx-auto max-w-7xl px-6">
+    <div class="flex flex-col items-center justify-between gap-8 md:flex-row">
+      <div class="flex items-center gap-3">
+        <img src="/logo-mark.png" alt="LinkWeave" class="h-8 w-8" />
+        <div>
+          <p class="font-bold text-[var(--color-dark-foreground)]">LinkWeave</p>
+          <p class="text-sm text-[var(--color-dark-muted-foreground)]">Self-hosted bookmark manager</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
+        <a href="https://linkweave.dev/login" class="text-[var(--color-dark-muted-foreground)] transition-colors hover:text-[var(--color-dark-foreground)]">Launch App</a>
+        <a href="https://github.com/linkweave/linkweave" target="_blank" rel="noopener" class="text-[var(--color-dark-muted-foreground)] transition-colors hover:text-[var(--color-dark-foreground)]">Source Code</a>
+        <a href="https://linkweave.dev/privacy" class="text-[var(--color-dark-muted-foreground)] transition-colors hover:text-[var(--color-dark-foreground)]">Privacy Policy</a>
+      </div>
+    </div>
+
+    <div class="mt-8 border-t border-[var(--color-dark-border)] pt-8 text-center">
+      <p class="text-sm text-[var(--color-dark-muted-foreground)]">
+        &copy; {year} LinkWeave. Licensed under the Business Source License 1.1,
+        converting to AGPL-3.0 on 2030-01-01.
+      </p>
+    </div>
+  </div>
+</footer>
