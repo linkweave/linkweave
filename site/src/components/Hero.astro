@@ -1,64 +1,41 @@
 ---
 ---
 
-<section class="hero-gradient relative overflow-hidden pt-32 pb-20">
-  <div class="mx-auto max-w-7xl px-6">
-    <div class="mx-auto max-w-3xl text-center">
-      <!-- Badge -->
-      <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-1.5 text-sm text-[var(--color-muted-foreground)]">
-        <span class="relative flex h-2 w-2">
-          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-          <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
-        </span>
-        Self-hosted &amp; source-available
-      </div>
+<section class="relative overflow-hidden pt-32 pb-20">
+  <div class="dot-grid-fade absolute inset-0"></div>
 
-      <h1 class="text-5xl font-extrabold tracking-tight sm:text-6xl md:text-7xl">
-        Your links.
-        <br />
-        <span class="gradient-text">Your server.</span>
+  <div class="relative mx-auto max-w-7xl px-6">
+    <div class="mx-auto max-w-3xl text-center">
+      <p class="mb-6 font-mono text-sm tracking-wide text-[var(--color-muted-foreground)]">
+        self-hosted &middot; source-available &middot; sqlite
+      </p>
+
+      <h1 class="text-5xl font-bold tracking-tight sm:text-6xl">
+        Your links.<br />
+        <span class="font-normal text-[var(--color-muted-foreground)]">Your server.</span><br />
         Your rules.
       </h1>
 
-      <p class="mx-auto mt-6 max-w-2xl text-lg text-[var(--color-muted-foreground)] sm:text-xl">
-        LinkWeave is a self-hosted bookmark manager with nested folders, tags,
-        shared collections, local AI tagging, and a full offline mode. No
-        subscriptions, no vendor lock-in, no data leaving your infrastructure.
+      <p class="mx-auto mt-6 max-w-2xl text-lg text-[var(--color-muted-foreground)]">
+        LinkWeave is a bookmark manager with nested folders, tags, shared
+        collections, AI tagging, and full offline mode.
+        <a href="https://linkweave.dev/login" class="font-medium text-[var(--color-primary)] underline-offset-2 hover:underline">Try the hosted instance</a>
+        or self-host with Docker &mdash; same features either way.
       </p>
 
       <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
         <a
           href="https://linkweave.dev/login"
-          class="w-full rounded-xl bg-[var(--color-primary)] px-6 py-3 text-center text-base font-semibold text-[var(--color-primary-foreground)] shadow-lg transition-all hover:shadow-xl hover:brightness-110 sm:w-auto"
+          class="w-full rounded-lg bg-[var(--color-primary)] px-6 py-3 text-center text-base font-semibold text-[var(--color-primary-foreground)] transition-all hover:brightness-110 sm:w-auto"
         >
           Get Started &rarr;
         </a>
         <a
           href="#features"
-          class="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-6 py-3 text-center text-base font-semibold text-[var(--color-foreground)] transition-all hover:bg-[var(--color-secondary)] sm:w-auto"
+          class="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-6 py-3 text-center text-base font-semibold text-[var(--color-foreground)] transition-all hover:bg-[var(--color-secondary)] sm:w-auto"
         >
           Explore Features
         </a>
-      </div>
-
-      <!-- Tech badges -->
-      <div class="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[var(--color-muted-foreground)]">
-        <span class="flex items-center gap-1.5">
-          <svg class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-          SQLite — single file
-        </span>
-        <span class="flex items-center gap-1.5">
-          <svg class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-          Docker ready
-        </span>
-        <span class="flex items-center gap-1.5">
-          <svg class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-          No cloud dependencies
-        </span>
-        <span class="flex items-center gap-1.5">
-          <svg class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-          Browser extension
-        </span>
       </div>
     </div>
 
