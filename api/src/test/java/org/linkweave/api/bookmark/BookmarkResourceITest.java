@@ -1,15 +1,18 @@
 package org.linkweave.api.bookmark;
 
+import org.linkweave.api.types.emailaddress.EmailAddress;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
+import org.linkweave.api.benutzer.UserRepo;
 import org.linkweave.api.bookmark.folder.Folder;
 import org.linkweave.api.bookmark.folder.FolderRepo;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.collection.CollectionAccessRepo;
 import org.linkweave.api.collection.CollectionRepo;
+import org.linkweave.api.shared.user.User;
 import org.linkweave.api.testutil.fixture.FixtureService;
 import org.junit.jupiter.api.Test;
 
@@ -32,6 +35,185 @@ class BookmarkResourceITest {
 
     @Inject
     FixtureService fixtureService;
+
+    @Inject
+    UserRepo userRepo;
+
+    @Test
+    void shouldReturn401_whenGetSingleBookmarkNotAuthenticated() {
+        RestAssured.given()
+            .get("/bookmarks/{id}", java.util.UUID.randomUUID().toString())
+            .then()
+            .statusCode(401);
+    }
+
+    @Test
+    @TestSecurity(
+        user = "test@example.com",
+        roles = {"BOOKMARK_READ"}
+    )
+    void shouldReturnSingleBookmark_whenUserHasAccess() {
+        // ARRANGE
+        Bookmark bookmark = fixtureService.createTestBookmark(b -> b
+            .withTitle("Single Fetch")
+            .withUrl("https://single.example.com")
+        );
+
+        // ACT
+        RestAssured.given()
+            .get("/bookmarks/{id}", bookmark.getId().getUUID().toString())
+            // ASSERT
+            .then()
+            .statusCode(200)
+            .body("id", equalTo(bookmark.getId().getUUID().toString()))
+            .body("data.title", equalTo("Single Fetch"))
+            .body("data.url", equalTo("https://single.example.com"));
+    }
+
+    @Test
+    @TestSecurity(
+        user = "test@example.com",
+        roles = {"BOOKMARK_READ"}
+    )
+    void shouldReturn403_whenGetSingleBookmarkOfForeignCollection() {
+        // ARRANGE
+        // Owned by alice (seeded user), NO CollectionAccess for the test user.
+        User alice = userRepo.findByEmail(EmailAddress.fromString("alice@example.com")).orElseThrow();
+        Collection foreignCollection = fixtureService.persistCollection(b -> b
+            .withOwner(alice)
+            .withName("Alice's Collection")
+        );
+        Bookmark foreignBookmark = fixtureService.persistBookmark(b -> b
+            .withCollection(foreignCollection)
+            .withTitle("Alice's Bookmark")
+            .withUrl("https://alice.example.com")
+        );
+
+        // ACT
+        RestAssured.given()
+            .get("/bookmarks/{id}", foreignBookmark.getId().getUUID().toString())
+            // ASSERT
+            .then()
+            .statusCode(403);
+    }
+
+    @Test
+    @TestSecurity(
+        user = "test@example.com",
+        roles = {"BOOKMARK_READ"}
+    )
+    void shouldReturn404_whenGetSingleBookmarkDoesNotExist() {
+        RestAssured.given()
+            .get("/bookmarks/{id}", java.util.UUID.randomUUID().toString())
+            .then()
+            .statusCode(404);
+    }
+
+    @Test
+    @TestSecurity(
+        user = "test@example.com",
+        roles = {"BOOKMARK_WRITE"}
+    )
+    void shouldReturn404_whenDeletingUnknownBookmark() {
+        RestAssured.given()
+            .delete("/bookmarks/{id}", java.util.UUID.randomUUID().toString())
+            .then()
+            .statusCode(404);
+    }
+
+    @Test
+    @TestSecurity(
+        user = "test@example.com",
+        roles = {"BOOKMARK_WRITE"}
+    )
+    void shouldReturn404_whenUpdatingUnknownBookmark() {
+        // ARRANGE
+        Collection collection = fixtureService.createTestCollection();
+        String body = """
+            {"collectionId":"%s","title":"Ghost","url":"https://example.com"}
+            """.formatted(collection.getId().getUUID().toString());
+
+        // ACT
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .put("/bookmarks/{id}", java.util.UUID.randomUUID().toString())
+            // ASSERT
+            .then()
+            .statusCode(404);
+    }
+
+    @Test
+    @TestSecurity(
+        user = "test@example.com",
+        roles = {"BOOKMARK_WRITE"}
+    )
+    void shouldReturn404_whenMovingUnknownBookmark() {
+        // ARRANGE
+        Collection collection = fixtureService.createTestCollection();
+        String body = """
+            {"collectionId":"%s"}
+            """.formatted(collection.getId().getUUID().toString());
+
+        // ACT
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .patch("/bookmarks/{id}/move", java.util.UUID.randomUUID().toString())
+            // ASSERT
+            .then()
+            .statusCode(404);
+    }
+
+    @Test
+    @TestSecurity(
+        user = "test@example.com",
+        roles = {"BOOKMARK_READ"}
+    )
+    void shouldReturn404_whenTrackingClickOnUnknownBookmark() {
+        RestAssured.given()
+            .post("/bookmarks/{id}/track-click", java.util.UUID.randomUUID().toString())
+            .then()
+            .statusCode(404);
+    }
+
+    @Test
+    @TestSecurity(
+        user = "test@example.com",
+        roles = {"BOOKMARK_WRITE"}
+    )
+    void shouldReturn403_whenUpdatingForeignBookmarkIntoOwnCollection() {
+        // ARRANGE
+        // The attacker has a collection of their own ...
+        Collection ownCollection = fixtureService.createTestCollection();
+
+        // ... and targets a bookmark in alice's collection (no access).
+        User alice = userRepo.findByEmail(EmailAddress.fromString("alice@example.com")).orElseThrow();
+        Collection foreignCollection = fixtureService.persistCollection(b -> b
+            .withOwner(alice)
+            .withName("Alice's Collection")
+        );
+        Bookmark foreignBookmark = fixtureService.persistBookmark(b -> b
+            .withCollection(foreignCollection)
+            .withTitle("Alice's Bookmark")
+            .withUrl("https://alice.example.com")
+        );
+
+        // IDOR attempt: PUT the foreign bookmark with the attacker's own
+        // (accessible) collectionId, which would steal it into ownCollection.
+        String body = """
+            {"collectionId":"%s","title":"Stolen","url":"https://attacker.example.com"}
+            """.formatted(ownCollection.getId().getUUID().toString());
+
+        // ACT
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .put("/bookmarks/{id}", foreignBookmark.getId().getUUID().toString())
+            // ASSERT
+            .then()
+            .statusCode(403);
+    }
 
     @Test
     void shouldReturn401_whenGetBookmarksNotAuthenticated() {

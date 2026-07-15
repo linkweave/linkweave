@@ -7,6 +7,7 @@ import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -61,6 +62,11 @@ public class BookmarkService {
     @NonNull
     public Bookmark getBookmark(@NonNull ID<Bookmark> id) {
         return bookmarkRepo.getById(id);
+    }
+
+    @NonNull
+    public Optional<Bookmark> findBookmark(@NonNull ID<Bookmark> id) {
+        return bookmarkRepo.findById(id);
     }
 
     /**
