@@ -11,6 +11,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -58,6 +59,17 @@ public class BookmarkResource {
         );
     }
 
+    @GET
+    @Path("/{bookmarkId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @NonNull
+    @Authenticated
+    public BookmarkJson get(@PathParam("bookmarkId") @NotNull @NonNull ID<Bookmark> bookmarkId) {
+        Bookmark bookmark = loadBookmarkOr404(bookmarkId);
+        authorizationService.requireAccessTo(bookmark);
+        return BookmarkMapper.toJson(bookmark);
+    }
+
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -80,6 +92,11 @@ public class BookmarkResource {
         @NotNull @Valid @NonNull BookmarkSaveJson json
     ) {
         authorizationService.requireCollectionAccess(json.getCollectionId());
+        // Also guard the bookmark's CURRENT collection — access to the target
+        // collection alone would let a caller pull any foreign bookmark into
+        // their own collection by id.
+        Bookmark existing = loadBookmarkOr404(bookmarkId);
+        authorizationService.requireAccessTo(existing);
         Bookmark bookmark = bookmarkService.updateBookmark(bookmarkId, json);
         return BookmarkMapper.toJson(bookmark);
     }
@@ -95,7 +112,7 @@ public class BookmarkResource {
         @NotNull @Valid @NonNull BookmarkMoveJson json
     ) {
         authorizationService.requireCollectionAccess(json.getCollectionId());
-        Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
+        Bookmark bookmark = loadBookmarkOr404(bookmarkId);
         authorizationService.requireSameCollection(bookmark, json.getCollectionId());
         bookmarkService.batchMoveToFolder(List.of(bookmark), json.getFolderId(), json.getCollectionId());
         return BookmarkMapper.toJson(bookmark);
@@ -107,7 +124,7 @@ public class BookmarkResource {
     public void delete(
         @PathParam("bookmarkId") @NotNull @NonNull ID<Bookmark> bookmarkId
     ) {
-        Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
+        Bookmark bookmark = loadBookmarkOr404(bookmarkId);
         authorizationService.requireAccessTo(bookmark);
         bookmarkService.removeBookmark(bookmarkId);
     }
@@ -170,13 +187,29 @@ public class BookmarkResource {
         return new BookmarkListJson(bookmarks.stream().map(BookmarkMapper::toJson).toList());
     }
 
+    /**
+     * Missing single bookmarks are a 404 for API clients (UC-079 A5), not the
+     * 500 that {@code getById}'s AppFailureException would produce.
+     * <p>
+     * Accepted risk: unknown ids answer 404 while existing-but-foreign ids
+     * answer 403, which distinguishes "doesn't exist" from "not yours"
+     * (unlike {@code requireApiKeyOwnership}, which deliberately collapses
+     * the two). Bookmark ids are random UUIDs, so existence probing is
+     * impractical, and UC-079 A4/A5 mandate the distinct messages.
+     */
+    @NonNull
+    private Bookmark loadBookmarkOr404(@NonNull ID<Bookmark> bookmarkId) {
+        return bookmarkService.findBookmark(bookmarkId)
+            .orElseThrow(() -> new NotFoundException("Bookmark not found: " + bookmarkId));
+    }
+
     @POST
     @Path("/{bookmarkId}/track-click")
     @Authenticated
     public void trackClick(
         @PathParam("bookmarkId") @NotNull @NonNull ID<Bookmark> bookmarkId
     ) {
-        Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
+        Bookmark bookmark = loadBookmarkOr404(bookmarkId);
         authorizationService.requireAccessTo(bookmark);
         bookmarkService.trackClick(bookmarkId);
     }
