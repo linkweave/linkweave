@@ -74,7 +74,9 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
+          cache-dependency-path: |
+            frontend/pnpm-lock.yaml
+            cli/pnpm-lock.yaml
 
       - name: Hostname alias for the e2e domain
         # *.localhost normally resolves to 127.0.0.1 via systemd-resolved on
@@ -136,6 +138,15 @@ jobs:
       - name: Install frontend deps
         working-directory: frontend
         run: pnpm install --frozen-lockfile
+
+      - name: Build CLI
+        # e2e/cli.spec.ts drives the built binary (cli/dist/main.js) against
+        # the same API/Vite pair as the browser tests. Building here keeps the
+        # spec's on-demand fallback build a no-op.
+        working-directory: cli
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4

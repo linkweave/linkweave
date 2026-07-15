@@ -1,0 +1,106 @@
+import { chmodSync, existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
+
+import { CliError } from './errors'
+
+export const DEFAULT_SERVER = 'https://linkweave.dev'
+
+/** Raw API keys are `lw_` followed by 64 hex chars (UC-080 step 6). */
+export const API_KEY_PATTERN = /^lw_[0-9a-f]{64}$/
+
+export interface StoredConfig {
+  server: string
+  apiKey: string
+  userEmail?: string
+  defaultCollectionId?: string
+}
+
+export function configDir(): string {
+  return join(homedir(), '.linkweave')
+}
+
+export function configPath(): string {
+  return join(configDir(), 'config.json')
+}
+
+export function loadStoredConfig(path: string = configPath()): StoredConfig | undefined {
+  if (!existsSync(path)) return undefined
+  let raw: string
+  try {
+    raw = readFileSync(path, 'utf-8')
+  } catch {
+    throw new CliError(`Cannot read ${path}. Check file permissions.`)
+  }
+  try {
+    return JSON.parse(raw) as StoredConfig
+  } catch {
+    throw new CliError(`${path} is not valid JSON. Run 'linkweave login' to recreate it.`)
+  }
+}
+
+/**
+ * Writes the config with owner-only permissions (BR-021/BR-022). The explicit
+ * chmod covers the file-already-exists case, where writeFileSync's `mode`
+ * option is ignored.
+ */
+export function saveStoredConfig(config: StoredConfig, path: string = configPath()): void {
+  const dir = join(path, '..')
+  try {
+    mkdirSync(dir, { recursive: true, mode: 0o700 })
+    writeFileSync(path, JSON.stringify(config, null, 2) + '\n', { mode: 0o600 })
+    if (process.platform !== 'win32') chmodSync(path, 0o600)
+  } catch (e) {
+    if (e instanceof CliError) throw e
+    throw new CliError(`Cannot write to ${path}. Check directory permissions.`)
+  }
+}
+
+/** Deletes the config file (BR-025). Returns false when there was none. */
+export function deleteStoredConfig(path: string = configPath()): boolean {
+  if (!existsSync(path)) return false
+  unlinkSync(path)
+  return true
+}
+
+export interface EffectiveConfig {
+  server: string
+  apiKey?: string
+  userEmail?: string
+  defaultCollectionId?: string
+}
+
+export interface ConfigFlags {
+  server?: string
+  apiKey?: string
+}
+
+/** Strips trailing slashes so `${server}/api/...` URLs stay well-formed. */
+export function normalizeServer(url: string): string {
+  return url.replace(/\/+$/, '')
+}
+
+/**
+ * Merges CLI flags, environment variables, and the stored config with the
+ * precedence flags > env > file (BR-023). The stored default collection and
+ * email only apply when the effective key IS the stored key — a key injected
+ * via flag/env may belong to a different user or server.
+ */
+export function resolveEffectiveConfig(
+  flags: ConfigFlags,
+  env: NodeJS.ProcessEnv = process.env,
+  stored: StoredConfig | undefined = loadStoredConfig(),
+): EffectiveConfig {
+  const apiKey = flags.apiKey ?? env['LINKWEAVE_API_KEY'] ?? stored?.apiKey
+  const server = normalizeServer(
+    flags.server ?? env['LINKWEAVE_SERVER'] ?? stored?.server ?? DEFAULT_SERVER,
+  )
+  const usingStoredIdentity =
+    stored !== undefined && apiKey === stored.apiKey && server === normalizeServer(stored.server)
+  return {
+    server,
+    apiKey,
+    userEmail: usingStoredIdentity ? stored.userEmail : undefined,
+    defaultCollectionId: usingStoredIdentity ? stored.defaultCollectionId : undefined,
+  }
+}
