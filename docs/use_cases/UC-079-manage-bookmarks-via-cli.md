@@ -46,9 +46,10 @@
 ## Main Success Scenario — Edit Bookmark
 
 1. User runs `linkweave bookmarks edit <bookmarkId>` with optional flags `--title`, `--url`, `--description`, `--tags`.
-2. CLI sends `PUT /api/bookmarks/{bookmarkId}` with the `X-API-Key` header and the updated `BookmarkSaveJson` body.
-3. Server authenticates, authorizes, and updates the bookmark.
-4. CLI displays a success message: `✓ Bookmark updated: {title}`.
+2. CLI fetches the current state via `GET /api/bookmarks/{bookmarkId}` (the PUT body is a full `BookmarkSaveJson`, so unspecified fields are carried over).
+3. CLI sends `PUT /api/bookmarks/{bookmarkId}` with the `X-API-Key` header and the merged `BookmarkSaveJson` body.
+4. Server authenticates, authorizes (both the bookmark's current collection and the target collection), and updates the bookmark.
+5. CLI displays a success message: `✓ Bookmark updated: {title}`.
 
 ## Main Success Scenario — Remove Bookmark
 
@@ -200,9 +201,12 @@ The `--folder` flag accepts a folder name (not an ID). The CLI resolves the name
 | `--server` | `-s` | LinkWeave API server URL | `https://linkweave.dev` |
 | `--api-key` | `-k` | API key (overrides config file) | — |
 | `--insecure` | | Disable TLS verification | `false` |
-| `--format` | `-f` | Output format (`table`, `json`, `ids`) | `table` |
 | `--help` | `-h` | Show help | — |
 | `--version` | `-v` | Show version | — |
+
+`--format`/`-f` (`table`, `json`, `ids`; default `table`) is scoped to the
+list commands (`bookmarks list`, `collections list`) — passing it to other
+commands is a usage error (exit 2) rather than being silently ignored.
 
 ### Commands
 

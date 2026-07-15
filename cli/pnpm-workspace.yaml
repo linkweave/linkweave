@@ -1,0 +1,7 @@
+# Both spellings kept deliberately (same pattern as frontend/ and site/):
+# onlyBuiltDependencies for pnpm <= 10, allowBuilds for pnpm >= 11.
+onlyBuiltDependencies:
+  - esbuild
+
+allowBuilds:
+  esbuild: true

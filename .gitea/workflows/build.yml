@@ -147,6 +147,34 @@ jobs:
         working-directory: frontend
         run: pnpm test
 
+  test-cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: cli/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: cli
+        run: pnpm install --frozen-lockfile
+
+      # `check` = tsc --noEmit + vitest run; the build proves the published
+      # bundle (which inlines the generated API client) still assembles.
+      - name: Type-check, unit tests, build
+        working-directory: cli
+        run: |
+          pnpm run check
+          pnpm run build
+
   build-frontend:
     needs: [test-frontend]
     runs-on: ubuntu-latest

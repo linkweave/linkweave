@@ -1,7 +1,7 @@
 # CLI Tool & API Key Architecture
 
-**Status:** In Progress — Phases 1–2 complete (API key backend + web UI); CLI (Phases 3–5) pending
-**Date:** 2026-05-10
+**Status:** In Progress — Phases 1–4 complete (API key backend, web UI, CLI with bookmark commands); Phase 5 (polish & distribution) pending
+**Date:** 2026-05-10 (updated 2026-07-15)
 
 ---
 
@@ -59,6 +59,18 @@ This document describes the architecture for adding a command-line interface (CL
 - The OpenAPI spec at `/q/openapi` is the shared contract. Generating the TypeScript client from the same spec ensures type-safety.
 - API changes break CLI builds immediately in CI (not weeks later).
 - One `git tag` covers API + frontend + CLI.
+
+### AD-2b: CLI Reuses the Frontend's Generated Client (2026-07-15)
+
+**Decision:** The CLI imports the checked-in typescript-fetch client from
+`frontend/src/api/generated` (via `cli/src/api.ts`) and tsup bundles it into
+`cli/dist/main.js`, so the published package is self-contained.
+
+**Deliberately deferred:** extracting the client into a shared workspace
+package (root pnpm workspace + `packages/api-client`). With only two
+consumers and standalone-package CI, the restructuring isn't worth it yet.
+Revisit when a third consumer needs the client (desktop app,
+screenshot-service) or when npm publishing (Phase 5) becomes concrete.
 
 ### AD-3: TypeScript
 
@@ -210,28 +222,38 @@ Implemented in `frontend/src/components/apikey/` and `frontend/src/stores/apiKey
 - [x] Revoke key confirmation
 - [x] One-time key display with copy (`ApiKeyRevealDialog.vue`)
 
-### Phase 3: CLI Scaffolding
+### Phase 3: CLI Scaffolding — ✅ Done
 
-- [ ] Create `cli/` directory with `package.json`
-- [ ] Set up TypeScript + commander
-- [ ] Configure OpenAPI client generation (reuse `typescript-fetch` pipeline)
-- [ ] Implement config management (`~/.linkweave/config.json`)
-- [ ] Implement `linkweave login` / `linkweave logout`
+Implemented in `cli/` (tsup bundle, `dist/main.js` bin entry).
 
-### Phase 4: CLI Bookmark Commands
+- [x] Create `cli/` directory with `package.json`
+- [x] Set up TypeScript + commander
+- [x] Reuse the generated `typescript-fetch` client (shared with the frontend
+      at `frontend/src/api/generated`, bundled into the CLI at build time)
+- [x] Implement config management (`~/.linkweave/config.json`, 0600, env
+      overrides `LINKWEAVE_API_KEY`/`LINKWEAVE_SERVER`)
+- [x] Implement `linkweave login` / `linkweave logout`
 
-- [ ] `linkweave bookmarks add <url>`
-- [ ] `linkweave bookmarks list`
-- [ ] `linkweave bookmarks edit <id>`
-- [ ] `linkweave bookmarks rm <id>`
-- [ ] `linkweave collections list`
+### Phase 4: CLI Bookmark Commands — ✅ Done
+
+Vitest unit tests live next to the sources (`cli/src/*.spec.ts`); e2e tests
+run in the Playwright suite (`frontend/e2e/cli.spec.ts`) against a real
+server and are wired into the e2e CI workflow.
+
+- [x] `linkweave bookmarks add <url>` (tag-name resolution BR-019, folder-path
+      resolution BR-020, collection name/ID resolution A8)
+- [x] `linkweave bookmarks list` (`--format` table/json/ids, `--folder`/`--tag` filters)
+- [x] `linkweave bookmarks edit <id>` (via `GET /api/bookmarks/{id}`, added for
+      the CLI so edit needs no collection scan and missing IDs are a clean 404)
+- [x] `linkweave bookmarks rm <id>`
+- [x] `linkweave collections list`
 
 ### Phase 5: Polish & Distribution
 
 - [ ] Shell completions (bash/zsh/fish)
 - [ ] `npm install -g @linkweave/cli` publishing setup
-- [ ] README with installation instructions
-- [ ] `--insecure` flag for self-signed certs
+- [x] README with installation instructions (`cli/README.md`)
+- [x] `--insecure` flag for self-signed certs
 
 ---
 
