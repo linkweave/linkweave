@@ -58,6 +58,8 @@ Behavior worth knowing:
 - `--folder` takes a path like `Dev/TypeScript/Articles`; missing segments are
   created by `bookmarks add` (but not by `bookmarks list`).
 - `rm` soft-deletes: the bookmark moves to the trashbin.
+- `edit` replaces the whole bookmark (fetch → merge → save); a concurrent
+  change made elsewhere between fetch and save is overwritten.
 - Data goes to stdout, errors and warnings to stderr. Exit codes: `0` success,
   `1` error (auth/network/validation), `2` usage error. `--format=json` pipes
   cleanly into `jq`.

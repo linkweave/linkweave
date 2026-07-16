@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { chmodSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -120,6 +120,18 @@ describe('stored config file handling', () => {
     // ASSERT
     expect(statSync(path).mode & 0o777).toBe(0o600)
     expect(JSON.parse(readFileSync(path, 'utf-8')).apiKey).toBe(KEY_B)
+  })
+
+  it('shouldRestoreOwnerOnlyPermissionsWhenOverwritingALooserFile', () => {
+    // ARRANGE
+    saveStoredConfig(STORED, path)
+    chmodSync(path, 0o644)
+
+    // ACT
+    saveStoredConfig({ ...STORED, apiKey: KEY_B }, path)
+
+    // ASSERT
+    expect(statSync(path).mode & 0o777).toBe(0o600)
   })
 
   it('shouldReturnUndefinedWhenFileIsMissing', () => {

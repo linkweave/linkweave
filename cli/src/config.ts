@@ -1,6 +1,6 @@
-import { chmodSync, existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 
 import { CliError } from './errors'
 
@@ -40,17 +40,22 @@ export function loadStoredConfig(path: string = configPath()): StoredConfig | un
 }
 
 /**
- * Writes the config with owner-only permissions (BR-021/BR-022). The explicit
- * chmod covers the file-already-exists case, where writeFileSync's `mode`
- * option is ignored.
+ * Writes the config with owner-only permissions (BR-021/BR-022). The content
+ * goes to a fresh same-directory temp file (0600 is honored at creation) and
+ * is renamed over the target: the key is never on disk with looser
+ * permissions — writeFileSync's `mode` is ignored for existing files, which
+ * would briefly expose the new content under the umask — and the replacement
+ * is atomic.
  */
 export function saveStoredConfig(config: StoredConfig, path: string = configPath()): void {
-  const dir = join(path, '..')
+  const dir = dirname(path)
+  const tmp = join(dir, `.config.json.${process.pid}.tmp`)
   try {
     mkdirSync(dir, { recursive: true, mode: 0o700 })
-    writeFileSync(path, JSON.stringify(config, null, 2) + '\n', { mode: 0o600 })
-    if (process.platform !== 'win32') chmodSync(path, 0o600)
+    writeFileSync(tmp, JSON.stringify(config, null, 2) + '\n', { mode: 0o600 })
+    renameSync(tmp, path)
   } catch (e) {
+    rmSync(tmp, { force: true })
     if (e instanceof CliError) throw e
     throw new CliError(`Cannot write to ${path}. Check directory permissions.`)
   }
