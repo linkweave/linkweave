@@ -18,6 +18,7 @@
   "include": [
     "src/**/*.ts",
     "tsup.config.ts",
+    "vitest.config.ts",
     "../frontend/src/api/generated/**/*.ts"
   ]
 }
