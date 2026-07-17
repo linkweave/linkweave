@@ -1,8 +1,10 @@
 import { CliError, EXIT_USAGE } from './errors'
 
-export type OutputFormat = 'table' | 'json' | 'ids'
+export const OUTPUT_FORMATS = ['table', 'json', 'ids'] as const
 
-const FORMATS: ReadonlySet<string> = new Set(['table', 'json', 'ids'])
+export type OutputFormat = (typeof OUTPUT_FORMATS)[number]
+
+const FORMATS: ReadonlySet<string> = new Set(OUTPUT_FORMATS)
 
 export function parseFormat(value: string): OutputFormat {
   if (!FORMATS.has(value)) {

@@ -1,7 +1,7 @@
 # CLI Tool & API Key Architecture
 
-**Status:** In Progress — Phases 1–4 complete (API key backend, web UI, CLI with bookmark commands); Phase 5 (polish & distribution) pending
-**Date:** 2026-05-10 (updated 2026-07-15)
+**Status:** In Progress — Phases 1–4 complete (API key backend, web UI, CLI with bookmark commands), shell completions done; npm publishing (Phase 5) pending
+**Date:** 2026-05-10 (updated 2026-07-17)
 
 ---
 
@@ -250,7 +250,9 @@ server and are wired into the e2e CI workflow.
 
 ### Phase 5: Polish & Distribution
 
-- [ ] Shell completions (bash/zsh/fish)
+- [x] Shell completions (bash/zsh/fish): `linkweave completion <shell>` prints
+      a script generated at runtime from the commander command tree, so new
+      commands/flags are picked up automatically (`cli/src/commands/completion.ts`)
 - [ ] `npm install -g @linkweave/cli` publishing setup
 - [x] README with installation instructions (`cli/README.md`)
 - [x] `--insecure` flag for self-signed certs
