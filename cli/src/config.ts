@@ -24,6 +24,21 @@ export function configPath(): string {
   return join(configDir(), 'config.json')
 }
 
+function optionalString(value: unknown): boolean {
+  return value === undefined || typeof value === 'string'
+}
+
+function isStoredConfig(value: unknown): value is StoredConfig {
+  if (typeof value !== 'object' || value === null) return false
+  const record = value as Record<string, unknown>
+  return (
+    typeof record['server'] === 'string' &&
+    typeof record['apiKey'] === 'string' &&
+    optionalString(record['userEmail']) &&
+    optionalString(record['defaultCollectionId'])
+  )
+}
+
 export function loadStoredConfig(path: string = configPath()): StoredConfig | undefined {
   if (!existsSync(path)) return undefined
   let raw: string
@@ -32,16 +47,21 @@ export function loadStoredConfig(path: string = configPath()): StoredConfig | un
   } catch {
     throw new CliError(`Cannot read ${path}. Check file permissions.`)
   }
-  try {
-    return JSON.parse(raw) as StoredConfig
-  } catch {
-    // A corrupt file must not brick the CLI: treat it as "not logged in" so
-    // `linkweave login` can recreate it (a throw here would block login too).
+  // A corrupt file must not brick the CLI: treat it as "not logged in" so
+  // `linkweave login` can recreate it (a throw here would block login too).
+  const ignore = (reason: string): undefined => {
     process.stderr.write(
-      `Warning: ignoring ${path} — not valid JSON. Run 'linkweave login' to recreate it.\n`,
+      `Warning: ignoring ${path} — ${reason}. Run 'linkweave login' to recreate it.\n`,
     )
     return undefined
   }
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    return ignore('not valid JSON')
+  }
+  return isStoredConfig(parsed) ? parsed : ignore('missing or malformed fields')
 }
 
 /**

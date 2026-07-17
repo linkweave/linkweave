@@ -152,6 +152,38 @@ describe('stored config file handling', () => {
     stderrSpy.mockRestore()
   })
 
+  it.each([
+    ['an empty object', '{}'],
+    ['a null literal', 'null'],
+    ['a non-object', '"lw_key"'],
+    ['missing apiKey', '{ "server": "https://x.example" }'],
+    ['a non-string server', `{ "server": 42, "apiKey": "${KEY_A}" }`],
+    ['a non-string optional field', JSON.stringify({ ...STORED, userEmail: 7 })],
+  ])('shouldWarnAndIgnoreValidJsonWithBadShape: %s', (_label, content) => {
+    // ARRANGE
+    writeFileSync(path, content)
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+
+    // ACT
+    const loaded = loadStoredConfig(path)
+
+    // ASSERT
+    expect(loaded).toBeUndefined()
+    expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('missing or malformed fields'))
+    stderrSpy.mockRestore()
+  })
+
+  it('shouldLoadConfigsCarryingUnknownExtraFields', () => {
+    // ARRANGE: a config written by a newer CLI version must stay readable.
+    writeFileSync(path, JSON.stringify({ ...STORED, futureField: true }))
+
+    // ACT
+    const loaded = loadStoredConfig(path)
+
+    // ASSERT
+    expect(loaded).toMatchObject(STORED)
+  })
+
   it('shouldDeleteTheConfigFile', () => {
     saveStoredConfig(STORED, path)
     expect(deleteStoredConfig(path)).toBe(true)
