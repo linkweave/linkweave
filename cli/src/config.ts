@@ -35,7 +35,12 @@ export function loadStoredConfig(path: string = configPath()): StoredConfig | un
   try {
     return JSON.parse(raw) as StoredConfig
   } catch {
-    throw new CliError(`${path} is not valid JSON. Run 'linkweave login' to recreate it.`)
+    // A corrupt file must not brick the CLI: treat it as "not logged in" so
+    // `linkweave login` can recreate it (a throw here would block login too).
+    process.stderr.write(
+      `Warning: ignoring ${path} — not valid JSON. Run 'linkweave login' to recreate it.\n`,
+    )
+    return undefined
   }
 }
 

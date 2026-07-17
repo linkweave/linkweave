@@ -1,7 +1,7 @@
 import { chmodSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   API_KEY_PATTERN,
@@ -13,7 +13,6 @@ import {
   saveStoredConfig,
   type StoredConfig,
 } from './config'
-import { CliError } from './errors'
 
 const KEY_A = 'lw_' + 'a'.repeat(64)
 const KEY_B = 'lw_' + 'b'.repeat(64)
@@ -138,10 +137,19 @@ describe('stored config file handling', () => {
     expect(loadStoredConfig(path)).toBeUndefined()
   })
 
-  it('shouldFailWithCliErrorOnCorruptJson', () => {
+  it('shouldWarnAndIgnoreCorruptJsonSoLoginStaysUsable', () => {
+    // ARRANGE
     saveStoredConfig(STORED, path)
     writeFileSync(path, 'not json')
-    expect(() => loadStoredConfig(path)).toThrow(CliError)
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+
+    // ACT
+    const loaded = loadStoredConfig(path)
+
+    // ASSERT
+    expect(loaded).toBeUndefined()
+    expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('not valid JSON'))
+    stderrSpy.mockRestore()
   })
 
   it('shouldDeleteTheConfigFile', () => {
