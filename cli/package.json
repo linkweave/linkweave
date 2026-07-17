@@ -2,7 +2,19 @@
   "name": "@linkweave/cli",
   "version": "0.1.0",
   "description": "Manage LinkWeave bookmarks from the command line",
-  "license": "MIT",
+  "keywords": [
+    "bookmarks",
+    "bookmark-manager",
+    "linkweave",
+    "cli"
+  ],
+  "homepage": "https://linkweave.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/linkweave/linkweave.git",
+    "directory": "cli"
+  },
+  "license": "BUSL-1.1",
   "type": "module",
   "bin": {
     "linkweave": "dist/main.js"
@@ -10,13 +22,17 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsx src/main.ts",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "pnpm run type-check && pnpm run test"
+    "check": "pnpm run type-check && pnpm run test",
+    "prepublishOnly": "pnpm run check && pnpm run build"
   },
   "dependencies": {
     "commander": "^14.0.2"
