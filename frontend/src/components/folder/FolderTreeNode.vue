@@ -3,8 +3,9 @@ import { requireValue } from '@/lib/nullish.ts'
 import { Folder, FolderOpen, ChevronRight, MoreHorizontal } from '@lucide/vue'
 import { DropdownMenuRoot, DropdownMenuTrigger } from 'radix-vue'
 import { DropdownMenuContentLw, DropdownMenuItemLw } from '@/components/ui'
-import type { FolderJson } from '@/api/generated'
-import { reactive, ref } from 'vue'
+import type { FolderJson, FolderPositionJson } from '@/api/generated'
+import { Placement } from '@/api/generated'
+import { reactive, ref, watch } from 'vue'
 import { useFolderStore } from '@/stores/folder'
 import {
   DRAG_TYPE_BOOKMARK,
@@ -40,6 +41,22 @@ interface FolderNode {
 
 const expanded = reactive<Record<string, boolean>>({})
 const dragOverFolderId = ref<string | null>(null)
+
+// Where a dragged folder would land on this row (UC-102): the top/bottom edge
+// zones insert before/after (insertion line), the middle nests (UC-012).
+// Bookmarks always nest — edge zones only exist while a folder is dragged.
+type DropZone = 'before' | 'after' | 'into'
+const dragOverZone = ref<DropZone | null>(null)
+const EDGE_ZONE_RATIO = 0.25
+
+// Clear stale hover state when a drag ends anywhere (drop elsewhere or Esc),
+// otherwise the last hovered row keeps its highlight.
+watch([isDraggingFolder, isDraggingBookmark], ([folder, bookmark]) => {
+  if (!folder && !bookmark) {
+    dragOverFolderId.value = null
+    dragOverZone.value = null
+  }
+})
 
 function isExpanded(folderId: string): boolean {
   return expanded[folderId] ?? true
@@ -101,12 +118,22 @@ function isDragAccepted(event: DragEvent, targetFolderId: string): boolean {
   return false
 }
 
+function zoneFor(event: DragEvent): DropZone {
+  if (!isDraggingFolder.value) return 'into'
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const y = event.clientY - rect.top
+  if (y < rect.height * EDGE_ZONE_RATIO) return 'before'
+  if (y > rect.height * (1 - EDGE_ZONE_RATIO)) return 'after'
+  return 'into'
+}
+
 function onDragOver(event: DragEvent, folder: FolderJson) {
   if (!isDragAccepted(event, folder.id)) return
   event.preventDefault()
   event.stopPropagation()
   if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
   dragOverFolderId.value = folder.id
+  dragOverZone.value = zoneFor(event)
 }
 
 function onDragLeave(event: DragEvent, folder: FolderJson) {
@@ -116,15 +143,67 @@ function onDragLeave(event: DragEvent, folder: FolderJson) {
   if (related && el.contains(related)) return
   if (dragOverFolderId.value === folder.id) {
     dragOverFolderId.value = null
+    dragOverZone.value = null
   }
 }
 
-async function onDrop(event: DragEvent, targetFolder: FolderJson) {
+// The "after" edge of an expanded folder with children visually points at the
+// gap above its first child, so it inserts there; everywhere else the edges
+// insert among the target's siblings.
+function edgeDropTarget(
+  node: FolderNode,
+  zone: 'before' | 'after',
+): { parentId: string | undefined; position: FolderPositionJson } {
+  const firstChild = node.children[0]
+  if (zone === 'after' && firstChild && isExpanded(node.folder.id)) {
+    return { //insert before first child of folder
+      parentId: node.folder.id,
+      position: { anchorFolderId: firstChild.folder.id, placement: Placement.Before },
+    }
+  }
+  return {
+    parentId: node.folder.data.parentId,
+    position: {
+      anchorFolderId: node.folder.id,
+      placement: zone === 'before' ? Placement.Before : Placement.After,
+    },
+  }
+}
+
+// True when the drop would land the folder exactly where it already is —
+// skipped silently so the user doesn't get a "moved" notification for a no-op.
+function isSamePosition(
+  folderId: string,
+  drop: { parentId: string | undefined; position: FolderPositionJson },
+): boolean {
+  const folder = folderStore.folders.find(f => f.id === folderId)
+  if (!folder || folder.data.parentId !== drop.parentId) return false
+  const siblings = folderStore.folders.filter(f => f.data.parentId === drop.parentId)
+  const anchorIndex = siblings.findIndex(f => f.id === drop.position.anchorFolderId)
+  const selfIndex = siblings.findIndex(f => f.id === folderId)
+  if (anchorIndex < 0 || selfIndex < 0) return false
+  return drop.position.placement === Placement.Before
+    ? selfIndex === anchorIndex - 1
+    : selfIndex === anchorIndex + 1
+}
+
+// Indent in Npx for the insertion line so it aligns with the level it inserts at:
+// one level deeper when the "after" edge means "first child" (see edgeDropTarget).
+function dropLineIndent(node: FolderNode, depth: number): string {
+  const deeper =
+    dragOverZone.value === 'after' && node.children.length > 0 && isExpanded(node.folder.id)
+  return `${(deeper ? depth + 1 : depth) * 16 + 8}px`
+}
+
+async function onDrop(event: DragEvent, targetNode: FolderNode) {
   event.preventDefault()
   event.stopPropagation()
+  const zone = zoneFor(event)
   dragOverFolderId.value = null
+  dragOverZone.value = null
 
   const types = event.dataTransfer?.types ?? []
+  const targetFolder = targetNode.folder
 
   if (types.includes(DRAG_TYPE_BOOKMARK)) {
     const bookmarkId = event.dataTransfer!.getData(DRAG_TYPE_BOOKMARK)
@@ -137,7 +216,13 @@ async function onDrop(event: DragEvent, targetFolder: FolderJson) {
     if (!folderId) return
     if (folderId === targetFolder.id) return
     if (isDescendant(folderId, targetFolder.id)) return
-    await moveFolderWithUndo(folderId, targetFolder.id)
+    if (zone === 'into') {
+      await moveFolderWithUndo(folderId, targetFolder.id)
+      return
+    }
+    const drop = edgeDropTarget(targetNode, zone)
+    if (isSamePosition(folderId, drop)) return
+    await moveFolderWithUndo(folderId, drop.parentId, drop.position)
   }
 }
 </script>
@@ -156,17 +241,24 @@ async function onDrop(event: DragEvent, targetFolder: FolderJson) {
             folderStore.selectedFolderId === node.folder.id
               ? 's-row-active bg-accent text-accent-foreground'
               : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-            dragOverFolderId === node.folder.id
+            dragOverFolderId === node.folder.id && dragOverZone === 'into'
               ? 'ring-2 ring-primary ring-inset'
               : isAvailableTarget(node.folder.id) ? 'ring-1 ring-primary/30' : '',
+            {
+              'drop-line-before': dragOverFolderId === node.folder.id && dragOverZone === 'before',
+              'drop-line-after': dragOverFolderId === node.folder.id && dragOverZone === 'after',
+            },
           ]"
-          :style="{ paddingLeft: `${requireValue(depth) * 16 + 8}px` }"
+          :style="{
+            paddingLeft: `${requireValue(depth) * 16 + 8}px`,
+            '--drop-line-indent': dropLineIndent(node, requireValue(depth)),
+          }"
           @click="folderStore.selectFolder(node.folder.id)"
           @dragstart="onFolderDragStart($event, node.folder)"
           @dragend="onFolderDragEnd"
           @dragover="onDragOver($event, node.folder)"
           @dragleave="onDragLeave($event, node.folder)"
-          @drop="onDrop($event, node.folder)"
+          @drop="onDrop($event, node)"
         >
           <button
             class="p-0.5 rounded transition-transform"
@@ -220,6 +312,34 @@ async function onDrop(event: DragEvent, targetFolder: FolderJson) {
 </template>
 
 <style scoped>
+.s-row {
+  position: relative;
+  /* default for --drop-line-indent; overridden by inline :style binding */
+  --drop-line-indent: 8px;
+}
+
+/* Insertion line for edge-zone drops (UC-102), drawn in the 2px gap between rows */
+.drop-line-before::before,
+.drop-line-after::after {
+  content: '';
+  position: absolute;
+  left: var(--drop-line-indent, 8px);
+  right: 8px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--color-primary);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.drop-line-before::before {
+  top: -2px;
+}
+
+.drop-line-after::after {
+  bottom: -2px;
+}
+
 .folder-group {
   --group-border: color-mix(in oklab, var(--color-primary) 22%, transparent);
   --group-bg: color-mix(in oklab, var(--color-primary) 3.5%, var(--color-background));

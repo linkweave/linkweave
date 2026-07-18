@@ -91,7 +91,7 @@ public class FolderResource {
         @NotNull @Valid @NonNull FolderMoveJson json
     ) {
         authorizationService.requireCollectionAccess(json.getCollectionId());
-        Folder moved = folderService.moveFolder(folderId, json.getParentId(), json.getCollectionId());
+        Folder moved = folderService.moveFolder(folderId, json.getParentId(), json.getCollectionId(), json.getPosition());
         return FolderMapper.toJson(moved);
     }
 

@@ -56,6 +56,10 @@ export interface BookmarkResourceApiApiBookmarksBookmarkIdDeleteRequest {
     bookmarkId: string;
 }
 
+export interface BookmarkResourceApiApiBookmarksBookmarkIdGetRequest {
+    bookmarkId: string;
+}
+
 export interface BookmarkResourceApiApiBookmarksBookmarkIdMovePatchRequest {
     bookmarkId: string;
     bookmarkMoveJson: BookmarkMoveJson;
@@ -265,6 +269,51 @@ export class BookmarkResourceApi extends runtime.BaseAPI {
      */
     async apiBookmarksBookmarkIdDelete(requestParameters: BookmarkResourceApiApiBookmarksBookmarkIdDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiBookmarksBookmarkIdDeleteRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Creates request options for apiBookmarksBookmarkIdGet without sending the request
+     */
+    async apiBookmarksBookmarkIdGetRequestOpts(requestParameters: BookmarkResourceApiApiBookmarksBookmarkIdGetRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['bookmarkId'] == null) {
+            throw new runtime.RequiredError(
+                'bookmarkId',
+                'Required parameter "bookmarkId" was null or undefined when calling apiBookmarksBookmarkIdGet().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/api/bookmarks/{bookmarkId}`;
+        urlPath = urlPath.replace(`{${"bookmarkId"}}`, encodeURIComponent(String(requestParameters['bookmarkId'])));
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * Get
+     */
+    async apiBookmarksBookmarkIdGetRaw(requestParameters: BookmarkResourceApiApiBookmarksBookmarkIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BookmarkJson>> {
+        const requestOptions = await this.apiBookmarksBookmarkIdGetRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BookmarkJsonFromJSON(jsonValue));
+    }
+
+    /**
+     * Get
+     */
+    async apiBookmarksBookmarkIdGet(requestParameters: BookmarkResourceApiApiBookmarksBookmarkIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BookmarkJson> {
+        const response = await this.apiBookmarksBookmarkIdGetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**

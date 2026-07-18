@@ -1,7 +1,9 @@
 package org.linkweave.api.bookmark.folder;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -10,11 +12,16 @@ import org.linkweave.api.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.linkweave.api.bookmark.Bookmark;
 import org.linkweave.api.bookmark.BookmarkRepo;
+import org.linkweave.api.bookmark.folder.json.FolderPositionJson;
 import org.linkweave.api.bookmark.folder.json.FolderSaveJson;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.collection.CollectionRepo;
+import org.linkweave.api.shared.sortorder.Placement;
+import org.linkweave.api.shared.sortorder.SparseSortOrder;
 import org.linkweave.infrastructure.errorhandling.AppFailureException;
 import org.linkweave.infrastructure.errorhandling.AppFailureMessage;
+import org.linkweave.infrastructure.errorhandling.AppValidationException;
+import org.linkweave.infrastructure.errorhandling.AppValidationMessage;
 import org.linkweave.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -46,6 +53,7 @@ public class FolderService {
             parent,
             json.getName(),
             json.getColor(),
+            SparseSortOrder.afterMax(folderRepo.findMaxSortOrderOfSiblings(collectionId, parentId)),
             null
         );
 
@@ -106,7 +114,12 @@ public class FolderService {
     }
 
     @NonNull
-    public Folder moveFolder(@NonNull ID<Folder> id, @Nullable ID<Folder> newParentId, @NonNull ID<Collection> collectionId) {
+    public Folder moveFolder(
+        @NonNull ID<Folder> id,
+        @Nullable ID<Folder> newParentId,
+        @NonNull ID<Collection> collectionId,
+        @Nullable FolderPositionJson position
+    ) {
         Folder folder = folderRepo.getById(id);
 
         if (newParentId != null) {
@@ -118,8 +131,68 @@ public class FolderService {
             folder.setParent(null);
         }
 
+        // Without an explicit position the folder keeps its number and is ranked
+        // among its new siblings by it (BR-189).
+        if (position != null) {
+            placeAmongSiblings(folder, newParentId, collectionId, position);
+        }
+
         folderRepo.persist(folder);
         return folder;
+    }
+
+    /**
+     * Assigns {@code folder} the sort order for the drop position described by
+     * {@code position}: usually a midpoint between the two neighbors; when their
+     * gap is exhausted, the whole sibling group is renumbered in steps of
+     * {@link SparseSortOrder#STEP} (BR-187).
+     */
+    private void placeAmongSiblings(
+        @NonNull Folder folder,
+        @Nullable ID<Folder> parentId,
+        @NonNull ID<Collection> collectionId,
+        @NonNull FolderPositionJson position
+    ) {
+        ID<Folder> anchorId = position.getAnchorFolderId();
+        if (anchorId.equals(folder.getId())) {
+            throw new AppValidationException(
+                AppValidationMessage.genericMessage("AppValidation.FOLDER_POSITION_ANCHOR_SELF")
+            );
+        }
+        Folder anchor = folderRepo.getById(anchorId);
+        requireFolderBelongsToCollection(anchor, collectionId);
+
+        List<Folder> siblings = new ArrayList<>(folderRepo.findSiblings(collectionId, parentId));
+        siblings.removeIf(f -> f.getId().equals(folder.getId()));
+
+        int anchorIndex = -1;
+        for (int i = 0; i < siblings.size(); i++) {
+            if (siblings.get(i).getId().equals(anchorId)) {
+                anchorIndex = i;
+                break;
+            }
+        }
+        if (anchorIndex < 0) {
+            throw new AppValidationException(
+                AppValidationMessage.genericMessage("AppValidation.FOLDER_POSITION_ANCHOR_NOT_SIBLING")
+            );
+        }
+        // insert in place of anchor or right after it
+        int insertIndex = position.getPlacement() == Placement.BEFORE ? anchorIndex : anchorIndex + 1;
+        Long prevSortOrderVal = insertIndex > 0 ? siblings.get(insertIndex - 1).getSortOrder() : null;
+        Long nextSortOrderVal = insertIndex < siblings.size() ? siblings.get(insertIndex).getSortOrder() : null;
+
+        OptionalLong slot = SparseSortOrder.between(prevSortOrderVal, nextSortOrderVal);
+        if (slot.isPresent()) {
+            folder.setSortOrder(slot.getAsLong());
+            return;
+        }
+
+        siblings.add(insertIndex, folder);
+        for (int i = 0; i < siblings.size(); i++) {
+            siblings.get(i).setSortOrder(SparseSortOrder.renumbered(i));
+            folderRepo.persist(siblings.get(i));
+        }
     }
 
     public void removeFolder(@NonNull ID<Folder> id) {

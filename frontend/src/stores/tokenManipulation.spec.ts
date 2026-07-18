@@ -8,11 +8,14 @@ import { useTagStore } from '@/stores/tag'
 
 function seedFolders(folders: Array<{ id: string; name: string; parentId?: string | null }>) {
   const collectionStore = useCollectionStore()
-  // Minimal stand-in for CollectionInfoJson — selectFolder only reads `folders`.
+  // Minimal stand-in for CollectionInfoJson — the folder store reads `folders`
+  // and sorts them by manual order (sortOrder, creation timestamp, id).
   collectionStore.collectionInfo = {
-    folders: folders.map(f => ({
+    folders: folders.map((f, index) => ({
       id: f.id,
       data: { name: f.name, parentId: f.parentId ?? null },
+      sortOrder: (index + 1) * 1000,
+      entityInfo: { timestampErstellt: new Date(2026, 0, 1 + index) },
     })),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any

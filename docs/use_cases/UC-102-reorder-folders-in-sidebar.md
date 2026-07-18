@@ -6,7 +6,7 @@
 **Use Case Name:** Reorder Folders in Sidebar   
 **Primary Actor:** User   
 **Goal:** Arrange folders in the sidebar into a custom, persistent order by dragging them to a new position.   
-**Status:** Draft   
+**Status:** Implemented   
 
 ## Traceability
 
@@ -131,5 +131,5 @@ If two siblings ever hold the same position number (e.g. after a reparent per BR
 ## Notes (non-normative)
 
 - Storage: a `sortOrder` value on the `Folder` entity (migration backfills it from creation order). Sparse numbering (e.g. steps of 1000, midpoint insertion) avoids rewriting all siblings on every drop.
-- The sidebar already implements folder drag-and-drop for nesting (`FolderTreeNode.vue`, `useDndMove`) with undo and cycle prevention; this use case extends the same gesture with edge-zone insertion targets and extends `PATCH /folders/{id}/move` (or a sibling endpoint) with a target position.
+- The sidebar already implements folder drag-and-drop for nesting (`FolderTreeNode.vue`, `useDndMove`) with undo and cycle prevention; this use case extends the same gesture with edge-zone insertion targets and extends `PATCH /folders/{id}/move` with an optional `position` (anchor sibling id + BEFORE/AFTER placement).
 - [UC-103](UC-103-reorder-bookmarks-within-folder.md) covers manually reordering **bookmarks within a folder**, reusing the same ordering model (sparse shared sort key, append-at-end, keep-number-on-move).

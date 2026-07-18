@@ -2,6 +2,8 @@ import { useBookmarkStore } from '@/stores/bookmark'
 import { useFolderStore } from '@/stores/folder'
 import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
+import type { FolderPositionJson } from '@/api/generated'
+import { Placement } from '@/api/generated'
 import { useI18n } from 'vue-i18n'
 
 export function useDndMove() {
@@ -26,14 +28,42 @@ export function useDndMove() {
     }
   }
 
-  async function moveFolderWithUndo(folderId: string, targetParentId: string | undefined) {
+  // Where the folder currently sits, expressed as an anchor among its siblings —
+  // captured before a move so undo can restore parent AND position (UC-102 A3).
+  function folderPositionSnapshot(folderId: string): {
+    parentId: string | undefined
+    position: FolderPositionJson | undefined
+  } {
+    const parentId = folderStore.folders.find(f => f.id === folderId)?.data.parentId
+    // folderStore.folders is already in manual order, so filtering keeps it.
+    const siblings = folderStore.folders.filter(f => f.data.parentId === parentId)
+    const index = siblings.findIndex(f => f.id === folderId)
+    const next = siblings[index + 1]
+    if (next) return { parentId, position: { anchorFolderId: next.id, placement: Placement.Before } }
+    const previous = index > 0 ? siblings[index - 1] : undefined
+    if (previous) {
+      return { parentId, position: { anchorFolderId: previous.id, placement: Placement.After } }
+    }
+    // Only child: any position within the group is the same position.
+    return { parentId, position: undefined }
+  }
+
+  async function moveFolderWithUndo(
+    folderId: string,
+    targetParentId: string | undefined,
+    position?: FolderPositionJson,
+  ) {
     const collectionId = collectionStore.currentCollectionId
     if (!collectionId) return
-    const previousParentId = folderStore.folders.find(f => f.id === folderId)?.data.parentId
+    const previous = folderPositionSnapshot(folderId)
     try {
-      await folderStore.moveFolder(folderId, { collectionId, parentId: targetParentId })
+      await folderStore.moveFolder(folderId, { collectionId, parentId: targetParentId, position })
       notification.successWithUndo(t('dnd.folderMoved'), t('common.undo'), async () => {
-        await folderStore.moveFolder(folderId, { collectionId, parentId: previousParentId })
+        await folderStore.moveFolder(folderId, {
+          collectionId,
+          parentId: previous.parentId,
+          position: previous.position,
+        })
       })
     } catch {
       notification.error(t('folder.moveError'))

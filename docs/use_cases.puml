@@ -55,7 +55,7 @@ rectangle "LinkWeave Bookmark Manager" {
         usecase "UC-011\nRename Folder" as UC011 <<implemented>>
         usecase "UC-012\nNest Folders" as UC012 <<implemented>>
         usecase "UC-014\nDelete Folder" as UC014 <<implemented>>
-        usecase "UC-102\nReorder Folders\nin Sidebar" as UC102
+        usecase "UC-102\nReorder Folders\nin Sidebar" as UC102 <<implemented>>
     }
 
     rectangle "Tag Management" {

@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { FolderPositionJson } from './folder-position-json';
+import {
+    FolderPositionJsonFromJSON,
+    FolderPositionJsonFromJSONTyped,
+    FolderPositionJsonToJSON,
+    FolderPositionJsonToJSONTyped,
+} from './folder-position-json';
+
 /**
  * 
  * @export
@@ -31,6 +39,12 @@ export interface FolderMoveJson {
      * @memberof FolderMoveJson
      */
     parentId?: string;
+    /**
+     * 
+     * @type {FolderPositionJson}
+     * @memberof FolderMoveJson
+     */
+    position?: FolderPositionJson;
 }
 
 /**
@@ -53,6 +67,7 @@ export function FolderMoveJsonFromJSONTyped(json: any, ignoreDiscriminator: bool
         
         'collectionId': json['collectionId'],
         'parentId': json['parentId'] == null ? undefined : json['parentId'],
+        'position': json['position'] == null ? undefined : FolderPositionJsonFromJSON(json['position']),
     };
 }
 
@@ -69,6 +84,7 @@ export function FolderMoveJsonToJSONTyped(value?: FolderMoveJson | null, ignoreD
         
         'collectionId': value['collectionId'],
         'parentId': value['parentId'],
+        'position': FolderPositionJsonToJSON(value['position']),
     };
 }
 

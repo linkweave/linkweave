@@ -1,7 +1,12 @@
-import { type Browser, expect, test } from './fixtures'
-import { BASE, createBookmarkViaApi, createCollectionViaApi } from './helpers/api'
-import { login } from './helpers/auth'
+import { expect, test } from './fixtures'
+import { createBookmarkViaApi, createCollectionViaApi } from './helpers/api'
 import { openAddBookmarkDialog } from './helpers/bookmarks'
+import {
+  deleteTestUserCleanup,
+  registerAndCaptureStorageState,
+  type StorageState,
+  type TestUser,
+} from './models/TestUser'
 
 test.describe.configure({ mode: 'serial' })
 
@@ -10,20 +15,27 @@ const collectionName = `Duplicate Check ${ts}`
 const existingBookmarkTitle = `Existing-${ts}`
 const duplicateUrl = `https://example.com/page-${ts}`
 
+let user: TestUser
+let storageState: StorageState
 let collectionId: string
 
 test.describe('Duplicate Bookmark Warning', () => {
   test.beforeAll(async ({ browser }) => {
-    const context = await browser.newContext({ ignoreHTTPSErrors: true })
-    const page = await context.newPage()
+    ;({ user, storageState } = await registerAndCaptureStorageState(browser, 'dupwarn'))
+    const ctx = await browser.newContext({ ignoreHTTPSErrors: true, storageState })
     try {
-      await login(page)
-      collectionId = await createCollectionViaApi(page.request, collectionName)
-      await createBookmarkViaApi(page.request, collectionId, existingBookmarkTitle, duplicateUrl)
+      collectionId = await createCollectionViaApi(ctx.request, collectionName)
+      await createBookmarkViaApi(ctx.request, collectionId, existingBookmarkTitle, duplicateUrl)
     } finally {
-      await context.close()
+      await ctx.close()
     }
   })
+
+  test.afterAll(async ({ browser }) => {
+    await deleteTestUserCleanup(browser, () => user)
+  })
+
+  test.use({ storageState: async ({}, use) => { await use(storageState) } })
 
   test('shows duplicate warning when creating a bookmark with an existing URL', async ({
     page,
@@ -122,17 +134,5 @@ test.describe('Duplicate Bookmark Warning', () => {
 
     await dialog.getByRole('button', { name: /cancel/i }).click()
     await expect(dialog).not.toBeVisible()
-  })
-
-  test.afterAll(async ({ browser }: { browser: Browser }) => {
-    if (!collectionId) return
-    const context = await browser.newContext({ ignoreHTTPSErrors: true })
-    const page = await context.newPage()
-    try {
-      await login(page)
-      await page.request.delete(`${BASE}/collections/${collectionId}`).catch(() => undefined)
-    } finally {
-      await context.close()
-    }
   })
 })

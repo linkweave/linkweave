@@ -24,6 +24,7 @@ import org.linkweave.api.bookmark.property.PropertyType;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.collection.CollectionRepo;
 import org.linkweave.api.shared.config.ConfigService;
+import org.linkweave.api.shared.sortorder.SparseSortOrder;
 import org.linkweave.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -105,7 +106,9 @@ public class BookmarkImportService {
         @Nullable PropertyDefinition importSourceDef,
         @Nullable String fileName
     ) {
-        Folder folder = new Folder(collection, parent, parsedFolder.getName(), null, null);
+        ID<Folder> parentId = parent == null ? null : parent.getId();
+        long sortOrder = SparseSortOrder.afterMax(folderRepo.findMaxSortOrderOfSiblings(collection.getId(), parentId));
+        Folder folder = new Folder(collection, parent, parsedFolder.getName(), null, sortOrder, null);
         folderRepo.persist(folder);
         summary.incrementFoldersCreated();
 

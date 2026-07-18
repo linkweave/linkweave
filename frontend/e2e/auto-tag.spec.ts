@@ -1,7 +1,12 @@
-import { expect, test, type APIRequestContext, type Browser } from './fixtures'
+import { expect, test, type APIRequestContext } from './fixtures'
 import { BASE, createCollectionViaApi } from './helpers/api'
-import { login } from './helpers/auth'
 import { openAddBookmarkDialog } from './helpers/bookmarks'
+import {
+  deleteTestUserCleanup,
+  registerAndCaptureStorageState,
+  type StorageState,
+  type TestUser,
+} from './models/TestUser'
 
 test.describe.configure({ mode: 'serial' })
 
@@ -10,6 +15,8 @@ const collectionName = `Auto-Tag Test ${ts}`
 const bookmarkTitle = `AutoTag-${ts}`
 const bookmarkUrl = `https://dev.acme-${ts}.example.com`
 
+let user: TestUser
+let storageState: StorageState
 let collectionId: string
 
 async function createAutoTagRuleViaApi(
@@ -46,19 +53,24 @@ async function findBookmarkByTitle(
 
 test.describe('Auto-Tag Bookmark by URL Pattern', () => {
   test.beforeAll(async ({ browser }) => {
-    const context = await browser.newContext({ ignoreHTTPSErrors: true })
-    const page = await context.newPage()
+    ;({ user, storageState } = await registerAndCaptureStorageState(browser, 'autotag'))
+    const ctx = await browser.newContext({ ignoreHTTPSErrors: true, storageState })
     try {
-      await login(page)
-      collectionId = await createCollectionViaApi(page.request, collectionName)
+      collectionId = await createCollectionViaApi(ctx.request, collectionName)
       // Seed the auto-tag rules this spec relies on, in a freshly-created
       // collection so we don't depend on dev-DB state.
-      await createAutoTagRuleViaApi(page.request, collectionId, 'dev\\.', 'dev')
-      await createAutoTagRuleViaApi(page.request, collectionId, 'uat', 'uat')
+      await createAutoTagRuleViaApi(ctx.request, collectionId, 'dev\\.', 'dev')
+      await createAutoTagRuleViaApi(ctx.request, collectionId, 'uat', 'uat')
     } finally {
-      await context.close()
+      await ctx.close()
     }
   })
+
+  test.afterAll(async ({ browser }) => {
+    await deleteTestUserCleanup(browser, () => user)
+  })
+
+  test.use({ storageState: async ({}, use) => { await use(storageState) } })
 
   test('shows suggestions, accepts them, and creates bookmark with the new tag', async ({ page }) => {
     const dialog = await openAddBookmarkDialog(page, collectionId)
@@ -119,17 +131,5 @@ test.describe('Auto-Tag Bookmark by URL Pattern', () => {
 
     await dialog.getByRole('button', { name: /cancel/i }).click()
     await expect(dialog).not.toBeVisible()
-  })
-
-  test.afterAll(async ({ browser }: { browser: Browser }) => {
-    if (!collectionId) return
-    const context = await browser.newContext({ ignoreHTTPSErrors: true })
-    const page = await context.newPage()
-    try {
-      await login(page)
-      await page.request.delete(`${BASE}/collections/${collectionId}`).catch(() => undefined)
-    } finally {
-      await context.close()
-    }
   })
 })

@@ -1,6 +1,7 @@
 package org.linkweave.api.bookmark.folder.json;
 
 import org.linkweave.api.types.id.ID;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -24,4 +25,14 @@ public class FolderMoveJson {
     @Nullable
     @Schema(required = false)
     ID<Folder> parentId;
+
+    /**
+     * Explicit drop position among the target parent's children (UC-102).
+     * Absent on a plain reparent, which keeps the folder's previous position
+     * number (BR-189).
+     */
+    @Nullable
+    @Valid
+    @Schema(required = false)
+    FolderPositionJson position;
 }

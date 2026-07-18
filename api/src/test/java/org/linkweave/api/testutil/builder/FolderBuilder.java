@@ -43,6 +43,12 @@ public class FolderBuilder {
     }
 
     @NonNull
+    public FolderBuilder withSortOrder(long sortOrder) {
+        folder.setSortOrder(sortOrder);
+        return this;
+    }
+
+    @NonNull
     public static Folder build(Consumer<FolderBuilder> block) {
         FolderBuilder builder = new FolderBuilder();
         block.accept(builder);

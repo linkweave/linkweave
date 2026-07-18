@@ -28,6 +28,7 @@ import org.linkweave.api.bookmark.property.BookmarkPropertyValue;
 import org.linkweave.api.bookmark.property.BookmarkPropertyValueRepo;
 import org.linkweave.api.bookmark.property.PropertyDefinition;
 import org.linkweave.api.bookmark.property.PropertyDefinitionRepo;
+import org.linkweave.api.shared.sortorder.SparseSortOrder;
 import org.linkweave.api.bookmark.property.PropertyType;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.collection.CollectionRepo;
@@ -240,7 +241,9 @@ public class ImportReviewService {
         if (existing != null) {
             return existing;
         }
-        Folder folder = new Folder(ctx.collection, parent, name, null, null);
+        ID<Folder> parentId = parent == null ? null : parent.getId();
+        long sortOrder = SparseSortOrder.afterMax(folderRepo.findMaxSortOrderOfSiblings(ctx.collection.getId(), parentId));
+        Folder folder = new Folder(ctx.collection, parent, name, null, sortOrder, null);
         folderRepo.persist(folder);
         ctx.folderIndex.put(key, folder);
         ctx.counts.foldersCreated++;

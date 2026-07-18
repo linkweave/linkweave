@@ -1,12 +1,13 @@
 import { expect, type Locator, type Page } from '@playwright/test'
-import { loginAndNavigateToCollection } from './auth'
 
 /**
- * Logs in, navigates to the collection, opens the "Add bookmark" dialog, and
- * returns it once visible.
+ * Navigates to the collection, opens the "Add bookmark" dialog, and returns it
+ * once visible. The page must already be authenticated (specs provide a
+ * per-spec user via the `storageState` fixture).
  */
 export async function openAddBookmarkDialog(page: Page, collectionId: string): Promise<Locator> {
-  await loginAndNavigateToCollection(page, collectionId)
+  await page.goto(`/collections/${collectionId}`)
+  await expect(page).toHaveURL(new RegExp(`/collections/${collectionId}`))
   await page.getByRole('button', { name: /add bookmark/i }).click()
   const dialog = page.locator('[role="dialog"]')
   await expect(dialog).toBeVisible()
