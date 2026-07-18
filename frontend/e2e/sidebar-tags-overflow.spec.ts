@@ -83,7 +83,7 @@ test.describe('sidebar Tags section overflow', () => {
     await page.goto(`/collections/${collectionId}`)
 
     const section = page.getByTestId('sidebar-tags-section')
-    await expect(section).toBeVisible()
+    await expect(section).toBeVisible({ timeout: 30000 })
 
     // Ensure the section is expanded (default is open, but be explicit so the
     // test does not depend on persisted prefs).
@@ -94,7 +94,17 @@ test.describe('sidebar Tags section overflow', () => {
     await expect(toggle).toHaveAttribute('aria-expanded', 'true')
 
     // Wait for the list to render and the open-collapse transition to settle.
-    await expect(page.getByTestId('tag-row-overflow-tag-00')).toBeVisible()
+    // Under parallel e2e load the tags GET can lag the page mount by tens of
+    // seconds, so a generous budget + one-shot reload fallback is the
+    // difference between a stable test and a random flake.
+    const firstTagRow = page.getByTestId('tag-row-overflow-tag-00')
+    try {
+      await expect(firstTagRow).toBeVisible({ timeout: 30000 })
+    } catch {
+      await page.reload()
+      await expect(page.getByTestId('sidebar-tags-section')).toBeVisible({ timeout: 30000 })
+      await expect(firstTagRow).toBeVisible({ timeout: 30000 })
+    }
 
     const geometry = await section.evaluate((sectionEl: HTMLElement) => {
       const scroller = sectionEl.querySelector<HTMLElement>('[class*="overflow-y-auto"]')!

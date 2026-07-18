@@ -42,13 +42,16 @@ export class RegisterPageObject {
   }
 
   async expectOnRegisterPage() {
-    await expect(this.page).toHaveURL(/\/register/)
-    await expect(this.firstNameInput).toBeVisible()
-    await expect(this.emailInput).toBeVisible()
-    await expect(this.submitButton).toBeVisible()
+    await expect(this.page).toHaveURL(/\/register/, { timeout: 15000 })
+    await expect(this.firstNameInput).toBeVisible({ timeout: 10000 })
+    await expect(this.emailInput).toBeVisible({ timeout: 10000 })
+    await expect(this.submitButton).toBeVisible({ timeout: 10000 })
   }
 
   async expectOnLoginPage() {
-    await expect(this.page).toHaveURL(/\/login/)
+    // After successful registration the SPA redirects to /login. Under
+    // parallel e2e load the backend's registration write + redirect can lag,
+    // so give the URL change a generous budget.
+    await expect(this.page).toHaveURL(/\/login/, { timeout: 30000 })
   }
 }

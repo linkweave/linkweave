@@ -7,9 +7,8 @@ import {
   type TestUser,
 } from './models/TestUser'
 
-// UC-102: reorder folders in the sidebar by dragging them onto the gap strips
-// between rows (insertion line with anchor dot), while the row body nests
-// (UC-012, fill indicator). Spring-loaded folders expand on hover during a drag.
+// UC-102: reorder folders in the sidebar by dragging them onto the edge zones
+// of other rows (insertion line), while the row middle still nests (UC-012).
 
 test.describe.configure({ mode: 'serial' })
 
@@ -56,33 +55,33 @@ test.describe('Folder reorder (UC-102)', () => {
   }
 
   /**
-   * Simulates an HTML5 drag of one folder row onto a drop target. Playwright's
+   * Simulates an HTML5 drag of one folder row onto another. Playwright's
    * high-level dragTo is unreliable for native DnD, so the drag events are
-   * dispatched directly with a shared DataTransfer. `before` targets the gap
-   * strip above the target row; `into` targets the row body (nest).
+   * dispatched directly with a shared DataTransfer, aiming at the requested
+   * zone of the target row (top edge = before, bottom edge = after,
+   * middle = nest).
    */
   async function dragFolder(
     page: Page,
     sourceName: string,
     targetName: string,
-    zone: 'before' | 'into',
+    zone: 'before' | 'after' | 'into',
   ) {
     const source = page.getByTestId(`folder-row-${folderIds[sourceName]}`)
+    const target = page.getByTestId(`folder-row-${folderIds[targetName]}`)
     const dataTransfer = await page.evaluateHandle(() => new DataTransfer())
     await source.dispatchEvent('dragstart', { dataTransfer })
-    if (zone === 'before') {
-      const strip = page.getByTestId(`folder-gap-before-${folderIds[targetName]}`)
-      await strip.dispatchEvent('dragover', { dataTransfer })
-      await strip.dispatchEvent('drop', { dataTransfer })
-    } else {
-      const target = page.getByTestId(`folder-row-${folderIds[targetName]}`)
-      const box = await target.boundingBox()
-      if (!box) throw new Error(`target row ${targetName} is not visible`)
-      const clientX = box.x + box.width / 2
-      const clientY = box.y + box.height / 2
-      await target.dispatchEvent('dragover', { dataTransfer, clientX, clientY })
-      await target.dispatchEvent('drop', { dataTransfer, clientX, clientY })
-    }
+    const box = await target.boundingBox()
+    if (!box) throw new Error(`target row ${targetName} is not visible`)
+    const clientX = box.x + box.width / 2
+    const clientY =
+      zone === 'before'
+        ? box.y + box.height * 0.1
+        : zone === 'after'
+          ? box.y + box.height * 0.9
+          : box.y + box.height / 2
+    await target.dispatchEvent('dragover', { dataTransfer, clientX, clientY })
+    await target.dispatchEvent('drop', { dataTransfer, clientX, clientY })
     await source.dispatchEvent('dragend', { dataTransfer })
   }
 
@@ -91,53 +90,36 @@ test.describe('Folder reorder (UC-102)', () => {
     expect(await visibleFolderNames(page)).toEqual(['Alpha', 'Beta', 'Gamma'])
   })
 
-  test('gap strips show the insertion line, the row body the nest fill', async ({
+  test('hovering the edge zones shows an insertion line, the middle a nesting highlight', async ({
     page,
   }) => {
     await page.goto(`/collections/${collectionId}`)
-    // Beta sits in the middle: every indicator around it is a real position
-    // change (gaps that would be a no-op for the dragged folder show nothing).
-    const source = page.getByTestId(`folder-row-${folderIds['Beta']}`)
+    const source = page.getByTestId(`folder-row-${folderIds['Gamma']}`)
     const target = page.getByTestId(`folder-row-${folderIds['Alpha']}`)
     await expect(target).toBeVisible()
 
     const dataTransfer = await page.evaluateHandle(() => new DataTransfer())
     await source.dispatchEvent('dragstart', { dataTransfer })
-
-    // The row in flight is dimmed.
-    await expect(source).toHaveClass(/is-dragging/)
-
-    // Gap strip above Alpha: insertion line with its anchor dot.
-    const strip = page.getByTestId(`folder-gap-before-${folderIds['Alpha']}`)
-    await strip.dispatchEvent('dragover', { dataTransfer })
-    await expect(strip.locator('.drop-line')).toBeVisible()
-    await expect(strip.locator('.drop-line .dot')).toBeVisible()
-
-    // Row body: nest fill replaces the line.
     const box = await target.boundingBox()
     if (!box) throw new Error('target row is not visible')
-    await target.dispatchEvent('dragover', {
-      dataTransfer,
-      clientX: box.x + box.width / 2,
-      clientY: box.y + box.height / 2,
-    })
-    await expect(target).toHaveClass(/nest-target/)
-    await expect(strip.locator('.drop-line')).toHaveCount(0)
+    const clientX = box.x + box.width / 2
 
-    // Trailing strip: insert after the last root folder.
-    const end = page.getByTestId('folder-gap-end')
-    await end.dispatchEvent('dragover', { dataTransfer })
-    await expect(end.locator('.drop-line')).toBeVisible()
-    await expect(target).not.toHaveClass(/nest-target/)
+    await target.dispatchEvent('dragover', { dataTransfer, clientX, clientY: box.y + 2 })
+    await expect(target).toHaveClass(/drop-line-before/)
 
-    // Cancel the drag: indicators disappear, no order change.
+    await target.dispatchEvent('dragover', { dataTransfer, clientX, clientY: box.y + box.height - 2 })
+    await expect(target).toHaveClass(/drop-line-after/)
+
+    await target.dispatchEvent('dragover', { dataTransfer, clientX, clientY: box.y + box.height / 2 })
+    await expect(target).toHaveClass(/ring-2/)
+    await expect(target).not.toHaveClass(/drop-line/)
+
+    // Cancel the drag: no order change.
     await source.dispatchEvent('dragend', { dataTransfer })
-    await expect(end.locator('.drop-line')).toHaveCount(0)
-    await expect(source).not.toHaveClass(/is-dragging/)
     expect(await visibleFolderNames(page)).toEqual(['Alpha', 'Beta', 'Gamma'])
   })
 
-  test('dropping onto the gap above another folder inserts it there and persists', async ({
+  test('dragging a folder onto the top edge of another inserts it before and persists', async ({
     page,
   }) => {
     await page.goto(`/collections/${collectionId}`)
@@ -164,15 +146,68 @@ test.describe('Folder reorder (UC-102)', () => {
     await expect.poll(() => visibleFolderNames(page)).toEqual(['Gamma', 'Alpha', 'Beta'])
   })
 
-  test('dropping onto the body of a row still nests the folder', async ({ page }) => {
+  test('dropping onto the middle of a row still nests the folder', async ({ page }) => {
     await page.goto(`/collections/${collectionId}`)
     await expect(page.getByTestId(`folder-row-${folderIds['Beta']}`)).toBeVisible()
 
     await dragFolder(page, 'Beta', 'Alpha', 'into')
 
+    // Beta is now a child of Alpha: rendered directly after it, indented one level.
+    await expect.poll(() => visibleFolderNames(page)).toEqual(['Gamma', 'Alpha', 'Beta'])
+// UC-102: reorder folders in the sidebar by dragging them onto the gap strips
+// between rows (insertion line with anchor dot), while the row body nests
+// (UC-012, fill indicator). Spring-loaded folders expand on hover during a drag.
+   * Simulates an HTML5 drag of one folder row onto a drop target. Playwright's
+   * dispatched directly with a shared DataTransfer. `before` targets the gap
+   * strip above the target row; `into` targets the row body (nest).
+    zone: 'before' | 'into',
+    if (zone === 'before') {
+      const strip = page.getByTestId(`folder-gap-before-${folderIds[targetName]}`)
+      await strip.dispatchEvent('dragover', { dataTransfer })
+      await strip.dispatchEvent('drop', { dataTransfer })
+    } else {
+      const target = page.getByTestId(`folder-row-${folderIds[targetName]}`)
+      const box = await target.boundingBox()
+      if (!box) throw new Error(`target row ${targetName} is not visible`)
+      const clientX = box.x + box.width / 2
+      const clientY = box.y + box.height / 2
+      await target.dispatchEvent('dragover', { dataTransfer, clientX, clientY })
+      await target.dispatchEvent('drop', { dataTransfer, clientX, clientY })
+    }
+  test('gap strips show the insertion line, the row body the nest fill', async ({
+    // Beta sits in the middle: every indicator around it is a real position
+    // change (gaps that would be a no-op for the dragged folder show nothing).
+    const source = page.getByTestId(`folder-row-${folderIds['Beta']}`)
+
+    // The row in flight is dimmed.
+    await expect(source).toHaveClass(/is-dragging/)
+
+    // Gap strip above Alpha: insertion line with its anchor dot.
+    const strip = page.getByTestId(`folder-gap-before-${folderIds['Alpha']}`)
+    await strip.dispatchEvent('dragover', { dataTransfer })
+    await expect(strip.locator('.drop-line')).toBeVisible()
+    await expect(strip.locator('.drop-line .dot')).toBeVisible()
+
+    // Row body: nest fill replaces the line.
+    await target.dispatchEvent('dragover', {
+      dataTransfer,
+      clientX: box.x + box.width / 2,
+      clientY: box.y + box.height / 2,
+    })
+    await expect(target).toHaveClass(/nest-target/)
+    await expect(strip.locator('.drop-line')).toHaveCount(0)
+    // Trailing strip: insert after the last root folder.
+    const end = page.getByTestId('folder-gap-end')
+    await end.dispatchEvent('dragover', { dataTransfer })
+    await expect(end.locator('.drop-line')).toBeVisible()
+    await expect(target).not.toHaveClass(/nest-target/)
+    // Cancel the drag: indicators disappear, no order change.
+    await expect(end.locator('.drop-line')).toHaveCount(0)
+    await expect(source).not.toHaveClass(/is-dragging/)
+  test('dropping onto the gap above another folder inserts it there and persists', async ({
+  test('dropping onto the body of a row still nests the folder', async ({ page }) => {
     // Beta is now a child of Alpha: rendered directly after it, indented one
     // level. Polled because the move refresh can re-render the rows mid-read.
-    await expect.poll(() => visibleFolderNames(page)).toEqual(['Gamma', 'Alpha', 'Beta'])
     const rowPadding = (name: string) =>
       page
         .getByTestId(`folder-row-${folderIds[name]}`)

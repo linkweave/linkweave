@@ -62,12 +62,12 @@ export class CollectionSwitcherPageObject {
     await expect(this.setDefaultButton).toBeDisabled()
   }
 
-  async expectShowsThisIsDefault() {
-    await expect(this.setDefaultButton).toContainText('This is the default')
+  async expectShowsThisIsDefault(opts: { timeout?: number } = {}) {
+    await expect(this.setDefaultButton).toContainText('This is the default', opts)
   }
 
-  async expectShowsSetAsDefault() {
-    await expect(this.setDefaultButton).toContainText('Set as default')
+  async expectShowsSetAsDefault(opts: { timeout?: number } = {}) {
+    await expect(this.setDefaultButton).toContainText('Set as default', opts)
   }
 
   async closeByClickingOutside() {

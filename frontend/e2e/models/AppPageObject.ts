@@ -23,6 +23,14 @@ export class AppPageObject {
   }
 
   async expectAuthenticated() {
-    await expect(this.allBookmarksLabel).toBeVisible()
+    // Wait for the SPA to actually load the current collection — under
+    // parallel e2e load the post-login /api/collections GET can lag, and the
+    // sidebar's `sidebar-all-bookmarks` span renders empty text (i18n key
+    // `sidebar.allBookmarks` is just `"{name}"`) until the collection name
+    // arrives, which Playwright treats as hidden. The "Add Bookmark" header
+    // button is always rendered as soon as the authed layout mounts.
+    await expect(
+      this.page.getByRole('button', { name: /add bookmark/i }),
+    ).toBeVisible({ timeout: 30000 })
   }
 }

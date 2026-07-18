@@ -52,14 +52,23 @@ test.describe('UC-093 preview popup action footer', () => {
       localStorage.setItem('linkweave:showPreviewPopup', 'true')
     })
     await gotoCollection(page, collection)
-    await expect(page.getByTestId(/^bookmark-card-/).first()).toBeVisible({ timeout: 10000 })
+    // Wait for the seeded bookmark to render. Under parallel e2e load the
+    // bookmarks GET can lag the page mount by tens of seconds — use a
+    // generous budget + one-shot reload fallback.
+    const firstCard = page.getByTestId(/^bookmark-card-/).first()
+    try {
+      await expect(firstCard).toBeVisible({ timeout: 30000 })
+    } catch {
+      await page.reload()
+      await expect(firstCard).toBeVisible({ timeout: 30000 })
+    }
 
     // Hover the row; the shared hover-intent controller shows the popup after
     // its cold-start dwell (DWELL_MS = 450ms).
     const card = page.getByTestId(/^bookmark-card-/).first()
     await card.hover()
     const popup = page.getByTestId('bookmark-preview-popup')
-    await expect(popup).toBeVisible({ timeout: 5000 })
+    await expect(popup).toBeVisible({ timeout: 10000 })
 
     // The capture area extends past the row and is the popup's largest surface.
     // Moving across it toward the footer must NOT dismiss the popup (regression

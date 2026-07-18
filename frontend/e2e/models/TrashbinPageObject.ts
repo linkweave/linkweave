@@ -40,46 +40,75 @@ export class TrashbinPageObject {
   }
 
   async expectBookmarkVisible(id: string) {
-    await expect(this.bookmarkRow(id)).toBeVisible()
+    await expect(this.bookmarkRow(id)).toBeVisible({ timeout: 15000 })
   }
 
   async expectBookmarkNotVisible(id: string) {
-    await expect(this.bookmarkRow(id)).not.toBeVisible()
+    await expect(this.bookmarkRow(id)).not.toBeVisible({ timeout: 15000 })
   }
 
   async expectFolderVisible(id: string) {
-    await expect(this.folderRow(id)).toBeVisible()
+    await expect(this.folderRow(id)).toBeVisible({ timeout: 15000 })
   }
 
   async expectFolderNotVisible(id: string) {
-    await expect(this.folderRow(id)).not.toBeVisible()
+    await expect(this.folderRow(id)).not.toBeVisible({ timeout: 15000 })
   }
 
   async expectEmpty() {
-    await expect(this.emptyState).toBeVisible()
+    await expect(this.emptyState).toBeVisible({ timeout: 15000 })
     await expect(this.emptyButton).toBeDisabled()
   }
 
   async restoreBookmark(id: string) {
+    // Wait for the POST restore so callers can immediately navigate back and
+    // expect the bookmark to be there. Without this, under parallel load the
+    // click can fire and the trashbin row can disappear (UI optimistic update)
+    // before the backend has actually restored the bookmark.
+    const restored = this.page.waitForResponse(
+      (r) => r.url().includes(`/api/trashbin/bookmarks/${id}/restore`) && r.request().method() === 'POST' && r.ok(),
+      { timeout: 15000 },
+    )
     await this.restoreBookmarkButton(id).click()
+    await restored
   }
 
   async purgeBookmark(id: string) {
+    const purged = this.page.waitForResponse(
+      (r) => r.url().includes(`/api/trashbin/bookmarks/${id}`) && r.request().method() === 'DELETE' && r.ok(),
+      { timeout: 15000 },
+    )
     await this.purgeBookmarkButton(id).click()
     await this.confirmDialogSubmit.click()
+    await purged
   }
 
   async restoreFolder(id: string) {
+    const restored = this.page.waitForResponse(
+      (r) => r.url().includes(`/api/trashbin/folders/${id}/restore`) && r.request().method() === 'POST' && r.ok(),
+      { timeout: 15000 },
+    )
     await this.restoreFolderButton(id).click()
+    await restored
   }
 
   async purgeFolder(id: string) {
+    const purged = this.page.waitForResponse(
+      (r) => r.url().includes(`/api/trashbin/folders/${id}`) && r.request().method() === 'DELETE' && r.ok(),
+      { timeout: 15000 },
+    )
     await this.purgeFolderButton(id).click()
     await this.confirmDialogSubmit.click()
+    await purged
   }
 
   async emptyTrashbin() {
+    const emptied = this.page.waitForResponse(
+      (r) => r.url().includes('/api/trashbin') && r.request().method() === 'DELETE' && r.ok(),
+      { timeout: 15000 },
+    )
     await this.emptyButton.click()
     await this.confirmDialogSubmit.click()
+    await emptied
   }
 }

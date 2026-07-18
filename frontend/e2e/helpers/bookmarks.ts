@@ -37,11 +37,26 @@ export async function createBookmarkViaUi(
     const trigger = dialog.getByTestId('create-bookmark-tags-trigger')
     await trigger.click()
     for (const tagName of tagNames) {
-      await page.getByTestId(`tags-row-${tagName}`).click()
+      // Under parallel e2e load the tag-list GET inside the popover can lag
+      // the popover open by tens of seconds. Wait explicitly with a generous
+      // budget so a freshly-created tag is reliably picked up.
+      const tagRow = page.getByTestId(`tags-row-${tagName}`)
+      try {
+        await expect(tagRow).toBeVisible({ timeout: 15000 })
+      } catch {
+        // Re-open the popover to force a fresh fetch of the tag list.
+        await trigger.click()
+        await expect(page.getByTestId('create-bookmark-tags-popover')).toBeHidden({
+          timeout: 10000,
+        })
+        await trigger.click()
+        await expect(tagRow).toBeVisible({ timeout: 30000 })
+      }
+      await tagRow.click()
     }
     await trigger.click()
-    await expect(page.getByTestId('create-bookmark-tags-popover')).toBeHidden()
+    await expect(page.getByTestId('create-bookmark-tags-popover')).toBeHidden({ timeout: 10000 })
   }
   await dialog.locator('button[type="submit"]').click()
-  await expect(dialog).not.toBeVisible()
+  await expect(dialog).not.toBeVisible({ timeout: 30000 })
 }

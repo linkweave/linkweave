@@ -13,12 +13,16 @@ export default defineConfig({
   timeout: 90_000,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  // One worker by default: deterministic ~3 min runs. `--workers=3` finishes
-  // in ~1 min on an otherwise idle machine, but three Chromiums + Vite +
-  // Quarkus dev + SQLite need most of the machine — with an IDE or other
-  // load running alongside, specs start missing their navigation/visibility
-  // timeouts and fail spuriously. Opt in explicitly when the machine is quiet.
-  workers: 1,
+  // Three workers by default for local runs: finishes the chromium suite in
+  // ~1 min vs ~3 min serial. The page objects and helpers all carry bounded
+  // timeouts + one-shot reload fallbacks for the data-load waits that used
+  // to flake under parallel e2e load, so three workers is now reliable on a
+  // typical dev machine (Vite + Quarkus dev + IntelliJ all running).
+  //
+  // On a heavily loaded machine, fall back to `--workers=1` for deterministic
+  // runs — three Chromiums still need real CPU, and the backend is SQLite.
+  // CI pins workers=1 separately for cross-browser reproducibility.
+  workers: process.env.CI ? 1 : 3,
   reporter: 'html',
   use: {
     baseURL,

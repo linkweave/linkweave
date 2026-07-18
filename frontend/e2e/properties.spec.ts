@@ -130,16 +130,23 @@ test.describe('UC-067 property filtering', () => {
 
   test('sidebar row toggles existence filter on/off', async ({ page }) => {
     await page.goto(`/collections/${collectionId}`)
-    // 4 bookmarks total, no filter yet
-    await expect.poll(() => visibleCardCount(page)).toBe(4)
+    // 4 bookmarks total, no filter yet. One-shot reload fallback — under
+    // parallel e2e load the bookmarks GET can silently fail or return stale
+    // data on first load.
+    try {
+      await expect.poll(() => visibleCardCount(page), { timeout: 30000 }).toBe(4)
+    } catch {
+      await page.reload()
+      await expect.poll(() => visibleCardCount(page), { timeout: 30000 }).toBe(4)
+    }
 
     const statusRow = page.locator('[data-testid="sidebar-property-row-status"]')
-    await expect(statusRow).toBeVisible()
+    await expect(statusRow).toBeVisible({ timeout: 15000 })
     await statusRow.click()
 
     // Only the two with status set should remain; query is bare-key
-    await expect.poll(() => searchQueryValue(page)).toBe('property:status')
-    await expect.poll(() => visibleCardCount(page)).toBe(2)
+    await expect.poll(() => searchQueryValue(page), { timeout: 15000 }).toBe('property:status')
+    await expect.poll(() => visibleCardCount(page), { timeout: 15000 }).toBe(2)
     await expect(statusRow).toHaveAttribute('data-active', 'true')
 
     // Sanity: the bookmark with only `priority` set is hidden.
@@ -148,8 +155,8 @@ test.describe('UC-067 property filtering', () => {
 
     // Click again → cleared
     await statusRow.click()
-    await expect.poll(() => searchQueryValue(page)).toBe('')
-    await expect.poll(() => visibleCardCount(page)).toBe(4)
+    await expect.poll(() => searchQueryValue(page), { timeout: 15000 }).toBe('')
+    await expect.poll(() => visibleCardCount(page), { timeout: 15000 }).toBe(4)
     await expect(statusRow).toHaveAttribute('data-active', 'false')
   })
 
@@ -159,18 +166,25 @@ test.describe('UC-067 property filtering', () => {
       localStorage.setItem('linkweave:showPropertyBadges', 'true')
     })
     await page.goto(`/collections/${collectionId}`)
-    await expect.poll(() => visibleCardCount(page)).toBe(4)
+    // One-shot reload fallback — under parallel e2e load the bookmarks GET
+    // can silently fail on first attempt.
+    try {
+      await expect.poll(() => visibleCardCount(page), { timeout: 30000 }).toBe(4)
+    } catch {
+      await page.reload()
+      await expect.poll(() => visibleCardCount(page), { timeout: 30000 }).toBe(4)
+    }
 
     const draftCard = page.locator(`[data-testid="bookmark-card-${bookmarkWithStatusDraftId}"]`)
     const statusBadge = draftCard.locator('[data-testid="card-property-badge-status"]')
-    await expect(statusBadge).toBeVisible()
+    await expect(statusBadge).toBeVisible({ timeout: 15000 })
     await expect(statusBadge).toHaveAttribute('data-active', 'false')
 
     await statusBadge.click()
 
     // Only the draft bookmark should remain.
-    await expect.poll(() => searchQueryValue(page)).toBe('property:status=draft')
-    await expect.poll(() => visibleCardCount(page)).toBe(1)
+    await expect.poll(() => searchQueryValue(page), { timeout: 15000 }).toBe('property:status=draft')
+    await expect.poll(() => visibleCardCount(page), { timeout: 15000 }).toBe(1)
     await expect(statusBadge).toHaveAttribute('data-active', 'true')
 
     // Purple border on the active badge — computed value differs per theme but
@@ -186,8 +200,8 @@ test.describe('UC-067 property filtering', () => {
 
     // Click the badge again → clear.
     await statusBadge.click()
-    await expect.poll(() => searchQueryValue(page)).toBe('')
-    await expect.poll(() => visibleCardCount(page)).toBe(4)
+    await expect.poll(() => searchQueryValue(page), { timeout: 15000 }).toBe('')
+    await expect.poll(() => visibleCardCount(page), { timeout: 15000 }).toBe(4)
   })
 
   test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => user))

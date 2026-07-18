@@ -40,18 +40,18 @@ export class LoginPageObject {
   }
 
   async expectOnLoginPage() {
-    await expect(this.page).toHaveURL(/\/login/)
-    await expect(this.appTitle).toBeVisible()
-    await expect(this.emailInput).toBeVisible()
-    await expect(this.passwordInput).toBeVisible()
-    await expect(this.loginSubmitButton).toBeVisible()
+    await expect(this.page).toHaveURL(/\/login/, { timeout: 15000 })
+    await expect(this.appTitle).toBeVisible({ timeout: 15000 })
+    await expect(this.emailInput).toBeVisible({ timeout: 10000 })
+    await expect(this.passwordInput).toBeVisible({ timeout: 10000 })
+    await expect(this.loginSubmitButton).toBeVisible({ timeout: 10000 })
   }
 
   async expectNotOnLoginPage() {
-    await expect(this.page).not.toHaveURL(/\/login/)
+    await expect(this.page).not.toHaveURL(/\/login/, { timeout: 30000 })
   }
 
   async expectErrorVisible() {
-    await expect(this.errorMessage).toBeVisible()
+    await expect(this.errorMessage).toBeVisible({ timeout: 15000 })
   }
 }

@@ -16,9 +16,17 @@ const bookmarks = [
 ]
 
 async function createTag(page: Page, name: string) {
+  // Wait for the POST so subsequent dialog-driven bookmark creation can find
+  // the tag in the list — without this, under parallel e2e load the tag row
+  // isn't yet in the dialog's tag combobox when we try to click it.
+  const created = page.waitForResponse(
+    (r) => r.url().endsWith('/api/tags') && r.request().method() === 'POST' && r.ok(),
+    { timeout: 15000 },
+  )
   await page.getByTestId('new-tag-btn').click()
   await page.getByTestId('create-tag-name-input').fill(name)
   await page.getByTestId('create-tag-submit').click()
+  await created
 }
 
 async function search(page: Page, query: string) {
@@ -26,11 +34,11 @@ async function search(page: Page, query: string) {
 }
 
 async function expectBookmarkVisible(page: Page, title: string) {
-  await expect(page.locator('h3').filter({ hasText: title })).toBeVisible()
+  await expect(page.locator('h3').filter({ hasText: title })).toBeVisible({ timeout: 30000 })
 }
 
 async function expectBookmarkNotVisible(page: Page, title: string) {
-  await expect(page.locator('h3').filter({ hasText: title })).not.toBeVisible()
+  await expect(page.locator('h3').filter({ hasText: title })).not.toBeVisible({ timeout: 30000 })
 }
 
 test.describe('Multi-Term Search', () => {
@@ -133,7 +141,9 @@ test.describe('Multi-Term Search', () => {
   test('should show all bookmarks when search is cleared', async ({ page }) => {
     await gotoCollection(page, collection)
     await search(page, 'Production')
-    await expect(page.locator('h3').filter({ hasText: `Production` }).first()).toBeVisible()
+    await expect(page.locator('h3').filter({ hasText: `Production` }).first()).toBeVisible({
+      timeout: 30000,
+    })
 
     await page.locator('input[type="text"]').first().clear()
     await expectBookmarkVisible(page, bookmarks[0].title)

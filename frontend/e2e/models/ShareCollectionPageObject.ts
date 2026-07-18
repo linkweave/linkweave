@@ -15,9 +15,13 @@ export class ShareCollectionPageObject {
 
   async openShareDialog(collectionId: string) {
     const btn = this.page.getByTestId(`collection-share-btn-${collectionId}`)
+    // Wait explicitly for the share button — the manage page might have
+    // rendered the default-collection row first, and the row for this spec's
+    // newly-created collection can lag under parallel e2e load.
+    await expect(btn).toBeVisible({ timeout: 30000 })
     await btn.scrollIntoViewIfNeeded()
     await btn.click()
-    await expect(this.emailInput).toBeVisible({ timeout: 10000 })
+    await expect(this.emailInput).toBeVisible({ timeout: 15000 })
   }
 
   async inviteUser(email: string) {

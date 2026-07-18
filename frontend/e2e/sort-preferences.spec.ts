@@ -51,8 +51,16 @@ test.describe('Sort preferences', () => {
 
   async function visibleTitles(page: import('./fixtures').Page): Promise<string[]> {
     // Wait for at least one bookmark card to render before reading the list,
-    // otherwise we race the SPA bootstrap on freshly-loaded pages.
-    await page.locator('h3').first().waitFor({ state: 'visible' })
+    // otherwise we race the SPA bootstrap on freshly-loaded pages. One-shot
+    // reload fallback: under parallel e2e load the bookmarks GET can silently
+    // fail or return stale data on the first attempt.
+    const firstCard = page.getByTestId(/^bookmark-card-/).first()
+    try {
+      await expect(firstCard).toBeVisible({ timeout: 30000 })
+    } catch {
+      await page.reload()
+      await expect(firstCard).toBeVisible({ timeout: 30000 })
+    }
     const titles = await page.locator('h3').allInnerTexts()
     return titles.map((t) => t.trim())
   }

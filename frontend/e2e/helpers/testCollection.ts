@@ -40,8 +40,16 @@ export function useTestCollectionWithCleanup(slug: string): TestCollection {
   return handle
 }
 
-/** Navigates to the provisioned collection and waits for the URL to settle. */
+/**
+ * Navigates to the provisioned collection and waits for the URL to settle,
+ * plus a render signal so callers don't race the SPA boot. The
+ * `collection-settings-open` gear button renders as part of the toolbar on
+ * every collection page, independent of the bookmarks GET — a reliable
+ * "the view has mounted" signal. Generous timeout: under parallel e2e load
+ * the SPA boot can lag the URL change by several seconds.
+ */
 export async function gotoCollection(page: Page, collection: TestCollection): Promise<void> {
   await page.goto(`/collections/${collection.collectionId}`)
   await expect(page).toHaveURL(new RegExp(`/collections/${collection.collectionId}`))
+  await expect(page.getByTestId('collection-settings-open')).toBeVisible({ timeout: 30000 })
 }
