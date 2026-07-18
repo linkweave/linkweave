@@ -25,9 +25,10 @@
 ## Main Success Scenario
 
 1. User starts dragging a folder in the sidebar folder tree.
-2. System highlights valid drop positions as the user moves the folder:
-   - Hovering over the **upper or lower edge** of another folder row shows an insertion line before or after that folder.
-   - Hovering over the **middle** of another folder row highlights the row as a nesting target (existing behavior, UC-012).
+2. System dims the dragged folder and highlights valid drop positions as the user moves it:
+   - Hovering over the **gap between two rows** shows an insertion line with an anchor dot at the indent level the drop would insert at.
+   - Hovering over the **body of another folder row** fills the row as a nesting target (existing behavior, UC-012).
+   - Hovering over a **collapsed folder** for a moment expands it ("spring-loading"), so the user can drop between its children.
 3. User drops the folder on an insertion line between two sibling folders.
 4. System places the folder at that position among the siblings.
 5. System persists the new order.
@@ -46,7 +47,7 @@
 
 ### A2: Drop at a Specific Position Inside a New Parent
 
-**Trigger:** User drags the folder over an expanded folder's children and drops it on an insertion line between them (step 3).
+**Trigger:** User drags the folder over an expanded folder's children and drops it into a gap between them (step 3).
 **Flow:**
 
 1. System moves the folder into the new parent folder.
@@ -131,5 +132,7 @@ If two siblings ever hold the same position number (e.g. after a reparent per BR
 ## Notes (non-normative)
 
 - Storage: a `sortOrder` value on the `Folder` entity (migration backfills it from creation order). Sparse numbering (e.g. steps of 1000, midpoint insertion) avoids rewriting all siblings on every drop.
-- The sidebar already implements folder drag-and-drop for nesting (`FolderTreeNode.vue`, `useDndMove`) with undo and cycle prevention; this use case extends the same gesture with edge-zone insertion targets and extends `PATCH /folders/{id}/move` with an optional `position` (anchor sibling id + BEFORE/AFTER placement).
+- The sidebar already implements folder drag-and-drop for nesting (`FolderTreeNode.vue`, `useDndMove`) with undo and cycle prevention; this use case extends the same gesture with gap-strip insertion targets and extends `PATCH /folders/{id}/move` with an optional `position` (anchor sibling id + BEFORE/AFTER placement).
+- Drop model (per design handoff): dedicated **gap strips** between rows own reorder (insertion line + anchor dot, rendered by `FolderTreeNode.vue` with shared state in `useDropIndicator`), the row body owns nest (filled tint). Supporting cues: dragged-row dim, gap↔row hysteresis, spring-loaded folders (700ms dwell with countdown bar), auto-scroll near the sidebar edges (`useDndAutoScroll`), and a settle animation on the landed row. The shared CSS class surface lives in `main.css` (`.dnd-gap`, `.drop-line`, `.nest-target`, `.is-dragging`, `.arming`, `.landed`) and is meant to be reused by UC-103.
+- Open follow-up from the handoff: Finder-style **level-picking via horizontal pointer position** for ambiguous gaps (a gap between a deeper row above and a shallower row below currently inserts at the row-below's level).
 - [UC-103](UC-103-reorder-bookmarks-within-folder.md) covers manually reordering **bookmarks within a folder**, reusing the same ordering model (sparse shared sort key, append-at-end, keep-number-on-move).

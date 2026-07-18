@@ -4,6 +4,7 @@ import BookmarkFavicon from '@/components/bookmark/BookmarkFavicon.vue'
 import BookmarkPreview from '@/components/bookmark/BookmarkPreview.vue'
 import BookmarkRowMenu from '@/components/bookmark/BookmarkRowMenu.vue'
 import { DRAG_TYPE_BOOKMARK, setDraggingBookmark } from '@/composables/useDragState'
+import { setCompactDragImage } from '@/lib/dragImage'
 import { useScreenshotRefresh } from '@/composables/useScreenshotRefresh'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import { useShowPropertyBadges, useShowPreviewPopup } from '@/composables/usePropertyDisplayPrefs'
@@ -73,6 +74,7 @@ function onBookmarkDragStart(event: DragEvent) {
   didDrag = true
   event.dataTransfer.effectAllowed = 'move'
   event.dataTransfer.setData(DRAG_TYPE_BOOKMARK, props.bookmark.id)
+  setCompactDragImage(event, props.bookmark.data.title, 'bookmark')
   setDraggingBookmark(true)
 }
 

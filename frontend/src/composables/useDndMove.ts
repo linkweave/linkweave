@@ -13,18 +13,24 @@ export function useDndMove() {
   const notification = useNotificationStore()
   const { t } = useI18n()
 
-  async function moveBookmarkWithUndo(bookmarkId: string, targetFolderId: string | undefined) {
+  /** Returns true when the bookmark actually moved (drives landing feedback). */
+  async function moveBookmarkWithUndo(
+    bookmarkId: string,
+    targetFolderId: string | undefined,
+  ): Promise<boolean> {
     const collectionId = collectionStore.currentCollectionId
-    if (!collectionId) return
+    if (!collectionId) return false
     const previousFolderId = bookmarkStore.bookmarks.find(b => b.id === bookmarkId)?.data.folderId
-    if (previousFolderId === targetFolderId) return
+    if (previousFolderId === targetFolderId) return false
     try {
       await bookmarkStore.moveBookmarkToFolder(bookmarkId, { collectionId, folderId: targetFolderId })
       notification.successWithUndo(t('dnd.bookmarkMoved'), t('common.undo'), async () => {
         await bookmarkStore.moveBookmarkToFolder(bookmarkId, { collectionId, folderId: previousFolderId })
       })
+      return true
     } catch {
       notification.error(t('bookmark.moveError'))
+      return false
     }
   }
 
@@ -48,13 +54,14 @@ export function useDndMove() {
     return { parentId, position: undefined }
   }
 
+  /** Returns true when the folder actually moved (drives landing feedback). */
   async function moveFolderWithUndo(
     folderId: string,
     targetParentId: string | undefined,
     position?: FolderPositionJson,
-  ) {
+  ): Promise<boolean> {
     const collectionId = collectionStore.currentCollectionId
-    if (!collectionId) return
+    if (!collectionId) return false
     const previous = folderPositionSnapshot(folderId)
     try {
       await folderStore.moveFolder(folderId, { collectionId, parentId: targetParentId, position })
@@ -65,8 +72,10 @@ export function useDndMove() {
           position: previous.position,
         })
       })
+      return true
     } catch {
       notification.error(t('folder.moveError'))
+      return false
     }
   }
 

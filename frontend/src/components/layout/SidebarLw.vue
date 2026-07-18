@@ -5,13 +5,13 @@ import TagList from '@/components/tag/TagList.vue'
 import { ButtonLw, CollapsibleLw } from '@/components/ui'
 import { useSidebarSectionExpandedPref } from '@/composables/useSidebarSectionExpandedPref'
 import BuildversionLw from '@/components/ui/BuildversionLw.vue'
+import { useDndAutoScroll } from '@/composables/useDndAutoScroll'
 import { useDndMove } from '@/composables/useDndMove'
+import { markLanded, setDropTarget } from '@/composables/useDropIndicator'
 import {
   DRAG_TYPE_BOOKMARK,
   DRAG_TYPE_FOLDER,
   getDraggingFolderId,
-  isDraggingBookmark,
-  isDraggingFolder,
 } from '@/composables/useDragState'
 import { useShowPropertiesSidebar } from '@/composables/usePropertyDisplayPrefs'
 import { parsePropertyValue } from '@/lib/searchQueryProperty'
@@ -53,6 +53,10 @@ const showSmartCollectionsSection = computed(
 const showCreateFolder = ref(false)
 const subfolderParentId = ref<string | undefined>(undefined)
 const allBookmarksDragOver = ref(false)
+
+// Auto-scrolls the folder section while a drag hovers near its edges (UC-102).
+const folderScrollContainer = ref<HTMLElement | null>(null)
+const { scrollEdge } = useDndAutoScroll(folderScrollContainer)
 
 watch(showCreateFolder, (open) => {
   if (!open) {
@@ -115,6 +119,7 @@ function onAllBookmarksDragOver(event: DragEvent) {
     event.preventDefault()
     event.stopPropagation()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+    setDropTarget(null) // this row is outside the tree; retire its indicator
     allBookmarksDragOver.value = true
     return
   }
@@ -126,6 +131,7 @@ function onAllBookmarksDragOver(event: DragEvent) {
     event.preventDefault()
     event.stopPropagation()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+    setDropTarget(null) // this row is outside the tree; retire its indicator
     allBookmarksDragOver.value = true
   }
 }
@@ -153,7 +159,7 @@ async function onAllBookmarksDrop(event: DragEvent) {
     const fid = event.dataTransfer!.getData(DRAG_TYPE_FOLDER)
     if (!fid) return
     if (!folderStore.folders.find((f) => f.id === fid)?.data.parentId) return // already root
-    await moveFolderWithUndo(fid, undefined)
+    if (await moveFolderWithUndo(fid, undefined)) markLanded(fid)
   }
 }
 </script>
@@ -162,18 +168,19 @@ async function onAllBookmarksDrop(event: DragEvent) {
   <div :class="['flex flex-col h-full', props.class]">
     <!-- Folders Section -->
     <div class="flex-1 min-h-0 flex flex-col">
-      <div class="overflow-y-auto p-2">
+      <div
+        ref="folderScrollContainer"
+        data-testid="folder-scroll"
+        class="overflow-y-auto p-2"
+        :class="{ 'as-up': scrollEdge === 'up', 'as-down': scrollEdge === 'down' }"
+      >
         <div
           class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors mb-1"
           :class="[
             folderStore.selectedFolderId === null
               ? 'bg-accent text-accent-foreground'
               : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground',
-            allBookmarksDragOver
-              ? 'ring-2 ring-primary ring-inset'
-              : isDraggingBookmark || isDraggingFolder
-                ? 'ring-1 ring-primary/30'
-                : '',
+            allBookmarksDragOver ? 'nest-target' : '',
           ]"
           @click="folderStore.selectFolder(null)"
           @dragover="onAllBookmarksDragOver"

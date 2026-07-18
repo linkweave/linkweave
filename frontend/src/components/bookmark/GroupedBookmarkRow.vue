@@ -3,6 +3,7 @@ import BookmarkFavicon from './BookmarkFavicon.vue'
 import BookmarkRowMenu from './BookmarkRowMenu.vue'
 import type { BookmarkJson } from '@/api/generated'
 import { DRAG_TYPE_BOOKMARK, setDraggingBookmark } from '@/composables/useDragState'
+import { setCompactDragImage } from '@/lib/dragImage'
 import { useBookmarkStore } from '@/stores/bookmark'
 
 const props = defineProps<{
@@ -22,6 +23,7 @@ function onDragStart(event: DragEvent) {
   if (!event.dataTransfer) return
   event.dataTransfer.effectAllowed = 'move'
   event.dataTransfer.setData(DRAG_TYPE_BOOKMARK, props.bookmark.id)
+  setCompactDragImage(event, props.bookmark.data.title, 'bookmark')
   setDraggingBookmark(true)
 }
 
