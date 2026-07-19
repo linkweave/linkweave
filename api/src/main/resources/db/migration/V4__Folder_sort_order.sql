@@ -14,4 +14,7 @@ UPDATE Folder SET sortOrder = (
         FROM Folder
     ) ranked
     WHERE ranked.id = Folder.id
-) where sortOrder is 0;
+)
+-- Matches every row (ADD COLUMN ... DEFAULT 0 just set them all); kept as a guard so
+-- re-running the backfill by hand cannot clobber orders users have since arranged.
+WHERE sortOrder = 0;

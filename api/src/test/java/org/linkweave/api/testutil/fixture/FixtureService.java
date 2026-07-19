@@ -106,12 +106,14 @@ public class FixtureService {
     /**
      * Folders without an explicit {@code withSortOrder(...)} are appended after their existing
      * siblings, matching what the API does on create. Without this they would all share
-     * sortOrder 0 and sort before every API-created folder.
+     * sortOrder 0 and sort before every API-created folder. A test that *does* pass a value
+     * keeps it — including 0 or a negative one, which are valid head-slot positions.
      */
     @NonNull
     public Folder persistFolder(Consumer<org.linkweave.api.testutil.builder.FolderBuilder> block) {
-        Folder folder = org.linkweave.api.testutil.builder.FolderBuilder.build(block);
-        if (folder.getSortOrder() == 0) {
+        var builder = org.linkweave.api.testutil.builder.FolderBuilder.configured(block);
+        Folder folder = builder.folder();
+        if (!builder.isSortOrderSet()) {
             ID<Folder> parentId = folder.getParent() == null ? null : folder.getParent().getId();
             folder.setSortOrder(SparseSortOrder.afterMax(
                 folderRepo.findMaxSortOrderOfSiblings(folder.getCollection().getId(), parentId)));

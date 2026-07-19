@@ -316,6 +316,56 @@ class FolderReorderITest {
 
     @Test
     @TestSecurity(user = "test@example.com", roles = { "BOOKMARK_WRITE" })
+    void shouldPersistZeroSortOrder_whenDroppedBeforeTheFirstFolder() {
+        // ARRANGE: a backfilled group starts at STEP, so the head slot is STEP - STEP = 0
+        Collection collection = fixtureService.createTestCollection();
+        String collectionId = collection.getId().getUUID().toString();
+        String alpha = createFolder(collectionId, "Alpha");
+        String beta = createFolder(collectionId, "Beta");
+
+        // ACT
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body("""
+                {"collectionId":"%s","position":{"anchorFolderId":"%s","placement":"BEFORE"}}
+                """.formatted(collectionId, alpha))
+            .patch("/folders/{id}/move", beta)
+            .then()
+            .statusCode(200)
+            .body("sortOrder", equalTo(0));
+
+        // ASSERT: zero is a real position, not an "unset" marker — it sorts first
+        RestAssured.given()
+            .queryParam("collectionId", collectionId)
+            .get("/folders")
+            .then()
+            .statusCode(200)
+            .body("folderList.data.name", contains("Beta", "Alpha"));
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = { "BOOKMARK_WRITE" })
+    void shouldKeepExplicitZeroSortOrder_whenSetViaTheFixtureBuilder() {
+        // ARRANGE: 0 must survive the fixture's "append when unset" convenience,
+        // otherwise a test modelling a head-inserted folder would silently be
+        // handed an appended one instead.
+        Collection collection = fixtureService.createTestCollection();
+        Folder head = fixtureService.persistFolder(b -> b
+            .withCollection(collection).withName("Head").withSortOrder(0));
+        Folder appended = fixtureService.persistFolder(b -> b
+            .withCollection(collection).withName("Appended"));
+
+        // ASSERT
+        Assertions.assertThat(folderRepo.getById(head.getId()).getSortOrder()).isZero();
+        Assertions.assertThat(folderRepo.getById(appended.getId()).getSortOrder())
+            .isEqualTo(SparseSortOrder.STEP);
+        Assertions.assertThat(folderRepo.findSiblings(collection.getId(), null))
+            .extracting(Folder::getName)
+            .containsExactly("Head", "Appended");
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = { "BOOKMARK_WRITE" })
     void shouldReturn403_whenMovingForeignFolderUsingOwnCollectionId() {
         // ARRANGE: the attacker has a collection of their own ...
         Collection ownCollection = fixtureService.createTestCollection();

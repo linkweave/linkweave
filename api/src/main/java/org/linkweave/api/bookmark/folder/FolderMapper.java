@@ -1,7 +1,6 @@
 package org.linkweave.api.bookmark.folder;
 
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.UtilityClass;
 import org.linkweave.api.bookmark.folder.json.FolderJson;
 import org.linkweave.api.bookmark.folder.json.FolderSaveJson;
 import org.linkweave.infrastructure.json.EntityInfoJson;
