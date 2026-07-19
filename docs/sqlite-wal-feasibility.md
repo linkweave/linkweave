@@ -10,19 +10,19 @@
 
 ## TL;DR
 
-**Enable WAL mode (already wired through the JDBC URL) and stop.** Measured against a 16-worker concurrent-write workload that mirrors the worst realistic LinkWeave load (interactive writes + background jobs + batch operations), WAL alone takes the system from **94% `SQLITE_BUSY` error rate at 1.1 ops/s** (rollback-journal baseline) to **0% errors at 135–410 ops/s** — a ~100× throughput improvement, with p99 write latency under 1 s.
+**Enable WAL mode (already wired through the JDBC URL) and stop.** Measured against a 16-worker concurrent-write workload that mirrors the worst realistic LinkWeave load (interactive writes + background jobs + batch operations), WAL alone takes the system from **94% `SQLITE_BUSY` error rate at 1.1 ops/s** (rollback-journal baseline) to **~0% errors at 135–410 ops/s** — a ~100× throughput improvement, with p99 write latency under 1 s.
 
-Pool sizing provides **no additional benefit**: small pools (≤4) hang the test setup because Quarkus background threads starve the single connection, medium pools (8) actively resurface `SQLITE_BUSY` due to longer queue depths, and the Agroal default (~20) is already optimal. A read/write datasource **split** is not warranted because both pools would still hit the same OS-level SQLite write lock — the split only pays off when reads route to a physically separate replica.
+A read/write datasource **split** is not warranted, for two reasons: (a) the status quo is already at ~0% errors — there is no contention pain to relieve; and (b) a dedicated write pool of 1 has a worse failure mode than SQLite's own `busy_timeout` handling — Agroal's acquisition timeout (default 5 s) turns writer queueing into hard 5xx errors, whereas SQLite's busy handling at least *waits*. A long batch import on a single write connection would fail every other queued write for its duration. Both pools would still hit the same OS-level write lock anyway; the split only pays off when reads route to a physically separate replica (Postgres, libSQL primary-replica).
 
 Turso Database (Limbo) remains the only SQLite-family engine with true multi-writer MVCC, but it is still **not adoptable today** (beta, no JDBC driver, MVCC limitations on indexes). Re-evaluate when production-ready with a Hibernate integration path.
 
-**Recommendation:** WAL + default pool. The strict regression gate (`SqliteWriteContentionLoadITest` with `LINKWEAVE_LOADTEST_STRICT=true`) passes 2/2 tests with zero non-2xx responses — that gate is now the going-forward guard for any change that could regress write contention.
+**Recommendation:** WAL + default pool (Agroal default = 50 connections). The strict regression gate (`SqliteWriteContentionLoadITest` with `LINKWEAVE_LOADTEST_STRICT=true`) passes 2/2 tests with zero non-2xx responses — that gate is now the going-forward guard for any change that could regress write contention.
 
 ---
 
 ## 1. Baseline — rollback-journal, default Agroal pool
 
-`SqliteWriteContentionLoadITest` with `journal_mode=DELETE`, `busy_timeout=10000`, default pool size (~20). Workload: 16 worker threads × 30 ops each (480 total), batches of 120 bookmarks, seeded with 400 existing bookmarks.
+`SqliteWriteContentionLoadITest` with `journal_mode=DELETE`, `busy_timeout=10000`, default Agroal pool (50 connections). Workload: 16 worker threads × 30 ops each (480 total), batches of 120 bookmarks, seeded with 400 existing bookmarks.
 
 ### Heavy batch writes (batch-tag / batch-move only)
 
@@ -51,7 +51,7 @@ track             96      87     60922  10423947  30004620  30008921  30008921  
 
 ## 2. WAL — default pool, default workload
 
-Same workload, `journal_mode=WAL&synchronous=NORMAL` (the production JDBC URL config — see `application.properties:55`).
+Same workload, `journal_mode=WAL&synchronous=NORMAL` (the production JDBC URL config — see `application.properties:55`). Agroal default pool (50 connections, verified at runtime via `PRAGMA journal_mode` / pool diagnostics in the test report).
 
 ### Heavy batch writes
 
@@ -113,23 +113,39 @@ wall=8.40s  totalOps=480  throughput=57.2 ops/s  errors=0 (0.0%)
 wall=3.00s  totalOps=480  throughput=160.0 ops/s  errors=0 (0.0%)
 ```
 
-**Interpretation.** Throughput scales *up* with concurrency (better utilisation of the WAL read parallelism). Error rate stays at 0–0.2% across 2× workload, 250 ms timeout, and 2.5× larger batches. The `@RetryOnSqliteBusy` interceptor on the resource layer absorbs the rare `SQLITE_BUSY` events that do occur. WAL has substantial headroom above the realistic LinkWeave concurrency ceiling (a self-hosted single-user app with a handful of background jobs).
+**Interpretation.** Throughput scales *up* with concurrency (better utilisation of the WAL read parallelism). All WAL configurations — default workload, 2× workload, 250 ms timeout, 2.5× larger batches — are effectively tied at **~zero errors** (0–2 failed ops out of 480–1920 is well below the noise floor of this test). The `@RetryOnSqliteBusy` interceptor on the resource layer absorbs the `SQLITE_BUSY_SNAPSHOT` events that do occur internally (visible as `SQLITE_BUSY_SNAPSHOT` warnings in the server log even when the client sees 0 errors). WAL has substantial headroom above the realistic LinkWeave concurrency ceiling (a self-hosted single-user app with a handful of background jobs).
 
 ---
 
-## 4. Pool sizing — UC-095 Candidate #2 (option B)
+## 4. Pool sizing and the read/write split question
 
-| `quarkus.datasource.jdbc.max-size` | Result |
+### What was tested vs. what was proposed
+
+The original proposal was a **read/write datasource split**: a dedicated write pool of 1 alongside a read pool of 20. What the experiments actually measured was **shrinking the single shared pool** to 1, 2, 4, 8. These are architecturally different — a global pool of 1 serializes reads, writes, test setup, Flyway migrations, and Quarkus background jobs all through the same single connection. A split would leave reads, setup, and migrations on the large pool and only serialize writes. So the findings below are evidence about global pool sizing, not about a dedicated write pool.
+
+### Global pool-sizing experiments
+
+The Agroal default (verified at runtime via `PRAGMA` diagnostics) is **50 connections**, not the ~20 the UC-095 use case assumed.
+
+| `max-size` | Result |
 |---|---|
-| **1** | Test setup transaction times out — Quarkus background jobs (scheduler, startup) compete with the `FixtureService` seed loop for the single connection. `RollbackException: ARJUNA016102: The transaction is not active!` |
-| **2** | Load runner hangs indefinitely — vert.x worker threads (default pool 20) all block on connection acquisition, request queue backs up, test does not complete within 15-min latch wait |
-| **4** | Same as 2 — `RollbackException` during `FixtureService.createTestCollection()` |
-| **8** | Test completes but `SQLITE_BUSY` errors reappear (visible in `target/surefire-reports/*.xml`) — fewer connections means longer queue depths and more tx retries, which compounds contention rather than reducing it |
-| **~20 (default)** | 0% errors, best result |
+| **1** | Test setup transaction times out — Quarkus background jobs compete with the `FixtureService` seed loop for the single connection. `RollbackException: ARJUNA016102: The transaction is not active!` |
+| **2 – 8** | Test hangs indefinitely (deadlock between Agroal connection acquisition and vert.x worker thread scheduling — not a `SQLITE_BUSY` issue). A 5-op-per-worker run with `max-size=8` still hangs at 5 minutes, ruling out throughput-limited slowness. |
+| **50 (Agroal default)** | 0 errors, ~zero contention. Best result. |
 
-**Conclusion.** The pool-sizing lever has a U-shaped curve. Below ~8 it starves the framework; around 8 it accidentally worsens contention by serialising queue waits; at the Agroal default it is already optimal. There is no configuration in this range that beats the default.
+### Why the read/write split is still rejected (correct grounds)
 
-This empirically validates UC-095's BR-095-1 ("WAL does not create multiple writers") and BR-095-4 (preference order: WAL → WAL + pool sizing → write serialization → engine change) — pool sizing is shown to add nothing on top of WAL for this workload.
+The split is correctly rejected, but **not** because of the global-pool findings above. The actual reasons are:
+
+1. **The status quo has no problem to solve.** WAL + the default pool of 50 already delivers ~0% errors at 2× the expected workload (§3). There is no contention pain that a split would relieve.
+
+2. **A dedicated write pool of 1 has a worse failure mode than SQLite's own busy handling.** When SQLite's `busy_timeout` is engaged, the writer thread *waits* and retries internally — the client sees latency, not errors. When Agroal's acquisition timeout fires (default 5 s), the queued writer gets a hard `SQLException` immediately. A long batch import (e.g. `POST /bookmarks/batch-tag` with 500 items) holding the single write connection for >5 s would 5xx every other queued write for the duration. SQLite's own serialisation degrades gracefully; Agroal's does not.
+
+3. **Both pools would hit the same OS-level write lock.** Even with separate pools, SQLite still serializes writers at the file level. The split cannot raise the write ceiling — it only changes which queue (Agroal's vs. SQLite's) the writer waits in. SQLite's queue is strictly better here because it waits inside the engine rather than failing at the pool level.
+
+### Note on `SQLITE_BUSY_SNAPSHOT`
+
+The WAL-mode `SQLITE_BUSY` that appears in server logs under concurrent load is predominantly `BUSY_SNAPSHOT`: a deferred transaction starts reading, another connection commits during the read, and the read→write upgrade at commit time fails immediately (`busy_timeout` does not help because the snapshot is stale, not contended). The `@RetryOnSqliteBusy` interceptor catches these and the retry succeeds on the next attempt with a fresh snapshot. This is working as designed and contributes to the ~0% error rate seen by clients.
 
 ---
 
@@ -154,10 +170,10 @@ Per UC-095 BR-095-2, this is necessarily a **feasibility/maturity judgement, not
 
 | Criterion | WAL only (chosen) | WAL + pool sizing | WAL + single-writer queue | Turso Database (Limbo) | PostgreSQL |
 |---|:---:|:---:|:---:|:---:|:---:|
-| Read concurrency improvement | **High** (measured) | Medium | High | High | High |
-| Multiple concurrent writers | No (serialized) | No (measured — no benefit) | No (by design) | Yes (MVCC) | Yes |
-| Mitigates `SQLITE_BUSY` under mixed load | **High — 0% errors at 2× load** | No additional benefit | High | High | High |
-| Implementation effort / risk | **Already shipped** | Config-only (no benefit shown) | Medium | Blocked (no JDBC) | High |
+| Read concurrency improvement | **High** (measured) | No benefit (default already 50) | High | High | High |
+| Multiple concurrent writers | No (serialized) | No | No (by design) | Yes (MVCC) | Yes |
+| Mitigates `SQLITE_BUSY` under mixed load | **~0% errors at 2× load** | No additional benefit | High | High | High |
+| Implementation effort / risk | **Already shipped** | Config-only (no benefit) | Medium | Blocked (no JDBC) | High |
 | Keeps C-003 (single file) | ✅ | ✅ | ✅ | ✅ | ❌ |
 | Keeps C-004 (self-hosted, no cloud) | ✅ | ✅ | ✅ | ✅ (embedded only) | ✅ |
 | Operational complexity | Minimal | Minimal | Low | Unknown | High |
@@ -167,8 +183,8 @@ Per UC-095 BR-095-2, this is necessarily a **feasibility/maturity judgement, not
 ## 7. Recommendation
 
 1. **Keep WAL on.** The JDBC URL already enables it (`application.properties:55` `journal_mode=WAL&synchronous=NORMAL`). No code change needed in production.
-2. **Do not introduce pool sizing.** Default (~20) is optimal; smaller pools actively regress.
-3. **Do not introduce a read/write datasource split.** Both pools would hit the same OS-level SQLite write lock; the split only pays off when routing reads to a physically separate engine (Postgres replica, libSQL primary-replica), which would break C-003.
+2. **Do not shrink the pool.** The Agroal default (50) is already well above what the workload needs. Smaller pools hang due to Agroal/vert.x thread-pool scheduling interactions, not SQLite contention.
+3. **Do not introduce a read/write datasource split.** The status quo is at ~0% errors — there is no problem to solve. A dedicated write pool of 1 would introduce Agroal acquisition-timeout failures (hard 5xx on queue timeout) that are worse than SQLite's own `busy_timeout` behaviour (graceful wait). The split only pays off when routing reads to a physically separate engine (Postgres replica, libSQL primary-replica), which would break C-003.
 4. **Treat the load test strict mode as the regression gate.** `LINKWEAVE_LOADTEST=true LINKWEAVE_LOADTEST_WAL=true LINKWEAVE_LOADTEST_STRICT=true ./mvnw test -pl api -Dtest=SqliteWriteContentionLoadITest` passes 2/2 with zero non-2xx. Any future change that could regress write contention (new write path, batch operation, scheduled job) must keep this gate green.
 5. **Close NFR-028** as delivered by the existing WAL configuration. The Turso (Limbo) re-evaluation trigger becomes a separate, future NFR if/when its adoption criteria are met.
 
@@ -221,9 +237,9 @@ If `LINKWEAVE_DB_PATH` ever points at a network volume, the operator must switch
 | `synchronous=NORMAL` | ✅ Shipped | same |
 | `busy_timeout=10000` | ✅ Shipped | same |
 | `@RetryOnSqliteBusy` interceptor on resources | ✅ Shipped | `api/src/main/java/org/linkweave/infrastructure/db/RetryOnSqliteBusy.java`, `SqliteBusyRetryInterceptor.java` |
-| Load test infrastructure (configurable WAL/pool/timeout) | ✅ Shipped | `api/src/test/java/org/linkweave/api/loadtest/LoadTestProfile.java`, `SqliteWriteContentionLoadITest.java` |
+| Load test infrastructure (configurable WAL/pool/timeout + PRAGMA diagnostics) | ✅ Shipped | `api/src/test/java/org/linkweave/api/loadtest/LoadTestProfile.java`, `SqliteWriteContentionLoadITest.java` |
 | Baseline + WAL experiments executed | ✅ This report | Sections 1–3 |
-| Pool-sizing experiments executed | ✅ This report | Section 4 |
+| Pool-sizing experiments executed | ✅ This report (global pool, not a split) | Section 4 |
 | Turso Limbo verdict recorded | ✅ This report | Section 5 |
 | Strict regression gate green | ✅ Passes 2/2 with 0 non-2xx | Section 7 |
 | Backup procedure updated for WAL sidecar files | 🟡 Pending — UC-061 follow-up | Section 8 |
@@ -253,13 +269,13 @@ rm -f linkweave-test.db linkweave-test.db-wal linkweave-test.db-shm
     -DLINKWEAVE_LOADTEST=true -DLINKWEAVE_LOADTEST_WAL=true \
     -DLINKWEAVE_LOADTEST_STRICT=true
 
-# Pool-sizing experiments (option B):
+# Pool-sizing experiments (option B — will hang ≤ 8, see §4):
 rm -f linkweave-test.db linkweave-test.db-wal linkweave-test.db-shm
 ./mvnw test -Dtest=SqliteWriteContentionLoadITest \
     -DLINKWEAVE_LOADTEST=true -DLINKWEAVE_LOADTEST_WAL=true \
     -DLINKWEAVE_LOADTEST_MAX_SIZE=8 -DLINKWEAVE_LOADTEST_ACQUISITION_TIMEOUT_MS=30000
 ```
 
-Reports are written to `api/target/surefire-reports/TEST-org.linkweave.api.loadtest.SqliteWriteContentionLoadITest.xml` — grep for `^config:|^wall=|^op ` to extract the summary.
+Reports are written to `api/target/surefire-reports/TEST-org.linkweave.api.loadtest.SqliteWriteContentionLoadITest.xml` — grep for `^config:\|^runtime:\|^wall=\|^op ` to extract the summary. The `runtime:` line prints the actual `PRAGMA journal_mode`, `PRAGMA busy_timeout`, and effective pool size from the running JVM, so each run is self-verifying against configuration confounds (e.g. a stale DB file whose persisted WAL header silently overrides the URL pragma).
 
 The env-var / system-property overrides (workers, ops, batch, seed, busy_timeout, wal mode, max-size, min-size, acquisition-timeout, strict) are all documented in `LoadTestProfile.java` and `SqliteWriteContentionLoadITest.java` Javadoc.

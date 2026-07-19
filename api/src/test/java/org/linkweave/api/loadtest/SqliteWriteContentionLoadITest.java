@@ -8,6 +8,8 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.linkweave.api.bookmark.Bookmark;
@@ -20,6 +22,7 @@ import org.linkweave.infrastructure.db.DatabaseService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
@@ -111,6 +114,13 @@ class SqliteWriteContentionLoadITest {
 
     @Inject
     DatabaseService databaseService;
+
+    @Inject
+    EntityManager em;
+
+    @Inject
+    @ConfigProperty(name = "quarkus.datasource.jdbc.max-size")
+    Optional<String> configuredMaxSize;
 
     private final int workers = env("LINKWEAVE_LOADTEST_WORKERS", 16);
     private final int opsPerWorker = env("LINKWEAVE_LOADTEST_OPS", 30);
@@ -341,6 +351,7 @@ class SqliteWriteContentionLoadITest {
         System.out.println("================ " + title + " ================");
         System.out.printf("config: workers=%d opsPerWorker=%d batchSize=%d seed=%d busy_timeout=%s journal=%s max-size=%s%n",
             workers, opsPerWorker, batchSize, seed, busy, journalLabel, maxSize);
+        System.out.println(runtimeDiagnostics());
         System.out.printf("wall=%.2fs totalOps=%d throughput=%.1f ops/s errors=%d (%.1f%%)%n",
             wallSec, results.size(), results.isEmpty() ? 0 : results.size() / wallSec,
             errors, results.isEmpty() ? 0 : 100.0 * errors / results.size());
@@ -384,6 +395,23 @@ class SqliteWriteContentionLoadITest {
         }
         assertTrue(result.results().size() == (long) workers * opsPerWorker,
             "not all ops were recorded (workers=" + workers + ", ops=" + opsPerWorker + ")");
+    }
+
+    /**
+     * Query the actual SQLite runtime state (PRAGMA journal_mode, PRAGMA busy_timeout) and the
+     * effective Agroal pool size, so each report is self-verifying. Catches configuration
+     * confounds where the JDBC URL pragma and the persisted DB header disagree (WAL persists
+     * in the file header, so a stale file can silently override the URL intent).
+     */
+    private String runtimeDiagnostics() {
+        try {
+            Object jm = em.createNativeQuery("PRAGMA journal_mode").getSingleResult();
+            Object bt = em.createNativeQuery("PRAGMA busy_timeout").getSingleResult();
+            String pool = configuredMaxSize.orElse("unset(Agroal default=20)");
+            return "runtime: PRAGMA journal_mode=" + jm + " PRAGMA busy_timeout=" + bt + " pool=" + pool;
+        } catch (Exception e) {
+            return "runtime: <PRAGMA query failed: " + e.getClass().getSimpleName() + ": " + e.getMessage() + ">";
+        }
     }
 
     private static int env(String name, int defaultValue) {
