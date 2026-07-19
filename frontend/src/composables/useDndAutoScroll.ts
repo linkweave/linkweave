@@ -13,9 +13,17 @@ const MIN_SPEED = 3
  * Listeners are registered in the capture phase: the drop targets inside the
  * tree stopPropagation() on their drag events, so bubbling-phase listeners on
  * the container would only ever fire over bare padding.
+ *
+ * By default the listener host is also the scrolled element. When one host
+ * contains several independent scroll areas (the grouped layout's cards,
+ * UC-103), `resolveTarget` picks the area under the pointer instead.
  */
-export function useDndAutoScroll(container: Ref<HTMLElement | null>) {
+export function useDndAutoScroll(
+  container: Ref<HTMLElement | null>,
+  resolveTarget?: (event: DragEvent) => HTMLElement | null,
+) {
   const scrollEdge = ref<'up' | 'down' | null>(null)
+  let activeEl: HTMLElement | null = null
   let speed = 0
   let raf = 0
 
@@ -26,7 +34,7 @@ export function useDndAutoScroll(container: Ref<HTMLElement | null>) {
   }
 
   function step() {
-    const el = container.value
+    const el = activeEl
     const edge = scrollEdge.value
     if (!el || edge === null || !canScroll(el, edge)) {
       stop()
@@ -38,14 +46,19 @@ export function useDndAutoScroll(container: Ref<HTMLElement | null>) {
 
   function stop() {
     scrollEdge.value = null
+    activeEl = null
     if (raf) cancelAnimationFrame(raf)
     raf = 0
   }
 
   function onDragOver(event: DragEvent) {
     if (!isDraggingFolder.value && !isDraggingBookmark.value) return
-    const el = container.value
-    if (!el) return
+    const el = resolveTarget ? resolveTarget(event) : container.value
+    if (!el) {
+      stop()
+      return
+    }
+    activeEl = el
     const rect = el.getBoundingClientRect()
     const fromTop = event.clientY - rect.top
     const fromBottom = rect.bottom - event.clientY

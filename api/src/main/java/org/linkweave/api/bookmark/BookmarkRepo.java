@@ -63,6 +63,43 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             .fetch();
     }
 
+    private static BooleanExpression hasFolder(@Nullable ID<Folder> folderId) {
+        return folderId != null
+            ? QBookmark.bookmark.folder.id.eq(folderId.getUUID())
+            : QBookmark.bookmark.folder.isNull();
+    }
+
+    /**
+     * The bookmarks of one folder group ({@code null} = unfiled) in manual order:
+     * sortOrder, ties broken by creation timestamp then id (BR-198).
+     */
+    @NonNull
+    public List<Bookmark> findSiblings(@NonNull ID<Collection> collectionId, @Nullable ID<Folder> folderId) {
+        return db.selectFrom(QBookmark.bookmark)
+            .where(QBookmark.bookmark.collection.id.eq(collectionId.getUUID())
+                .and(hasFolder(folderId))
+                .and(notDeleted()))
+            .orderBy(
+                QBookmark.bookmark.sortOrder.asc(),
+                QBookmark.bookmark.timestampErstellt.asc(),
+                QBookmark.bookmark.id.asc())
+            .fetch();
+    }
+
+    /**
+     * @return the highest sortOrder in the folder group ({@code null} = unfiled), or
+     *     {@code null} when the group is empty. Soft-deleted bookmarks count so a restored
+     *     bookmark cannot collide with positions handed out while it sat in the trash.
+     */
+    @Nullable
+    public Long findMaxSortOrderOfSiblings(@NonNull ID<Collection> collectionId, @Nullable ID<Folder> folderId) {
+        return db.select(QBookmark.bookmark.sortOrder.max())
+            .from(QBookmark.bookmark)
+            .where(QBookmark.bookmark.collection.id.eq(collectionId.getUUID())
+                .and(hasFolder(folderId)))
+            .fetchFirst();
+    }
+
     @NonNull
     public List<Bookmark> findAllByFolderIncludingDeleted(@NonNull ID<Folder> folderId) {
         return db.selectFrom(QBookmark.bookmark)

@@ -21,7 +21,8 @@ export const SortField = {
     Title: 'TITLE',
     DateAdded: 'DATE_ADDED',
     LastClicked: 'LAST_CLICKED',
-    ClickCount: 'CLICK_COUNT'
+    ClickCount: 'CLICK_COUNT',
+    Manual: 'MANUAL'
 } as const;
 export type SortField = typeof SortField[keyof typeof SortField];
 

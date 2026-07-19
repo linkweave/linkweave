@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { BookmarkPositionJson } from './bookmark-position-json';
+import {
+    BookmarkPositionJsonFromJSON,
+    BookmarkPositionJsonFromJSONTyped,
+    BookmarkPositionJsonToJSON,
+    BookmarkPositionJsonToJSONTyped,
+} from './bookmark-position-json';
+
 /**
  * 
  * @export
@@ -31,6 +39,12 @@ export interface BookmarkMoveJson {
      * @memberof BookmarkMoveJson
      */
     folderId?: string;
+    /**
+     * 
+     * @type {BookmarkPositionJson}
+     * @memberof BookmarkMoveJson
+     */
+    position?: BookmarkPositionJson;
 }
 
 /**
@@ -53,6 +67,7 @@ export function BookmarkMoveJsonFromJSONTyped(json: any, ignoreDiscriminator: bo
         
         'collectionId': json['collectionId'],
         'folderId': json['folderId'] == null ? undefined : json['folderId'],
+        'position': json['position'] == null ? undefined : BookmarkPositionJsonFromJSON(json['position']),
     };
 }
 
@@ -69,6 +84,7 @@ export function BookmarkMoveJsonToJSONTyped(value?: BookmarkMoveJson | null, ign
         
         'collectionId': value['collectionId'],
         'folderId': value['folderId'],
+        'position': BookmarkPositionJsonToJSON(value['position']),
     };
 }
 

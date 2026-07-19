@@ -76,6 +76,37 @@ class ExportResourceITest {
 
     @Test
     @TestSecurity(user = "test@example.com", roles = { "BOOKMARK_WRITE" })
+    void shouldExportBookmarksAndFoldersInManualOrder() {
+        // ARRANGE: manual order (sortOrder) deliberately contradicts both the
+        // alphabetical and the creation order (UC-103)
+        Collection collection = fixtureService.createTestCollection();
+        String collectionId = collection.getId().getUUID().toString();
+        Folder zebra = fixtureService.persistFolder(b -> b
+            .withCollection(collection).withName("Zebra Folder").withSortOrder(1000));
+        fixtureService.persistFolder(b -> b
+            .withCollection(collection).withName("Alpha Folder").withSortOrder(2000));
+        fixtureService.persistBookmark(b -> b.withCollection(collection).withFolder(zebra)
+            .withTitle("Last BM").withUrl("https://last.com").withSortOrder(2000));
+        fixtureService.persistBookmark(b -> b.withCollection(collection).withFolder(zebra)
+            .withTitle("First BM").withUrl("https://first.com").withSortOrder(1000));
+
+        // ACT
+        String html = RestAssured.given()
+            .accept("text/html")
+            .get("/collections/{collectionId}/export", collectionId)
+            .then()
+            .statusCode(200)
+            .extract().asString();
+
+        // ASSERT
+        assert html.indexOf("Zebra Folder") < html.indexOf("Alpha Folder")
+            : "folders must follow the manual order, not the alphabetical one";
+        assert html.indexOf("First BM") < html.indexOf("Last BM")
+            : "bookmarks must follow the manual order, not the alphabetical one";
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = { "BOOKMARK_WRITE" })
     void shouldExportCollectionWithFoldersAndBookmarks() {
         // ARRANGE
         Collection collection = fixtureService.createTestCollection();

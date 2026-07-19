@@ -3,7 +3,6 @@ package org.linkweave.api.bookmark.folder;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.OptionalLong;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -17,6 +16,7 @@ import org.linkweave.api.bookmark.folder.json.FolderSaveJson;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.collection.CollectionRepo;
 import org.linkweave.api.shared.sortorder.Placement;
+import org.linkweave.api.shared.sortorder.SortOrderPlacement;
 import org.linkweave.api.shared.sortorder.SparseSortOrder;
 import org.linkweave.infrastructure.errorhandling.AppFailureException;
 import org.linkweave.infrastructure.errorhandling.AppFailureMessage;
@@ -179,20 +179,7 @@ public class FolderService {
         }
         // insert in place of anchor or right after it
         int insertIndex = position.getPlacement() == Placement.BEFORE ? anchorIndex : anchorIndex + 1;
-        Long prevSortOrderVal = insertIndex > 0 ? siblings.get(insertIndex - 1).getSortOrder() : null;
-        Long nextSortOrderVal = insertIndex < siblings.size() ? siblings.get(insertIndex).getSortOrder() : null;
-
-        OptionalLong slot = SparseSortOrder.between(prevSortOrderVal, nextSortOrderVal);
-        if (slot.isPresent()) {
-            folder.setSortOrder(slot.getAsLong());
-            return;
-        }
-
-        siblings.add(insertIndex, folder);
-        for (int i = 0; i < siblings.size(); i++) {
-            siblings.get(i).setSortOrder(SparseSortOrder.renumbered(i));
-            folderRepo.persist(siblings.get(i));
-        }
+        SortOrderPlacement.placeAt(siblings, folder, insertIndex, folderRepo::persist);
     }
 
     public void removeFolder(@NonNull ID<Folder> id) {

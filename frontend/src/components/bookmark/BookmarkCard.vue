@@ -3,7 +3,8 @@ import type { BookmarkJson, PropertyDefinitionJson } from '@/api/generated'
 import BookmarkFavicon from '@/components/bookmark/BookmarkFavicon.vue'
 import BookmarkPreview from '@/components/bookmark/BookmarkPreview.vue'
 import BookmarkRowMenu from '@/components/bookmark/BookmarkRowMenu.vue'
-import { DRAG_TYPE_BOOKMARK, setDraggingBookmark } from '@/composables/useDragState'
+import { DRAG_TYPE_BOOKMARK, setDraggingBookmarkId } from '@/composables/useDragState'
+import { useBookmarkReorder } from '@/composables/useBookmarkReorder'
 import { setCompactDragImage } from '@/lib/dragImage'
 import { useScreenshotRefresh } from '@/composables/useScreenshotRefresh'
 import { useMediaQuery } from '@/composables/useMediaQuery'
@@ -75,15 +76,37 @@ function onBookmarkDragStart(event: DragEvent) {
   event.dataTransfer.effectAllowed = 'move'
   event.dataTransfer.setData(DRAG_TYPE_BOOKMARK, props.bookmark.id)
   setCompactDragImage(event, props.bookmark.data.title, 'bookmark')
-  setDraggingBookmark(true)
+  setDraggingBookmarkId(props.bookmark.id)
 }
 
 function onBookmarkDragEnd() {
-  setDraggingBookmark(false)
+  setDraggingBookmarkId(null)
   // Reset after the synthetic click that fires when a drag ends without a drop
   setTimeout(() => {
     didDrag = false
   }, 0)
+}
+
+// --- Reorder targets (UC-103) ----------------------------------------------
+// Only the list layout offers insertion lines (BR-199); the composable itself
+// additionally gates on Manual sort mode and an active bookmark drag.
+
+const reorder = useBookmarkReorder()
+
+const dropLine = computed(() =>
+  props.layout === 'list' ? reorder.lineFor(props.bookmark.id) : null,
+)
+
+function onReorderDragOver(event: DragEvent) {
+  if (props.layout === 'list') reorder.onRowDragOver(event, props.bookmark)
+}
+
+function onReorderDragLeave(event: DragEvent) {
+  if (props.layout === 'list') reorder.onRowDragLeave(event, props.bookmark)
+}
+
+function onReorderDrop(event: DragEvent) {
+  if (props.layout === 'list') void reorder.onRowDrop(event, props.bookmark)
 }
 
 // --- Batch selection (UC-074) ----------------------------------------------
@@ -315,9 +338,16 @@ function onRowLeave() {
     ]"
     @dragstart="onBookmarkDragStart"
     @dragend="onBookmarkDragEnd"
+    @dragenter="onReorderDragOver"
+    @dragover="onReorderDragOver"
+    @dragleave="onReorderDragLeave"
+    @drop="onReorderDrop"
     @mouseenter="onRowEnter"
     @mouseleave="onRowLeave"
   >
+    <!-- Insertion line for a Manual-mode reorder drop (UC-103): drawn in the
+         gap above/below this row while it is the active anchor. -->
+    <div v-if="dropLine" class="bm-drop-line" :class="`bm-drop-line-${dropLine}`" aria-hidden="true" />
     <!-- Stretched link: covers the entire card so any click on the card body opens the URL.
          Sibling (not parent) of interactive children to keep HTML valid and Cmd-click working. -->
     <a

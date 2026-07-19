@@ -60,8 +60,10 @@ public class BookmarkImportService {
             ? findOrCreateImportSourceDefinition(collection)
             : null;
 
+        SortOrderAllocator<ID<Folder>> bookmarkSortOrders = new SortOrderAllocator<>(
+            folderId -> bookmarkRepo.findMaxSortOrderOfSiblings(collection.getId(), folderId));
         for (ParsedBookmark rootBookmark : importDTO.rootBookmarks()) {
-            if (createBookmark(rootBookmark, collection, null, importSourceDef, fileName)) {
+            if (createBookmark(rootBookmark, collection, null, importSourceDef, fileName, bookmarkSortOrders)) {
                 summary.incrementBookmarksCreated();
             } else {
                 summary.incrementBookmarksSkipped();
@@ -71,7 +73,8 @@ public class BookmarkImportService {
         SortOrderAllocator<ID<Folder>> sortOrders = new SortOrderAllocator<>(
             parentId -> folderRepo.findMaxSortOrderOfSiblings(collection.getId(), parentId));
         for (ParsedFolder parsedFolder : importDTO.rootFolders()) {
-            importFolderRecursive(parsedFolder, collection, null, summary, importSourceDef, fileName, sortOrders);
+            importFolderRecursive(
+                parsedFolder, collection, null, summary, importSourceDef, fileName, sortOrders, bookmarkSortOrders);
         }
 
         return summary;
@@ -107,7 +110,8 @@ public class BookmarkImportService {
         @NonNull ImportSummaryJson summary,
         @Nullable PropertyDefinition importSourceDef,
         @Nullable String fileName,
-        @NonNull SortOrderAllocator<ID<Folder>> sortOrders
+        @NonNull SortOrderAllocator<ID<Folder>> sortOrders,
+        @NonNull SortOrderAllocator<ID<Folder>> bookmarkSortOrders
     ) {
         ID<Folder> parentId = parent == null ? null : parent.getId();
         Folder folder = new Folder(collection, parent, parsedFolder.getName(), null, sortOrders.next(parentId), null);
@@ -115,7 +119,7 @@ public class BookmarkImportService {
         summary.incrementFoldersCreated();
 
         for (ParsedBookmark parsedBookmark : parsedFolder.getBookmarks()) {
-            if (createBookmark(parsedBookmark, collection, folder, importSourceDef, fileName)) {
+            if (createBookmark(parsedBookmark, collection, folder, importSourceDef, fileName, bookmarkSortOrders)) {
                 summary.incrementBookmarksCreated();
             } else {
                 summary.incrementBookmarksSkipped();
@@ -123,7 +127,8 @@ public class BookmarkImportService {
         }
 
         for (ParsedFolder child : parsedFolder.getFolders()) {
-            importFolderRecursive(child, collection, folder, summary, importSourceDef, fileName, sortOrders);
+            importFolderRecursive(
+                child, collection, folder, summary, importSourceDef, fileName, sortOrders, bookmarkSortOrders);
         }
     }
 
@@ -135,7 +140,8 @@ public class BookmarkImportService {
         @NonNull Collection collection,
         @Nullable Folder folder,
         @Nullable PropertyDefinition importSourceDef,
-        @Nullable String fileName
+        @Nullable String fileName,
+        @NonNull SortOrderAllocator<ID<Folder>> bookmarkSortOrders
     ) {
         Optional<URL> url = parseUrl(parsed.getUrl());
         if (url.isEmpty()) {
@@ -149,6 +155,7 @@ public class BookmarkImportService {
             parsed.getDescription(),
             new HashSet<>(),
             new HashSet<>(),
+            bookmarkSortOrders.next(folder == null ? null : folder.getId()),
             0,
             null,
             null,

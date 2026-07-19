@@ -7,6 +7,8 @@ function bm(opts: {
   createdAt?: string
   clickCount?: number
   lastClickedAt?: string | null
+  sortOrder?: number
+  folderId?: string
 }): BookmarkJson {
   return {
     id: opts.id,
@@ -19,7 +21,9 @@ function bm(opts: {
     data: {
       title: opts.title ?? opts.id,
       url: `https://example.com/${opts.id}`,
+      folderId: opts.folderId,
     } as BookmarkJson['data'],
+    sortOrder: opts.sortOrder ?? 0,
     clickCount: opts.clickCount ?? 0,
     lastClickedAt: opts.lastClickedAt ? new Date(opts.lastClickedAt) : undefined,
     propertyValues: [],
@@ -83,6 +87,65 @@ describe('sortBookmarks', () => {
     ]
     expect(sortBookmarks(list, ASC('LAST_CLICKED')).items.map((b) => b.id)).toEqual(['newNever', 'oldNever'])
     expect(sortBookmarks(list, DESC('LAST_CLICKED')).items.map((b) => b.id)).toEqual(['newNever', 'oldNever'])
+  })
+})
+
+describe('sortBookmarks MANUAL mode', () => {
+  it('sorts by sortOrder ascending, ignoring direction', () => {
+    const list = [
+      bm({ id: 'c', sortOrder: 3000 }),
+      bm({ id: 'a', sortOrder: 1000 }),
+      bm({ id: 'b', sortOrder: 1500 }),
+    ]
+    expect(sortBookmarks(list, ASC('MANUAL')).items.map((b) => b.id)).toEqual(['a', 'b', 'c'])
+    expect(sortBookmarks(list, DESC('MANUAL')).items.map((b) => b.id)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('tie-breaks equal sortOrders with the older bookmark first (BR-198)', () => {
+    const list = [
+      bm({ id: 'newer', sortOrder: 1000, createdAt: '2026-03-01T00:00:00Z' }),
+      bm({ id: 'older', sortOrder: 1000, createdAt: '2026-01-01T00:00:00Z' }),
+    ]
+    expect(sortBookmarks(list, ASC('MANUAL')).items.map((b) => b.id)).toEqual(['older', 'newer'])
+  })
+
+  it('groups by folder rank before sortOrder, unfiled last (BR-197)', () => {
+    const folderRank = new Map([
+      ['parent', 0],
+      ['child', 1],
+      ['other', 2],
+    ])
+    const list = [
+      bm({ id: 'unfiled', sortOrder: 0 }),
+      bm({ id: 'other-1', folderId: 'other', sortOrder: 1000 }),
+      bm({ id: 'child-1', folderId: 'child', sortOrder: 9000 }),
+      bm({ id: 'parent-2', folderId: 'parent', sortOrder: 2000 }),
+      bm({ id: 'parent-1', folderId: 'parent', sortOrder: 1000 }),
+    ]
+    expect(sortBookmarks(list, ASC('MANUAL'), { folderRank }).items.map((b) => b.id)).toEqual([
+      'parent-1',
+      'parent-2',
+      'child-1',
+      'other-1',
+      'unfiled',
+    ])
+  })
+
+  it('treats a bookmark of an unknown folder like unfiled', () => {
+    const folderRank = new Map([['known', 0]])
+    const list = [
+      bm({ id: 'ghost', folderId: 'deleted-folder', sortOrder: 0 }),
+      bm({ id: 'known-1', folderId: 'known', sortOrder: 1000 }),
+    ]
+    expect(sortBookmarks(list, ASC('MANUAL'), { folderRank }).items.map((b) => b.id)).toEqual([
+      'known-1',
+      'ghost',
+    ])
+  })
+
+  it('reports neverOpenedCount 0 in MANUAL mode', () => {
+    const list = [bm({ id: '1', clickCount: 0, lastClickedAt: null })]
+    expect(sortBookmarks(list, ASC('MANUAL')).neverOpenedCount).toBe(0)
   })
 })
 

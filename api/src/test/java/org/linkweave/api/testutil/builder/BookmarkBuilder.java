@@ -19,6 +19,7 @@ import org.jspecify.annotations.Nullable;
 public class BookmarkBuilder {
 
     private final Bookmark bookmark;
+    private boolean sortOrderSet;
 
     public BookmarkBuilder() {
         this.bookmark = defaultBookmark();
@@ -93,9 +94,36 @@ public class BookmarkBuilder {
     }
 
     @NonNull
+    public BookmarkBuilder withSortOrder(long sortOrder) {
+        bookmark.setSortOrder(sortOrder);
+        sortOrderSet = true;
+        return this;
+    }
+
+    /**
+     * Whether the test picked a sort order explicitly. Tracked separately because the
+     * entity's field is a primitive {@code long}: 0 is a legitimate stored value (see
+     * {@code SparseSortOrder.between}, whose head slot returns 0 and then goes negative),
+     * so it cannot double as an "unset" sentinel.
+     */
+    public boolean isSortOrderSet() {
+        return sortOrderSet;
+    }
+
+    @NonNull
+    public Bookmark bookmark() {
+        return bookmark;
+    }
+
+    @NonNull
     public static Bookmark build(Consumer<BookmarkBuilder> block) {
+        return configured(block).bookmark;
+    }
+
+    @NonNull
+    public static BookmarkBuilder configured(Consumer<BookmarkBuilder> block) {
         BookmarkBuilder builder = new BookmarkBuilder();
         block.accept(builder);
-        return builder.bookmark;
+        return builder;
     }
 }

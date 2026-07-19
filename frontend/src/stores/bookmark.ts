@@ -97,10 +97,14 @@ export const useBookmarkStore = defineStore('bookmark', () => {
       })
     }
 
-    return sortBookmarks(result, {
-      field: collectionStore.sortField,
-      direction: collectionStore.sortDirection,
-    })
+    return sortBookmarks(
+      result,
+      {
+        field: collectionStore.sortField,
+        direction: collectionStore.sortDirection,
+      },
+      { folderRank: folderStore.folderRank },
+    )
   })
 
   const filteredBookmarks = computed(() => sortedAndFiltered.value.items)

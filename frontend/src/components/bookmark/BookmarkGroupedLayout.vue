@@ -5,6 +5,7 @@ import { useFolderStore } from '@/stores/folder'
 import type { BookmarkJson, FolderJson } from '@/api/generated'
 import { Folder, FolderOpen } from '@lucide/vue'
 import { DRAG_TYPE_BOOKMARK, isDraggingBookmark } from '@/composables/useDragState'
+import { useDndAutoScroll } from '@/composables/useDndAutoScroll'
 import { useDndMove } from '@/composables/useDndMove'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import GroupedBookmarkRow from './GroupedBookmarkRow.vue'
@@ -13,6 +14,14 @@ const { t } = useI18n()
 const folderStore = useFolderStore()
 const { moveBookmarkWithUndo } = useDndMove()
 const isTouch = useMediaQuery('(hover: none) and (pointer: coarse)')
+
+// Each card body scrolls independently; during a drag the section under the
+// pointer auto-scrolls so reorder targets outside its viewport are reachable
+// (UC-103). One capture listener on the grid root serves every card.
+const gridRoot = ref<HTMLElement | null>(null)
+useDndAutoScroll(gridRoot, (event) =>
+  event.target instanceof Element ? event.target.closest<HTMLElement>('[data-group-scroll]') : null,
+)
 
 const props = defineProps<{
   bookmarks: BookmarkJson[]
@@ -74,9 +83,9 @@ function buildSections(
 ): Section[] {
   const folderId = folder?.id ?? null
   const direct = bookmarksByFolder.get(folderId) ?? []
-  const children = (foldersByParent.get(folderId) ?? [])
-    .slice()
-    .sort((a, b) => a.data.name.localeCompare(b.data.name))
+  // foldersByParent preserves folderStore.folders' manual order (UC-102), so
+  // subfolder sections follow the sidebar's order (BR-200).
+  const children = foldersByParent.get(folderId) ?? []
 
   const sections: Section[] = []
   if (direct.length > 0) {
@@ -91,9 +100,8 @@ function buildSections(
 const groups = computed<GroupCard[]>(() => {
   const { bookmarksByFolder, foldersByParent } = buildMaps()
 
-  const rootFolders = (foldersByParent.get(null) ?? [])
-    .slice()
-    .sort((a, b) => a.data.name.localeCompare(b.data.name))
+  // Cards follow the manual folder order (UC-102) like the sidebar (BR-200).
+  const rootFolders = foldersByParent.get(null) ?? []
 
   const cards: GroupCard[] = []
 
@@ -152,7 +160,7 @@ async function onHeaderDrop(event: DragEvent, group: GroupCard) {
 </script>
 
 <template>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+  <div ref="gridRoot" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
     <div
       v-for="group in groups"
       :key="group.rootFolder?.id ?? 'unfiled'"
@@ -184,7 +192,7 @@ async function onHeaderDrop(event: DragEvent, group: GroupCard) {
       </div>
 
       <!-- Sections -->
-      <div class="p-2 overflow-y-auto max-h-96">
+      <div data-group-scroll class="p-2 overflow-y-auto max-h-96">
         <template
           v-for="(section, sectionIndex) in group.sections"
           :key="section.folder?.id ?? 'unfiled-' + sectionIndex"

@@ -56,13 +56,23 @@
 2. System assigns the bookmark the order position where it was dropped (overriding its previous position number).
 3. Use case continues at step 7.
 
+### A2b: Reorder in the Grouped (Compact) Layout
+
+**Trigger:** The user views the collection in the grouped layout (folder cards with compact rows) and starts dragging a compact bookmark row (step 3).
+**Flow:**
+
+1. System shows insertion lines between the compact rows of a section while the sort mode is Manual (BR-199).
+2. Dropping between two rows of the same section reorders the bookmark within its folder (continue at step 6).
+3. Dropping between rows of a different folder's section moves the bookmark into that folder at the drop position (as in A2).
+4. Dropping on a folder card's header moves the bookmark into that root folder without assigning a new position (as in A1).
+
 ### A3: Non-Manual Sort Mode Active
 
 **Trigger:** User drags a bookmark while the collection's sort mode is Title, Creation Date, Last Clicked, or Click Count (step 3).
 **Flow:**
 
 1. System shows no insertion lines between bookmarks; dragging onto a sidebar folder (move, UC-013) remains available.
-2. System may show a hint that reordering requires the Manual sort mode.
+2. While the drag is in flight, the toolbar shows a hint that reordering requires the Manual sort mode. The same mechanism explains a filtered view (BR-197): with a search or tag filter active, the hint says filters must be cleared to reorder.
 3. Use case ends.
 
 ### A4: Undo Reorder
@@ -135,6 +145,14 @@ When a Manual-mode list spans several folders (a folder selected together with i
 
 If two bookmarks in the same folder ever hold the same position number (e.g. after a move per BR-195), the system orders them deterministically (older bookmark first).
 
+### BR-199: Layout Support
+
+Reorder insertion targets are offered in the **list** layout and in the **grouped (compact)** layout (between the compact rows of a section). The **grid** layout displays the manual order but offers no insertion targets — dragging a grid card onto a sidebar folder (move, UC-013) still works, and the system may hint that reordering is available in the list layout.
+
+### BR-200: Grouped Layout Follows the Manual Folder Order
+
+The grouped layout orders its folder cards and subfolder sections by the manual folder order (UC-102) — always, regardless of the user's bookmark sort mode — so the sidebar and the grouped view never disagree about folder order. (This replaces the previous alphabetical ordering of cards and sections.)
+
 ---
 
 ## Notes (non-normative)
@@ -143,3 +161,5 @@ If two bookmarks in the same folder ever hold the same position number (e.g. aft
 - The per-user sort preference already lives in `CollectionAccess` settings (`SortField` enum, `CollectionSettingsService`); Manual becomes a new `SortField` constant surfaced in `BookmarkSortMenu.vue`.
 - Bookmark drag-to-folder already exists (`useDndMove.moveBookmarkWithUndo`); this use case adds edge-zone insertion targets in the bookmark list, active only in Manual mode.
 - The reorder persists via the bookmark move/update endpoint extended with a target position (same pattern as UC-102's folder move).
+- Layouts: the list layout and the grouped (compact) layout (`BookmarkGroupedLayout.vue` / `GroupedBookmarkRow.vue`) offer insertion targets (BR-199); the grid layout is display-only for ordering. The grouped layout's card/section ordering switches from alphabetical to the UC-102 folder order (BR-200).
+- The HTML export (UC-030) writes folders and bookmarks in their manual order, so an export of a hand-arranged collection round-trips that arrangement.

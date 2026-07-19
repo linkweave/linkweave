@@ -197,6 +197,32 @@
   transform: translate(-50%, -50%);
 }
 
+/* Bookmark insertion line (UC-103): drawn by the anchor row in the gap above
+   or below itself. The offset centers the line in the layout's row gap —
+   list cards (12px gap) use the default; tighter layouts (grouped rows)
+   override --bm-drop-offset. */
+.bm-drop-line {
+  --bm-drop-offset: -7.25px;
+
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  height: 2.5px;
+  border-radius: 3px;
+  background: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 18%, transparent);
+  pointer-events: none;
+  z-index: 6;
+}
+
+.bm-drop-line-above {
+  top: var(--bm-drop-offset);
+}
+
+.bm-drop-line-below {
+  bottom: var(--bm-drop-offset);
+}
+
 /* The row being dragged. */
 .is-dragging {
   opacity: 0.38;

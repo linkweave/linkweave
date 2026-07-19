@@ -1,22 +1,27 @@
 <script setup lang="ts">
-import {ButtonLw} from '@/components/ui'
+import { ButtonLw } from '@/components/ui'
 import OfflineBanner from '@/components/ui/OfflineBanner.vue'
-import {cn} from '@/lib/utils'
-import {Menu, X} from '@lucide/vue'
-import {onMounted} from 'vue'
-import {ref} from 'vue'
-import SidebarLw from './SidebarLw.vue'
-import HeaderLw from './HeaderLw.vue'
+import { useDndAutoScroll } from '@/composables/useDndAutoScroll'
+import { installSessionExpiryWatch } from '@/lib/session-watch'
+import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/stores/auth'
+import { useOfflineStore } from '@/stores/offline'
+import { Menu, X } from '@lucide/vue'
+import { onMounted, ref } from 'vue'
 import CollectionSwitcher from './CollectionSwitcher.vue'
-import {installSessionExpiryWatch} from '@/lib/session-watch'
-import {useAuthStore} from '@/stores/auth'
-import {useOfflineStore} from '@/stores/offline'
+import HeaderLw from './HeaderLw.vue'
+import SidebarLw from './SidebarLw.vue'
 
 withDefaults(defineProps<{ hideSidebar?: boolean }>(), { hideSidebar: false })
 
 const sidebarOpen = ref(false)
 const offline = useOfflineStore()
 const auth = useAuthStore()
+
+// Dragging a bookmark near the top/bottom of the content area scrolls it, so a
+// Manual-mode reorder (UC-103) can reach rows outside the viewport.
+const mainScrollContainer = ref<HTMLElement | null>(null)
+useDndAutoScroll(mainScrollContainer)
 
 onMounted(() => {
   offline.setupListeners()
@@ -44,7 +49,14 @@ const closeSidebar = () => {
     <HeaderLw>
       <template #leading>
         <slot name="header-leading">
-          <ButtonLw v-if="!hideSidebar" variant="ghost" size="icon" class="lg:hidden shrink-0" data-testid="mobile-sidebar-toggle" @click="toggleSidebar">
+          <ButtonLw
+            v-if="!hideSidebar"
+            variant="ghost"
+            size="icon"
+            class="lg:hidden shrink-0"
+            data-testid="mobile-sidebar-toggle"
+            @click="toggleSidebar"
+          >
             <Menu class="h-5 w-5" />
           </ButtonLw>
         </slot>
@@ -80,7 +92,7 @@ const closeSidebar = () => {
           :class="
             cn(
               'fixed inset-y-0 left-0 z-50 w-60 bg-sidebar border-r border-border transform transition-transform lg:relative lg:translate-x-0 flex flex-col',
-              sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+              sidebarOpen ? 'translate-x-0' : '-translate-x-full',
             )
           "
         >
@@ -95,7 +107,7 @@ const closeSidebar = () => {
       </template>
 
       <!-- Main content -->
-      <main class="flex-1 overflow-y-auto">
+      <main ref="mainScrollContainer" class="flex-1 overflow-y-auto">
         <slot name="toolbar" />
         <div class="p-3 sm:p-6">
           <slot />

@@ -39,6 +39,17 @@ public class BookmarkExportService {
         <H1>Bookmarks</H1>
         """;
 
+    /**
+     * Bookmarks are written in their manual order (UC-103, BR-198) so an export
+     * of a hand-arranged folder round-trips that arrangement. Folders need no
+     * comparator: {@code findByCollection} already returns the manual order and
+     * the tree-building below preserves it.
+     */
+    private static final Comparator<Bookmark> MANUAL_ORDER = Comparator
+        .comparingLong(Bookmark::getSortOrder)
+        .thenComparing(Bookmark::getTimestampErstellt)
+        .thenComparing(b -> b.getId().getUUID());
+
     private final BookmarkRepo bookmarkRepo;
     private final CollectionRepo collectionRepo;
     private final FolderRepo folderRepo;
@@ -124,11 +135,10 @@ public class BookmarkExportService {
 
         List<Folder> rootFolders = folders.stream()
             .filter(f -> f.getParent() == null)
-            .sorted(Comparator.comparing(Folder::getName))
             .toList();
         List<Bookmark> rootBookmarks = bookmarks.stream()
             .filter(b -> b.getFolder() == null)
-            .sorted(Comparator.comparing(Bookmark::getTitle))
+            .sorted(MANUAL_ORDER)
             .toList();
 
         StringBuilder sb = new StringBuilder();
@@ -171,16 +181,14 @@ public class BookmarkExportService {
         sb.append("    <DL><p>\n");
 
         List<Bookmark> folderBookmarks = bookmarksByFolder.getOrDefault(folder, List.of()).stream()
-            .sorted(Comparator.comparing(Bookmark::getTitle))
+            .sorted(MANUAL_ORDER)
             .toList();
         for (Bookmark bookmark : folderBookmarks) {
             sb.append("        ");
             appendBookmark(sb, bookmark);
         }
 
-        List<Folder> childFolders = childrenByParent.getOrDefault(folder, List.of()).stream()
-            .sorted(Comparator.comparing(Folder::getName))
-            .toList();
+        List<Folder> childFolders = childrenByParent.getOrDefault(folder, List.of());
         for (Folder child : childFolders) {
             sb.append("        ");
             appendFolder(sb, child, childrenByParent, bookmarksByFolder);

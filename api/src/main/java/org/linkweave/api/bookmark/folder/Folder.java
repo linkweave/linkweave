@@ -20,6 +20,7 @@ import org.linkweave.api.types.id.ID;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.shared.abstractentity.AbstractEntity;
 import org.linkweave.api.shared.auth.BelongsToCollection;
+import org.linkweave.api.shared.sortorder.HasSortOrder;
 import org.linkweave.infrastructure.db.DbConst;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -33,7 +34,7 @@ import org.jspecify.annotations.Nullable;
 @AllArgsConstructor
 @Getter
 @Setter
-public class Folder extends AbstractEntity<Folder> implements BelongsToCollection {
+public class Folder extends AbstractEntity<Folder> implements BelongsToCollection, HasSortOrder {
 
     @NonNull
     @ManyToOne(optional = false)

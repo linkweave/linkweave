@@ -1,6 +1,7 @@
 package org.linkweave.api.bookmark.json;
 
 import org.linkweave.api.types.id.ID;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -24,4 +25,14 @@ public class BookmarkMoveJson {
     @Nullable
     @Schema(required = false)
     ID<Folder> folderId;
+
+    /**
+     * Explicit drop position among the target folder group's bookmarks (UC-103).
+     * Absent on a plain move, which keeps the bookmark's previous position
+     * number (BR-195).
+     */
+    @Nullable
+    @Valid
+    @Schema(required = false)
+    BookmarkPositionJson position;
 }

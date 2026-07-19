@@ -214,7 +214,8 @@ public class ImportReviewService {
 
         CommitCtx ctx = new CommitCtx(
             collection, folderIndex, existing, importSourceDef, request.fileName(), new Counts(),
-            new SortOrderAllocator<>(parentId -> folderRepo.findMaxSortOrderOfSiblings(collectionId, parentId)));
+            new SortOrderAllocator<>(parentId -> folderRepo.findMaxSortOrderOfSiblings(collectionId, parentId)),
+            new SortOrderAllocator<>(folderId -> bookmarkRepo.findMaxSortOrderOfSiblings(collectionId, folderId)));
         for (ImportNodeJson node : request.nodes()) {
             writeNode(node, destination, ctx, 0);
         }
@@ -265,7 +266,9 @@ public class ImportReviewService {
         }
         Bookmark bookmark = new Bookmark(
             ctx.collection, folder, bookmarkTitle(node.name(), Objects.requireNonNull(rawUrl)), url.get(), null,
-            new HashSet<>(), new HashSet<>(), 0, null, null, null, null
+            new HashSet<>(), new HashSet<>(),
+            ctx.bookmarkSortOrders.next(folder == null ? null : folder.getId()),
+            0, null, null, null, null
         );
         OffsetDateTime addedAt = resolveImportedAddedAt(node.addDate());
         if (addedAt != null) {
@@ -307,7 +310,8 @@ public class ImportReviewService {
         @Nullable PropertyDefinition importSourceDef,
         @Nullable String fileName,
         Counts counts,
-        SortOrderAllocator<ID<Folder>> sortOrders
+        SortOrderAllocator<ID<Folder>> sortOrders,
+        SortOrderAllocator<ID<Folder>> bookmarkSortOrders
     ) {}
 
     // --- Helpers --------------------------------------------------------------
