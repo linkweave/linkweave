@@ -36,6 +36,13 @@ public class FolderJson {
     @Schema(required = true)
     FolderSaveJson data;
 
+    /**
+     * Manual position among siblings (UC-102). Server-managed: assigned on
+     * create/move, never taken from client input.
+     */
+    @Schema(required = true)
+    long sortOrder;
+
     @Nullable
     @Schema(required = false)
     OffsetDateTime deletedAt;

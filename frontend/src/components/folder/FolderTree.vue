@@ -7,6 +7,7 @@ import type { FolderJson } from '@/api/generated'
 import FolderTreeNode from '@/components/folder/FolderTreeNode.vue'
 import RenameFolderDialog from '@/components/folder/RenameFolderDialog.vue'
 import { ConfirmDialog } from '@/components/ui'
+import { setDropTarget } from '@/composables/useDropIndicator'
 
 const { t } = useI18n()
 const folderStore = useFolderStore()
@@ -82,6 +83,16 @@ function handleDeleteDialogUpdate(open: boolean) {
   if (!open) deletingFolder.value = null
 }
 
+// Rows and gap strips only clear the indicator when handing over to another
+// target — leaving the tree entirely has to clear it here, or the last line
+// would linger while the pointer is elsewhere (e.g. over "All Bookmarks").
+function onTreeDragLeave(event: DragEvent) {
+  const related = event.relatedTarget as Node | null
+  const el = event.currentTarget as HTMLElement
+  if (related && el.contains(related)) return
+  setDropTarget(null)
+}
+
 async function confirmDeleteFolder() {
   if (!deletingFolder.value) return
   try {
@@ -96,7 +107,7 @@ async function confirmDeleteFolder() {
 </script>
 
 <template>
-  <div :class="className">
+  <div :class="className" @dragleave="onTreeDragLeave">
     <div v-if="folderStore.loading" class="text-sm text-muted-foreground p-2">
       {{ t('common.loading') }}
     </div>

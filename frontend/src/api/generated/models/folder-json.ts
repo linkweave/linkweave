@@ -54,6 +54,12 @@ export interface FolderJson {
     data: FolderSaveJson;
     /**
      * 
+     * @type {number}
+     * @memberof FolderJson
+     */
+    sortOrder: number;
+    /**
+     * 
      * @type {Date}
      * @memberof FolderJson
      */
@@ -67,6 +73,7 @@ export function instanceOfFolderJson(value: object): value is FolderJson {
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('entityInfo' in value) || value['entityInfo'] === undefined) return false;
     if (!('data' in value) || value['data'] === undefined) return false;
+    if (!('sortOrder' in value) || value['sortOrder'] === undefined) return false;
     return true;
 }
 
@@ -83,6 +90,7 @@ export function FolderJsonFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'id': json['id'],
         'entityInfo': EntityInfoJsonFromJSON(json['entityInfo']),
         'data': FolderSaveJsonFromJSON(json['data']),
+        'sortOrder': json['sortOrder'],
         'deletedAt': json['deletedAt'] == null ? undefined : (new Date(json['deletedAt'])),
     };
 }
@@ -101,6 +109,7 @@ export function FolderJsonToJSONTyped(value?: FolderJson | null, ignoreDiscrimin
         'id': value['id'],
         'entityInfo': EntityInfoJsonToJSON(value['entityInfo']),
         'data': FolderSaveJsonToJSON(value['data']),
+        'sortOrder': value['sortOrder'],
         'deletedAt': value['deletedAt'] == null ? value['deletedAt'] : value['deletedAt'].toISOString(),
     };
 }

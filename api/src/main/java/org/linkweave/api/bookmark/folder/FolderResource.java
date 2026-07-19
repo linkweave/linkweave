@@ -91,7 +91,11 @@ public class FolderResource {
         @NotNull @Valid @NonNull FolderMoveJson json
     ) {
         authorizationService.requireCollectionAccess(json.getCollectionId());
-        Folder moved = folderService.moveFolder(folderId, json.getParentId(), json.getCollectionId());
+        // The moved folder itself must live in that collection, otherwise access to any one
+        // collection would allow reordering folders of every other one (IDOR).
+        Folder folder = folderService.getFolder(folderId);
+        authorizationService.requireSameCollection(folder, json.getCollectionId());
+        Folder moved = folderService.moveFolder(folderId, json.getParentId(), json.getCollectionId(), json.getPosition());
         return FolderMapper.toJson(moved);
     }
 

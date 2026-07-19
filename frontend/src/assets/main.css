@@ -144,3 +144,172 @@
     background-color: var(--color-muted-foreground);
   }
 }
+
+/* ── Drag & drop cues (UC-102 folder tree; reused by UC-103 list reorder) ──
+   Deliberately un-layered so they override layered Tailwind utilities on the
+   same element (e.g. the nest fill must beat `hover:bg-accent`). Everything
+   derives from --color-primary via color-mix, so light and dark theme need no
+   per-theme overrides. */
+
+:root {
+  --dnd-fill: color-mix(in srgb, var(--color-primary) 13%, transparent);
+  --dnd-ring: color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+/* Gap strip between rows: a 10px hit target straddling the visual 2px gap —
+   4px of it overlays the row above, 4px the row below. The negative margins
+   net out to the 2px the list used to get from `space-y-0.5`, so the strips
+   cost no vertical density over the pre-reorder layout. Inert (and invisible)
+   unless a folder drag is in progress. */
+.dnd-gap {
+  position: relative;
+  height: 10px;
+  margin: -4px 0;
+  pointer-events: none;
+}
+
+.dnd-gap-live {
+  pointer-events: auto;
+  z-index: 5;
+}
+
+/* Insertion line with the anchor dot on its left cap. The dot's x-position is
+   the semantic: it sits on the folder-icon column of the target indent level. */
+.drop-line {
+  position: absolute;
+  top: 50%;
+  height: 2.5px;
+  margin-top: -1.25px;
+  border-radius: 3px;
+  background: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 18%, transparent);
+  pointer-events: none;
+}
+
+.drop-line .dot {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  transform: translate(-50%, -50%);
+}
+
+/* The row being dragged. */
+.is-dragging {
+  opacity: 0.38;
+}
+
+/* While a drag is live, row color changes must snap: the usual 150ms color
+   transition would fade indicators in/out and read as the indicator lagging
+   behind the cursor. */
+.dnd-live .s-row {
+  transition: none;
+}
+
+/* Nest ("drop into") target: filled tint + inset hairline. Applies instantly
+   (see above) even outside the tree, e.g. on the "All Bookmarks" row. */
+.nest-target {
+  position: relative;
+  background: var(--dnd-fill);
+  transition: none;
+}
+
+.nest-target::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1.5px var(--dnd-ring);
+  pointer-events: none;
+}
+
+/* Spring-loaded folder: hairline + countdown bar while the dwell timer runs. */
+.arming {
+  box-shadow: inset 0 0 0 1.5px var(--dnd-ring);
+}
+
+.spring-bar {
+  position: absolute;
+  left: 8px;
+  right: 14px;
+  bottom: 3px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: dnd-spring 0.7s linear forwards;
+  pointer-events: none;
+}
+
+@keyframes dnd-spring {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* Auto-scroll edge glow on the scroll container. */
+.as-up {
+  box-shadow: inset 0 66px 34px -46px var(--dnd-ring);
+}
+
+.as-down {
+  box-shadow: inset 0 -66px 34px -46px var(--dnd-ring);
+}
+
+/* Haptic-style settle on the row that received the drop. */
+.landed {
+  animation: dnd-land 0.4s cubic-bezier(0.2, 0.85, 0.3, 1.35);
+  transform-origin: center left;
+}
+
+@keyframes dnd-land {
+  0% {
+    transform: scale(0.965);
+    background: var(--dnd-fill);
+  }
+
+  55% {
+    transform: scale(1.02);
+    background: var(--dnd-fill);
+  }
+
+  100% {
+    transform: scale(1);
+    background: transparent;
+  }
+}
+
+/* Compact drag ghost chip (see lib/dragImage.ts). Parked off-screen: it only
+   exists for the browser to snapshot as the drag image. */
+.dnd-drag-chip {
+  position: fixed;
+  top: -1000px;
+  left: -1000px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  max-width: 220px;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 18%);
+}
+
+.dnd-drag-chip svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--color-primary);
+}
+
+.dnd-drag-chip span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

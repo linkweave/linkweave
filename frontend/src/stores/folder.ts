@@ -9,11 +9,23 @@ import { useTrashbinStore } from '@/stores/trashbin'
 
 const folderApi = new FolderResourceApi(config)
 
+// Manual order within a sibling group (UC-102): sortOrder first, ties broken
+// deterministically like the backend does it — older folder first, then id
+// (BR-191). Sorting here keeps optimistic patches (create/move) in the right
+// place without refetching.
+function byManualOrder(a: FolderJson, b: FolderJson): number {
+  if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder
+  const byCreation =
+    a.entityInfo.timestampErstellt.getTime() - b.entityInfo.timestampErstellt.getTime()
+  if (byCreation !== 0) return byCreation
+  return a.id.localeCompare(b.id)
+}
+
 export const useFolderStore = defineStore('folder', () => {
   const collectionStore = useCollectionStore()
 
   const folders = computed<FolderJson[]>(() =>
-    collectionStore.collectionInfo?.folders ?? []
+    [...(collectionStore.collectionInfo?.folders ?? [])].sort(byManualOrder)
   )
 
   const loading = computed(() => collectionStore.loading)

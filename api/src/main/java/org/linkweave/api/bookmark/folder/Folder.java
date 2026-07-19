@@ -55,6 +55,14 @@ public class Folder extends AbstractEntity<Folder> implements BelongsToCollectio
     @Column(length = 7)
     private String color;
 
+    /**
+     * Manual position among siblings (same collection + parent), UC-102.
+     * Sparse numbering managed by {@link FolderService}; ties are broken by
+     * creation timestamp, then id (BR-191).
+     */
+    @Column(nullable = false)
+    private long sortOrder;
+
     @Nullable
     @Column(name = "deleted_at", nullable = true)
     private OffsetDateTime deletedAt;

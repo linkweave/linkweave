@@ -10,6 +10,7 @@ import org.jspecify.annotations.Nullable;
 public class FolderBuilder {
 
     private final Folder folder;
+    private boolean sortOrderSet;
 
     public FolderBuilder() {
         this.folder = defaultFolder();
@@ -43,9 +44,40 @@ public class FolderBuilder {
     }
 
     @NonNull
+    public FolderBuilder withSortOrder(long sortOrder) {
+        folder.setSortOrder(sortOrder);
+        sortOrderSet = true;
+        return this;
+    }
+
+    /**
+     * Whether the test picked a sort order explicitly. Tracked separately because the
+     * entity's field is a primitive {@code long}: 0 is a legitimate stored value (see
+     * {@code SparseSortOrder.between}, whose head slot returns 0 and then goes negative),
+     * so it cannot double as an "unset" sentinel.
+     */
+    public boolean isSortOrderSet() {
+        return sortOrderSet;
+    }
+
+    @NonNull
+    public Folder folder() {
+        return folder;
+    }
+
+    @NonNull
     public static Folder build(Consumer<FolderBuilder> block) {
+        return configured(block).folder;
+    }
+
+    /**
+     * As {@link #build}, but hands back the builder so callers can still see which
+     * fields were set explicitly.
+     */
+    @NonNull
+    public static FolderBuilder configured(Consumer<FolderBuilder> block) {
         FolderBuilder builder = new FolderBuilder();
         block.accept(builder);
-        return builder.folder;
+        return builder;
     }
 }

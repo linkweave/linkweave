@@ -1,6 +1,11 @@
 import { expect, type Page, test } from './fixtures'
 import { createBookmarkViaApi, createCollectionViaApi } from './helpers/api'
-import { login } from './helpers/auth'
+import {
+  deleteTestUserCleanup,
+  registerAndCaptureStorageState,
+  type StorageState,
+  type TestUser,
+} from './models/TestUser'
 
 // Import review — UC-096: parse → review tree → select → commit. The review
 // surface lets the user deselect folders/bookmarks and skip duplicates before
@@ -18,6 +23,8 @@ const dupBook = `DupBook ${ts}`
 const keptBook = `KeptBook ${ts}`
 const rootBook = `RootBook ${ts}`
 
+let user: TestUser
+let storageState: StorageState
 let collectionId: string
 
 // Netscape bookmark HTML: a folder with a duplicate + a new bookmark, plus a
@@ -40,7 +47,6 @@ function bookmarksHtml(): string {
 }
 
 async function uploadAndAwaitTree(page: Page) {
-  await login(page)
   await page.goto(`/collections/${collectionId}/import`)
   await page.getByTestId('import-file-input').setInputFiles({
     name: 'bookmarks.html',
@@ -56,17 +62,22 @@ function bookmarkRow(page: Page, title: string) {
 
 test.describe('Import review (UC-096)', () => {
   test.beforeAll(async ({ browser }) => {
-    const context = await browser.newContext({ ignoreHTTPSErrors: true })
-    const page = await context.newPage()
+    ;({ user, storageState } = await registerAndCaptureStorageState(browser, 'importreview'))
+    const ctx = await browser.newContext({ ignoreHTTPSErrors: true, storageState })
     try {
-      await login(page)
-      collectionId = await createCollectionViaApi(page.request, collectionName)
+      collectionId = await createCollectionViaApi(ctx.request, collectionName)
       // Pre-existing bookmark whose URL collides with dupBook in the import file.
-      await createBookmarkViaApi(page.request, collectionId, `Existing ${ts}`, dupUrl)
+      await createBookmarkViaApi(ctx.request, collectionId, `Existing ${ts}`, dupUrl)
     } finally {
-      await context.close()
+      await ctx.close()
     }
   })
+
+  test.afterAll(async ({ browser }) => {
+    await deleteTestUserCleanup(browser, () => user)
+  })
+
+  test.use({ storageState: async ({}, use) => { await use(storageState) } })
 
   test('flags duplicates and pre-deselects them; skip pill toggles them', async ({ page }) => {
     await uploadAndAwaitTree(page)
@@ -130,8 +141,6 @@ test.describe('Import review (UC-096)', () => {
       })
       await expect(bookmarkRow(page, plainTitle)).toBeVisible()
     }
-
-    await login(page)
 
     // First pass: nothing is a duplicate yet → import both.
     await upload()

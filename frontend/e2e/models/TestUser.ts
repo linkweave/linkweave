@@ -4,6 +4,9 @@ import {
   type BrowserContext,
   expect,
 } from '@playwright/test'
+import { mkdirSync, rmdirSync, statSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 
 export type TestUser = { email: string; password: string }
 export type StorageState = Awaited<ReturnType<BrowserContext['storageState']>>
@@ -12,6 +15,69 @@ const REGISTER_URL = '/api/auth/register'
 const DELETE_ME_URL = '/api/auth/me'
 const LOGIN_URL = '/api/j_security_check'
 const ME_URL = '/api/auth/me'
+
+// ── Cross-worker write lock ──────────────────────────────────────────────────
+//
+// Playwright workers are separate processes, and most specs register a user in
+// `beforeAll` — so a parallel run starts with a thundering herd of
+// registration + auto-provisioning writes against the single dev SQLite DB,
+// which is exactly when it starts throwing transient 401/500s. Serializing
+// only these short (~100ms) auth phases across workers removes the herd while
+// leaving the actual tests fully parallel.
+//
+// The lock is a directory (mkdir is atomic on every platform). A stale lock —
+// e.g. a worker killed mid-phase — is stolen after LOCK_STALE_MS.
+
+const LOCK_DIR = path.join(tmpdir(), 'linkweave-e2e-auth.lock')
+const LOCK_STALE_MS = 20_000
+
+/**
+ * Options for a helper context that must start UNAUTHENTICATED.
+ *
+ * `browser.newContext()` inside @playwright/test inherits the enclosing
+ * file's `test.use({ storageState })` — and specs point that fixture at a
+ * module-level variable assigned in `beforeAll`. When fullyParallel makes a
+ * worker re-enter a spec file it ran earlier, `beforeAll` runs again and a
+ * bare `newContext()` would silently inherit the PREVIOUS user's session —
+ * a user `afterAll` has already hard-deleted, so every request 401s. The
+ * explicit empty storageState overrides the inherited fixture value.
+ */
+function freshContextOptions(): Parameters<Browser['newContext']>[0] {
+  return {
+    ignoreHTTPSErrors: true,
+    storageState: { cookies: [], origins: [] },
+  }
+}
+
+async function withAuthPhaseLock<T>(fn: () => Promise<T>): Promise<T> {
+  const deadline = Date.now() + 2 * LOCK_STALE_MS
+  for (;;) {
+    try {
+      mkdirSync(LOCK_DIR)
+      break
+    } catch {
+      try {
+        if (Date.now() - statSync(LOCK_DIR).mtimeMs > LOCK_STALE_MS) {
+          rmdirSync(LOCK_DIR)
+          continue
+        }
+      } catch {
+        continue // lock vanished between mkdir and stat — try again immediately
+      }
+      if (Date.now() > deadline) break // never deadlock the suite over the lock
+      await new Promise((r) => setTimeout(r, 100 + Math.random() * 150))
+    }
+  }
+  try {
+    return await fn()
+  } finally {
+    try {
+      rmdirSync(LOCK_DIR)
+    } catch {
+      /* already stolen as stale — nothing to release */
+    }
+  }
+}
 
 /**
  * Registers a fresh user via POST /api/auth/register. The email is unique per
@@ -87,7 +153,7 @@ async function fetchDefaultCollectionId(request: APIRequestContext): Promise<str
   // SQLite and can return 500 — retry transient failures.
   let lastStatus = 0
   let lastBody = ''
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 5; attempt++) {
     const resp = await request.get(ME_URL)
     lastStatus = resp.status()
     if (resp.ok()) {
@@ -96,9 +162,11 @@ async function fetchDefaultCollectionId(request: APIRequestContext): Promise<str
       return body.defaultCollectionId
     }
     lastBody = await resp.text().catch(() => '')
-    if (lastStatus < 500) break
-    console.warn(`[e2e] fetch /auth/me → ${lastStatus}, retrying (attempt ${attempt + 1}/3)`)
-    await new Promise((r) => setTimeout(r, 500))
+    // 401 right after login is transient (SQLite write contention while the
+    // session/provisioning writes settle) — retry like the other helpers.
+    if (lastStatus !== 401 && lastStatus < 500) break
+    console.warn(`[e2e] fetch /auth/me → ${lastStatus}, retrying (attempt ${attempt + 1}/5)`)
+    await new Promise((r) => setTimeout(r, 800 * (attempt + 1)))
   }
   throw new Error(`fetch /auth/me failed: ${lastStatus} ${lastBody}`)
 }
@@ -113,13 +181,15 @@ export async function registerAndCaptureStorageState(
   browser: Browser,
   specSlug: string,
 ): Promise<{ user: TestUser; storageState: StorageState; collectionId: string }> {
-  const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
+  const ctx = await browser.newContext(freshContextOptions())
   try {
-    const user = await registerTestUser(ctx.request, specSlug)
-    await loginViaApi(ctx.request, user)
-    const collectionId = await fetchDefaultCollectionId(ctx.request)
-    const storageState = await ctx.storageState()
-    return { user, storageState, collectionId }
+    return await withAuthPhaseLock(async () => {
+      const user = await registerTestUser(ctx.request, specSlug)
+      await loginViaApi(ctx.request, user)
+      const collectionId = await fetchDefaultCollectionId(ctx.request)
+      const storageState = await ctx.storageState()
+      return { user, storageState, collectionId }
+    })
   } finally {
     await ctx.close()
   }
@@ -152,10 +222,14 @@ export async function deleteTestUserCleanup(
 ): Promise<void> {
   const user = userGetter()
   if (!user) return
-  const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
+  const ctx = await browser.newContext(freshContextOptions())
   try {
-    await loginViaApi(ctx.request, user)
-    await deleteTestUser(ctx.request)
+    // The delete cascades over everything the user owns — serialized across
+    // workers like registration, so it doesn't stall another spec's writes.
+    await withAuthPhaseLock(async () => {
+      await loginViaApi(ctx.request, user)
+      await deleteTestUser(ctx.request)
+    })
   } catch {
     // Best-effort: swallow errors so afterAll never masks the real test failure.
   } finally {

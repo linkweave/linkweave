@@ -27,7 +27,9 @@ import org.linkweave.api.collection.CollectionAccess;
 import org.linkweave.api.collection.CollectionAccessRepo;
 import org.linkweave.api.collection.CollectionRole;
 import org.linkweave.api.collection.CollectionService;
+import org.linkweave.api.shared.sortorder.SparseSortOrder;
 import org.linkweave.api.shared.user.User;
+import org.linkweave.api.types.id.ID;
 import org.linkweave.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
 
@@ -101,9 +103,21 @@ public class FixtureService {
         return access;
     }
 
+    /**
+     * Folders without an explicit {@code withSortOrder(...)} are appended after their existing
+     * siblings, matching what the API does on create. Without this they would all share
+     * sortOrder 0 and sort before every API-created folder. A test that *does* pass a value
+     * keeps it — including 0 or a negative one, which are valid head-slot positions.
+     */
     @NonNull
     public Folder persistFolder(Consumer<org.linkweave.api.testutil.builder.FolderBuilder> block) {
-        Folder folder = org.linkweave.api.testutil.builder.FolderBuilder.build(block);
+        var builder = org.linkweave.api.testutil.builder.FolderBuilder.configured(block);
+        Folder folder = builder.folder();
+        if (!builder.isSortOrderSet()) {
+            ID<Folder> parentId = folder.getParent() == null ? null : folder.getParent().getId();
+            folder.setSortOrder(SparseSortOrder.afterMax(
+                folderRepo.findMaxSortOrderOfSiblings(folder.getCollection().getId(), parentId)));
+        }
         folderRepo.persist(folder);
         return folder;
     }

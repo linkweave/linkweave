@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { AuthResourceApi } from '@/api/generated'
 import { config } from '@/api'
 import type { UserInfoJson } from '@/api/generated'
+import { isResponseError } from '@/api/error-utils'
 import i18n from '@/i18n'
 import * as offlineCache from '@/lib/offline-cache'
 import { setSessionExpiredHandler } from '@/lib/offline-middleware'
@@ -45,21 +46,43 @@ export const useAuthStore = defineStore('auth', () => {
     void logout({ keepReturnTarget: true })
   }
 
+  /** Statuses that definitively mean "not logged in" (vs. a transient failure). */
+  function isUnauthenticatedResponse(err: unknown): boolean {
+    if (!isResponseError(err)) return false
+    const status = err.response.status
+    return status === 401 || status === 403 || status === 499
+  }
+
+  /**
+   * Fetches /auth/me, retrying transient failures (5xx, network blips) a few
+   * times. Only a definitive 401/403/499 — or exhausted retries — resolves to
+   * null. Without this, a single hiccup during boot would visually log the
+   * user out even though their session cookie is still perfectly valid.
+   */
+  async function fetchMeResilient(): Promise<UserInfoJson | null> {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await authApi.apiAuthMeGet()
+      } catch (err) {
+        if (isUnauthenticatedResponse(err)) return null
+        if (attempt >= 2) return null
+        await new Promise(resolve => setTimeout(resolve, 400 * (attempt + 1)))
+      }
+    }
+  }
+
   async function fetchCurrentUser(): Promise<boolean> {
     if (fetchPromise) {
       return fetchPromise
     }
     fetchPromise = (async () => {
       try {
-        user.value = await authApi.apiAuthMeGet()
+        user.value = await fetchMeResilient()
         if (user.value) {
           sessionExpiryHandled = false
           offlineCache.saveUserInfo(user.value.email, user.value).catch(err => console.error('Failed to cache user info for offline use:', err))
         }
-        return true
-      } catch {
-        user.value = null
-        return false
+        return user.value !== null
       } finally {
         loading.value = false
         initialized.value = true

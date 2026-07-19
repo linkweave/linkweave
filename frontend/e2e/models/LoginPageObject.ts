@@ -27,11 +27,16 @@ export class LoginPageObject {
     await this.loginSubmitButton.click()
   }
 
-  /** Opens the login page, signs in, and waits until the app lands on a collection. */
+  /**
+   * Opens the login page, signs in, and waits until the app lands on a
+   * collection. The generous timeout covers parallel e2e load: login is a
+   * full SPA boot plus the auth round-trip, and with several workers sharing
+   * one dev backend the landing can take well over the usual budget.
+   */
   async loginAndLand(email = 'alice@example.com', password = 'alice') {
     await this.goto()
     await this.login(email, password)
-    await expect(this.page).toHaveURL(/\/collections\//, { timeout: 15000 })
+    await expect(this.page).toHaveURL(/\/collections\//, { timeout: 30000 })
   }
 
   async expectOnLoginPage() {

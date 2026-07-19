@@ -24,6 +24,7 @@ import org.linkweave.api.bookmark.property.PropertyType;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.collection.CollectionRepo;
 import org.linkweave.api.shared.config.ConfigService;
+import org.linkweave.api.shared.sortorder.SortOrderAllocator;
 import org.linkweave.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -67,8 +68,10 @@ public class BookmarkImportService {
             }
         }
 
+        SortOrderAllocator<ID<Folder>> sortOrders = new SortOrderAllocator<>(
+            parentId -> folderRepo.findMaxSortOrderOfSiblings(collection.getId(), parentId));
         for (ParsedFolder parsedFolder : importDTO.rootFolders()) {
-            importFolderRecursive(parsedFolder, collection, null, summary, importSourceDef, fileName);
+            importFolderRecursive(parsedFolder, collection, null, summary, importSourceDef, fileName, sortOrders);
         }
 
         return summary;
@@ -103,9 +106,11 @@ public class BookmarkImportService {
         @Nullable Folder parent,
         @NonNull ImportSummaryJson summary,
         @Nullable PropertyDefinition importSourceDef,
-        @Nullable String fileName
+        @Nullable String fileName,
+        @NonNull SortOrderAllocator<ID<Folder>> sortOrders
     ) {
-        Folder folder = new Folder(collection, parent, parsedFolder.getName(), null, null);
+        ID<Folder> parentId = parent == null ? null : parent.getId();
+        Folder folder = new Folder(collection, parent, parsedFolder.getName(), null, sortOrders.next(parentId), null);
         folderRepo.persist(folder);
         summary.incrementFoldersCreated();
 
@@ -118,7 +123,7 @@ public class BookmarkImportService {
         }
 
         for (ParsedFolder child : parsedFolder.getFolders()) {
-            importFolderRecursive(child, collection, folder, summary, importSourceDef, fileName);
+            importFolderRecursive(child, collection, folder, summary, importSourceDef, fileName, sortOrders);
         }
     }
 

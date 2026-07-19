@@ -19,6 +19,8 @@ rectangle "LinkWeave Bookmark Manager" {
     rectangle "Authentication" {
         usecase "UC-033\nLogin with Google" as UC033 <<implemented>>
         usecase "UC-034\nRegister Account" as UC034 <<implemented>>
+        usecase "UC-098\nProactive Session Expiry\nDetection on Tab Focus" as UC098 <<implemented>>
+        usecase "UC-099\nReturn to Previous Page\nAfter Re-Login" as UC099 <<implemented>>
     }
 
     rectangle "Collection Management" {
@@ -26,12 +28,17 @@ rectangle "LinkWeave Bookmark Manager" {
         usecase "UC-002\nAuto-Navigate\nto Collection" as UC002 <<implemented>>
         usecase "UC-003\nList Collections" as UC003 <<implemented>>
         usecase "UC-004\nSet Default Collection" as UC004 <<implemented>>
-        usecase "UC-023\nShare Collection" as UC023 <<implemented>>
-        usecase "UC-024\nAccess Shared Collection" as UC024 <<implemented>>
-        usecase "UC-025\nRevoke Collection\nAccess" as UC025 <<implemented>>
         usecase "UC-026\nCreate Collection" as UC026 <<implemented>>
         usecase "UC-027\nEdit Collection" as UC027 <<implemented>>
         usecase "UC-028\nDelete Collection" as UC028 <<implemented>>
+    }
+
+    rectangle "Sharing & Feeds" {
+        usecase "UC-023\nShare Collection" as UC023 <<implemented>>
+        usecase "UC-024\nAccess Shared Collection" as UC024 <<implemented>>
+        usecase "UC-025\nRevoke Collection\nAccess" as UC025 <<implemented>>
+        usecase "UC-100\nInvite User\nas Viewer" as UC100
+        usecase "UC-101\nSubscribe to Collection\nRSS Feed" as UC101
     }
 
     rectangle "Bookmark Management" {
@@ -48,6 +55,7 @@ rectangle "LinkWeave Bookmark Manager" {
         usecase "UC-011\nRename Folder" as UC011 <<implemented>>
         usecase "UC-012\nNest Folders" as UC012 <<implemented>>
         usecase "UC-014\nDelete Folder" as UC014 <<implemented>>
+        usecase "UC-102\nReorder Folders\nin Sidebar" as UC102 <<implemented>>
     }
 
     rectangle "Tag Management" {
@@ -64,6 +72,7 @@ rectangle "LinkWeave Bookmark Manager" {
         usecase "UC-068\nSet Bookmark\nProperty Value" as UC068 <<implemented>>
         usecase "UC-069\nFilter Bookmarks\nby Property" as UC069 <<implemented>>
         usecase "UC-091\nCollapsible Properties\nSection" as UC091 <<implemented>>
+        usecase "UC-081\nSet Bookmark Properties\nin Extension" as UC081
     }
 
     rectangle "Search & Filtering" {
@@ -73,6 +82,7 @@ rectangle "LinkWeave Bookmark Manager" {
         usecase "UC-070\nSearch with Operators" as UC070 <<implemented>>
         usecase "UC-071\nSave Search Query" as UC071 <<implemented>>
         usecase "UC-072\nUse Smart Collection" as UC072 <<implemented>>
+        usecase "UC-046\nMulti-Term Search\nBookmarks" as UC046 <<implemented>>
     }
 
     rectangle "Batch Operations" {
@@ -83,6 +93,7 @@ rectangle "LinkWeave Bookmark Manager" {
     rectangle "Bookmark Enrichment" {
         usecase "UC-075\nAdd Bookmark Note" as UC075
         usecase "UC-076\nSort Bookmarks" as UC076 <<implemented>>
+        usecase "UC-103\nReorder Bookmarks\nWithin Folder" as UC103
     }
 
     rectangle "Navigation" {
@@ -114,6 +125,7 @@ rectangle "LinkWeave Bookmark Manager" {
 
     rectangle "Auto-Tagging" {
         usecase "UC-045\nAuto-Tag Bookmark\nby URL Pattern" as UC045 <<implemented>>
+        usecase "UC-097\nAuto-Tag Bookmark\nwith Local LLM" as UC097
     }
 
     rectangle "Favicons" {
@@ -132,7 +144,8 @@ rectangle "LinkWeave Bookmark Manager" {
         usecase "UC-035\nAdd ArchUnit Tests" as UC035 <<implemented>>
         usecase "UC-036\nAdopt Form Library\nwith Zod Schemas" as UC036 <<implemented>>
         usecase "UC-056\nSession Data Cleanup" as UC056 <<implemented>>
-        usecase "UC-037\nProvide Browser\nExtension" as UC037 <<implemented>>
+        usecase "UC-092\nEnforce Module\nBoundaries" as UC092 <<implemented>>
+        usecase "UC-095\nExplore SQLite WAL\n& Turso Multi-Writer" as UC095
     }
 
     rectangle "Offline Mode" {
@@ -143,11 +156,13 @@ rectangle "LinkWeave Bookmark Manager" {
 
     rectangle "Distribution" {
         usecase "UC-052\nRun as Desktop App" as UC052 <<implemented>>
+        usecase "UC-037\nProvide Browser\nExtension" as UC037 <<implemented>>
     }
 
     rectangle "Mobile & UI Polish" {
         usecase "UC-057\nImprove Mobile\nResponsiveness" as UC057 <<implemented>>
         usecase "UC-058\nInvestigate Form\nLabel-Input Spacing" as UC058 <<implemented>>
+        usecase "UC-094\nSave Bookmark from\nMobile Share Sheet" as UC094
     }
 
     rectangle "Backup" {
@@ -175,18 +190,28 @@ rectangle "LinkWeave Bookmark Manager" {
 user --> UC033
 user --> UC034
 user --> UC030
+user --> UC098
+user --> UC099
+
+UC099 ..> UC098 : <<extend>>
 
 ' Collection Management
 user --> UC001
 user --> UC002
 user --> UC003
 user --> UC004
-owner --> UC023
-user --> UC024
-owner --> UC025
 user --> UC026
 owner --> UC027
 owner --> UC028
+
+' Sharing & Feeds
+owner --> UC023
+user --> UC024
+owner --> UC025
+owner --> UC100
+user --> UC101
+
+UC100 ..> UC023 : <<extend>>
 
 ' Bookmark Management
 user --> UC005
@@ -201,6 +226,9 @@ user --> UC010
 user --> UC011
 user --> UC012
 user --> UC014
+user --> UC102
+
+UC102 ..> UC039 : <<extend>>
 
 ' Tag Management
 user --> UC015
@@ -214,12 +242,18 @@ user --> UC020
 user --> UC021
 user --> UC022
 user --> UC032
+user --> UC046
+
+UC046 ..> UC032 : <<extend>>
 
 ' Properties
 owner --> UC067
 user --> UC068
 user --> UC069
 user --> UC091
+user --> UC081
+
+UC081 ..> UC037 : <<extend>>
 
 UC091 ..> UC068 : <<extend>>
 
@@ -238,6 +272,9 @@ user --> UC074
 ' Bookmark Enrichment
 user --> UC075
 user --> UC076
+user --> UC103
+
+UC103 ..> UC076 : <<extend>>
 
 ' Navigation
 user --> UC029
@@ -250,7 +287,8 @@ user --> UC031
 developer --> UC035
 developer --> UC036
 developer --> UC056
-user --> UC037
+developer --> UC092
+developer --> UC095
 
 ' Offline Mode
 user --> UC047
@@ -272,6 +310,9 @@ user --> UC043
 
 ' Auto-Tagging
 user --> UC045
+user --> UC097
+
+UC097 ..> UC045 : <<extend>>
 
 ' Favicons
 user --> UC050
@@ -288,6 +329,7 @@ UC093 ..> UC054 : <<refine>>
 
 'Distribution
 user --> UC052
+user --> UC037
 
 note right of UC052
   See desktop-app.md
@@ -297,6 +339,7 @@ end note
 ' Mobile & UI Polish
 developer --> UC057
 developer --> UC058
+user --> UC094
 
 note right of UC057
   See mobile-viability/MOBILE-VIABILITY-REPORT.md

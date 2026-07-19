@@ -13,11 +13,12 @@ export default defineConfig({
   timeout: 90_000,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  // Cap parallel workers locally. The dev SQLite DB serializes writes and
-  // returns 5xx/401 responses under high concurrent registration/login load.
-  // The API-only auth flow (registerAndCaptureStorageState) is fast enough
-  // that the default worker count (~CPU cores) saturates the backend.
-  workers: process.env.CI ? 1 : 3,
+  // One worker by default: deterministic ~3 min runs. `--workers=3` finishes
+  // in ~1 min on an otherwise idle machine, but three Chromiums + Vite +
+  // Quarkus dev + SQLite need most of the machine — with an IDE or other
+  // load running alongside, specs start missing their navigation/visibility
+  // timeouts and fail spuriously. Opt in explicitly when the machine is quiet.
+  workers: 1,
   reporter: 'html',
   use: {
     baseURL,

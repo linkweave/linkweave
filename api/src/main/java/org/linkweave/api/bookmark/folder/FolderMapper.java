@@ -13,15 +13,17 @@ public class FolderMapper {
 
     @NonNull
     public static FolderJson toJson(@NonNull Folder folder) {
+        Folder parent = folder.getParent();
         return new FolderJson(
             folder.getId(),
             EntityInfoJson.fromEntity(folder),
             new FolderSaveJson(
                 folder.getCollection().getId(),
-                folder.getParent() != null ? folder.getParent().getId() : null,
+                parent != null ? parent.getId() : null,
                 folder.getName(),
                 folder.getColor()
             ),
+            folder.getSortOrder(),
             folder.getDeletedAt()
         );
     }
