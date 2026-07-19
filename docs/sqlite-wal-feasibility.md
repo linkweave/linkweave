@@ -130,8 +130,30 @@ The Agroal default (verified at runtime via `PRAGMA` diagnostics) is **50 connec
 | `max-size` | Result |
 |---|---|
 | **1** | Test setup transaction times out — Quarkus background jobs compete with the `FixtureService` seed loop for the single connection. `RollbackException: ARJUNA016102: The transaction is not active!` |
-| **2 – 8** | Test hangs indefinitely (deadlock between Agroal connection acquisition and vert.x worker thread scheduling — not a `SQLITE_BUSY` issue). A 5-op-per-worker run with `max-size=8` still hangs at 5 minutes, ruling out throughput-limited slowness. |
-| **50 (Agroal default)** | 0 errors, ~zero contention. Best result. |
+| **2 – 8** | Test hangs — **nested-transaction connection deadlock** (see root-cause analysis below). Not a `SQLITE_BUSY` issue. |
+| **50 (Agroal default)** | ~0 errors, ~zero contention. Best result. |
+
+### Root cause of the pool ≤ 8 hang: nested-transaction connection deadlock
+
+Thread-dump analysis (`jstack` on the hung JVM) revealed that **every API-key-authenticated request needs 2 concurrent connections**:
+
+1. The resource method (`@JaxResource` = `@Transactional(REQUIRED)`) starts an outer transaction → acquires **connection #1**.
+2. `UserRepo.findBenutzerIdFromBenutzername` (`@Transactional(REQUIRES_NEW)`, `api/src/main/java/org/linkweave/api/benutzer/UserRepo.java:44`) suspends the outer transaction and starts a new one → needs **connection #2**.
+
+With `max-size=8`, only 4 concurrent requests can hold both connections simultaneously. The 5th request acquires connection #1 (for the outer tx), then blocks waiting for connection #2 (for the `REQUIRES_NEW` auth lookup). Since all 8 connections are now held by suspended outer transactions, no inner transaction can ever get a connection — **classic resource deadlock**:
+
+```
+32 threads all parked at io.agroal.pool.ConnectionPool.waitAvailableHandler
+→ org.hibernate.resource.jdbc.internal.LogicalConnectionManagedImpl.acquire
+→ UserRepo.findBenutzerIdFromBenutzername  (REQUIRES_NEW)
+→ TransactionalInterceptorRequiresNew
+```
+
+The Agroal acquisition timeout (30 s in the test) eventually fires per-thread and produces a `SQLException("Sorry, acquisition timeout!")`, but with 80 ops × 30 s worst case the test takes ~40 minutes to drain. This is not a throughput limit — a 5-op-per-worker run (80 ops total, should finish in <1 s with the default pool) still hangs at 5 minutes.
+
+The `@RetryOnSqliteBusy` interceptor does **not** worsen the hang — it only catches `SQLiteException` with BUSY error codes, not Agroal's generic `SQLException`.
+
+**Constraint:** the minimum viable pool size is `2 × max_concurrent_api_key_requests` (the `REQUIRES_NEW` on the auth path doubles the per-request connection requirement). The Agroal default of 50 supports 25 concurrent requests, which is well above the expected LinkWeave load.
 
 ### Why the read/write split is still rejected (correct grounds)
 
