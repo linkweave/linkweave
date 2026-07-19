@@ -9,6 +9,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import {VitePWA} from 'vite-plugin-pwa'
 import {sentryVitePlugin} from '@sentry/vite-plugin'
 import istanbul from 'vite-plugin-istanbul'
+import {isSameOriginAsset} from './src/pwa/runtime-caching'
 
 export default defineConfig(({ command }) => {
   const isDev = command === 'serve' && !process.env.VITEST
@@ -52,9 +53,15 @@ export default defineConfig(({ command }) => {
         workbox: {
           navigateFallback: 'index.html',
           navigateFallbackDenylist: [/^\/api/],
+          // Same-origin static assets only. Cross-origin requests — most
+          // notably the <img> favicons emitted by BookmarkFavicon.vue for
+          // hosts on a collection's favicon allowlist — must bypass the SW.
+          // Otherwise, when the upstream fetch fails inside Workbox's
+          // CacheFirst strategy, respondWith() rejects and Firefox surfaces
+          // the failed interception to the page as NS_ERROR_INTERCEPTION_FAILED.
           runtimeCaching: [
             {
-              urlPattern: /^https:\/\/.*\.(js|css|png|svg|ico|woff2)$/,
+              urlPattern: isSameOriginAsset,
               handler: 'CacheFirst',
               options: { cacheName: 'linkweave-assets' },
             },
