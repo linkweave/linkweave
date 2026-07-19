@@ -9,7 +9,7 @@ import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.linkweave.api.bookmark.Bookmark;
 import org.linkweave.api.bookmark.Tag;
 import org.linkweave.api.bookmark.folder.Folder;
@@ -84,8 +84,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @QuarkusTest
 @TestProfile(LoadTestProfile.class)
-@EnabledIfEnvironmentVariable(named = "LINKWEAVE_LOADTEST", matches = "true")
+@EnabledIf("loadTestGateEnabled")
 class SqliteWriteContentionLoadITest {
+
+    /**
+     * Gate for the load test. Accepts EITHER the original {@code LINKWEAVE_LOADTEST} environment
+     * variable (preserved for the documented invocation in CI / developer shells) OR the same key
+     * as a system property ({@code -DLINKWEAVE_LOADTEST=true}), which surefire reliably forwards
+     * to the forked test JVM in environments where env-var propagation is unreliable.
+     */
+    static boolean loadTestGateEnabled() {
+        return "true".equalsIgnoreCase(System.getenv("LINKWEAVE_LOADTEST"))
+            || "true".equalsIgnoreCase(System.getProperty("LINKWEAVE_LOADTEST"));
+    }
+
 
     private static final int CREATE = 0;
     private static final int UPDATE = 1;
@@ -316,16 +328,19 @@ class SqliteWriteContentionLoadITest {
         double wallSec = result.wallMicros() / 1_000_000.0;
         long errors = results.stream().filter(r -> !r.success()).count();
 
+        String busy = strSetting(LoadTestProfile.ENV_BUSY_TIMEOUT, "10000");
+        String walMode = strSetting(LoadTestProfile.ENV_WAL, "");
+        String maxSize = strSetting(LoadTestProfile.ENV_MAX_SIZE, "default(~20)");
+        String journalLabel = switch (walMode.toLowerCase()) {
+            case "immediate" -> "WAL+IMMEDIATE";
+            case "true" -> "WAL";
+            default -> "rollback-journal";
+        };
+
         System.out.println();
         System.out.println("================ " + title + " ================");
-        System.out.printf("config: workers=%d opsPerWorker=%d batchSize=%d seed=%d busy_timeout=%s journal=%s%n",
-            workers, opsPerWorker, batchSize, seed,
-            System.getenv().getOrDefault(LoadTestProfile.ENV_BUSY_TIMEOUT, "10000"),
-            switch (String.valueOf(System.getenv(LoadTestProfile.ENV_WAL)).toLowerCase()) {
-                case "immediate" -> "WAL+IMMEDIATE";
-                case "true" -> "WAL";
-                default -> "rollback-journal";
-            });
+        System.out.printf("config: workers=%d opsPerWorker=%d batchSize=%d seed=%d busy_timeout=%s journal=%s max-size=%s%n",
+            workers, opsPerWorker, batchSize, seed, busy, journalLabel, maxSize);
         System.out.printf("wall=%.2fs totalOps=%d throughput=%.1f ops/s errors=%d (%.1f%%)%n",
             wallSec, results.size(), results.isEmpty() ? 0 : results.size() / wallSec,
             errors, results.isEmpty() ? 0 : 100.0 * errors / results.size());
@@ -372,6 +387,14 @@ class SqliteWriteContentionLoadITest {
     }
 
     private static int env(String name, int defaultValue) {
+        String prop = System.getProperty(name);
+        if (prop != null && !prop.isBlank()) {
+            try {
+                return Integer.parseInt(prop.trim());
+            } catch (NumberFormatException e) {
+                return defaultValue;
+            }
+        }
         String value = System.getenv(name);
         if (value == null || value.isBlank()) {
             return defaultValue;
@@ -381,5 +404,15 @@ class SqliteWriteContentionLoadITest {
         } catch (NumberFormatException e) {
             return defaultValue;
         }
+    }
+
+    /** Read a string setting from env var or system property (system property wins). */
+    private static String strSetting(String name, String defaultValue) {
+        String prop = System.getProperty(name);
+        if (prop != null && !prop.isBlank()) {
+            return prop;
+        }
+        String env = System.getenv(name);
+        return (env == null || env.isBlank()) ? defaultValue : env;
     }
 }
