@@ -27,6 +27,19 @@ class SparseSortOrderTest {
         Assertions.assertThat(SparseSortOrder.between(null, 1000L)).isEqualTo(OptionalLong.of(0L));
     }
 
+    /**
+     * The head slot walks below STEP on repeated drops to the top; only the relative
+     * order matters, so zero and negative values are correct results rather than a
+     * broken invariant. What must hold is strict ordering against the anchor — a tie
+     * would let the creation-timestamp tiebreak invert the drop.
+     */
+    @Test
+    void shouldStayStrictlyBelowNext_whenFirstSlotFallsBelowStep() {
+        Assertions.assertThat(SparseSortOrder.between(null, 10L)).isEqualTo(OptionalLong.of(-990L));
+        Assertions.assertThat(SparseSortOrder.between(null, 0L)).isEqualTo(OptionalLong.of(-1000L));
+        Assertions.assertThat(SparseSortOrder.between(null, -1000L)).isEqualTo(OptionalLong.of(-2000L));
+    }
+
     @Test
     void shouldInsertOneStepAfterLast_whenNoNextNeighbor() {
         Assertions.assertThat(SparseSortOrder.between(2000L, null)).isEqualTo(OptionalLong.of(3000L));

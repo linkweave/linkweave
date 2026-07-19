@@ -28,10 +28,15 @@ public final class SparseSortOrder {
     }
 
     /**
+     * <p>Only relative order carries meaning, so the head slot ({@code previous == null})
+     * deliberately walks below {@link #STEP} and may reach zero or go negative — dropping a
+     * folder above a group that starts at {@code STEP} yields 0 on the first drop, -1000 on
+     * the next, and so on. Sorting is unaffected and the head never needs a renumbering.
+     *
      * @param previous sort order of the neighbor before the insertion point, or {@code null} when inserting first
      * @param next sort order of the neighbor after the insertion point, or {@code null} when inserting last
-     * @return the sort order for the insertion point, or empty when the gap between the
-     *     neighbors is exhausted and the sibling group must be renumbered
+     * @return the sort order for the insertion point — always strictly between the neighbors —
+     *     or empty when the gap between them is exhausted and the sibling group must be renumbered
      */
     public static OptionalLong between(@Nullable Long previous, @Nullable Long next) {
         if (previous == null && next == null) {

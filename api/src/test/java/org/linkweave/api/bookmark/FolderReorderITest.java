@@ -314,6 +314,38 @@ class FolderReorderITest {
             .statusCode(403);
     }
 
+    @Test
+    @TestSecurity(user = "test@example.com", roles = { "BOOKMARK_WRITE" })
+    void shouldReturn403_whenMovingForeignFolderUsingOwnCollectionId() {
+        // ARRANGE: the attacker has a collection of their own ...
+        Collection ownCollection = fixtureService.createTestCollection();
+        String anchor = createFolder(ownCollection.getId().getUUID().toString(), "Anchor");
+
+        // ... and targets a folder in alice's collection (no access).
+        User alice = userRepo.findByEmail(EmailAddress.fromString("alice@example.com")).orElseThrow();
+        Collection foreignCollection = fixtureService.persistCollection(b -> b
+            .withOwner(alice)
+            .withName("Alice's Collection"));
+        Folder foreignFolder = fixtureService.persistFolder(b -> b
+            .withCollection(foreignCollection)
+            .withName("Alice's Folder"));
+
+        // ACT: IDOR attempt — a folder the caller cannot see, moved with an accessible collectionId
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body("""
+                {"collectionId":"%s","position":{"anchorFolderId":"%s","placement":"BEFORE"}}
+                """.formatted(ownCollection.getId().getUUID(), anchor))
+            .patch("/folders/{id}/move", foreignFolder.getId().getUUID())
+            // ASSERT
+            .then()
+            .statusCode(403);
+
+        // the foreign folder must be untouched
+        Assertions.assertThat(folderRepo.getById(foreignFolder.getId()).getSortOrder())
+            .isEqualTo(foreignFolder.getSortOrder());
+    }
+
     private static org.linkweave.api.types.id.ID<Folder> folderId(String uuid) {
         return org.linkweave.api.types.id.ID.of(java.util.UUID.fromString(uuid), Folder.class);
     }

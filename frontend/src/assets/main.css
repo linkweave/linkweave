@@ -156,11 +156,14 @@
   --dnd-ring: color-mix(in srgb, var(--color-primary) 30%, transparent);
 }
 
-/* Gap strip between rows: a generous 12px hit target straddling the visual
-   4px gap. Inert (and invisible) unless a folder drag is in progress. */
+/* Gap strip between rows: a 10px hit target straddling the visual 2px gap —
+   4px of it overlays the row above, 4px the row below. The negative margins
+   net out to the 2px the list used to get from `space-y-0.5`, so the strips
+   cost no vertical density over the pre-reorder layout. Inert (and invisible)
+   unless a folder drag is in progress. */
 .dnd-gap {
   position: relative;
-  height: 12px;
+  height: 10px;
   margin: -4px 0;
   pointer-events: none;
 }

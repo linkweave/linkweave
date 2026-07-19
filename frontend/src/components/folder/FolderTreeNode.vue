@@ -62,7 +62,9 @@ const expanded = reactive<Record<string, boolean>>({})
 // at the strip↔row boundary). Scoped to the gap's position on purpose: a fast
 // drag that skips past must release the indicator immediately. The band
 // reaches ~6px into the adjacent rows — just past the strip's own overlap.
-const GAP_STICKY_PX = 8
+// Tied to the .dnd-gap geometry: the strip's center sits 1px off each row
+// edge, so this is the 6px reach plus that 1px.
+const GAP_STICKY_PX = 7
 
 function isExpanded(folderId: string): boolean {
   return expanded[folderId] ?? true

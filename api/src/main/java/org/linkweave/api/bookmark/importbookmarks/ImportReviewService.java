@@ -28,7 +28,7 @@ import org.linkweave.api.bookmark.property.BookmarkPropertyValue;
 import org.linkweave.api.bookmark.property.BookmarkPropertyValueRepo;
 import org.linkweave.api.bookmark.property.PropertyDefinition;
 import org.linkweave.api.bookmark.property.PropertyDefinitionRepo;
-import org.linkweave.api.shared.sortorder.SparseSortOrder;
+import org.linkweave.api.shared.sortorder.SortOrderAllocator;
 import org.linkweave.api.bookmark.property.PropertyType;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.collection.CollectionRepo;
@@ -213,7 +213,8 @@ public class ImportReviewService {
                 : null;
 
         CommitCtx ctx = new CommitCtx(
-            collection, folderIndex, existing, importSourceDef, request.fileName(), new Counts());
+            collection, folderIndex, existing, importSourceDef, request.fileName(), new Counts(),
+            new SortOrderAllocator<>(parentId -> folderRepo.findMaxSortOrderOfSiblings(collectionId, parentId)));
         for (ImportNodeJson node : request.nodes()) {
             writeNode(node, destination, ctx, 0);
         }
@@ -242,8 +243,7 @@ public class ImportReviewService {
             return existing;
         }
         ID<Folder> parentId = parent == null ? null : parent.getId();
-        long sortOrder = SparseSortOrder.afterMax(folderRepo.findMaxSortOrderOfSiblings(ctx.collection.getId(), parentId));
-        Folder folder = new Folder(ctx.collection, parent, name, null, sortOrder, null);
+        Folder folder = new Folder(ctx.collection, parent, name, null, ctx.sortOrders.next(parentId), null);
         folderRepo.persist(folder);
         ctx.folderIndex.put(key, folder);
         ctx.counts.foldersCreated++;
@@ -306,7 +306,8 @@ public class ImportReviewService {
         Set<String> existing,
         @Nullable PropertyDefinition importSourceDef,
         @Nullable String fileName,
-        Counts counts
+        Counts counts,
+        SortOrderAllocator<ID<Folder>> sortOrders
     ) {}
 
     // --- Helpers --------------------------------------------------------------
