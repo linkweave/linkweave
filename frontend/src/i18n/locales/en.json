@@ -85,7 +85,9 @@
   },
   "dnd": {
     "bookmarkMoved": "Bookmark moved.",
-    "folderMoved": "Folder moved."
+    "folderMoved": "Folder moved.",
+    "reorderNeedsManualSort": "Reordering needs the Manual sort mode — drop on a folder to move.",
+    "reorderNeedsUnfilteredView": "Reordering is off while filters are active — clear the search to reorder."
   },
   "header": {
     "addBookmark": "Add Bookmark",
@@ -560,6 +562,8 @@
       "sharedClicksNote": "\"Last clicked\" and \"Click count\" reflect everyone in this collection."
     },
     "field": {
+      "manual": "Manual",
+      "manualSub": "Drag bookmarks into your own order",
       "title": "Title",
       "titleSub": "A → Z by title",
       "dateAdded": "Date added",

@@ -30,6 +30,30 @@ export const useFolderStore = defineStore('folder', () => {
 
   const loading = computed(() => collectionStore.loading)
 
+  // Depth-first rank over the folder tree — parents before descendants,
+  // siblings in manual order (BR-197). Drives folder grouping wherever
+  // bookmarks of several folders appear in one list (Manual sort mode,
+  // grouped layout).
+  const folderRank = computed<Map<string, number>>(() => {
+    const byParent = new Map<string | null, FolderJson[]>()
+    for (const f of folders.value) {
+      const parentId = f.data.parentId ?? null
+      const siblings = byParent.get(parentId)
+      if (siblings) siblings.push(f)
+      else byParent.set(parentId, [f])
+    }
+    const rank = new Map<string, number>()
+    let next = 0
+    const walk = (parentId: string | null) => {
+      for (const f of byParent.get(parentId) ?? []) {
+        rank.set(f.id, next++)
+        walk(f.id)
+      }
+    }
+    walk(null)
+    return rank
+  })
+
   // Sidebar folder selection is a derived view over the bookmark search query:
   // the "selected" folder is whichever folder is referenced by the first active
   // `under:` token. Sidebar / card clicks write the folder *id* into the token
@@ -154,6 +178,7 @@ export const useFolderStore = defineStore('folder', () => {
 
   return {
     folders,
+    folderRank,
     loading,
     selectedFolderId,
     selectedFolderIds,

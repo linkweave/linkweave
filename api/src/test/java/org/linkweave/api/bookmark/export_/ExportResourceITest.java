@@ -14,6 +14,7 @@ import org.linkweave.infrastructure.db.DatabaseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 
 @QuarkusTest
@@ -72,6 +73,39 @@ class ExportResourceITest {
             .body(containsString("<DT><H3"))
             .body(containsString("<DT><A HREF="))
             .body(containsString("</DL>"));
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = { "BOOKMARK_WRITE" })
+    void shouldExportBookmarksAndFoldersInManualOrder() {
+        // ARRANGE: manual order (sortOrder) deliberately contradicts both the
+        // alphabetical and the creation order (UC-103)
+        Collection collection = fixtureService.createTestCollection();
+        String collectionId = collection.getId().getUUID().toString();
+        Folder zebra = fixtureService.persistFolder(b -> b
+            .withCollection(collection).withName("Zebra Folder").withSortOrder(1000));
+        fixtureService.persistFolder(b -> b
+            .withCollection(collection).withName("Alpha Folder").withSortOrder(2000));
+        fixtureService.persistBookmark(b -> b.withCollection(collection).withFolder(zebra)
+            .withTitle("Last BM").withUrl("https://last.com").withSortOrder(2000));
+        fixtureService.persistBookmark(b -> b.withCollection(collection).withFolder(zebra)
+            .withTitle("First BM").withUrl("https://first.com").withSortOrder(1000));
+
+        // ACT
+        String html = RestAssured.given()
+            .accept("text/html")
+            .get("/collections/{collectionId}/export", collectionId)
+            .then()
+            .statusCode(200)
+            .extract().asString();
+
+        // ASSERT
+        assertThat(html.indexOf("Zebra Folder"))
+            .as("folders must follow the manual order, not the alphabetical one")
+            .isLessThan(html.indexOf("Alpha Folder"));
+        assertThat(html.indexOf("First BM"))
+            .as("bookmarks must follow the manual order, not the alphabetical one")
+            .isLessThan(html.indexOf("Last BM"));
     }
 
     @Test

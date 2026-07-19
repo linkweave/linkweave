@@ -129,9 +129,20 @@ public class FixtureService {
         return tag;
     }
 
+    /**
+     * Bookmarks without an explicit {@code withSortOrder(...)} are appended after the
+     * existing bookmarks of their folder group, matching what the API does on create
+     * (see {@link #persistFolder} for the rationale).
+     */
     @NonNull
     public Bookmark persistBookmark(Consumer<org.linkweave.api.testutil.builder.BookmarkBuilder> block) {
-        Bookmark bookmark = org.linkweave.api.testutil.builder.BookmarkBuilder.build(block);
+        var builder = org.linkweave.api.testutil.builder.BookmarkBuilder.configured(block);
+        Bookmark bookmark = builder.bookmark();
+        if (!builder.isSortOrderSet()) {
+            ID<Folder> folderId = bookmark.getFolder() == null ? null : bookmark.getFolder().getId();
+            bookmark.setSortOrder(SparseSortOrder.afterMax(
+                bookmarkRepo.findMaxSortOrderOfSiblings(bookmark.getCollection().getId(), folderId)));
+        }
         bookmarkRepo.persist(bookmark);
         return bookmark;
     }

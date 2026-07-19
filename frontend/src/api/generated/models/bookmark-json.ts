@@ -64,6 +64,12 @@ export interface BookmarkJson {
      * @type {number}
      * @memberof BookmarkJson
      */
+    sortOrder: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof BookmarkJson
+     */
     clickCount: number;
     /**
      * 
@@ -92,6 +98,7 @@ export function instanceOfBookmarkJson(value: object): value is BookmarkJson {
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('entityInfo' in value) || value['entityInfo'] === undefined) return false;
     if (!('data' in value) || value['data'] === undefined) return false;
+    if (!('sortOrder' in value) || value['sortOrder'] === undefined) return false;
     if (!('clickCount' in value) || value['clickCount'] === undefined) return false;
     if (!('propertyValues' in value) || value['propertyValues'] === undefined) return false;
     return true;
@@ -110,6 +117,7 @@ export function BookmarkJsonFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'id': json['id'],
         'entityInfo': EntityInfoJsonFromJSON(json['entityInfo']),
         'data': BookmarkSaveJsonFromJSON(json['data']),
+        'sortOrder': json['sortOrder'],
         'clickCount': json['clickCount'],
         'lastClickedAt': json['lastClickedAt'] == null ? undefined : (new Date(json['lastClickedAt'])),
         'deletedAt': json['deletedAt'] == null ? undefined : (new Date(json['deletedAt'])),
@@ -131,6 +139,7 @@ export function BookmarkJsonToJSONTyped(value?: BookmarkJson | null, ignoreDiscr
         'id': value['id'],
         'entityInfo': EntityInfoJsonToJSON(value['entityInfo']),
         'data': BookmarkSaveJsonToJSON(value['data']),
+        'sortOrder': value['sortOrder'],
         'clickCount': value['clickCount'],
         'lastClickedAt': value['lastClickedAt'] == null ? value['lastClickedAt'] : value['lastClickedAt'].toISOString(),
         'deletedAt': value['deletedAt'] == null ? value['deletedAt'] : value['deletedAt'].toISOString(),

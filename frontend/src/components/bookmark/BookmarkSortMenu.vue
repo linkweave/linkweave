@@ -23,6 +23,7 @@ type FieldOption = {
 }
 
 const FIELDS: ReadonlyArray<FieldOption> = [
+  { id: SortField.Manual,      label: 'sort.field.manual',      ascLabel: 'sort.field.manualSub', descLabel: 'sort.field.manualSub' },
   { id: SortField.Title,       label: 'sort.field.title',       ascLabel: 'sort.dir.az',          descLabel: 'sort.dir.za' },
   { id: SortField.DateAdded,   label: 'sort.field.dateAdded',   ascLabel: 'sort.dir.oldestFirst', descLabel: 'sort.dir.newestFirst' },
   { id: SortField.LastClicked, label: 'sort.field.lastClicked', ascLabel: 'sort.dir.oldestFirst', descLabel: 'sort.dir.mostRecent' },
@@ -75,6 +76,7 @@ function reset() {
         <span class="hidden sm:inline text-muted-foreground">{{ t('sort.label') }}:</span>
         <span class="hidden sm:inline font-medium">{{ currentFieldLabel }}</span>
         <component
+          v-if="currentField !== SortField.Manual"
           :is="currentDir === SortDirection.Desc ? ArrowDown : ArrowUp"
           class="hidden sm:inline h-3 w-3 text-muted-foreground"
         />
@@ -113,8 +115,9 @@ function reset() {
                   : t(`sort.field.${f.id.toLowerCase()}Sub`) }}
             </div>
           </div>
+          <!-- A manual order has only one reading — no direction toggle. -->
           <div
-            v-if="f.id === currentField"
+            v-if="f.id === currentField && f.id !== SortField.Manual"
             class="flex overflow-hidden rounded border border-border"
             @click.stop
           >

@@ -28,6 +28,7 @@ import org.linkweave.api.bookmark.property.BookmarkPropertyValue;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.shared.abstractentity.AbstractEntity;
 import org.linkweave.api.shared.auth.BelongsToCollection;
+import org.linkweave.api.shared.sortorder.HasSortOrder;
 import org.linkweave.infrastructure.db.DbConst;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -36,12 +37,13 @@ import org.jspecify.annotations.Nullable;
 @Table(indexes = {
     @Index(name = "ix_bookmark_collection_id", columnList = "collection_id, id"),
     @Index(name = "ix_bookmark_folder_id", columnList = "folder_id, id"),
+    @Index(name = "ix_bookmark_group_sort", columnList = "collection_id, folder_id, sortOrder, id"),
 })
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Bookmark extends AbstractEntity<Bookmark> implements BelongsToCollection {
+public class Bookmark extends AbstractEntity<Bookmark> implements BelongsToCollection, HasSortOrder {
 
 
     @NonNull
@@ -85,6 +87,15 @@ public class Bookmark extends AbstractEntity<Bookmark> implements BelongsToColle
 
     @OneToMany(mappedBy = "bookmark", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<BookmarkPropertyValue> propertyValues = new HashSet<>();
+
+    /**
+     * Manual position among the bookmarks of the same folder group (same
+     * collection + folder, {@code null} folder = unfiled), UC-103. Sparse
+     * numbering managed by {@link BookmarkService}; ties are broken by
+     * creation timestamp, then id (BR-198).
+     */
+    @Column(nullable = false)
+    private long sortOrder;
 
     @Column(name = "click_count", nullable = false)
     private int clickCount = 0;

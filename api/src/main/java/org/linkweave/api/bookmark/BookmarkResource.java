@@ -114,7 +114,7 @@ public class BookmarkResource {
         authorizationService.requireCollectionAccess(json.getCollectionId());
         Bookmark bookmark = loadBookmarkOr404(bookmarkId);
         authorizationService.requireSameCollection(bookmark, json.getCollectionId());
-        bookmarkService.batchMoveToFolder(List.of(bookmark), json.getFolderId(), json.getCollectionId());
+        bookmarkService.moveToFolder(bookmark, json.getFolderId(), json.getCollectionId(), json.getPosition());
         return BookmarkMapper.toJson(bookmark);
     }
 

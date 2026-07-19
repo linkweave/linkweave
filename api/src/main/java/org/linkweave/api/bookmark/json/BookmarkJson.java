@@ -38,6 +38,13 @@ public class BookmarkJson {
     @Schema(required = true)
     BookmarkSaveJson data;
 
+    /**
+     * Manual position among the bookmarks of the same folder group (UC-103).
+     * Server-managed: assigned on create, changed via the move endpoint.
+     */
+    @Schema(required = true)
+    long sortOrder;
+
     @NotNull
     @NonNull
     @Schema(required = true)

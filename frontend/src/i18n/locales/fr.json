@@ -85,7 +85,9 @@
   },
   "dnd": {
     "bookmarkMoved": "Favori déplacé.",
-    "folderMoved": "Dossier déplacé."
+    "folderMoved": "Dossier déplacé.",
+    "reorderNeedsManualSort": "Le tri « Manuel » est requis pour réorganiser — déposez sur un dossier pour déplacer.",
+    "reorderNeedsUnfilteredView": "La réorganisation est désactivée avec des filtres actifs — videz la recherche pour réorganiser."
   },
   "header": {
     "addBookmark": "Ajouter un favori",
@@ -560,6 +562,8 @@
       "sharedClicksNote": "« Dernier clic » et « Nombre de clics » reflètent lʼactivité de tous les membres de cette collection."
     },
     "field": {
+      "manual": "Manuel",
+      "manualSub": "Glissez les favoris dans votre propre ordre",
       "title": "Titre",
       "titleSub": "A → Z par titre",
       "dateAdded": "Date dʼajout",

@@ -3,13 +3,20 @@ import { readonly, ref } from 'vue'
 // Module-level reactive state shared across all drag interactions in the current page.
 
 const _draggingFolderId = ref<string | null>(null)
+const _draggingBookmarkId = ref<string | null>(null)
 
 export const isDraggingBookmark = ref(false)
 export const isDraggingFolder = ref(false)
 export const draggingFolderId = readonly(_draggingFolderId)
 
-export function setDraggingBookmark(dragging: boolean) {
-  isDraggingBookmark.value = dragging
+export function setDraggingBookmarkId(id: string | null) {
+  _draggingBookmarkId.value = id
+  isDraggingBookmark.value = id !== null
+}
+
+// Only used during dragover (dataTransfer.getData is unavailable then)
+export function getDraggingBookmarkId(): string | null {
+  return _draggingBookmarkId.value
 }
 
 export function setDraggingFolderId(id: string | null) {

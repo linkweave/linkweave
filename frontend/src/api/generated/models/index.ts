@@ -17,6 +17,7 @@ export * from './bookmark-batch-tag-json';
 export * from './bookmark-json';
 export * from './bookmark-list-json';
 export * from './bookmark-move-json';
+export * from './bookmark-position-json';
 export * from './bookmark-property-value-json';
 export * from './bookmark-property-value-list-json';
 export * from './bookmark-save-json';

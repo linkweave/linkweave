@@ -4,6 +4,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -17,10 +18,14 @@ import org.linkweave.api.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.linkweave.api.bookmark.folder.Folder;
 import org.linkweave.api.bookmark.folder.FolderRepo;
+import org.linkweave.api.bookmark.json.BookmarkPositionJson;
 import org.linkweave.api.bookmark.json.BookmarkSaveJson;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.collection.CollectionRepo;
 import ch.dvbern.oss.commons.i18nl10n.I18nMessage;
+import org.linkweave.api.shared.sortorder.Placement;
+import org.linkweave.api.shared.sortorder.SortOrderPlacement;
+import org.linkweave.api.shared.sortorder.SparseSortOrder;
 import org.linkweave.infrastructure.errorhandling.AppAuthorizationException;
 import org.linkweave.infrastructure.errorhandling.AppFailureException;
 import org.linkweave.infrastructure.errorhandling.AppFailureMessage;
@@ -100,6 +105,7 @@ public class BookmarkService {
             json.getDescription(),
             tags,
             new HashSet<>(),
+            SparseSortOrder.afterMax(bookmarkRepo.findMaxSortOrderOfSiblings(collectionId, folderId)),
             0,
             null,
             null,
@@ -198,6 +204,63 @@ public class BookmarkService {
     @NonNull
     public List<Bookmark> findBookmarks(@NonNull List<ID<Bookmark>> bookmarkIds) {
         return bookmarkRepo.findByIdsWithTags(bookmarkIds);
+    }
+
+    /**
+     * Single-bookmark move (UC-013 / UC-103): reparents the bookmark and, when a
+     * {@code position} is given, assigns it the sort order of that drop position.
+     * Without a position the bookmark keeps its number and is ranked among its
+     * new folder group's bookmarks by it (BR-195).
+     */
+    public void moveToFolder(
+        @NonNull Bookmark bookmark,
+        @Nullable ID<Folder> folderId,
+        @NonNull ID<Collection> collectionId,
+        @Nullable BookmarkPositionJson position
+    ) {
+        batchMoveToFolder(List.of(bookmark), folderId, collectionId);
+        if (position != null) {
+            placeAmongSiblings(bookmark, folderId, collectionId, position);
+        }
+    }
+
+    /**
+     * Assigns {@code bookmark} the sort order for the drop position described by
+     * {@code position}: usually a midpoint between the two neighbors; when their
+     * gap is exhausted, the whole folder group is renumbered in steps of
+     * {@link SparseSortOrder#STEP}.
+     */
+    private void placeAmongSiblings(
+        @NonNull Bookmark bookmark,
+        @Nullable ID<Folder> folderId,
+        @NonNull ID<Collection> collectionId,
+        @NonNull BookmarkPositionJson position
+    ) {
+        ID<Bookmark> anchorId = position.getAnchorBookmarkId();
+        if (anchorId.equals(bookmark.getId())) {
+            throw new AppValidationException(
+                AppValidationMessage.genericMessage("AppValidation.BOOKMARK_POSITION_ANCHOR_SELF")
+            );
+        }
+
+        List<Bookmark> siblings = new ArrayList<>(bookmarkRepo.findSiblings(collectionId, folderId));
+        siblings.removeIf(b -> b.getId().equals(bookmark.getId()));
+
+        int anchorIndex = -1;
+        for (int i = 0; i < siblings.size(); i++) {
+            if (siblings.get(i).getId().equals(anchorId)) {
+                anchorIndex = i;
+                break;
+            }
+        }
+        if (anchorIndex < 0) {
+            throw new AppValidationException(
+                AppValidationMessage.genericMessage("AppValidation.BOOKMARK_POSITION_ANCHOR_NOT_SIBLING")
+            );
+        }
+        // insert in place of anchor or right after it
+        int insertIndex = position.getPlacement() == Placement.BEFORE ? anchorIndex : anchorIndex + 1;
+        SortOrderPlacement.placeAt(siblings, bookmark, insertIndex, bookmarkRepo::persist);
     }
 
     public void batchMoveToFolder(

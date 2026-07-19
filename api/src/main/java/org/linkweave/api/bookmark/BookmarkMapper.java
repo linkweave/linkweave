@@ -46,6 +46,7 @@ public class BookmarkMapper {
                     .map(Tag::getId)
                     .collect(Collectors.toSet())
             ),
+            bookmark.getSortOrder(),
             bookmark.getClickCount(),
             bookmark.getLastClickedAt(),
             bookmark.getDeletedAt(),
