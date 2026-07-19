@@ -93,6 +93,18 @@ public class BookmarkBuilder {
         return this;
     }
 
+    /**
+     * Explicit creation timestamp, applied before persist so it sticks —
+     * {@code AbstractEntityListener} fills {@code timestampErstellt} only when
+     * null. Post-persist backdating is order-dependent in the full suite;
+     * prefer this for tests that rely on creation-time ordering (BR-198).
+     */
+    @NonNull
+    public BookmarkBuilder withCreatedAt(@NonNull OffsetDateTime at) {
+        bookmark.setTimestampErstellt(at);
+        return this;
+    }
+
     @NonNull
     public BookmarkBuilder withSortOrder(long sortOrder) {
         bookmark.setSortOrder(sortOrder);

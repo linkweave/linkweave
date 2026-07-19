@@ -29,6 +29,7 @@ import org.jspecify.annotations.Nullable;
 @Table(indexes = {
     @Index(name = "ix_folder_collection_id", columnList = "collection_id, id"),
     @Index(name = "ix_folder_parent_id", columnList = "parent_id, id"),
+    @Index(name = "ix_folder_group_sort", columnList = "collection_id, parent_id, sortOrder, id"),
 })
 @NoArgsConstructor
 @AllArgsConstructor

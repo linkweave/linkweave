@@ -239,6 +239,34 @@ class FolderReorderITest {
 
     @Test
     @TestSecurity(user = "test@example.com", roles = { "BOOKMARK_WRITE" })
+    void shouldFail_whenAnchorBelongsToForeignCollection() {
+        // ARRANGE: the anchor lives in alice's collection — indistinguishable
+        // from any other non-sibling anchor (uniform 400, no existence probe)
+        Collection collection = fixtureService.createTestCollection();
+        String collectionId = collection.getId().getUUID().toString();
+        String mover = createFolder(collectionId, "Mover");
+        User alice = userRepo.findByEmail(EmailAddress.fromString("alice@example.com")).orElseThrow();
+        Collection foreignCollection = fixtureService.persistCollection(b -> b
+            .withOwner(alice)
+            .withName("Alice's Collection"));
+        Folder foreignAnchor = fixtureService.persistFolder(b -> b
+            .withCollection(foreignCollection)
+            .withName("Alice's Folder"));
+
+        // ACT
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body("""
+                {"collectionId":"%s","position":{"anchorFolderId":"%s","placement":"BEFORE"}}
+                """.formatted(collectionId, foreignAnchor.getId().getUUID()))
+            .patch("/folders/{id}/move", mover)
+            // ASSERT
+            .then()
+            .statusCode(400);
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = { "BOOKMARK_WRITE" })
     void shouldFail_whenAnchorIsTheMovedFolderItself() {
         // ARRANGE
         Collection collection = fixtureService.createTestCollection();

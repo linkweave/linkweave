@@ -19,3 +19,10 @@ UPDATE Bookmark SET sortOrder = (
 -- Matches every row (ADD COLUMN ... DEFAULT 0 just set them all); kept as a guard so
 -- re-running the backfill by hand cannot clobber orders users have since arranged.
 WHERE sortOrder = 0;
+
+-- UC-102/UC-103: the sibling queries filter one folder group and order by the
+-- manual sort order (WHERE collection_id = ? AND folder_id/parent_id = ?
+-- ORDER BY sortOrder, ...). Cover the filter + ORDER BY prefix so large
+-- groups don't sort in memory.
+CREATE INDEX ix_bookmark_group_sort ON Bookmark (collection_id, folder_id, sortOrder, id);
+CREATE INDEX ix_folder_group_sort ON Folder (collection_id, parent_id, sortOrder, id);

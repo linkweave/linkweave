@@ -217,12 +217,12 @@ class BookmarkReorderITest {
     void shouldOrderOlderBookmarkFirst_whenSortOrdersCollide() {
         // ARRANGE: a kept position number (BR-195) can collide with an existing one
         Collection collection = fixtureService.createTestCollection();
-        Bookmark older = fixtureService.persistBookmark(b -> b
-            .withCollection(collection).withTitle("older").withSortOrder(1000));
-        Bookmark newer = fixtureService.persistBookmark(b -> b
-            .withCollection(collection).withTitle("newer").withSortOrder(1000));
-        fixtureService.setTimestampErstellt(older, java.time.OffsetDateTime.parse("2020-01-01T00:00:00Z"));
-        fixtureService.setTimestampErstellt(newer, java.time.OffsetDateTime.parse("2024-01-01T00:00:00Z"));
+        fixtureService.persistBookmark(b -> b
+            .withCollection(collection).withTitle("older").withSortOrder(1000)
+            .withCreatedAt(java.time.OffsetDateTime.parse("2020-01-01T00:00:00Z")));
+        fixtureService.persistBookmark(b -> b
+            .withCollection(collection).withTitle("newer").withSortOrder(1000)
+            .withCreatedAt(java.time.OffsetDateTime.parse("2024-01-01T00:00:00Z")));
 
         // ASSERT: BR-198 — deterministic tie-break, older bookmark first
         Assertions.assertThat(bookmarkRepo.findSiblings(collection.getId(), null))
@@ -247,6 +247,34 @@ class BookmarkReorderITest {
             .body("""
                 {"collectionId":"%s","position":{"anchorBookmarkId":"%s","placement":"BEFORE"}}
                 """.formatted(collectionId, anchor.getId().getUUID()))
+            .patch("/bookmarks/{id}/move", mover)
+            // ASSERT
+            .then()
+            .statusCode(400);
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = { "BOOKMARK_WRITE" })
+    void shouldFail_whenAnchorBelongsToForeignCollection() {
+        // ARRANGE: the anchor lives in alice's collection — indistinguishable
+        // from any other non-sibling anchor (uniform 400, no existence probe)
+        Collection collection = fixtureService.createTestCollection();
+        String collectionId = collection.getId().getUUID().toString();
+        String mover = createBookmark(collectionId, "mover");
+        User alice = userRepo.findByEmail(EmailAddress.fromString("alice@example.com")).orElseThrow();
+        Collection foreignCollection = fixtureService.persistCollection(b -> b
+            .withOwner(alice)
+            .withName("Alice's Collection"));
+        Bookmark foreignAnchor = fixtureService.persistBookmark(b -> b
+            .withCollection(foreignCollection)
+            .withTitle("Alice's Bookmark"));
+
+        // ACT
+        RestAssured.given()
+            .contentType(ContentType.JSON)
+            .body("""
+                {"collectionId":"%s","position":{"anchorBookmarkId":"%s","placement":"BEFORE"}}
+                """.formatted(collectionId, foreignAnchor.getId().getUUID()))
             .patch("/bookmarks/{id}/move", mover)
             // ASSERT
             .then()

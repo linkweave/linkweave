@@ -37,6 +37,7 @@ import org.jspecify.annotations.Nullable;
 @Table(indexes = {
     @Index(name = "ix_bookmark_collection_id", columnList = "collection_id, id"),
     @Index(name = "ix_bookmark_folder_id", columnList = "folder_id, id"),
+    @Index(name = "ix_bookmark_group_sort", columnList = "collection_id, folder_id, sortOrder, id"),
 })
 @Getter
 @Setter

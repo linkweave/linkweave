@@ -159,9 +159,11 @@ public class FolderService {
                 AppValidationMessage.genericMessage("AppValidation.FOLDER_POSITION_ANCHOR_SELF")
             );
         }
-        Folder anchor = folderRepo.getById(anchorId);
-        requireFolderBelongsToCollection(anchor, collectionId);
 
+        // The anchor is validated purely by its membership in the target sibling
+        // group below (like the bookmark path, UC-103): an unknown, foreign, or
+        // misplaced anchor uniformly answers 400 — bad input, not a server
+        // fault, and no existence probe via distinct errors.
         List<Folder> siblings = new ArrayList<>(folderRepo.findSiblings(collectionId, parentId));
         siblings.removeIf(f -> f.getId().equals(folder.getId()));
 

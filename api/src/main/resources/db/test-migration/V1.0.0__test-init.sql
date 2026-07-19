@@ -20,6 +20,7 @@ create index ix_apikey_user_id on ApiKey (user_id, id);
 create index ix_auto_tag_rule_collection_id on AutoTagRule (collection_id, sortOrder, id);
 create index ix_bookmark_collection_id on Bookmark (collection_id, id);
 create index ix_bookmark_folder_id on Bookmark (folder_id, id);
+create index ix_bookmark_group_sort on Bookmark (collection_id, folder_id, sortOrder, id);
 create index ix_bookmark_tag_bookmark_id on Bookmark_Tag (bookmark_id, tag_id);
 create index ix_bookmark_tag_tag_id on Bookmark_Tag (tag_id, bookmark_id);
 create index ix_bookmark_property_value_definition_id on BookmarkPropertyValue (propertyDefinition_id, bookmark_id, id);
@@ -29,6 +30,7 @@ create index ix_collectionaccess_collection_id on CollectionAccess (collection_i
 create index ix_collectionaccess_user_default on CollectionAccess (user_id, isDefault);
 create index ix_folder_collection_id on Folder (collection_id, id);
 create index ix_folder_parent_id on Folder (parent_id, id);
+create index ix_folder_group_sort on Folder (collection_id, parent_id, sortOrder, id);
 create index ix_property_definition_collection_id on PropertyDefinition (collection_id, sortOrder, id);
 create index ix_saved_search_collection_id on SavedSearch (collection_id, id);
 create index ix_tag_collection_id on Tag (collection_id, id);

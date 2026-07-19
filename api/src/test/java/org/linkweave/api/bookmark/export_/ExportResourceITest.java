@@ -14,6 +14,7 @@ import org.linkweave.infrastructure.db.DatabaseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 
 @QuarkusTest
@@ -99,10 +100,12 @@ class ExportResourceITest {
             .extract().asString();
 
         // ASSERT
-        assert html.indexOf("Zebra Folder") < html.indexOf("Alpha Folder")
-            : "folders must follow the manual order, not the alphabetical one";
-        assert html.indexOf("First BM") < html.indexOf("Last BM")
-            : "bookmarks must follow the manual order, not the alphabetical one";
+        assertThat(html.indexOf("Zebra Folder"))
+            .as("folders must follow the manual order, not the alphabetical one")
+            .isLessThan(html.indexOf("Alpha Folder"));
+        assertThat(html.indexOf("First BM"))
+            .as("bookmarks must follow the manual order, not the alphabetical one")
+            .isLessThan(html.indexOf("Last BM"));
     }
 
     @Test
