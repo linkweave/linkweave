@@ -32,11 +32,17 @@ import org.linkweave.api.collection.Collection;
 import org.linkweave.api.shared.auth.AuthorizationService;
 import io.smallrye.faulttolerance.api.RateLimit;
 import org.linkweave.infrastructure.db.RetryOnSqliteBusy;
+import org.linkweave.infrastructure.ratelimit.RateLimitConst;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
-@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
-@RetryOnSqliteBusy(attempts = 8)
+@RateLimit(value = RateLimitConst.STANDARD_PER_MINUTE, window = 1, windowUnit = ChronoUnit.MINUTES)
+// 12 attempts for every write here, not just the batch endpoints. The batch operations hold the
+// SQLite write lock for the better part of a second under load, and a concurrent single-row create
+// or update has to outwait whichever batch is in flight — so it needs the same retry window. With
+// only 8 attempts the single-row writes were the ones left returning 500s once the batch endpoints
+// stopped (measured in SqliteWriteContentionLoadITest).
+@RetryOnSqliteBusy(attempts = 12)
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated
@@ -131,7 +137,6 @@ public class BookmarkResource {
 
     @POST
     @Path("/batch-move")
-    @RetryOnSqliteBusy(attempts = 12)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
@@ -144,7 +149,6 @@ public class BookmarkResource {
 
     @POST
     @Path("/batch-delete")
-    @RetryOnSqliteBusy(attempts = 12)
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("BOOKMARK_WRITE")
     public void batchDelete(@NotNull @Valid @NonNull BookmarkBatchDeleteJson json) {
@@ -154,7 +158,6 @@ public class BookmarkResource {
 
     @POST
     @Path("/batch-tag")
-    @RetryOnSqliteBusy(attempts = 12)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull

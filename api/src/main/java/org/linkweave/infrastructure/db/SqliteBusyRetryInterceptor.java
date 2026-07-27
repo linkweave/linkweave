@@ -31,7 +31,7 @@ import org.sqlite.SQLiteException;
 public class SqliteBusyRetryInterceptor {
 
     private static final long BACKOFF_BASE_MS = 10;
-    private static final long BACKOFF_JITTER_MS = 25;
+    private static final long BACKOFF_CAP_MS = 250;
 
     private final TransactionManager transactionManager;
 
@@ -69,9 +69,24 @@ public class SqliteBusyRetryInterceptor {
         return onClass != null ? onClass.attempts() : 1;
     }
 
+    /**
+     * Capped exponential backoff with equal jitter.
+     *
+     * <p>The previous schedule was linear ({@code 10ms * attempt}), which gave the 12-attempt batch
+     * endpoints a total retry window of roughly 660&nbsp;ms. Measured batch write latency under
+     * concurrency has a p99 near 900&nbsp;ms, so the retries could expire while the lock holder was
+     * still committing — the caller then got a 500 even though simply waiting longer would have
+     * succeeded. Doubling with a 250&nbsp;ms ceiling stretches the same 12 attempts to roughly
+     * 1.4&nbsp;s while keeping early retries fast, so brief contention still clears immediately.</p>
+     *
+     * <p>Half the delay is fixed and half random ("equal jitter"): writers that collided once are
+     * spread out instead of waking together and colliding again.</p>
+     */
     private void sleepWithJitter(int attempt, Exception cause) throws Exception {
+        long ceiling = Math.min(BACKOFF_CAP_MS, BACKOFF_BASE_MS << Math.min(attempt - 1, 20));
+        long delay = ceiling / 2 + ThreadLocalRandom.current().nextLong(ceiling / 2 + 1);
         try {
-            Thread.sleep(BACKOFF_BASE_MS * attempt + ThreadLocalRandom.current().nextLong(BACKOFF_JITTER_MS));
+            Thread.sleep(delay);
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
             throw cause;

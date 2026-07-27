@@ -25,6 +25,7 @@ import org.linkweave.api.bookmark.json.TagListJson;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.shared.auth.AuthorizationService;
 import org.linkweave.api.types.id.ID;
+import org.linkweave.infrastructure.ratelimit.RateLimitConst;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
@@ -34,7 +35,7 @@ import org.jspecify.annotations.NonNull;
  * feature flag is off (FR-096) the service returns no suggestions and the system
  * falls back to client-side rule suggestions.
  */
-@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
+@RateLimit(value = RateLimitConst.STANDARD_PER_MINUTE, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated
@@ -47,6 +48,7 @@ public class BookmarkAutoTagResource {
 
     @POST
     @Path("/bookmarks/{bookmarkId}/suggest-tags")
+    @RateLimit(value = RateLimitConst.EXTERNAL_LLM_PER_MINUTE, window = 1, windowUnit = ChronoUnit.MINUTES)
     @Produces(MediaType.APPLICATION_JSON)
     @Authenticated
     @NonNull
@@ -62,6 +64,7 @@ public class BookmarkAutoTagResource {
 
     @POST
     @Path("/suggest-tags")
+    @RateLimit(value = RateLimitConst.EXTERNAL_LLM_PER_MINUTE, window = 1, windowUnit = ChronoUnit.MINUTES)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Authenticated
@@ -75,6 +78,20 @@ public class BookmarkAutoTagResource {
             collectionId, json.getTitle(), json.getUrl(), json.getDescription()));
     }
 
+    /**
+     * Keeps the standard cap on purpose, unlike its metered neighbours above.
+     *
+     * <p>Warm-up reads as the expensive endpoint and isn't one. It returns immediately when the
+     * provider is OpenAI, so it never bills anything; on Ollama it sends a keep-alive request with
+     * no prompt (load the model, don't infer), and the one genuinely costly path — the first model
+     * pull — is already serialized by a compare-and-set so concurrent callers fast-fail rather than
+     * downloading in parallel.</p>
+     *
+     * <p>It is also the most frequently called endpoint here: {@code SuggestedTagsSection} fires it
+     * every time the bookmark dialog opens. Capping it like a costly operation only rejects normal
+     * browsing — a trial 10/min cap produced 13 rejections in one e2e run, and even 300/min was not
+     * enough.</p>
+     */
     @POST
     @Path("/warm-up")
     @Produces(MediaType.APPLICATION_JSON)

@@ -19,6 +19,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import io.smallrye.faulttolerance.api.RateLimit;
+import org.linkweave.infrastructure.ratelimit.RateLimitConst;
 import org.linkweave.infrastructure.stereotypes.JaxDTO;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -30,7 +31,7 @@ import org.jspecify.annotations.Nullable;
  * exercise time-sensitive features (cleanup suggestions, favicon TTLs, etc.)
  * without poking the database directly. Disabled in the prod profile.
  */
-@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
+@RateLimit(value = RateLimitConst.STANDARD_PER_MINUTE, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @UnlessBuildProfile("prod")
 @RequiredArgsConstructor

@@ -10,7 +10,8 @@ import java.util.Map;
  * <p>Two deliberate overrides vs. the normal {@code %test} configuration:</p>
  * <ul>
  *   <li><b>Disable SmallRye Fault Tolerance</b> — every resource class is annotated
- *       {@code @RateLimit(value = 120, window = 1, windowUnit = MINUTES)}. Without disabling FT,
+ *       {@code @RateLimit(value = RateLimitConst.STANDARD_PER_MINUTE, window = 1,
+ *       windowUnit = MINUTES)} — a process-wide bucket. Without disabling FT,
  *       a concurrent load test would be flooded with HTTP 429s long before any {@code SQLITE_BUSY}
  *       contention appears. FT is used in this codebase <em>only</em> for {@code @RateLimit}, so
  *       disabling it has no other side effects.</li>
@@ -28,19 +29,48 @@ import java.util.Map;
  * see the UC-095 before/after measurements). Note: WAL mode persists in the db file, so delete
  * {@code linkweave-test.db*} between runs that switch modes ({@code journal_mode=DELETE} is
  * passed explicitly for the baseline as a belt-and-braces measure).</p>
+ *
+ * <p>All settings can be supplied as either environment variables or {@code -D} system properties
+ * (system properties take precedence). Surefire reliably forwards {@code -D} flags to the forked
+ * test JVM; env-var propagation depends on the parent shell. Pool sizing is exposed via
+ * {@code LINKWEAVE_LOADTEST_MAX_SIZE} / {@code LINKWEAVE_LOADTEST_MIN_SIZE} for the UC-095 option-B
+ * experiments — when unset, Agroal's default (50, see {@code DataSourceJdbcRuntimeConfig#maxSize})
+ * is used.</p>
  */
 public class LoadTestProfile implements QuarkusTestProfile {
 
+    public static final String ENV_ENABLED = "LINKWEAVE_LOADTEST";
+    public static final String ENV_STRICT = "LINKWEAVE_LOADTEST_STRICT";
     public static final String ENV_BUSY_TIMEOUT = "LINKWEAVE_LOADTEST_BUSY_TIMEOUT_MS";
     public static final String ENV_WAL = "LINKWEAVE_LOADTEST_WAL";
+    public static final String ENV_MAX_SIZE = "LINKWEAVE_LOADTEST_MAX_SIZE";
+    public static final String ENV_MIN_SIZE = "LINKWEAVE_LOADTEST_MIN_SIZE";
+    public static final String ENV_ACQUISITION_TIMEOUT = "LINKWEAVE_LOADTEST_ACQUISITION_TIMEOUT_MS";
+
+    /**
+     * Read a setting from either an environment variable or a system property (system property
+     * wins). Surefire reliably forwards {@code -D} flags to the forked test JVM, but env-var
+     * propagation is unreliable in some shells/CI environments — so both paths are supported.
+     *
+     * <p>This is the single source of truth for that precedence — {@code SqliteWriteContentionLoadITest}
+     * reads its settings through here too. Do not re-implement the lookup: a hand-rolled
+     * {@code getenv}-only check is what silently disabled the strict regression gate once already.</p>
+     */
+    static String setting(String name) {
+        String prop = System.getProperty(name);
+        if (prop != null && !prop.isBlank()) {
+            return prop;
+        }
+        return System.getenv(name);
+    }
 
     @Override
     public Map<String, String> getConfigOverrides() {
-        String busy = System.getenv(ENV_BUSY_TIMEOUT);
+        String busy = setting(ENV_BUSY_TIMEOUT);
         if (busy == null || busy.isBlank()) {
             busy = "10000";
         }
-        String walMode = System.getenv(ENV_WAL);
+        String walMode = setting(ENV_WAL);
         String journal;
         if ("immediate".equalsIgnoreCase(walMode)) {
             journal = "&journal_mode=WAL&transaction_mode=IMMEDIATE&synchronous=NORMAL";
@@ -55,6 +85,20 @@ public class LoadTestProfile implements QuarkusTestProfile {
         config.put("MP_Fault_Tolerance_NonFallback_Enabled", "false");
         config.put("smallrye.faulttolerance.enabled", "false");
         config.put("quarkus.datasource.jdbc.url", jdbcUrl);
+
+        // Pool sizing — option B experiments. unset = Agroal default (50).
+        String maxSize = setting(ENV_MAX_SIZE);
+        if (maxSize != null && !maxSize.isBlank()) {
+            config.put("quarkus.datasource.jdbc.max-size", maxSize);
+        }
+        String minSize = setting(ENV_MIN_SIZE);
+        if (minSize != null && !minSize.isBlank()) {
+            config.put("quarkus.datasource.jdbc.min-size", minSize);
+        }
+        String acquisitionTimeout = setting(ENV_ACQUISITION_TIMEOUT);
+        if (acquisitionTimeout != null && !acquisitionTimeout.isBlank()) {
+            config.put("quarkus.datasource.jdbc.acquisition-timeout", acquisitionTimeout);
+        }
         return config;
     }
 }
