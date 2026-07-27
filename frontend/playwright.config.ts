@@ -11,17 +11,26 @@ export default defineConfig({
   // registers a dedicated test user via the form-auth flow, and under heavy
   // parallel load that round-trip can take longer than the default 30s budget.
   timeout: 90_000,
+  // Three Chromiums share the machine with Vite and Quarkus dev, so a render
+  // can occasionally miss Playwright's 5s default on a busy box. 10s absorbs
+  // that jitter without hiding anything: a genuinely wrong value still fails,
+  // it just fails 5s later. Prefer raising this over sprinkling per-assertion
+  // timeouts — and never "fix" a wait with a reload, which turns a real
+  // read-after-write bug into a green result.
+  expect: { timeout: 10_000 },
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  // Three workers by default for local runs: finishes the chromium suite in
-  // ~1 min vs ~3 min serial. The page objects and helpers all carry bounded
-  // timeouts + one-shot reload fallbacks for the data-load waits that used
-  // to flake under parallel e2e load, so three workers is now reliable on a
-  // typical dev machine (Vite + Quarkus dev + IntelliJ all running).
+  // Three workers by default for local runs: ~45s vs ~103s serial.
   //
-  // On a heavily loaded machine, fall back to `--workers=1` for deterministic
-  // runs — three Chromiums still need real CPU, and the backend is SQLite.
-  // CI pins workers=1 separately for cross-browser reproducibility.
+  // This was previously flaky, and the cause was not CPU or SQLite: SmallRye
+  // @RateLimit buckets are process-wide, so parallel workers drained the
+  // per-resource caps and the backend rejected requests outright. No client
+  // timeout can wait that out, which is why generous timeouts never fixed it.
+  // The caps are raised in RateLimitConst (and further in the %dev profile),
+  // and three workers has been green since.
+  //
+  // On a heavily loaded machine, fall back to `--workers=1` — three Chromiums
+  // still need real CPU. CI pins workers=1 for cross-browser reproducibility.
   workers: process.env.CI ? 1 : 3,
   reporter: 'html',
   use: {
