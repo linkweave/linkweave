@@ -95,21 +95,13 @@ public class BookmarkService {
             requireFolderBelongsToCollection(folderRepo.getById(folderId), collectionId);
         }
 
-        // Guards the accidental double save (UC-095 follow-up): the same url *and* title in
-        // the same folder is never intentional. A differing title is left alone — correcting
-        // a just-saved bookmark by re-adding it under a better name is legitimate.
-        URL url = parseUrl(json.getUrl());
-        if (bookmarkRepo.existsIdenticalInFolder(collectionId, folderId, url, json.getTitle())) {
-            throw new AppValidationException(AppValidationMessage.duplicateBookmarkInFolder(json.getTitle()));
-        }
-
         Set<Tag> tags = resolveTags(json.getTagIds());
 
         Bookmark bookmark = new Bookmark(
             collectionRepo.referenceById(collectionId),
             folderId != null ? folderRepo.referenceById(folderId) : null,
             json.getTitle(),
-            url,
+            parseUrl(json.getUrl()),
             json.getDescription(),
             tags,
             new HashSet<>(),

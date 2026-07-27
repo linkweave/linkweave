@@ -18,7 +18,6 @@ import lombok.Setter;
 import org.linkweave.api.bookmark.Bookmark;
 import org.linkweave.api.shared.abstractentity.AbstractEntity;
 import org.linkweave.infrastructure.db.DbConst;
-import org.hibernate.envers.Audited;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -32,7 +31,6 @@ import org.jspecify.annotations.Nullable;
         columnNames = {"bookmark_id", "propertyDefinition_id"}
     )
 )
-@Audited
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter

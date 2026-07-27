@@ -19,7 +19,6 @@ import lombok.Setter;
 import org.linkweave.api.shared.abstractentity.AbstractEntity;
 import org.linkweave.api.shared.user.User;
 import org.linkweave.infrastructure.db.DbConst;
-import org.hibernate.envers.Audited;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -28,7 +27,6 @@ import org.jspecify.annotations.Nullable;
     @Index(name = "ix_apikey_user_id", columnList = "user_id, id"),
     @Index(name = "ix_apikey_key_hash", columnList = "keyHash", unique = true),
 })
-@Audited
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter

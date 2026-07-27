@@ -20,7 +20,6 @@ import lombok.Setter;
 import org.linkweave.api.shared.abstractentity.AbstractEntity;
 import org.linkweave.api.shared.user.User;
 import org.linkweave.infrastructure.db.DbConst;
-import org.hibernate.envers.Audited;
 import org.jspecify.annotations.NonNull;
 
 @Entity
@@ -34,7 +33,6 @@ import org.jspecify.annotations.NonNull;
         @UniqueConstraint(name = "uc_collectionaccess_collection_user", columnNames = {"collection_id", "user_id"}),
     }
 )
-@Audited
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
