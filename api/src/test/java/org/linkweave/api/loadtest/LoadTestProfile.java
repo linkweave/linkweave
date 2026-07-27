@@ -33,7 +33,8 @@ import java.util.Map;
  * (system properties take precedence). Surefire reliably forwards {@code -D} flags to the forked
  * test JVM; env-var propagation depends on the parent shell. Pool sizing is exposed via
  * {@code LINKWEAVE_LOADTEST_MAX_SIZE} / {@code LINKWEAVE_LOADTEST_MIN_SIZE} for the UC-095 option-B
- * experiments — when unset, Agroal's default (~20) is used.</p>
+ * experiments — when unset, Agroal's default (50, see {@code DataSourceJdbcRuntimeConfig#maxSize})
+ * is used.</p>
  */
 public class LoadTestProfile implements QuarkusTestProfile {
 
@@ -78,7 +79,7 @@ public class LoadTestProfile implements QuarkusTestProfile {
         config.put("smallrye.faulttolerance.enabled", "false");
         config.put("quarkus.datasource.jdbc.url", jdbcUrl);
 
-        // Pool sizing — option B experiments. unset = Agroal default (~20).
+        // Pool sizing — option B experiments. unset = Agroal default (50).
         String maxSize = setting(ENV_MAX_SIZE);
         if (maxSize != null && !maxSize.isBlank()) {
             config.put("quarkus.datasource.jdbc.max-size", maxSize);

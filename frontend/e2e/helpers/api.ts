@@ -11,8 +11,10 @@ export type Created = { id: string }
  *
  * Retries transient 5xx — the dev SQLite DB occasionally returns 500 under
  * concurrent writes — and fails fast on 4xx so real bugs surface. Uses 5
- * attempts with exponential backoff (300ms → ~5s total) so the helper
- * survives the sustained contention peaks a 3-worker e2e run produces.
+ * attempts with exponential backoff over the 4 gaps between them
+ * (200/400/800/1600 ms, plus up to 100 ms jitter each → ~3–3.4 s of waiting)
+ * so the helper survives the sustained contention peaks a 3-worker e2e run
+ * produces.
  */
 export async function api<T>(
   request: APIRequestContext,
@@ -23,7 +25,8 @@ export async function api<T>(
   const opts: Parameters<APIRequestContext['post']>[1] = body === undefined ? {} : { data: body }
   let lastStatus = 0
   let lastBody = ''
-  for (let attempt = 0; attempt < 5; attempt++) {
+  const attempts = 5
+  for (let attempt = 0; attempt < attempts; attempt++) {
     const resp =
       method === 'GET'
         ? await request.get(path, opts)
@@ -38,8 +41,12 @@ export async function api<T>(
     }
     lastBody = await resp.text().catch(() => '')
     if (lastStatus < 500) break
-    console.warn(`[e2e] ${method} ${path} → ${lastStatus}, retrying (attempt ${attempt + 1}/5)`)
-    // Exponential backoff: 200ms, 400ms, 800ms, 1600ms, 3200ms (with jitter).
+    // No point sleeping after the last attempt — nothing follows it but the throw.
+    if (attempt === attempts - 1) break
+    console.warn(
+      `[e2e] ${method} ${path} → ${lastStatus}, retrying (attempt ${attempt + 1}/${attempts})`,
+    )
+    // Exponential backoff: 200ms, 400ms, 800ms, 1600ms (with jitter).
     await new Promise((r) => setTimeout(r, 200 * Math.pow(2, attempt) + Math.random() * 100))
   }
   throw new Error(`${method} ${path} failed: ${lastStatus} ${lastBody}`)

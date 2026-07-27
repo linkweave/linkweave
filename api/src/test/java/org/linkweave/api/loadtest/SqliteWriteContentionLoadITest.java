@@ -340,7 +340,7 @@ class SqliteWriteContentionLoadITest {
 
         String busy = strSetting(LoadTestProfile.ENV_BUSY_TIMEOUT, "10000");
         String walMode = strSetting(LoadTestProfile.ENV_WAL, "");
-        String maxSize = strSetting(LoadTestProfile.ENV_MAX_SIZE, "default(~20)");
+        String maxSize = strSetting(LoadTestProfile.ENV_MAX_SIZE, "default(50)");
         String journalLabel = switch (walMode.toLowerCase()) {
             case "immediate" -> "WAL+IMMEDIATE";
             case "true" -> "WAL";
@@ -407,7 +407,9 @@ class SqliteWriteContentionLoadITest {
         try {
             Object jm = em.createNativeQuery("PRAGMA journal_mode").getSingleResult();
             Object bt = em.createNativeQuery("PRAGMA busy_timeout").getSingleResult();
-            String pool = configuredMaxSize.orElse("unset(Agroal default=20)");
+            // Agroal declares @WithDefault("50"), so the property always resolves and this
+            // fallback is only a guard against a future Quarkus dropping that default.
+            String pool = configuredMaxSize.orElse("unset(Agroal default=50)");
             return "runtime: PRAGMA journal_mode=" + jm + " PRAGMA busy_timeout=" + bt + " pool=" + pool;
         } catch (Exception e) {
             return "runtime: <PRAGMA query failed: " + e.getClass().getSimpleName() + ": " + e.getMessage() + ">";
