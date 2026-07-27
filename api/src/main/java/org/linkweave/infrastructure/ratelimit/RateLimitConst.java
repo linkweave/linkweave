@@ -25,4 +25,18 @@ public class RateLimitConst {
      * their own much stricter method-level caps and deliberately do not use this constant.</p>
      */
     public static final int STANDARD_PER_MINUTE = 1200;
+
+    /**
+     * Cap for endpoints that forward to an external LLM.
+     *
+     * <p>{@link #STANDARD_PER_MINUTE} is sized for cheap local CRUD, where the only thing a flood
+     * costs is CPU. These endpoints are different: with
+     * {@code linkweave.autotag.provider=openai} every call bills a third-party API, so the limit
+     * is the operator's spend cap, not a throughput knob. Kept deliberately close to what a person
+     * clicking "suggest tags" can produce.</p>
+     */
+    public static final int EXTERNAL_LLM_PER_MINUTE = 60;
+
+    // Deliberately no separate warm-up cap — see BookmarkAutoTagResource#warmUp for why it keeps
+    // STANDARD_PER_MINUTE despite living next to the metered endpoints.
 }
