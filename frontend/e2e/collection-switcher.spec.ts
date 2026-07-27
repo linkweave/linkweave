@@ -20,11 +20,6 @@ test.describe('Collection Switcher', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
     await expect(page).toHaveURL(/\/collections\//, { timeout: 15000 })
-    // Wait for the SPA to actually load the collection metadata before the
-    // switcher tests poke at default-badge state. Under parallel load the
-    // /api/collections GET can lag the URL change by several seconds, and the
-    // switcher renders "Set as default" until the default flag arrives.
-    await expect(page.getByTestId('collection-switcher-trigger')).toBeVisible({ timeout: 30000 })
   })
 
   test('should show switcher button in sidebar', async ({ page }) => {
@@ -50,7 +45,7 @@ test.describe('Collection Switcher', () => {
     await switcher.openSwitcher()
     // ASSERT
     const badges = page.locator('[data-testid^="collection-default-badge-"]')
-    await expect(badges).toHaveCount(1, { timeout: 15000 })
+    await expect(badges).toHaveCount(1)
   })
 
   test('should show "This is the default" when on default collection', async ({ page }) => {
@@ -60,7 +55,7 @@ test.describe('Collection Switcher', () => {
     // ACT
     await switcher.openSwitcher()
     // ASSERT
-    await switcher.expectShowsThisIsDefault({ timeout: 15000 })
+    await switcher.expectShowsThisIsDefault()
     await switcher.expectSetAsDefaultDisabled()
   })
 

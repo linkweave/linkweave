@@ -100,6 +100,27 @@ public class BookmarkRepo extends BaseRepo<Bookmark> {
             .fetchFirst();
     }
 
+    /**
+     * Whether the folder group ({@code null} = unfiled) already holds a live bookmark with
+     * exactly this url <em>and</em> title. Deliberately narrower than url-only: the same url
+     * under a different title is a legitimate second entry (e.g. "… - LOCAL" next to the
+     * plain one), while an exact repeat is only ever an accidental double save.
+     */
+    public boolean existsIdenticalInFolder(
+        @NonNull ID<Collection> collectionId,
+        @Nullable ID<Folder> folderId,
+        @NonNull URL url,
+        @NonNull String title
+    ) {
+        return db.selectFrom(QBookmark.bookmark)
+            .where(QBookmark.bookmark.collection.id.eq(collectionId.getUUID())
+                .and(hasFolder(folderId))
+                .and(QBookmark.bookmark.url.eq(url))
+                .and(QBookmark.bookmark.title.eq(title))
+                .and(notDeleted()))
+            .fetchFirst() != null;
+    }
+
     @NonNull
     public List<Bookmark> findAllByFolderIncludingDeleted(@NonNull ID<Folder> folderId) {
         return db.selectFrom(QBookmark.bookmark)

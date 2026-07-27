@@ -21,10 +21,11 @@ import org.linkweave.api.bookmark.BookmarkService;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.shared.auth.AuthorizationService;
 import io.smallrye.faulttolerance.api.RateLimit;
+import org.linkweave.infrastructure.ratelimit.RateLimitConst;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
-@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
+@RateLimit(value = RateLimitConst.STANDARD_PER_MINUTE, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated

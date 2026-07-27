@@ -19,9 +19,10 @@ import org.linkweave.api.shared.user.CurrentUserService;
 import org.linkweave.api.shared.user.User;
 import org.linkweave.api.types.id.ID;
 import org.linkweave.infrastructure.db.RetryOnSqliteBusy;
+import org.linkweave.infrastructure.ratelimit.RateLimitConst;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 
-@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
+@RateLimit(value = RateLimitConst.STANDARD_PER_MINUTE, window = 1, windowUnit = ChronoUnit.MINUTES)
 @RetryOnSqliteBusy
 @JaxResource
 @RequiredArgsConstructor

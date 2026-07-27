@@ -25,6 +25,7 @@ import org.linkweave.api.bookmark.json.TagListJson;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.shared.auth.AuthorizationService;
 import org.linkweave.api.types.id.ID;
+import org.linkweave.infrastructure.ratelimit.RateLimitConst;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
 
@@ -34,7 +35,7 @@ import org.jspecify.annotations.NonNull;
  * feature flag is off (FR-096) the service returns no suggestions and the system
  * falls back to client-side rule suggestions.
  */
-@RateLimit(value = 120, window = 1, windowUnit = ChronoUnit.MINUTES)
+@RateLimit(value = RateLimitConst.STANDARD_PER_MINUTE, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated

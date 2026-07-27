@@ -42,23 +42,15 @@ test.describe('Trashbin', () => {
     )
 
     await page.reload()
-    await expect(page.locator('h3').filter({ hasText: `Trash-A-${ts}` })).toBeVisible({
-      timeout: 30000,
-    })
-    await expect(page.locator('h3').filter({ hasText: `Trash-B-${ts}` })).toBeVisible({
-      timeout: 30000,
-    })
+    await expect(page.locator('h3').filter({ hasText: `Trash-A-${ts}` })).toBeVisible()
+    await expect(page.locator('h3').filter({ hasText: `Trash-B-${ts}` })).toBeVisible()
 
     await deleteBookmarkViaApi(page, bookmarkAId)
     await deleteBookmarkViaApi(page, bookmarkBId)
 
     await page.reload()
-    await expect(page.locator('h3').filter({ hasText: `Trash-A-${ts}` })).not.toBeVisible({
-      timeout: 30000,
-    })
-    await expect(page.locator('h3').filter({ hasText: `Trash-B-${ts}` })).not.toBeVisible({
-      timeout: 30000,
-    })
+    await expect(page.locator('h3').filter({ hasText: `Trash-A-${ts}` })).not.toBeVisible()
+    await expect(page.locator('h3').filter({ hasText: `Trash-B-${ts}` })).not.toBeVisible()
   })
 
   test('should show deleted items in trashbin', async ({ page }) => {
@@ -80,17 +72,7 @@ test.describe('Trashbin', () => {
     await trashbin.expectBookmarkNotVisible(bookmarkAId)
 
     await gotoCollection(page, collection)
-    // The restore POST has succeeded, but the bookmark-list GET on fresh page
-    // load can lag under parallel e2e load. Try the assertion; if it times
-    // out, force a reload to re-fetch and try once more. One-shot retry —
-    // genuine bugs surface as a second timeout.
-    const restored = page.locator('h3').filter({ hasText: `Trash-A-${ts}` })
-    try {
-      await expect(restored).toBeVisible({ timeout: 30000 })
-    } catch {
-      await page.reload()
-      await expect(restored).toBeVisible({ timeout: 30000 })
-    }
+    await expect(page.locator('h3').filter({ hasText: `Trash-A-${ts}` })).toBeVisible()
   })
 
   test('should purge a bookmark permanently', async ({ page }) => {

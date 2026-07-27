@@ -81,16 +81,7 @@ async function seedWorld(browser: Browser): Promise<void> {
 async function gotoCollection(page: Page) {
   await page.goto(`/collections/${collectionId}`)
   await expect(page).toHaveURL(new RegExp(`/collections/${collectionId}`))
-  // Under parallel load the bookmarks GET can lag the page mount; give the
-  // first card a generous budget + one-shot reload fallback so a transient
-  // GET failure doesn't fail the whole spec.
-  const firstCard = page.getByTestId(/^bookmark-card-/).first()
-  try {
-    await expect(firstCard).toBeVisible({ timeout: 30000 })
-  } catch {
-    await page.reload()
-    await expect(firstCard).toBeVisible({ timeout: 30000 })
-  }
+  await expect(page.getByTestId(/^bookmark-card-/).first()).toBeVisible()
 }
 
 const headerInput = (page: Page) => page.locator('header [data-search-input]')

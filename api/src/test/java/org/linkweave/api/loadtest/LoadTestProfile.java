@@ -10,7 +10,8 @@ import java.util.Map;
  * <p>Two deliberate overrides vs. the normal {@code %test} configuration:</p>
  * <ul>
  *   <li><b>Disable SmallRye Fault Tolerance</b> — every resource class is annotated
- *       {@code @RateLimit(value = 120, window = 1, windowUnit = MINUTES)}. Without disabling FT,
+ *       {@code @RateLimit(value = RateLimitConst.STANDARD_PER_MINUTE, window = 1,
+ *       windowUnit = MINUTES)} — a process-wide bucket. Without disabling FT,
  *       a concurrent load test would be flooded with HTTP 429s long before any {@code SQLITE_BUSY}
  *       contention appears. FT is used in this codebase <em>only</em> for {@code @RateLimit}, so
  *       disabling it has no other side effects.</li>
