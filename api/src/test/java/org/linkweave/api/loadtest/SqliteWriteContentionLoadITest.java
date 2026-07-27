@@ -97,8 +97,7 @@ class SqliteWriteContentionLoadITest {
      * to the forked test JVM in environments where env-var propagation is unreliable.
      */
     static boolean loadTestGateEnabled() {
-        return "true".equalsIgnoreCase(System.getenv("LINKWEAVE_LOADTEST"))
-            || "true".equalsIgnoreCase(System.getProperty("LINKWEAVE_LOADTEST"));
+        return flagSetting(LoadTestProfile.ENV_ENABLED);
     }
 
 
@@ -386,12 +385,12 @@ class SqliteWriteContentionLoadITest {
 
     private void softAssert(RunResult result) {
         long errors = result.results().stream().filter(r -> !r.success()).count();
-        if ("true".equalsIgnoreCase(System.getenv("LINKWEAVE_LOADTEST_STRICT"))) {
+        if (flagSetting(LoadTestProfile.ENV_STRICT)) {
             assertEquals(0, errors,
                 "STRICT mode: expected zero non-2xx responses after a mitigation, got " + errors);
         } else {
-            System.out.println("INFO: set LINKWEAVE_LOADTEST_STRICT=true to fail on any non-2xx "
-                + "(use after a WAL / single-writer-queue fix lands).");
+            System.out.println("INFO: set LINKWEAVE_LOADTEST_STRICT=true (env or -D) to fail on any "
+                + "non-2xx (use after a WAL / single-writer-queue fix lands).");
         }
         assertTrue(result.results().size() == (long) workers * opsPerWorker,
             "not all ops were recorded (workers=" + workers + ", ops=" + opsPerWorker + ")");
@@ -417,15 +416,7 @@ class SqliteWriteContentionLoadITest {
     }
 
     private static int env(String name, int defaultValue) {
-        String prop = System.getProperty(name);
-        if (prop != null && !prop.isBlank()) {
-            try {
-                return Integer.parseInt(prop.trim());
-            } catch (NumberFormatException e) {
-                return defaultValue;
-            }
-        }
-        String value = System.getenv(name);
+        String value = LoadTestProfile.setting(name);
         if (value == null || value.isBlank()) {
             return defaultValue;
         }
@@ -438,11 +429,15 @@ class SqliteWriteContentionLoadITest {
 
     /** Read a string setting from env var or system property (system property wins). */
     private static String strSetting(String name, String defaultValue) {
-        String prop = System.getProperty(name);
-        if (prop != null && !prop.isBlank()) {
-            return prop;
-        }
-        String env = System.getenv(name);
-        return (env == null || env.isBlank()) ? defaultValue : env;
+        String value = LoadTestProfile.setting(name);
+        return (value == null || value.isBlank()) ? defaultValue : value;
+    }
+
+    /**
+     * Read a boolean flag from env var or system property. Every flag must go through here so a
+     * {@code -D} invocation behaves the same as an exported env var.
+     */
+    private static boolean flagSetting(String name) {
+        return "true".equalsIgnoreCase(LoadTestProfile.setting(name));
     }
 }

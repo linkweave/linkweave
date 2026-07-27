@@ -39,6 +39,8 @@ import java.util.Map;
  */
 public class LoadTestProfile implements QuarkusTestProfile {
 
+    public static final String ENV_ENABLED = "LINKWEAVE_LOADTEST";
+    public static final String ENV_STRICT = "LINKWEAVE_LOADTEST_STRICT";
     public static final String ENV_BUSY_TIMEOUT = "LINKWEAVE_LOADTEST_BUSY_TIMEOUT_MS";
     public static final String ENV_WAL = "LINKWEAVE_LOADTEST_WAL";
     public static final String ENV_MAX_SIZE = "LINKWEAVE_LOADTEST_MAX_SIZE";
@@ -49,8 +51,12 @@ public class LoadTestProfile implements QuarkusTestProfile {
      * Read a setting from either an environment variable or a system property (system property
      * wins). Surefire reliably forwards {@code -D} flags to the forked test JVM, but env-var
      * propagation is unreliable in some shells/CI environments — so both paths are supported.
+     *
+     * <p>This is the single source of truth for that precedence — {@code SqliteWriteContentionLoadITest}
+     * reads its settings through here too. Do not re-implement the lookup: a hand-rolled
+     * {@code getenv}-only check is what silently disabled the strict regression gate once already.</p>
      */
-    private static String setting(String name) {
+    static String setting(String name) {
         String prop = System.getProperty(name);
         if (prop != null && !prop.isBlank()) {
             return prop;
