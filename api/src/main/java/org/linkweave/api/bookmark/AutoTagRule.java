@@ -18,6 +18,7 @@ import org.linkweave.api.collection.Collection;
 import org.linkweave.api.shared.abstractentity.AbstractEntity;
 import org.linkweave.api.shared.auth.BelongsToCollection;
 import org.linkweave.infrastructure.db.DbConst;
+import org.hibernate.envers.Audited;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import org.jspecify.annotations.Nullable;
         @Index(name = "ix_auto_tag_rule_collection_id", columnList = "collection_id, sortOrder, id"),
     }
 )
+@Audited
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter

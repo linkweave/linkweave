@@ -41,6 +41,10 @@ rectangle "LinkWeave Bookmark Manager" {
         usecase "UC-101\nSubscribe to Collection\nRSS Feed" as UC101
     }
 
+    rectangle "Live Updates" {
+        usecase "UC-104\nReceive Live\nCollection Updates" as UC104
+    }
+
     rectangle "Bookmark Management" {
         usecase "UC-005\nCreate Bookmark" as UC005 <<implemented>>
         usecase "UC-006\nView Bookmarks" as UC006 <<implemented>>
@@ -401,6 +405,26 @@ note right of UC088
   Prometheus format at /q/metrics.
   Stack (Prometheus, VictoriaMetrics,
   etc.) is operator's choice.
+end note
+
+' Live Updates
+user --> UC104
+
+UC104 ..> UC054 : <<extend>>
+UC104 ..> UC024 : <<extend>>
+
+note right of UC104
+  One server-to-client channel
+  per open collection. Notifies
+  what changed; client refetches.
+  Enhancement only — never a
+  dependency (BR-206).
+  In-process fan-out: valid only
+  single-instance (see UC-095).
+  NOT auto-tagging (UC-097) —
+  that is synchronous, pre-save.
+  Deferred: prefer refetch-on-focus
+  until a blocking async flow exists.
 end note
 
 legend right

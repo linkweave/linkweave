@@ -3,6 +3,7 @@ import ButtonLw from '@/components/ui/ButtonLw.vue'
 import FolderSelectLw from '@/components/ui/FolderSelectLw.vue'
 import { useDuplicateCheck } from '@/composables/useDuplicateCheck'
 import { useTagSuggestions } from '@/composables/useTagSuggestions'
+import { preventImplicitSubmit } from '@/lib/implicitSubmit'
 import { ensureUrlProtocol } from '@/lib/url'
 import { computed, ref, watch } from 'vue'
 import TagSelect from '../components/TagSelect.vue'
@@ -164,8 +165,15 @@ function saveAnother() {
     </button>
   </div>
 
-  <!-- Form -->
-  <form v-if="!saved" class="p-4 space-y-3" @submit.prevent="save">
+  <!-- Form. Enter never submits (see `preventImplicitSubmit`) — the popup's
+       form is as long as the web dialog's, and implicit submission saved it
+       half-filled, e.g. before a tag being typed in TagSelect was applied. -->
+  <form
+    v-if="!saved"
+    class="p-4 space-y-3"
+    @keydown.enter="preventImplicitSubmit"
+    @submit.prevent="save"
+  >
     <!-- URL -->
     <div class="space-y-1.5">
       <div class="flex items-center justify-between">

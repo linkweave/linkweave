@@ -53,6 +53,25 @@ test.describe('Duplicate Bookmark Warning', () => {
     await expect(dialog).not.toBeVisible()
   })
 
+  test('offers to reveal the existing entry when url, title and folder all match', async ({
+    page,
+  }) => {
+    const dialog = await openAddBookmarkDialog(page, collectionId)
+
+    // The accidental double save: the identical payload, re-entered.
+    await dialog.locator('#create-bookmark-url').fill(duplicateUrl)
+    await dialog.locator('#create-bookmark-title').fill(existingBookmarkTitle)
+
+    // The exact-match variant replaces the plain url-match list.
+    await expect(dialog.getByTestId('duplicate-exact-warning')).toBeVisible()
+    await expect(dialog.getByTestId('duplicate-warning')).not.toBeVisible()
+
+    // "Show it" reveals what is already saved rather than saving a second copy.
+    await dialog.getByTestId('duplicate-show-existing').click()
+    await expect(dialog).not.toBeVisible()
+    await expect(page.locator('h3').filter({ hasText: existingBookmarkTitle })).toHaveCount(1)
+  })
+
   test('does not show duplicate warning for a new URL', async ({ page }) => {
     const dialog = await openAddBookmarkDialog(page, collectionId)
 
