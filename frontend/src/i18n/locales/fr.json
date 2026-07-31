@@ -367,6 +367,8 @@
     "duplicateWarning": "Un favori avec cette URL existe déjà :",
     "duplicateWarningPlural": "{count} favoris avec cette URL existent déjà :",
     "duplicateInFolder": "dans {folder}",
+    "duplicateExactWarning": "Vous avez déjà enregistré ce favori à lʼidentique.",
+    "duplicateShow": "Lʼafficher",
     "fromYourRules": "Depuis vos règles",
     "aiSuggestionsGroup": "Suggestions IA",
     "aiPrivate": "Privé · {model}",

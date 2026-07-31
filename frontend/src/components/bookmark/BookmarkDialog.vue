@@ -162,10 +162,23 @@ function onAddTags(ids: string[]) {
 const bookmarkIdRef = computed(() => props.bookmark?.id)
 const bookmarksRef = computed(() => bookmarkStore.bookmarks)
 const foldersRef = computed(() => folderStore.folders)
-const { duplicates } = useDuplicateCheck(url, bookmarksRef, {
+// Title and folder are passed in so an exact re-save can be told apart from a
+// legitimate second entry for the same page. Both stay non-blocking (BR-026).
+const { duplicates, exactDuplicate } = useDuplicateCheck(url, bookmarksRef, {
   excludeBookmarkId: bookmarkIdRef,
   folders: foldersRef,
+  title,
+  folderId,
 })
+
+/**
+ * Answers "did my last save work?" without a second save: closes the dialog and
+ * flashes the bookmark that is already there, reusing the just-created reveal.
+ */
+function showExistingDuplicate(bookmarkId: string) {
+  emit('update:open', false)
+  markNewBookmark(bookmarkId)
+}
 
 function onUrlBlur() {
   if (typeof url.value === 'string') {
@@ -271,8 +284,36 @@ const onSubmit = handleSubmit(async (values) => {
         />
       </FormFieldLw>
 
+      <!--
+        Two flavours of the same non-blocking warning (BR-026 keeps duplicate
+        urls legal). An *exact* match — same url, title and folder — is the
+        accidental double save, so it offers to reveal the entry that already
+        exists instead of just listing it; anything else is a legitimate second
+        entry for the page and keeps the plain url-match list.
+      -->
       <div
-        v-if="duplicates.length > 0"
+        v-if="exactDuplicate"
+        data-testid="duplicate-exact-warning"
+        class="flex items-center gap-2 rounded-md border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-200"
+      >
+        <span class="flex-1">
+          {{ t('bookmark.duplicateExactWarning') }}
+          <span v-if="exactDuplicate.folderName">
+            ({{ t('bookmark.duplicateInFolder', { folder: exactDuplicate.folderName }) }})
+          </span>
+        </span>
+        <button
+          type="button"
+          data-testid="duplicate-show-existing"
+          class="shrink-0 font-medium underline hover:no-underline"
+          @click="showExistingDuplicate(exactDuplicate.id)"
+        >
+          {{ t('bookmark.duplicateShow') }}
+        </button>
+      </div>
+
+      <div
+        v-else-if="duplicates.length > 0"
         data-testid="duplicate-warning"
         class="rounded-md border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-200"
       >
