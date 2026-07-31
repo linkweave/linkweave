@@ -6,7 +6,8 @@ import { DRAG_TYPE_BOOKMARK, setDraggingBookmarkId } from '@/composables/useDrag
 import { setCompactDragImage } from '@/lib/dragImage'
 import { useBookmarkReorder } from '@/composables/useBookmarkReorder'
 import { useBookmarkStore } from '@/stores/bookmark'
-import { computed } from 'vue'
+import { useNewBookmarkFlash } from '@/composables/useNewBookmarkFlash'
+import { computed, ref } from 'vue'
 
 const props = defineProps<{
   bookmark: BookmarkJson
@@ -38,13 +39,20 @@ function onDragEnd() {
 // rows move the bookmark into that folder at the drop position.
 const reorder = useBookmarkReorder()
 const dropLine = computed(() => reorder.lineFor(props.bookmark.id))
+
+// Grouped rows are where a new bookmark hides best: it is appended to the
+// bottom of its folder group, and a late group sits below the fold.
+const rowEl = ref<HTMLElement | null>(null)
+const { isNew } = useNewBookmarkFlash(rowEl, () => props.bookmark.id)
 </script>
 
 <template>
   <div
+    ref="rowEl"
     :draggable="!isTouch"
     :data-testid="`grouped-row-${bookmark.id}`"
     class="group/row relative flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-accent/50 min-w-0 cursor-grab active:cursor-grabbing"
+    :class="isNew ? 'bm-just-created' : ''"
     @dragstart="onDragStart"
     @dragend="onDragEnd"
     @dragenter="reorder.onRowDragOver($event, bookmark)"
@@ -82,3 +90,28 @@ const dropLine = computed(() => reorder.lineFor(props.bookmark.id))
     />
   </div>
 </template>
+
+<style scoped>
+/* Mirrors BookmarkCard's flash: a just-created row is appended to the bottom
+   of its folder group, so it needs to announce itself. */
+.bm-just-created {
+  animation: bm-just-created-flash 1.8s ease-out;
+}
+
+@keyframes bm-just-created-flash {
+  0%,
+  55% {
+    box-shadow: 0 0 0 2px var(--color-primary);
+  }
+  100% {
+    box-shadow: 0 0 0 2px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bm-just-created {
+    animation: none;
+    box-shadow: 0 0 0 2px var(--color-primary);
+  }
+}
+</style>

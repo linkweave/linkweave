@@ -12,9 +12,11 @@ import {
 } from '@/components/ui'
 import { useDuplicateCheck } from '@/composables/useDuplicateCheck'
 import { useFormDialog } from '@/composables/useFormDialog'
+import { markNewBookmark } from '@/composables/useNewBookmarkFlash'
 import { usePropsExpandedPref } from '@/composables/usePropsExpandedPref'
 import SuggestedTagsSection from '@/components/bookmark/SuggestedTagsSection.vue'
 import TagCombobox from '@/components/bookmark/TagCombobox.vue'
+import { preventImplicitSubmit } from '@/lib/implicitSubmit'
 import {
   decodePropertyValue,
   encodePropertyValueMap,
@@ -205,11 +207,17 @@ const onSubmit = handleSubmit(async (values) => {
       if (snapshotPropertyValues() !== initialPropertyValuesSnapshot.value) {
         await bookmarkStore.updateProperties(props.bookmark.id, buildWirePropertyValues())
       }
+      notification.success(t('bookmark.updateSuccess'))
     } else {
       const created = await bookmarkStore.createBookmark(values)
       if (propertyValuesByDefinitionId.size > 0) {
         await bookmarkStore.updateProperties(created.id, buildWirePropertyValues())
       }
+      // Saving used to give no feedback at all: no toast, and the new row is
+      // filed by sort order rather than prepended, so in grouped layout it
+      // landed below the fold. Users concluded it had failed and saved again.
+      notification.success(t('bookmark.createSuccess'))
+      markNewBookmark(created.id)
     }
     emit('update:open', false)
     emit('saved')
@@ -235,7 +243,18 @@ const onSubmit = handleSubmit(async (values) => {
       </span>
     </template>
 
-    <form :id="formId" @submit.prevent="onSubmit" class="space-y-4">
+    <!--
+      Enter is deliberately not a submit shortcut anywhere in this form — see
+      `preventImplicitSubmit`. Guarded on the form rather than per input so the
+      property inputs below, and any field added later, are covered by default.
+      Submitting is the Create button's job only.
+    -->
+    <form
+      :id="formId"
+      class="space-y-4"
+      @keydown.enter="preventImplicitSubmit"
+      @submit.prevent="onSubmit"
+    >
       <FormFieldLw
         :label="t('bookmark.url')"
         :for-id="`${idPrefix}-url`"

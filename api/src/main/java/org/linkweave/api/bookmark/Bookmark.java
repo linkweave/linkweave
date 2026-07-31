@@ -30,6 +30,7 @@ import org.linkweave.api.shared.abstractentity.AbstractEntity;
 import org.linkweave.api.shared.auth.BelongsToCollection;
 import org.linkweave.api.shared.sortorder.HasSortOrder;
 import org.linkweave.infrastructure.db.DbConst;
+import org.hibernate.envers.Audited;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import org.jspecify.annotations.Nullable;
     @Index(name = "ix_bookmark_folder_id", columnList = "folder_id, id"),
     @Index(name = "ix_bookmark_group_sort", columnList = "collection_id, folder_id, sortOrder, id"),
 })
+@Audited
 @Getter
 @Setter
 @AllArgsConstructor

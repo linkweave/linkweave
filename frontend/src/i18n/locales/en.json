@@ -350,6 +350,8 @@
     "suggestionWillCreate": "(new)",
     "manageRules": "Manage rules",
     "createError": "Failed to create bookmark.",
+    "createSuccess": "Bookmark saved",
+    "updateSuccess": "Bookmark updated",
     "tagSuggestionError": "Failed to apply some tag suggestions.",
     "updateError": "Failed to update bookmark.",
     "moveError": "Failed to move bookmark.",

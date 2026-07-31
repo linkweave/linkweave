@@ -25,6 +25,7 @@ import { Clock, ExternalLink, Folder, MousePointerClick } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import BookmarkPropertyBadge from './BookmarkPropertyBadge.vue'
 import { useBookmarkPreviewHover } from '@/composables/useBookmarkPreviewHover'
+import { useNewBookmarkFlash } from '@/composables/useNewBookmarkFlash'
 
 const tagStore = useTagStore()
 const folderStore = useFolderStore()
@@ -296,6 +297,8 @@ async function refreshPreview() {
 const previewHover = useBookmarkPreviewHover()
 const rowEl = ref<HTMLElement | null>(null)
 
+const { isNew } = useNewBookmarkFlash(rowEl, () => props.bookmark.id)
+
 // Gate the wiring: previews must be on, layout must be the list (the only
 // layout that benefits from a zoom — grid already shows a large cover),
 // the device must have real hover, and the bookmark's preview must not be
@@ -335,6 +338,7 @@ function onRowLeave() {
       props.layout === 'grid' ? 'overflow-hidden' : '',
       selection.selecting ? 'cursor-pointer select-none' : 'cursor-grab active:cursor-grabbing',
       selectedCardClass,
+      isNew ? 'bm-just-created' : '',
     ]"
     @dragstart="onBookmarkDragStart"
     @dragend="onBookmarkDragEnd"
@@ -593,6 +597,31 @@ function onRowLeave() {
 </template>
 
 <style scoped>
+/* A just-created bookmark flashes so the save is visibly located — it is
+   filed by sort order, not prepended, so it can land anywhere in the list.
+   Scoped CSS rather than a Tailwind ring utility: the card already carries
+   hover/focus ring utilities and an unlayered scoped rule wins over them. */
+.bm-just-created {
+  animation: bm-just-created-flash 1.8s ease-out;
+}
+
+@keyframes bm-just-created-flash {
+  0%,
+  55% {
+    box-shadow: 0 0 0 2px var(--color-primary);
+  }
+  100% {
+    box-shadow: 0 0 0 2px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bm-just-created {
+    animation: none;
+    box-shadow: 0 0 0 2px var(--color-primary);
+  }
+}
+
 /* Overlay checkbox pinned to the capture's top-left corner (UC-074:
    22px at 8/8 on the grid cover, 19px at 6/6 on the list thumbnail).
    Scoped CSS rather than Tailwind utilities: the checkbox's own scoped

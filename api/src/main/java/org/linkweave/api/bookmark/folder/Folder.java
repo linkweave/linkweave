@@ -22,6 +22,7 @@ import org.linkweave.api.shared.abstractentity.AbstractEntity;
 import org.linkweave.api.shared.auth.BelongsToCollection;
 import org.linkweave.api.shared.sortorder.HasSortOrder;
 import org.linkweave.infrastructure.db.DbConst;
+import org.hibernate.envers.Audited;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import org.jspecify.annotations.Nullable;
     @Index(name = "ix_folder_parent_id", columnList = "parent_id, id"),
     @Index(name = "ix_folder_group_sort", columnList = "collection_id, parent_id, sortOrder, id"),
 })
+@Audited
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter

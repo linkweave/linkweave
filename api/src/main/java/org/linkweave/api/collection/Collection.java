@@ -16,6 +16,7 @@ import lombok.Setter;
 import org.linkweave.api.shared.abstractentity.AbstractEntity;
 import org.linkweave.api.shared.user.User;
 import org.linkweave.infrastructure.db.DbConst;
+import org.hibernate.envers.Audited;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import org.jspecify.annotations.Nullable;
 @Table(indexes = {
     @Index(name = "ix_collection_owner_id", columnList = "owner_id, id"),
 })
+@Audited
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter

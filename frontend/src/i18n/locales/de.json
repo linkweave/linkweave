@@ -350,6 +350,8 @@
     "suggestionWillCreate": "(neu)",
     "manageRules": "Regeln verwalten",
     "createError": "Lesezeichen konnte nicht erstellt werden.",
+    "createSuccess": "Lesezeichen gespeichert",
+    "updateSuccess": "Lesezeichen aktualisiert",
     "tagSuggestionError": "Einige Tag-Vorschläge konnten nicht übernommen werden.",
     "updateError": "Lesezeichen konnte nicht aktualisiert werden.",
     "moveError": "Lesezeichen konnte nicht verschoben werden.",

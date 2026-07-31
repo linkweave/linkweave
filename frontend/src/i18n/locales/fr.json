@@ -350,6 +350,8 @@
     "suggestionWillCreate": "(nouvelle)",
     "manageRules": "Gérer les règles",
     "createError": "Échec de la création du favori.",
+    "createSuccess": "Signet enregistré",
+    "updateSuccess": "Signet mis à jour",
     "tagSuggestionError": "Échec de lʼapplication de certaines suggestions de tags.",
     "updateError": "Échec de la mise à jour du favori.",
     "moveError": "Échec du déplacement du favori.",
