@@ -90,14 +90,14 @@ rectangle "LinkWeave Bookmark Manager" {
     }
 
     rectangle "Batch Operations" {
-        usecase "UC-073\nBatch Tag Bookmarks" as UC073
+        usecase "UC-073\nBatch Tag Bookmarks" as UC073 <<implemented>>
         usecase "UC-074\nBatch Move/Delete\nBookmarks" as UC074 <<implemented>>
     }
 
     rectangle "Bookmark Enrichment" {
         usecase "UC-075\nAdd Bookmark Note" as UC075
         usecase "UC-076\nSort Bookmarks" as UC076 <<implemented>>
-        usecase "UC-103\nReorder Bookmarks\nWithin Folder" as UC103
+        usecase "UC-103\nReorder Bookmarks\nWithin Folder" as UC103 <<implemented>>
     }
 
     rectangle "Navigation" {
@@ -107,7 +107,7 @@ rectangle "LinkWeave Bookmark Manager" {
 
     rectangle "Import" {
         usecase "UC-031\nImport Browser\nBookmarks" as UC031 <<implemented>>
-        usecase "UC-096\nReview & Select\nBefore Import" as UC096
+        usecase "UC-096\nReview & Select\nBefore Import" as UC096 <<implemented>>
         UC096 .> UC031 : extends
         note right of UC031
           See bookmark-import.md
@@ -141,6 +141,7 @@ rectangle "LinkWeave Bookmark Manager" {
         usecase "UC-054\nView Bookmark\nScreenshot Previews" as UC054 <<implemented>>
         usecase "UC-055\nScreenshot Cache\nCleanup Job" as UC055 <<implemented>>
         usecase "UC-093\nPrevent Preview Popup\nObscuring Row Actions" as UC093 <<implemented>>
+        usecase "UC-105\nView Preview on\nCompact Grouped View" as UC105
     }
 
     rectangle "Architecture & Quality Control" {
@@ -330,6 +331,8 @@ owner --> UC054
 scheduler --> UC055
 operator --> UC055
 UC093 ..> UC054 : <<refine>>
+user --> UC105
+UC105 ..> UC054 : <<refine>>
 
 'Distribution
 user --> UC052
