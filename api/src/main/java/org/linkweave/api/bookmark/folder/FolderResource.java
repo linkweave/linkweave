@@ -75,8 +75,12 @@ public class FolderResource {
         @PathParam("folderId") @NotNull @NonNull ID<Folder> folderId,
         @NotNull @Valid @NonNull FolderSaveJson json
     ) {
+        authorizationService.requireCollectionAccess(json.getCollectionId());
+        // updateFolder writes json.collectionId onto the folder, so checking only the
+        // folder's current collection would let a caller re-home any folder (and its
+        // whole subtree) into another collection by id (IDOR) — same guard as move.
         Folder folder = folderService.getFolder(folderId);
-        authorizationService.requireAccessTo(folder);
+        authorizationService.requireSameCollection(folder, json.getCollectionId());
         Folder renamed = folderService.updateFolder(folderId, json);
         return FolderMapper.toJson(renamed);
     }

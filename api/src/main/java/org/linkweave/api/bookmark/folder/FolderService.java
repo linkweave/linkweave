@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import ch.dvbern.oss.commons.i18nl10n.I18nMessage;
 import org.linkweave.infrastructure.clock.AppClock;
 import org.linkweave.api.types.id.ID;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.linkweave.api.collection.CollectionRepo;
 import org.linkweave.api.shared.sortorder.Placement;
 import org.linkweave.api.shared.sortorder.SortOrderPlacement;
 import org.linkweave.api.shared.sortorder.SparseSortOrder;
+import org.linkweave.infrastructure.errorhandling.AppAuthorizationException;
 import org.linkweave.infrastructure.errorhandling.AppFailureException;
 import org.linkweave.infrastructure.errorhandling.AppFailureMessage;
 import org.linkweave.infrastructure.errorhandling.AppValidationException;
@@ -253,8 +255,10 @@ public class FolderService {
 
     private void requireFolderBelongsToCollection(@NonNull Folder folder, @NonNull ID<Collection> collectionId) {
         if (!folder.getCollection().getId().equals(collectionId)) {
-            throw new AppFailureException(
-                AppFailureMessage.internalError("Folder does not belong to the specified collection")
+            throw new AppAuthorizationException(
+                I18nMessage.of("AppAuthorization.FOLDER_COLLECTION_MISMATCH",
+                    "folderId", folder.getId().getUUID().toString(),
+                    "collectionId", collectionId.getUUID().toString())
             );
         }
     }
