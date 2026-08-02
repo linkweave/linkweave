@@ -6,16 +6,14 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.linkweave.api.benutzer.UserRepo;
 import org.linkweave.api.bookmark.folder.Folder;
 import org.linkweave.api.bookmark.folder.FolderRepo;
 import org.linkweave.api.collection.Collection;
-import org.linkweave.api.collection.CollectionAccessRepo;
-import org.linkweave.api.collection.CollectionRepo;
 import org.linkweave.api.shared.user.User;
 import org.linkweave.api.testutil.fixture.FixtureService;
 import org.linkweave.api.types.emailaddress.EmailAddress;
-import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;

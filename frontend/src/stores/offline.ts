@@ -10,6 +10,8 @@ import { useCollectionStore } from '@/stores/collection'
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
+let listenersInstalled = false
+
 export const useOfflineStore = defineStore('offline', () => {
   const lastSyncedAt = ref<number | null>(null)
 
@@ -34,15 +36,23 @@ export const useOfflineStore = defineStore('offline', () => {
   }
 
   function setupListeners() {
+    // MainLayout wraps five views and remounts on every navigation between them,
+    // so this runs again and again — the window listeners must be installed only
+    // once. They live at module scope and therefore outlive the pinia instance
+    // that was active when they were installed (tests swap it per case), so they
+    // look the store up on every event rather than holding on to one.
+    if (listenersInstalled) return
+    listenersInstalled = true
+
     const debouncedSetBrowserOffline = debounce((value: boolean) => {
       setBrowserOffline(value)
-      if (!value) onBackOnline()
+      if (!value) void useOfflineStore().onBackOnline()
     }, 2000)
 
     window.addEventListener('online', () => debouncedSetBrowserOffline(false))
     window.addEventListener('offline', () => debouncedSetBrowserOffline(true))
 
-    installNetworkStatusListeners({ onServerBack: onBackOnline })
+    installNetworkStatusListeners({ onServerBack: () => void useOfflineStore().onBackOnline() })
   }
 
   async function onBackOnline() {

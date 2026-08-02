@@ -6,7 +6,7 @@ import type { UserInfoJson } from '@/api/generated'
 import { isResponseError } from '@/api/error-utils'
 import i18n from '@/i18n'
 import * as offlineCache from '@/lib/offline-cache'
-import { setSessionExpiredHandler } from '@/lib/offline-middleware'
+import { setCurrentUserEmailProvider, setSessionExpiredHandler } from '@/lib/offline-middleware'
 import { clearPostLoginRedirect, savePostLoginRedirect } from '@/lib/postLoginRedirect'
 import { currentFullPath, navigate } from '@/lib/routerNavigation'
 import { resetAllStores } from '@/lib/storeReset'
@@ -29,6 +29,7 @@ export const useAuthStore = defineStore('auth', () => {
   let sessionExpiryHandled = false
 
   setSessionExpiredHandler(handleSessionExpired)
+  setCurrentUserEmailProvider(() => user.value?.email ?? null)
 
   /**
    * Single pathway for session expiry (UC-098 BR-098-3) — used by both the

@@ -7,7 +7,11 @@ import {
   Permission,
 } from '@/api/generated'
 import { purgeAll, saveCollectionInfo, saveCollections, saveUserInfo } from './offline-cache'
-import { createOfflineMiddleware, setSessionExpiredHandler } from './offline-middleware'
+import {
+  createOfflineMiddleware,
+  setCurrentUserEmailProvider,
+  setSessionExpiredHandler,
+} from './offline-middleware'
 
 const fakeUser: UserInfoJson = {
   id: 'user-1',
@@ -57,6 +61,12 @@ function makeErrorContext(url: string) {
 }
 
 describe('offline-middleware onError cache fallback', () => {
+  // The provider lives at module scope, so a test that sets it must not leak
+  // into the next one even when an assertion throws first.
+  afterEach(() => {
+    setCurrentUserEmailProvider(() => null)
+  })
+
   it('does not serve /api/auth/me from cache — auth must hit the server', async () => {
     const middleware = createOfflineMiddleware()
     const res = await middleware.onError!(makeErrorContext('/api/auth/me'))
@@ -95,6 +105,34 @@ describe('offline-middleware onError cache fallback', () => {
     const ctx = { ...makeErrorContext('/api/collections'), init: { method: 'POST' } as RequestInit }
     const res = await middleware.onError!(ctx)
     expect(res).toBeUndefined()
+  })
+
+  it('never serves another user\'s cache to the logged-in user', async () => {
+    // ARRANGE: bob is logged in, but only alice's data sits in the cache
+    setCurrentUserEmailProvider(() => 'bob@example.com')
+    const middleware = createOfflineMiddleware()
+
+    // ACT
+    const collections = await middleware.onError!(makeErrorContext('/api/collections'))
+    const info = await middleware.onError!(makeErrorContext('/api/collections/col-1'))
+
+    // ASSERT
+    expect(collections).toBeUndefined()
+    expect(info).toBeUndefined()
+  })
+
+  it('serves the cache of the logged-in user', async () => {
+    // ARRANGE
+    setCurrentUserEmailProvider(() => 'alice@example.com')
+    const middleware = createOfflineMiddleware()
+
+    // ACT
+    const res = await middleware.onError!(makeErrorContext('/api/collections'))
+
+    // ASSERT
+    expect(res).toBeInstanceOf(Response)
+    const parsed = CollectionSummaryListJsonFromJSON(await res!.json())
+    expect(parsed.collections[0]!.id).toBe('col-1')
   })
 })
 

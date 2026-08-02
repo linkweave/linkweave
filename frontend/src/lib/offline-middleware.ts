@@ -29,11 +29,23 @@ function toResponse(data: unknown): Response {
   })
 }
 
+let currentUserEmail: () => string | null = () => null
+
+/**
+ * Lets the auth store tell the middleware who is logged in, without importing
+ * the store here (auth.ts already imports this module). Serving a cached
+ * response is only safe for the caller's own data — while someone is
+ * authenticated, another user's leftover cache must never be answered with.
+ */
+export function setCurrentUserEmailProvider(provider: () => string | null) {
+  currentUserEmail = provider
+}
+
 async function tryServeFromCache(
   pathname: string,
   searchParams: URLSearchParams,
 ): Promise<Response | undefined> {
-  const cachedUser = await offlineCache.loadUserInfo()
+  const cachedUser = await offlineCache.loadUserInfo(currentUserEmail() ?? undefined)
   if (!cachedUser) return undefined
 
   const { email } = cachedUser
