@@ -62,9 +62,9 @@ Configuration is stored in ~/.linkweave/config.json. Precedence: flags > environ
     .description('remove the stored configuration')
     .action(() => runLogout())
 
-  const bookmarks = program.command('bookmarks').description('manage bookmarks')
+  const bookmarksCmd = program.command('bookmarks').description('manage bookmarks')
 
-  bookmarks
+  bookmarksCmd
     .command('add')
     .description('create a bookmark')
     .argument('<url>', 'the URL to bookmark')
@@ -75,7 +75,7 @@ Configuration is stored in ~/.linkweave/config.json. Precedence: flags > environ
     .option('--description <description>', 'bookmark description')
     .action(runBookmarksAdd)
 
-  bookmarks
+  bookmarksCmd
     .command('list')
     .description('list bookmarks in a collection')
     .option('--collection <collection>', 'collection ID or name (defaults to your default collection)')
@@ -84,7 +84,7 @@ Configuration is stored in ~/.linkweave/config.json. Precedence: flags > environ
     .addOption(formatOption())
     .action(runBookmarksList)
 
-  bookmarks
+  bookmarksCmd
     .command('edit')
     .description('update fields of a bookmark')
     .argument('<id>', 'the bookmark ID')
@@ -94,15 +94,15 @@ Configuration is stored in ~/.linkweave/config.json. Precedence: flags > environ
     .option('--tags <tags>', 'comma-separated tag names replacing the current tags')
     .action(runBookmarksEdit)
 
-  bookmarks
+  bookmarksCmd
     .command('rm')
     .description('remove a bookmark (moves it to the trashbin)')
     .argument('<id>', 'the bookmark ID')
     .action(async (id: string, _options, cmd: Command) => runBookmarksRm(id, cmd))
 
-  const collections = program.command('collections').description('manage collections')
+  const collectionsCmd = program.command('collections').description('manage collections')
 
-  collections
+  collectionsCmd
     .command('list')
     .description('list your collections')
     .addOption(formatOption())
