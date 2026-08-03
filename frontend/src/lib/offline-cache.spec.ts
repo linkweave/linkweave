@@ -73,15 +73,41 @@ describe('offline-cache', () => {
       expect(result!.cachedAt).toBeTypeOf('number')
     })
 
-    it('should pick the first user-info entry when multiple exist', async () => {
+    it('should refuse to guess an identity when multiple users are cached', async () => {
+      // ARRANGE: a previous user's purge never completed (crash, closed tab)
       await saveUserInfo('bob@example.com', { ...fakeUser, email: 'bob@example.com' })
       await saveUserInfo('alice@example.com', fakeUser)
 
+      // ACT
       const result = await loadUserInfo()
+
+      // ASSERT: whoever opens the app next must not inherit the other's identity
+      expect(result).toBeNull()
+    })
+
+    it('should load only the requested user when several are cached', async () => {
+      // ARRANGE
+      await saveUserInfo('bob@example.com', { ...fakeUser, email: 'bob@example.com' })
+      await saveUserInfo('alice@example.com', fakeUser)
+
+      // ACT
+      const result = await loadUserInfo('bob@example.com')
+
+      // ASSERT
       expect(result).not.toBeNull()
-      if (result) {
-        expect(['alice@example.com', 'bob@example.com']).toContain(result.email)
-      }
+      expect(result!.email).toBe('bob@example.com')
+      expect(result!.data.email).toBe('bob@example.com')
+    })
+
+    it('should return null for a user without cached info', async () => {
+      // ARRANGE
+      await saveUserInfo('alice@example.com', fakeUser)
+
+      // ACT
+      const result = await loadUserInfo('bob@example.com')
+
+      // ASSERT
+      expect(result).toBeNull()
     })
   })
 

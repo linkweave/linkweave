@@ -87,19 +87,30 @@ export const useCollectionStore = defineStore('collection', () => {
     }
   }
 
+  // Switching collections starts a new request without cancelling the running
+  // one; on a slow link the earlier response can land last and would then
+  // overwrite the current collection's data. Only the newest request may write.
+  let latestInfoRequest = 0
+
   async function fetchCollectionInfo(collectionId: string) {
     if (!collectionId) {
+      // Clearing is terminal: the discarded request will no longer touch
+      // `loading`, so this path owns switching the spinner off.
+      latestInfoRequest++
       collectionInfo.value = null
       settings.value = null
+      loading.value = false
       return
     }
 
+    const requestId = ++latestInfoRequest
     loading.value = true
     try {
       const [info, fetchedSettings] = await Promise.all([
         collectionApi.apiCollectionsIdGet({ id: collectionId }),
         collectionApi.apiCollectionsIdSettingsGet({ id: collectionId }).catch(() => null),
       ])
+      if (requestId !== latestInfoRequest) return
       collectionInfo.value = info
       settings.value = fetchedSettings
       const auth = useAuthStore()
@@ -110,11 +121,12 @@ export const useCollectionStore = defineStore('collection', () => {
       }
     } catch (err) {
       console.error('Failed to fetch collection info:', err)
+      if (requestId !== latestInfoRequest) return
       collectionInfo.value = null
       const notification = useNotificationStore()
       notification.handleApiError(err, 'Failed to load collection')
     } finally {
-      loading.value = false
+      if (requestId === latestInfoRequest) loading.value = false
     }
   }
 
@@ -212,7 +224,11 @@ export const useCollectionStore = defineStore('collection', () => {
           fetchCollections()
         }
       } else {
+        // Discard an in-flight fetch too, or it would repopulate what we clear
+        // here — and take over its `loading = false`, which it now skips.
+        latestInfoRequest++
         collectionInfo.value = null
+        loading.value = false
       }
     },
     { immediate: true },

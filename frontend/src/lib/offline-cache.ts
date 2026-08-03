@@ -25,8 +25,15 @@ export interface Cached<T> {
   cachedAt: number
 }
 
+// One connection per session. Opening a fresh one per operation (and never
+// closing it) piles up handles for the lifetime of the tab and blocks any
+// future version upgrade, which waits for every open connection to go away.
+let dbPromise: Promise<IDBDatabase> | null = null
+
 function openDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
+  if (dbPromise) return dbPromise
+
+  dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION)
 
     request.onupgradeneeded = (event) => {
@@ -51,59 +58,67 @@ function openDB(): Promise<IDBDatabase> {
       }
     }
 
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error)
-  })
-}
-
-function put<T>(storeName: string, key: string, value: Cached<T>): Promise<void> {
-  return new Promise((resolve, reject) => {
-    openDB().then(db => {
-      const tx = db.transaction(storeName, 'readwrite')
-      const store = tx.objectStore(storeName)
-      const req = store.put(value, key)
-      req.onsuccess = () => resolve()
-      req.onerror = () => reject(req.error)
-    }).catch(reject)
-  })
-}
-
-function get<T>(storeName: string, key: string): Promise<Cached<T> | null> {
-  return new Promise((resolve, reject) => {
-    openDB().then(db => {
-      const tx = db.transaction(storeName, 'readonly')
-      const store = tx.objectStore(storeName)
-      const req = store.get(key)
-      req.onsuccess = () => {
-        resolve(req.result ?? null)
+    request.onsuccess = () => {
+      const db = request.result
+      // Another tab upgrading the schema must not be blocked by this connection.
+      db.onversionchange = () => {
+        db.close()
+        dbPromise = null
       }
-      req.onerror = () => reject(req.error)
-    }).catch(reject)
+      db.onclose = () => {
+        dbPromise = null
+      }
+      resolve(db)
+    }
+    request.onerror = () => {
+      dbPromise = null
+      reject(request.error)
+    }
+  })
+
+  return dbPromise
+}
+
+/**
+ * Runs one request in its own transaction and settles only once that
+ * transaction completes — resolving on the request's success alone would report
+ * a write as done while it can still be rolled back by a failing transaction.
+ */
+async function runRequest<T>(
+  storeName: string,
+  mode: IDBTransactionMode,
+  operation: (store: IDBObjectStore) => IDBRequest,
+): Promise<T | undefined> {
+  const db = await openDB()
+  return new Promise<T | undefined>((resolve, reject) => {
+    const tx = db.transaction(storeName, mode)
+    const req = operation(tx.objectStore(storeName))
+    let result: T | undefined
+    req.onsuccess = () => {
+      result = req.result as T
+    }
+    tx.oncomplete = () => resolve(result)
+    tx.onerror = () => reject(tx.error ?? req.error)
+    tx.onabort = () => reject(tx.error ?? req.error)
   })
 }
 
-function deleteByKey(storeName: string, key: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    openDB().then(db => {
-      const tx = db.transaction(storeName, 'readwrite')
-      const store = tx.objectStore(storeName)
-      const req = store.delete(key)
-      req.onsuccess = () => resolve()
-      req.onerror = () => reject(req.error)
-    }).catch(reject)
-  })
+async function put<T>(storeName: string, key: string, value: Cached<T>): Promise<void> {
+  await runRequest(storeName, 'readwrite', store => store.put(value, key))
 }
 
-function getAllKeys(storeName: string): Promise<string[]> {
-  return new Promise((resolve, reject) => {
-    openDB().then(db => {
-      const tx = db.transaction(storeName, 'readonly')
-      const store = tx.objectStore(storeName)
-      const req = store.getAllKeys()
-      req.onsuccess = () => resolve(req.result as string[])
-      req.onerror = () => reject(req.error)
-    }).catch(reject)
-  })
+async function get<T>(storeName: string, key: string): Promise<Cached<T> | null> {
+  const result = await runRequest<Cached<T>>(storeName, 'readonly', store => store.get(key))
+  return result ?? null
+}
+
+async function deleteByKey(storeName: string, key: string): Promise<void> {
+  await runRequest(storeName, 'readwrite', store => store.delete(key))
+}
+
+async function getAllKeys(storeName: string): Promise<string[]> {
+  const keys = await runRequest<IDBValidKey[]>(storeName, 'readonly', store => store.getAllKeys())
+  return (keys ?? []) as string[]
 }
 
 function userKey(email: string, suffix: string): string {
@@ -148,15 +163,29 @@ export function saveSavedSearches(
   })
 }
 
-export async function loadUserInfo(): Promise<{ email: string; data: UserInfoJson; cachedAt: number } | null> {
-  const allKeys = await getAllKeys(STORES.USER_INFO)
-  const userInfoKey = allKeys.find(k => k.endsWith(':user-info'))
-  if (!userInfoKey) return null
+/**
+ * With `expectedEmail` the cache of exactly that user is returned, never
+ * another one's. Without it — the offline boot, where nobody is authenticated
+ * yet — a cache holding more than one user is refused instead of handing back
+ * whichever entry IndexedDB happens to yield first: on a shared browser that
+ * would restore the previous user's identity (and their cached bookmarks) for
+ * whoever opens the app next.
+ */
+export async function loadUserInfo(
+  expectedEmail?: string,
+): Promise<{ email: string; data: UserInfoJson; cachedAt: number } | null> {
+  let email: string
+  if (expectedEmail) {
+    email = expectedEmail
+  } else {
+    const userInfoKeys = (await getAllKeys(STORES.USER_INFO)).filter(k => k.endsWith(':user-info'))
+    if (userInfoKeys.length !== 1) return null
+    email = userInfoKeys[0]!.replace(':user-info', '')
+  }
 
-  const cached = await get<Record<string, unknown>>(STORES.USER_INFO, userInfoKey)
+  const cached = await get<Record<string, unknown>>(STORES.USER_INFO, userKey(email, 'user-info'))
   if (!cached) return null
 
-  const email = userInfoKey.replace(':user-info', '')
   return { email, data: UserInfoJsonFromJSON(cached.data), cachedAt: cached.cachedAt }
 }
 
@@ -194,9 +223,18 @@ export async function purgeForUser(email: string): Promise<void> {
 
 export async function purgeAll(): Promise<void> {
   const db = await openDB()
-  for (const storeName of Object.values(STORES)) {
-    db.transaction(storeName, 'readwrite').objectStore(storeName).clear()
-  }
+  const storeNames = Object.values(STORES)
+  // One transaction over all stores, awaited to completion — callers must be
+  // able to rely on the data actually being gone when this resolves.
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(storeNames, 'readwrite')
+    for (const storeName of storeNames) {
+      tx.objectStore(storeName).clear()
+    }
+    tx.oncomplete = () => resolve()
+    tx.onerror = () => reject(tx.error)
+    tx.onabort = () => reject(tx.error)
+  })
 }
 
 export async function getLastSyncedAt(email: string): Promise<number | null> {
