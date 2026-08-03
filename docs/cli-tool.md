@@ -282,7 +282,13 @@ server and are wired into the e2e CI workflow.
       60s in `$XDG_CACHE_HOME/linkweave/completion-cache.json`. Fails silently:
       an error printed during completion corrupts the user's command line.
       Generated bash targets 3.2 (macOS), so no `mapfile`.
-- [ ] `npm install -g @linkweave/cli` publishing setup
+- [ ] `npm install -g @linkweave/cli` publishing setup. The package itself is
+      ready — `npm pack` produces a 25 kB tarball (LICENSE, README, package.json
+      and the single bundled `dist/main.js`), and installing it globally yields
+      a working `linkweave` binary with the right shebang and bin symlink,
+      verified by hand. What is missing is the publish: the `@linkweave` npm
+      org/scope, an automation token in CI, and a release job. Until then the
+      README documents installing from a checkout.
 - [x] README with installation instructions (`cli/README.md`)
 - [x] `--insecure` flag for self-signed certs
 

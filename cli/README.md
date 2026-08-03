@@ -10,17 +10,28 @@ linkweave bookmarks add https://example.com --tags reading --folder Inbox
 
 ## Installation
 
-```bash
-npm install -g @linkweave/cli
-```
+> **Not on npm yet.** Publishing is the remaining piece of Phase 5 in
+> `docs/cli-tool.md`. Once it lands, this is the install:
+>
+> ```bash
+> npm install -g @linkweave/cli
+> ```
 
-From the monorepo (development):
+Until then, install from a checkout — this builds the same self-contained
+bundle that gets published, and puts `linkweave` on your PATH:
 
 ```bash
 cd cli
 pnpm install
 pnpm run build        # bundles to dist/main.js
+npm install -g .
+```
+
+Or skip the install and run it in place:
+
+```bash
 node dist/main.js --help
+pnpm run dev -- bookmarks list   # from source, via tsx
 ```
 
 ## Getting started
