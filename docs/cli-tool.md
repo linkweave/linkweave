@@ -130,9 +130,11 @@ linkweave/
 │           ├── logoutCmd.ts                 # linkweave logout
 │           ├── bookmarksCmd.ts              # bookmarks add | list | edit | rm
 │           ├── collectionsCmd.ts            # collections list
-│           ├── completionCmd.ts             # completion <shell> script generator
 │           ├── completeCmd.ts               # hidden __complete value callback
+│           ├── completionScriptGenerator.ts # emits the bash/zsh/fish script
 │           └── shared.ts                    # config + error-handling helpers
+│                                            # (the last two carry no Cmd suffix:
+│                                            #  they are helpers, not commands)
 ├── frontend/e2e/cli.spec.ts                 # CLI e2e, drives the built binary
 ├── docs/                                    # Documentation (this file)
 └── ...
@@ -274,7 +276,7 @@ server and are wired into the e2e CI workflow.
 
 - [x] Shell completions (bash/zsh/fish): `linkweave completion <shell>` prints
       a script generated at runtime from the commander command tree, so new
-      commands/flags are picked up automatically (`cli/src/commands/completionCmd.ts`)
+      commands/flags are picked up automatically (`cli/src/commands/completionScriptGenerator.ts`)
 - [x] Value completion for `--collection`/`--tag`/`--folder` via a hidden
       `linkweave __complete` callback (`cli/src/commands/completeCmd.ts`), cached
       60s in `~/.linkweave/completion-cache.json`. Fails silently by design:

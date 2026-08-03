@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import { buildProgram } from '../program'
-import { completionScript } from './completionCmd'
+import { completionScript } from './completionScriptGenerator'
 
 const program = buildProgram()
 
