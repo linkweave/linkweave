@@ -175,7 +175,19 @@ function bashScript(nodes: CompletionNode[]): string {
 __linkweave_values() {
   local collection="" i value
   for ((i = 1; i < COMP_CWORD; i++)); do
-    if [[ "\${COMP_WORDS[i]}" == "--collection" ]]; then collection="\${COMP_WORDS[i + 1]}"; fi
+    case "\${COMP_WORDS[i]}" in
+      # '=' is in COMP_WORDBREAKS, so '--collection=Work' normally arrives as
+      # three words. Both tokenisations are handled: a user with a trimmed
+      # COMP_WORDBREAKS gets it as one.
+      --collection)
+        if [[ "\${COMP_WORDS[i + 1]}" == "=" ]]; then
+          collection="\${COMP_WORDS[i + 2]}"
+        else
+          collection="\${COMP_WORDS[i + 1]}"
+        fi
+        ;;
+      --collection=*) collection="\${COMP_WORDS[i]#--collection=}" ;;
+    esac
   done
   COMPREPLY=()
   while IFS= read -r value; do
@@ -204,9 +216,13 @@ ${prevArms}
   local i w skip=0
   for ((i = 1; i < COMP_CWORD; i++)); do
     w="\${COMP_WORDS[i]}"
-    if ((skip)); then skip=0; continue; fi
+    if ((skip)); then ((skip--)); continue; fi
     case "$w" in
-      ${skipPattern}) skip=1 ;;
+      # Skip two for the split '--flag = value' form, so the value is not
+      # mistaken for a subcommand name.
+      ${skipPattern})
+        if [[ "\${COMP_WORDS[i + 1]}" == "=" ]]; then skip=2; else skip=1; fi
+        ;;
       -*) ;;
       *) cmdwords+=("$w") ;;
     esac
@@ -246,7 +262,11 @@ __linkweave_values() {
   local collection="" i
   local -a values
   for ((i = 1; i < CURRENT; i++)); do
-    [[ "\${words[i]}" == "--collection" ]] && collection="\${words[i + 1]}"
+    # zsh keeps '--collection=Work' as a single word, unlike bash.
+    case "\${words[i]}" in
+      --collection) collection="\${words[i + 1]}" ;;
+      --collection=*) collection="\${words[i]#--collection=}" ;;
+    esac
   done
   if [[ -n "$collection" ]]; then
     values=(\${(f)"$(linkweave __complete "$1" --collection "$collection" -- "\${words[CURRENT]}" 2>/dev/null)"})
@@ -310,8 +330,11 @@ function fishScript(nodes: CompletionNode[]): string {
     '    # Tracking the previous word avoids indexing, which errors on an',
     '    # empty command line (fish arrays are 1-based).',
     '    for part in $parts',
+    '        # fish keeps --collection=Work as a single token, unlike bash.',
     '        if test "$previous" = "--collection"',
     '            set collection $part',
+    '        else if string match -q -- "--collection=*" $part',
+    '            set collection (string replace -- "--collection=" "" $part)',
     '        end',
     '        set previous $part',
     '    end',

@@ -144,6 +144,29 @@ describe('completionScript', () => {
     expect(result.stdout).toContain('__complete tags --collection Work')
   })
 
+  it('shouldForwardTheCollectionWhenWrittenWithAnEqualsSign', () => {
+    // ARRANGE: '=' is in COMP_WORDBREAKS, so bash hands `--collection=Work` to
+    // the completion function as three words. Reading only [i+1] captures the
+    // '=' itself, which resolves to nothing and silently offers no candidates.
+    const log = join(stubDir, 'calls.log')
+    rmSync(log, { force: true })
+
+    // ACT
+    bashComplete(['linkweave', 'bookmarks', 'list', '--collection', '=', 'Work', '--tag', ''])
+
+    // ASSERT
+    const result = spawnSync('cat', [log], { encoding: 'utf-8' })
+    expect(result.stdout).toContain('__complete tags --collection Work')
+  })
+
+  it('shouldNotMistakeAnEqualsSeparatedValueForASubcommand', () => {
+    // The context scan must skip the value too, or 'Work' would be read as a
+    // command word.
+    const words = bashComplete(['linkweave', 'bookmarks', '--collection', '=', 'Work', ''])
+
+    expect(words).toEqual(expect.arrayContaining(['add', 'list', 'edit', 'rm']))
+  })
+
   it('shouldNotCompleteValuesForTheCommaSeparatedTagsFlag', () => {
     // --tags takes a list; completing it would replace the whole word.
     expect(completionScript('bash', program)).not.toMatch(/--tags\) __linkweave_values/)
