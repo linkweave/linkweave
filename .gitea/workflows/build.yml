@@ -149,6 +149,13 @@ jobs:
 
   test-cli:
     runs-on: ubuntu-latest
+    strategy:
+      # cli/package.json claims engines.node >= 22, and npm only warns when
+      # that is unmet — so the floor has to be proven, not asserted. 22 is the
+      # oldest supported LTS, 24 is what most people will actually run.
+      fail-fast: false
+      matrix:
+        node-version: [22, 24]
     steps:
       - uses: actions/checkout@v5
 
@@ -159,7 +166,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: ${{ matrix.node-version }}
           cache: pnpm
           cache-dependency-path: cli/pnpm-lock.yaml
 

@@ -10,6 +10,10 @@ linkweave bookmarks add https://example.com --tags reading --folder Inbox
 
 ## Installation
 
+Requires **Node.js 22 or newer** — the CLI ships as a JavaScript bundle run by
+your own `node`, not as a standalone binary. Both 22 and 24 are exercised in
+CI.
+
 > **Not on npm yet.** Publishing is the remaining piece of Phase 5 in
 > `docs/cli-tool.md`. Once it lands, this is the install:
 >
