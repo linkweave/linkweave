@@ -119,7 +119,7 @@ linkweave/
 │       ├── program.ts                       # commander command tree
 │       ├── api.ts                           # re-exports the frontend's generated client
 │       ├── client.ts                        # API clients with X-API-Key injection
-│       ├── config.ts                        # ~/.linkweave/config.json (0600, atomic)
+│       ├── config.ts                        # XDG config path (0600, atomic)
 │       ├── cache.ts                         # 60s completion-candidate cache
 │       ├── errors.ts                        # HTTP/TLS failures -> user-facing messages
 │       ├── output.ts                        # --format table/json/ids rendering
@@ -254,7 +254,7 @@ Implemented in `cli/` (tsup bundle, `dist/main.js` bin entry).
 - [x] Set up TypeScript + commander
 - [x] Reuse the generated `typescript-fetch` client (shared with the frontend
       at `frontend/src/api/generated`, bundled into the CLI at build time)
-- [x] Implement config management (`~/.linkweave/config.json`, 0600, env
+- [x] Implement config management (XDG config dir, 0600, env
       overrides `LINKWEAVE_API_KEY`/`LINKWEAVE_SERVER`)
 - [x] Implement `linkweave login` / `linkweave logout`
 
@@ -279,7 +279,7 @@ server and are wired into the e2e CI workflow.
       commands/flags are picked up automatically (`cli/src/commands/completionScriptGenerator.ts`)
 - [x] Value completion for `--collection`/`--tag`/`--folder` via a hidden
       `linkweave __complete` callback (`cli/src/commands/completeCmd.ts`), cached
-      60s in `~/.linkweave/completion-cache.json`. Fails silently by design:
+      60s in `$XDG_CACHE_HOME/linkweave/completion-cache.json`. Fails silently:
       an error printed during completion corrupts the user's command line.
       Generated bash targets 3.2 (macOS), so no `mapfile`.
 - [ ] `npm install -g @linkweave/cli` publishing setup
@@ -294,7 +294,7 @@ server and are wired into the e2e CI workflow.
 |---|---|---|
 | Raw API key | Stored in DB | Never stored; only SHA-256 hash is persisted |
 | Raw API key | Logged | Never logged; only prefix appears in logs |
-| `~/.linkweave/config.json` | Read by other users | File permissions set to `0600` |
+| `$XDG_CONFIG_HOME/linkweave/config.json` | Read by other users | File permissions set to `0600` |
 | API key in transit | Intercepted | TLS required; no HTTP fallback |
 | Key brute-force | Guessed by attacker | 32 bytes of entropy (2^256); infeasible |
 | Key enumeration | Attacker probes keys | Constant-time hash comparison; generic error messages |

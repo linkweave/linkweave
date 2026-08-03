@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { BookmarkJson, TagJson } from '../api'
 
 // The commands pull their credentials and clients from these two modules;
-// stubbing them keeps the tests off the network and out of the real ~/.linkweave.
+// stubbing them keeps the tests off the network and out of the real config dir.
 const CONFIG = { server: 'https://test.example', apiKey: 'lw_test' }
 
 // Reassigned per test — the factories below dereference it lazily, at call

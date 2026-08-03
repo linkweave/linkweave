@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-import { configDir, writePrivateFile } from './config'
+import { cacheDir, writePrivateFile } from './config'
 
 /**
  * Short-lived cache for shell-completion candidates. Tab completion has to
@@ -11,7 +11,7 @@ import { configDir, writePrivateFile } from './config'
 const TTL_MS = 60_000
 
 export function cachePath(): string {
-  return join(configDir(), 'completion-cache.json')
+  return join(cacheDir(), 'completion-cache.json')
 }
 
 interface CacheEntry {

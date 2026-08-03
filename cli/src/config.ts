@@ -1,4 +1,13 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  rmdirSync,
+  rmSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs'
 import { homedir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 
@@ -16,12 +25,83 @@ export interface StoredConfig {
   defaultCollectionId?: string
 }
 
-export function configDir(): string {
-  return join(homedir(), '.linkweave')
+function homeFrom(env: NodeJS.ProcessEnv): string {
+  // Mirrors what os.homedir() does, but off the env that was passed in, so
+  // every path in this module derives from one source.
+  return env['HOME'] ?? env['USERPROFILE'] ?? homedir()
 }
 
-export function configPath(): string {
-  return join(configDir(), 'config.json')
+/**
+ * XDG Base Directory resolution. `XDG_CONFIG_HOME`/`XDG_CACHE_HOME` win when
+ * set to an absolute path — the spec requires relative values to be ignored —
+ * otherwise the platform default applies.
+ *
+ * The defaults are the XDG ones on macOS too. Apple's own convention is
+ * `~/Library/Application Support`, but that is a poor fit for a tool driven
+ * from a terminal: awkward to `cat`, `grep`, or keep under version control,
+ * and unlike every other CLI already on a developer's PATH.
+ */
+function xdgDir(env: NodeJS.ProcessEnv, variable: string, fallback: string): string {
+  const configured = env[variable]
+  if (configured !== undefined && configured.startsWith('/')) return join(configured, 'linkweave')
+  if (process.platform === 'win32') {
+    const appData = env[variable === 'XDG_CACHE_HOME' ? 'LOCALAPPDATA' : 'APPDATA']
+    if (appData) return join(appData, 'linkweave')
+  }
+  return join(homeFrom(env), fallback, 'linkweave')
+}
+
+export function configDir(env: NodeJS.ProcessEnv = process.env): string {
+  return xdgDir(env, 'XDG_CONFIG_HOME', '.config')
+}
+
+export function cacheDir(env: NodeJS.ProcessEnv = process.env): string {
+  return xdgDir(env, 'XDG_CACHE_HOME', '.cache')
+}
+
+export function configPath(env: NodeJS.ProcessEnv = process.env): string {
+  return join(configDir(env), 'config.json')
+}
+
+/** Where the config lived before the move to XDG. Still read, never written. */
+export function legacyConfigDir(env: NodeJS.ProcessEnv = process.env): string {
+  return join(homeFrom(env), '.linkweave')
+}
+
+/**
+ * The config to read: the XDG location, falling back to the pre-XDG one while
+ * it still exists so an existing install is not silently logged out. Reading
+ * never writes — the move happens on the next `login`, see removeLegacyFiles.
+ */
+export function configReadPath(env: NodeJS.ProcessEnv = process.env): string {
+  const current = configPath(env)
+  if (existsSync(current)) return current
+  const legacy = join(legacyConfigDir(env), 'config.json')
+  return existsSync(legacy) ? legacy : current
+}
+
+/**
+ * Deletes the pre-XDG files. Called after a successful save so a copy of the
+ * API key is not left behind at the old location, and on logout. Best-effort:
+ * a failure here must not fail the command that triggered it.
+ */
+export function removeLegacyFiles(env: NodeJS.ProcessEnv = process.env): boolean {
+  const dir = legacyConfigDir(env)
+  let removed = false
+  for (const name of ['config.json', 'completion-cache.json']) {
+    try {
+      unlinkSync(join(dir, name))
+      removed = true
+    } catch {
+      // Not there, or not ours to delete.
+    }
+  }
+  try {
+    rmdirSync(dir)
+  } catch {
+    // Non-empty or absent: leave whatever else the user keeps there.
+  }
+  return removed
 }
 
 function optionalString(value: unknown): boolean {
@@ -65,7 +145,7 @@ const warnOnStderr: ConfigWarning = (message) => {
 }
 
 export function loadStoredConfig(
-  path: string = configPath(),
+  path: string = configReadPath(),
   // Shell completion passes a no-op: a warning printed mid-completion would
   // land in the middle of the user's command line.
   warn: ConfigWarning = warnOnStderr,
@@ -93,7 +173,7 @@ export function loadStoredConfig(
 }
 
 /**
- * Writes owner-only content (BR-021/BR-022) into `~/.linkweave`. The content
+ * Writes owner-only content (BR-021/BR-022) into the config dir. The content
  * goes to a fresh same-directory temp file (0600 is honored at creation) and
  * is renamed over the target: the content is never on disk with looser
  * permissions — writeFileSync's `mode` is ignored for existing files, which
@@ -118,16 +198,19 @@ export function saveStoredConfig(config: StoredConfig, path: string = configPath
 }
 
 /**
- * Deletes the config file (BR-025). Returns false when there was none —
- * decided from unlink's own result rather than a preceding existsSync, which
- * both races and lets an unreadable-directory failure escape as a raw errno.
+ * Deletes the config file (BR-025), plus anything left at the pre-XDG
+ * location so logout does not leave a usable API key behind. Returns false
+ * when there was nothing anywhere — decided from unlink's own result rather
+ * than a preceding existsSync, which both races and lets an
+ * unreadable-directory failure escape as a raw errno.
  */
 export function deleteStoredConfig(path: string = configPath()): boolean {
+  const legacyRemoved = removeLegacyFiles()
   try {
     unlinkSync(path)
     return true
   } catch (e) {
-    if ((e as NodeJS.ErrnoException).code === 'ENOENT') return false
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') return legacyRemoved
     throw new CliError(`Cannot delete ${path}. Check file and directory permissions.`)
   }
 }

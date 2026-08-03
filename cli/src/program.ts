@@ -7,6 +7,7 @@ import { COMPLETION_SOURCES, runComplete } from './commands/completeCmd'
 import { COMPLETION_SHELLS, completionScript, type CompletionShell } from './commands/completionScriptGenerator'
 import { runLogin } from './commands/loginCmd'
 import { runLogout } from './commands/logoutCmd'
+import { configPath } from './config'
 import { OUTPUT_FORMATS } from './output'
 
 function formatOption(): Option {
@@ -37,7 +38,8 @@ Environment:
   LINKWEAVE_SERVER    server URL (overrides the config file)
   LINKWEAVE_API_KEY   API key (overrides the config file)
 
-Configuration is stored in ~/.linkweave/config.json. Precedence: flags > environment > config file.`,
+Configuration is stored in ${configPath()} (XDG_CONFIG_HOME).
+Precedence: flags > environment > config file.`,
     )
 
   program.hook('preAction', () => {
@@ -51,7 +53,7 @@ Configuration is stored in ~/.linkweave/config.json. Precedence: flags > environ
 
   program
     .command('login')
-    .description('store the server URL and API key in ~/.linkweave/config.json')
+    .description(`store the server URL and API key in ${configPath()}`)
     .action(async (_options, cmd: Command) => {
       const { server, apiKey } = cmd.optsWithGlobals<{ server?: string; apiKey?: string }>()
       await runLogin({ server, apiKey })

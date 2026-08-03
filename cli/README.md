@@ -27,7 +27,7 @@ node dist/main.js --help
 
 Interactive — prompts for the server URL and API key (the key is not echoed),
 validates the key against the server, and stores both in
-`~/.linkweave/config.json` with owner-only permissions:
+`$XDG_CONFIG_HOME/linkweave/config.json` with owner-only permissions:
 
 ```bash
 linkweave login
@@ -140,8 +140,15 @@ Exit codes:
 
 ## Configuration
 
-`login` writes `~/.linkweave/config.json` (created with `0600`, written
-atomically): server URL, API key, your email, and your default collection ID.
+`login` writes `$XDG_CONFIG_HOME/linkweave/config.json` (default
+`~/.config/linkweave/config.json`, created with `0600`, written atomically):
+server URL, API key, your email, and your default collection ID.
+
+The CLI follows the XDG Base Directory specification. `XDG_CONFIG_HOME` and
+`XDG_CACHE_HOME` are honoured when set to an absolute path; otherwise
+`~/.config` and `~/.cache` are used, on macOS as well as Linux. A config left
+over from before this change (`~/.linkweave/config.json`) is still read, and
+the next `linkweave login` moves it to the new location.
 
 Precedence for the server and key: **flags** (`--server`/`--api-key`) >
 **environment** (`LINKWEAVE_SERVER`/`LINKWEAVE_API_KEY`) > **config file**.
@@ -165,8 +172,8 @@ linkweave bookmarks add https://x --folder <TAB>   # Dev  Dev/TypeScript
 ```
 
 Those suggestions come from a hidden `linkweave __complete` callback, cached
-for 60 seconds in `~/.linkweave/completion-cache.json` (owner-only, like the
-config) so a keypress never waits on the network twice. If you are not logged
+for 60 seconds in `$XDG_CACHE_HOME/linkweave/completion-cache.json`
+(owner-only, like the config) so a keypress never waits on the network twice. If you are not logged
 in, offline, or the server is slow, completion silently offers nothing rather
 than printing an error into your command line. `--tags` (the comma-separated
 list on `add`/`edit`) is not value-completed; use `--tag` filtering to

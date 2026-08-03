@@ -1,4 +1,13 @@
-import { chmodSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -7,9 +16,15 @@ import { CliError } from './errors'
 import {
   API_KEY_PATTERN,
   DEFAULT_SERVER,
+  cacheDir,
+  configDir,
+  configPath,
+  configReadPath,
   deleteStoredConfig,
+  legacyConfigDir,
   loadStoredConfig,
   normalizeServer,
+  removeLegacyFiles,
   resolveEffectiveConfig,
   saveStoredConfig,
   type StoredConfig,
@@ -212,5 +227,143 @@ describe('stored config file handling', () => {
     saveStoredConfig(STORED, path)
     expect(deleteStoredConfig(path)).toBe(true)
     expect(deleteStoredConfig(path)).toBe(false)
+  })
+})
+
+describe('XDG base directories', () => {
+  const HOME = '/home/tester'
+
+  it('shouldPreferXdgEnvironmentVariables', () => {
+    expect(configDir({ XDG_CONFIG_HOME: '/xdg/cfg' })).toBe('/xdg/cfg/linkweave')
+    expect(cacheDir({ XDG_CACHE_HOME: '/xdg/cache' })).toBe('/xdg/cache/linkweave')
+  })
+
+  it('shouldIgnoreRelativeXdgValuesAsTheSpecRequires', () => {
+    // "If an implementation encounters a relative path it must be ignored."
+    const withRelative = configDir({ XDG_CONFIG_HOME: 'relative/path', HOME })
+
+    expect(withRelative).not.toContain('relative/path')
+    expect(withRelative).toBe(join(HOME, '.config', 'linkweave'))
+  })
+
+  it('shouldFallBackToTheXdgDefaults', () => {
+    expect(configDir({ HOME })).toBe(join(HOME, '.config', 'linkweave'))
+    expect(cacheDir({ HOME })).toBe(join(HOME, '.cache', 'linkweave'))
+  })
+
+  it('shouldKeepConfigAndCacheApart', () => {
+    // The completion cache is derived data and must not sit next to the key.
+    expect(cacheDir({ HOME })).not.toBe(configDir({ HOME }))
+  })
+
+  it('shouldPutTheConfigFileInsideTheConfigDir', () => {
+    expect(configPath({ HOME })).toBe(join(HOME, '.config', 'linkweave', 'config.json'))
+  })
+})
+
+describe('migration from the pre-XDG location', () => {
+  let home: string
+
+  beforeEach(() => {
+    home = mkdtempSync(join(tmpdir(), 'linkweave-home-'))
+    vi.stubEnv('HOME', home)
+    vi.stubEnv('XDG_CONFIG_HOME', join(home, '.config'))
+    vi.stubEnv('XDG_CACHE_HOME', join(home, '.cache'))
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    rmSync(home, { recursive: true, force: true })
+  })
+
+  function writeLegacyConfig(): string {
+    const dir = legacyConfigDir()
+    mkdirSync(dir, { recursive: true })
+    const path = join(dir, 'config.json')
+    writeFileSync(path, JSON.stringify(STORED))
+    return path
+  }
+
+  it('shouldReadTheOldFileSoAnExistingInstallStaysLoggedIn', () => {
+    // ARRANGE
+    const legacy = writeLegacyConfig()
+
+    // ACT / ASSERT
+    expect(configReadPath()).toBe(legacy)
+    expect(loadStoredConfig()).toEqual(STORED)
+  })
+
+  it('shouldPreferTheXdgFileWhenBothExist', () => {
+    // ARRANGE
+    writeLegacyConfig()
+    saveStoredConfig({ ...STORED, apiKey: KEY_B }, configPath())
+
+    // ACT / ASSERT
+    expect(configReadPath()).toBe(configPath())
+    expect(loadStoredConfig()?.apiKey).toBe(KEY_B)
+  })
+
+  it('shouldNotWriteAnythingWhileMerelyReading', () => {
+    // ARRANGE: a read must not relocate files behind the user's back —
+    // __complete calls this on every keypress.
+    writeLegacyConfig()
+
+    // ACT
+    loadStoredConfig()
+
+    // ASSERT
+    expect(existsSync(join(legacyConfigDir(), 'config.json'))).toBe(true)
+    expect(existsSync(configPath())).toBe(false)
+  })
+
+  it('shouldRemoveTheOldFilesSoNoUsableKeyIsLeftBehind', () => {
+    // ARRANGE
+    writeLegacyConfig()
+    writeFileSync(join(legacyConfigDir(), 'completion-cache.json'), '{}')
+
+    // ACT
+    const removed = removeLegacyFiles()
+
+    // ASSERT
+    expect(removed).toBe(true)
+    expect(existsSync(legacyConfigDir())).toBe(false)
+  })
+
+  it('shouldLeaveTheOldDirectoryAloneWhenItHoldsOtherFiles', () => {
+    // ARRANGE
+    writeLegacyConfig()
+    const unrelated = join(legacyConfigDir(), 'notes.txt')
+    writeFileSync(unrelated, 'mine')
+
+    // ACT
+    removeLegacyFiles()
+
+    // ASSERT: our files go, anything else the user put there stays.
+    expect(existsSync(join(legacyConfigDir(), 'config.json'))).toBe(false)
+    expect(existsSync(unrelated)).toBe(true)
+  })
+
+  it('shouldReportNothingRemovedWhenThereIsNoOldInstall', () => {
+    expect(removeLegacyFiles()).toBe(false)
+  })
+
+  it('shouldClearBothLocationsOnLogout', () => {
+    // ARRANGE
+    writeLegacyConfig()
+    saveStoredConfig(STORED, configPath())
+
+    // ACT
+    const deleted = deleteStoredConfig(configPath())
+
+    // ASSERT
+    expect(deleted).toBe(true)
+    expect(existsSync(configPath())).toBe(false)
+    expect(existsSync(join(legacyConfigDir(), 'config.json'))).toBe(false)
+  })
+
+  it('shouldReportSuccessOnLogoutWhenOnlyTheOldFileExisted', () => {
+    writeLegacyConfig()
+
+    expect(deleteStoredConfig(configPath())).toBe(true)
   })
 })

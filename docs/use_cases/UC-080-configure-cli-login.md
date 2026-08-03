@@ -29,7 +29,7 @@
 6. CLI validates the key format (must match `lw_` + 64 hex chars).
 7. CLI validates the key against the server by sending `GET /api/auth/me` with the `X-API-Key` header.
 8. Server returns the user's profile (email, name, default collection ID).
-9. CLI stores the configuration in `~/.linkweave/config.json`:
+9. CLI stores the configuration in `$XDG_CONFIG_HOME/linkweave/config.json`:
    ```json
    {
      "server": "https://linkweave.dev",
@@ -38,7 +38,7 @@
      "defaultCollectionId": "550e8400-..."
    }
    ```
-10. CLI displays: `✓ Logged in as user@example.com. Configuration saved to ~/.linkweave/config.json`
+10. CLI displays: `✓ Logged in as user@example.com. Configuration saved to <resolved config path>`
 
 ## Main Success Scenario — Non-Interactive Login
 
@@ -85,7 +85,7 @@
 
 ### A4: Config File Already Exists
 
-**Trigger:** `~/.linkweave/config.json` already contains credentials (step 9).
+**Trigger:** the config file already contains credentials (step 9).
 **Flow:**
 
 1. CLI overwrites the existing configuration without prompting (the user explicitly ran `login`).
@@ -93,10 +93,10 @@
 
 ### A5: Config File Permissions
 
-**Trigger:** `~/.linkweave/config.json` cannot be written (step 9).
+**Trigger:** the config file cannot be written (step 9).
 **Flow:**
 
-1. CLI displays: `Error: Cannot write to ~/.linkweave/config.json. Check directory permissions.`
+1. CLI displays: `Error: Cannot write to <resolved config path>. Check directory permissions.`
 2. CLI exits with code 1.
 
 ### A6: Self-Signed Certificate
@@ -111,7 +111,7 @@
 
 ### Success Postconditions
 
-- `~/.linkweave/config.json` exists and contains a valid server URL, API key, and user email.
+- The config file exists and contains a valid server URL, API key, and user email.
 - The API key was validated against the server (not just stored blindly).
 - Subsequent CLI commands will use the stored credentials.
 
@@ -125,7 +125,18 @@
 
 ### BR-021: Config File Location
 
-The configuration file is stored at `~/.linkweave/config.json`. On Windows, `~` resolves to `%USERPROFILE%`. The `~/.linkweave/` directory is created if it does not exist.
+The configuration file is stored at `$XDG_CONFIG_HOME/linkweave/config.json`, following the [XDG Base Directory specification](https://specifications.freedesktop.org/basedir-spec/latest/).
+
+- `XDG_CONFIG_HOME` is honoured only when set to an absolute path; the spec requires relative values to be ignored.
+- Otherwise the default is `~/.config/linkweave/config.json`, on macOS as well as Linux. Apple's `~/Library/Application Support` is deliberately not used: it is awkward to inspect from a terminal, and unlike every other CLI on a developer's PATH.
+- On Windows, `%APPDATA%\linkweave\` is used when the XDG variable is unset.
+- The directory is created if it does not exist, with mode `0700`.
+
+### BR-021a: Migration from the Pre-XDG Location
+
+Earlier builds of the CLI stored the config at `~/.linkweave/config.json`. That path is still **read** when no file exists at the XDG location, so an existing installation is never silently logged out. Reading never relocates anything — `linkweave __complete` reads the config on every keypress, and a filesystem write there would be surprising.
+
+The move happens on the next successful `linkweave login`: after the new file is safely written, the old `config.json` and `completion-cache.json` are deleted and `~/.linkweave/` is removed if nothing else remains in it. This is a security requirement as much as tidiness — leaving a readable copy of a valid API key at the old path would defeat BR-022. `linkweave logout` likewise clears both locations.
 
 ### BR-022: Config File Permissions
 
@@ -133,7 +144,7 @@ The CLI must set the config file permissions to `0600` (owner read/write only) o
 
 ### BR-023: Environment Variables Override Config
 
-If `LINKWEAVE_API_KEY` is set in the environment, it takes precedence over the value in `~/.linkweave/config.json`. Similarly, `LINKWEAVE_SERVER` overrides the stored server URL. This allows CI/CD pipelines and scripts to inject credentials without modifying the config file.
+If `LINKWEAVE_API_KEY` is set in the environment, it takes precedence over the value in the config file. Similarly, `LINKWEAVE_SERVER` overrides the stored server URL. This allows CI/CD pipelines and scripts to inject credentials without modifying the config file.
 
 ### BR-024: Key Validation Before Storage
 
@@ -141,7 +152,7 @@ The CLI must always validate the API key against the server (via `GET /api/auth/
 
 ### BR-025: Logout
 
-Running `linkweave logout` deletes `~/.linkweave/config.json` and displays: `✓ Configuration removed. Run 'linkweave login' to authenticate again.`
+Running `linkweave logout` deletes the config file (both the XDG location and the pre-XDG one, see BR-021a) and displays: `✓ Configuration removed. Run 'linkweave login' to authenticate again.`
 
 ---
 

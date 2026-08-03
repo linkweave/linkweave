@@ -24,7 +24,7 @@
 ## Main Success Scenario — Add Bookmark
 
 1. User runs `linkweave bookmarks add <url>` with optional flags `--title`, `--collection`, `--folder`, `--tags`, `--description`.
-2. CLI reads the API key from `~/.linkweave/config.json` (or `LINKWEAVE_API_KEY` env var).
+2. CLI reads the API key from `$XDG_CONFIG_HOME/linkweave/config.json` (or `LINKWEAVE_API_KEY` env var).
 3. CLI reads the server URL from config (default: `https://linkweave.dev`).
 4. If `--collection` is not specified, CLI calls `GET /api/auth/me` to retrieve the user's default collection ID.
 5. If `--title` is not specified, CLI uses the URL as a fallback title (the server does not auto-fetch titles via the API).
