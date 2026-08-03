@@ -3,6 +3,7 @@ import { Argument, Command, Option } from 'commander'
 import pkg from '../package.json'
 import { runBookmarksAdd, runBookmarksEdit, runBookmarksList, runBookmarksRm } from './commands/bookmarks'
 import { runCollectionsList } from './commands/collections'
+import { COMPLETION_SOURCES, runComplete } from './commands/complete'
 import { COMPLETION_SHELLS, completionScript, type CompletionShell } from './commands/completion'
 import { runLogin } from './commands/login'
 import { runLogout } from './commands/logout'
@@ -114,6 +115,15 @@ Configuration is stored in ~/.linkweave/config.json. Precedence: flags > environ
     .action((shell: CompletionShell, _options, cmd: Command) => {
       process.stdout.write(completionScript(shell, cmd.parent ?? cmd))
     })
+
+  // Called by the generated completion scripts, not by users: prints candidate
+  // values for an option, one per line, and stays silent on any failure.
+  program
+    .command('__complete', { hidden: true })
+    .addArgument(new Argument('<source>', 'value set').choices(COMPLETION_SOURCES))
+    .addArgument(new Argument('[prefix]', 'only values starting with this'))
+    .option('--collection <collection>', 'collection scoping tags and folders')
+    .action(runComplete)
 
   return program
 }

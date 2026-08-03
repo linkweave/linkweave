@@ -153,7 +153,24 @@ recreate it.
 
 ## Shell completion
 
-Completions cover subcommands, flags, and `--format` values.
+Completions cover subcommands, flags, and `--format` values. They also
+complete **your own data**: `--collection`, `--tag`, and `--folder` are
+completed from the server, and a `--collection` already on the command line
+scopes the tag and folder suggestions to it.
+
+```bash
+linkweave bookmarks list --collection <TAB>   # My Links  Work
+linkweave bookmarks list --tag <TAB>          # tags in your default collection
+linkweave bookmarks add https://x --folder <TAB>   # Dev  Dev/TypeScript
+```
+
+Those suggestions come from a hidden `linkweave __complete` callback, cached
+for 60 seconds in `~/.linkweave/completion-cache.json` (owner-only, like the
+config) so a keypress never waits on the network twice. If you are not logged
+in, offline, or the server is slow, completion silently offers nothing rather
+than printing an error into your command line. `--tags` (the comma-separated
+list on `add`/`edit`) is not value-completed; use `--tag` filtering to
+discover names.
 
 **bash** — add to `~/.bashrc`:
 

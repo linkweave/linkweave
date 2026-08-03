@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 
 import { CliError, EXIT_USAGE } from './errors'
 
@@ -57,7 +57,19 @@ function isStoredConfig(value: unknown): value is StoredConfig {
   )
 }
 
-export function loadStoredConfig(path: string = configPath()): StoredConfig | undefined {
+/** Writes the warning emitted when a config file has to be ignored. */
+export type ConfigWarning = (message: string) => void
+
+const warnOnStderr: ConfigWarning = (message) => {
+  process.stderr.write(message)
+}
+
+export function loadStoredConfig(
+  path: string = configPath(),
+  // Shell completion passes a no-op: a warning printed mid-completion would
+  // land in the middle of the user's command line.
+  warn: ConfigWarning = warnOnStderr,
+): StoredConfig | undefined {
   if (!existsSync(path)) return undefined
   let raw: string
   try {
@@ -68,9 +80,7 @@ export function loadStoredConfig(path: string = configPath()): StoredConfig | un
   // A corrupt file must not brick the CLI: treat it as "not logged in" so
   // `linkweave login` can recreate it (a throw here would block login too).
   const ignore = (reason: string): undefined => {
-    process.stderr.write(
-      `Warning: ignoring ${path} — ${reason}. Run 'linkweave login' to recreate it.\n`,
-    )
+    warn(`Warning: ignoring ${path} — ${reason}. Run 'linkweave login' to recreate it.\n`)
     return undefined
   }
   let parsed: unknown
@@ -83,25 +93,28 @@ export function loadStoredConfig(path: string = configPath()): StoredConfig | un
 }
 
 /**
- * Writes the config with owner-only permissions (BR-021/BR-022). The content
+ * Writes owner-only content (BR-021/BR-022) into `~/.linkweave`. The content
  * goes to a fresh same-directory temp file (0600 is honored at creation) and
- * is renamed over the target: the key is never on disk with looser
+ * is renamed over the target: the content is never on disk with looser
  * permissions — writeFileSync's `mode` is ignored for existing files, which
- * would briefly expose the new content under the umask — and the replacement
- * is atomic.
+ * would briefly expose it under the umask — and the replacement is atomic.
  */
-export function saveStoredConfig(config: StoredConfig, path: string = configPath()): void {
+export function writePrivateFile(path: string, content: string): void {
   const dir = dirname(path)
-  const tmp = join(dir, `.config.json.${process.pid}.tmp`)
+  const tmp = join(dir, `.${basename(path)}.${process.pid}.tmp`)
   try {
     mkdirSync(dir, { recursive: true, mode: 0o700 })
-    writeFileSync(tmp, JSON.stringify(config, null, 2) + '\n', { mode: 0o600 })
+    writeFileSync(tmp, content, { mode: 0o600 })
     renameSync(tmp, path)
   } catch (e) {
     rmSync(tmp, { force: true })
     if (e instanceof CliError) throw e
     throw new CliError(`Cannot write to ${path}. Check directory permissions.`)
   }
+}
+
+export function saveStoredConfig(config: StoredConfig, path: string = configPath()): void {
+  writePrivateFile(path, JSON.stringify(config, null, 2) + '\n')
 }
 
 /**
