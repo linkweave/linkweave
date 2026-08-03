@@ -35,9 +35,12 @@ export async function runBookmarksAdd(
     { forbidden: COLLECTION_FORBIDDEN_MESSAGE },
     async () => {
       const collectionId = await resolveTargetCollectionId(clients, config, options.collection)
-      const tagIds = options.tags
-        ? await resolveTagIds(clients.tags, collectionId, parseTagNames(options.tags))
-        : undefined
+      // `!== undefined`, not truthiness: `--tags ''` means "no tags", which is
+      // a different request from omitting the flag entirely.
+      const tagIds =
+        options.tags !== undefined
+          ? await resolveTagIds(clients.tags, collectionId, parseTagNames(options.tags))
+          : undefined
       const folderId = options.folder
         ? await resolveFolderId(clients.folders, collectionId, options.folder, { create: true })
         : undefined
@@ -49,7 +52,7 @@ export async function runBookmarksAdd(
           title: options.title ?? url,
           url,
           description: options.description,
-          tagIds: tagIds ? new Set(tagIds) : undefined,
+          tagIds: tagIds && new Set(tagIds),
         },
       })
     },
@@ -77,6 +80,11 @@ export async function runBookmarksList(options: BookmarkListOptions, cmd: Comman
       const collectionId = await resolveTargetCollectionId(clients, config, options.collection)
       let { bookmarkList } = await clients.bookmarks.apiBookmarksGet({ collectionId })
 
+      // Fetched once and shared: --tag resolves a name to an ID with it, and
+      // the table renders its tag-name column from it.
+      const needsTags = options.tag !== undefined || format === 'table'
+      const tagList = needsTags ? (await clients.tags.apiTagsGet({ collectionId })).tagList : []
+
       // The API only filters by collection; folder and tag filters are local.
       if (options.folder) {
         const folderId = await resolveFolderId(clients.folders, collectionId, options.folder, {
@@ -85,7 +93,6 @@ export async function runBookmarksList(options: BookmarkListOptions, cmd: Comman
         bookmarkList = bookmarkList.filter((b) => b.data.folderId === folderId)
       }
       if (options.tag) {
-        const { tagList } = await clients.tags.apiTagsGet({ collectionId })
         const needle = options.tag.toLowerCase()
         const tag = tagList.find((t) => t.data.name.toLowerCase() === needle)
         if (!tag) {
@@ -95,9 +102,7 @@ export async function runBookmarksList(options: BookmarkListOptions, cmd: Comman
       }
 
       if (format === 'table') {
-        const { tagList } = await clients.tags.apiTagsGet({ collectionId })
-        const tagNames = new Map(tagList.map((t) => [t.id, t.data.name]))
-        printBookmarkTable(bookmarkList, tagNames)
+        printBookmarkTable(bookmarkList, new Map(tagList.map((t) => [t.id, t.data.name])))
         return undefined
       }
       return bookmarkList
@@ -163,9 +168,11 @@ export async function runBookmarksEdit(
     async () => {
       const existing = await clients.bookmarks.apiBookmarksBookmarkIdGet({ bookmarkId })
       const collectionId = existing.data.collectionId
-      const tagIds = options.tags
-        ? new Set(await resolveTagIds(clients.tags, collectionId, parseTagNames(options.tags)))
-        : existing.data.tagIds
+      // `--tags ''` clears every tag; omitting the flag keeps the current set.
+      const tagIds =
+        options.tags !== undefined
+          ? new Set(await resolveTagIds(clients.tags, collectionId, parseTagNames(options.tags)))
+          : existing.data.tagIds
       return clients.bookmarks.apiBookmarksBookmarkIdPut({
         bookmarkId,
         bookmarkSaveJson: {

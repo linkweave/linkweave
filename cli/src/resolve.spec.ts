@@ -24,7 +24,7 @@ function tag(id: string, name: string): TagJson {
 }
 
 function folder(id: string, name: string, parentId?: string): FolderJson {
-  return { id, entityInfo, data: { collectionId: UUID_A, name, parentId } }
+  return { id, entityInfo, sortOrder: 0, data: { collectionId: UUID_A, name, parentId } }
 }
 
 describe('looksLikeId', () => {

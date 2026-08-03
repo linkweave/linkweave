@@ -48,6 +48,13 @@ describe('toCliError', () => {
     expect(error.message).toContain('Cannot reach LinkWeave server at https://x.example')
   })
 
+  it('shouldNotDisguiseOrdinaryTypeErrorsAsAnUnreachableServer', async () => {
+    // Only FetchError means "the request failed"; a TypeError from CLI code
+    // must keep its own message so the bug stays diagnosable.
+    const error = await toCliError(new TypeError('x is not a function'), CONTEXT)
+    expect(error.message).toBe('x is not a function')
+  })
+
   it('shouldMapTlsFailuresToTheInsecureHint', async () => {
     // Mimics undici: TypeError('fetch failed') -> cause with a TLS error code.
     const tls = Object.assign(new Error('self-signed certificate'), {

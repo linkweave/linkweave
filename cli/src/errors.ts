@@ -83,7 +83,11 @@ export async function toCliError(error: unknown, context: HttpErrorContext): Pro
     }
   }
 
-  if (error instanceof FetchError || error instanceof TypeError) {
+  // The generated runtime wraps every fetch rejection in FetchError, so this
+  // is the only network arm needed. Other error types (including TypeError)
+  // fall through and keep their own message rather than being reported as an
+  // unreachable server.
+  if (error instanceof FetchError) {
     if (isTlsError(error)) return new CliError(TLS_FAILED_MESSAGE)
     return new CliError(
       `Cannot reach LinkWeave server at ${context.server}. Check your network connection and server URL.`,

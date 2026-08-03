@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { CliError } from './errors'
 import {
   API_KEY_PATTERN,
   DEFAULT_SERVER,
@@ -38,9 +39,29 @@ describe('API_KEY_PATTERN', () => {
 })
 
 describe('normalizeServer', () => {
-  it('shouldStripTrailingSlashes', () => {
+  it('shouldStripTrailingSlashesAndSurroundingWhitespace', () => {
     expect(normalizeServer('https://x.example///')).toBe('https://x.example')
     expect(normalizeServer('https://x.example')).toBe('https://x.example')
+    expect(normalizeServer('  http://localhost:8443  ')).toBe('http://localhost:8443')
+  })
+
+  it.each([
+    ['not a URL at all', 'not-a-url'],
+    ['a host:port without a scheme', 'localhost:8443'],
+    ['a non-http scheme', 'ftp://x.example'],
+    ['an empty string', ''],
+  ])('shouldRejectAsUsageError: %s', (_label, value) => {
+    // ACT
+    const act = (): string => normalizeServer(value)
+
+    // ASSERT: caught early, instead of surfacing as `TypeError: Invalid URL`
+    // from inside the generated client at request time.
+    expect(act).toThrow(/Invalid server URL/)
+    try {
+      act()
+    } catch (e) {
+      expect((e as CliError).exitCode).toBe(2)
+    }
   })
 })
 
@@ -159,6 +180,9 @@ describe('stored config file handling', () => {
     ['missing apiKey', '{ "server": "https://x.example" }'],
     ['a non-string server', `{ "server": 42, "apiKey": "${KEY_A}" }`],
     ['a non-string optional field', JSON.stringify({ ...STORED, userEmail: 7 })],
+    // Ignored rather than fatal: normalizeServer would throw on this, which
+    // would take down `linkweave login` — the only way to repair the file.
+    ['an unusable server URL', JSON.stringify({ ...STORED, server: 'localhost:8443' })],
   ])('shouldWarnAndIgnoreValidJsonWithBadShape: %s', (_label, content) => {
     // ARRANGE
     writeFileSync(path, content)

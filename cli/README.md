@@ -47,6 +47,11 @@ export LINKWEAVE_SERVER=https://linkweave.dev
 linkweave bookmarks list
 ```
 
+> **Prefer the interactive prompt or `LINKWEAVE_API_KEY` over `--api-key`.**
+> A key passed as a flag is recorded in your shell history and is visible to
+> any other user on the machine via `ps`. The interactive prompt does not echo
+> the key, and `login` stores it with owner-only permissions.
+
 ## Commands
 
 ### `linkweave bookmarks add <url>`
@@ -89,7 +94,7 @@ linkweave bookmarks edit 3f8a... --title "New title" --tags vue,reference
 At least one flag is required. Only the given fields change, but note the
 save is a whole-bookmark replace (fetch → merge → save): a concurrent change
 made elsewhere between fetch and save is overwritten. `--tags` replaces the
-complete tag list.
+complete tag list; `--tags ""` removes every tag.
 
 ### `linkweave bookmarks rm <id>`
 

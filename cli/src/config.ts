@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, unlinkSync, wr
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 
-import { CliError } from './errors'
+import { CliError, EXIT_USAGE } from './errors'
 
 export const DEFAULT_SERVER = 'https://linkweave.dev'
 
@@ -28,11 +28,29 @@ function optionalString(value: unknown): boolean {
   return value === undefined || typeof value === 'string'
 }
 
+const SERVER_PROTOCOLS = new Set(['http:', 'https:'])
+
+/** Parses a server URL, returning undefined when it is not usable as a base. */
+function parseServerUrl(value: string): URL | undefined {
+  let parsed: URL
+  try {
+    parsed = new URL(value.trim())
+  } catch {
+    return undefined
+  }
+  return SERVER_PROTOCOLS.has(parsed.protocol) ? parsed : undefined
+}
+
 function isStoredConfig(value: unknown): value is StoredConfig {
   if (typeof value !== 'object' || value === null) return false
   const record = value as Record<string, unknown>
+  const server = record['server']
   return (
-    typeof record['server'] === 'string' &&
+    // A stored server that no longer parses is treated as a malformed field so
+    // the file is ignored — normalizeServer would otherwise throw and take
+    // `linkweave login`, the only way to fix it, down with it.
+    typeof server === 'string' &&
+    parseServerUrl(server) !== undefined &&
     typeof record['apiKey'] === 'string' &&
     optionalString(record['userEmail']) &&
     optionalString(record['defaultCollectionId'])
@@ -86,11 +104,19 @@ export function saveStoredConfig(config: StoredConfig, path: string = configPath
   }
 }
 
-/** Deletes the config file (BR-025). Returns false when there was none. */
+/**
+ * Deletes the config file (BR-025). Returns false when there was none —
+ * decided from unlink's own result rather than a preceding existsSync, which
+ * both races and lets an unreadable-directory failure escape as a raw errno.
+ */
 export function deleteStoredConfig(path: string = configPath()): boolean {
-  if (!existsSync(path)) return false
-  unlinkSync(path)
-  return true
+  try {
+    unlinkSync(path)
+    return true
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') return false
+    throw new CliError(`Cannot delete ${path}. Check file and directory permissions.`)
+  }
 }
 
 export interface EffectiveConfig {
@@ -105,9 +131,21 @@ export interface ConfigFlags {
   apiKey?: string
 }
 
-/** Strips trailing slashes so `${server}/api/...` URLs stay well-formed. */
+/**
+ * Strips trailing slashes so `${server}/api/...` URLs stay well-formed, and
+ * rejects anything that is not an http(s) base URL. Validating here means a
+ * bad `--server` fails with a precise usage error instead of surfacing later
+ * as `TypeError: Invalid URL` from inside the generated client.
+ */
 export function normalizeServer(url: string): string {
-  return url.replace(/\/+$/, '')
+  const trimmed = url.trim().replace(/\/+$/, '')
+  if (parseServerUrl(trimmed) === undefined) {
+    throw new CliError(
+      `Invalid server URL '${url}'. Expected an http:// or https:// URL, e.g. ${DEFAULT_SERVER}.`,
+      EXIT_USAGE,
+    )
+  }
+  return trimmed
 }
 
 /**
