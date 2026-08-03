@@ -146,9 +146,7 @@ server URL, API key, your email, and your default collection ID.
 
 The CLI follows the XDG Base Directory specification. `XDG_CONFIG_HOME` and
 `XDG_CACHE_HOME` are honoured when set to an absolute path; otherwise
-`~/.config` and `~/.cache` are used, on macOS as well as Linux. A config left
-over from before this change (`~/.linkweave/config.json`) is still read, and
-the next `linkweave login` moves it to the new location.
+`~/.config` and `~/.cache` are used, on macOS as well as Linux.
 
 Precedence for the server and key: **flags** (`--server`/`--api-key`) >
 **environment** (`LINKWEAVE_SERVER`/`LINKWEAVE_API_KEY`) > **config file**.

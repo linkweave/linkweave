@@ -132,12 +132,6 @@ The configuration file is stored at `$XDG_CONFIG_HOME/linkweave/config.json`, fo
 - On Windows, `%APPDATA%\linkweave\` is used when the XDG variable is unset.
 - The directory is created if it does not exist, with mode `0700`.
 
-### BR-021a: Migration from the Pre-XDG Location
-
-Earlier builds of the CLI stored the config at `~/.linkweave/config.json`. That path is still **read** when no file exists at the XDG location, so an existing installation is never silently logged out. Reading never relocates anything — `linkweave __complete` reads the config on every keypress, and a filesystem write there would be surprising.
-
-The move happens on the next successful `linkweave login`: after the new file is safely written, the old `config.json` and `completion-cache.json` are deleted and `~/.linkweave/` is removed if nothing else remains in it. This is a security requirement as much as tidiness — leaving a readable copy of a valid API key at the old path would defeat BR-022. `linkweave logout` likewise clears both locations.
-
 ### BR-022: Config File Permissions
 
 The CLI must set the config file permissions to `0600` (owner read/write only) on Unix-like systems to prevent other users from reading the API key.
@@ -152,7 +146,7 @@ The CLI must always validate the API key against the server (via `GET /api/auth/
 
 ### BR-025: Logout
 
-Running `linkweave logout` deletes the config file (both the XDG location and the pre-XDG one, see BR-021a) and displays: `✓ Configuration removed. Run 'linkweave login' to authenticate again.`
+Running `linkweave logout` deletes the config file and displays: `✓ Configuration removed. Run 'linkweave login' to authenticate again.`
 
 ---
 

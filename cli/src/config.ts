@@ -3,7 +3,6 @@ import {
   mkdirSync,
   readFileSync,
   renameSync,
-  rmdirSync,
   rmSync,
   unlinkSync,
   writeFileSync,
@@ -63,47 +62,6 @@ export function configPath(env: NodeJS.ProcessEnv = process.env): string {
   return join(configDir(env), 'config.json')
 }
 
-/** Where the config lived before the move to XDG. Still read, never written. */
-export function legacyConfigDir(env: NodeJS.ProcessEnv = process.env): string {
-  return join(homeFrom(env), '.linkweave')
-}
-
-/**
- * The config to read: the XDG location, falling back to the pre-XDG one while
- * it still exists so an existing install is not silently logged out. Reading
- * never writes — the move happens on the next `login`, see removeLegacyFiles.
- */
-export function configReadPath(env: NodeJS.ProcessEnv = process.env): string {
-  const current = configPath(env)
-  if (existsSync(current)) return current
-  const legacy = join(legacyConfigDir(env), 'config.json')
-  return existsSync(legacy) ? legacy : current
-}
-
-/**
- * Deletes the pre-XDG files. Called after a successful save so a copy of the
- * API key is not left behind at the old location, and on logout. Best-effort:
- * a failure here must not fail the command that triggered it.
- */
-export function removeLegacyFiles(env: NodeJS.ProcessEnv = process.env): boolean {
-  const dir = legacyConfigDir(env)
-  let removed = false
-  for (const name of ['config.json', 'completion-cache.json']) {
-    try {
-      unlinkSync(join(dir, name))
-      removed = true
-    } catch {
-      // Not there, or not ours to delete.
-    }
-  }
-  try {
-    rmdirSync(dir)
-  } catch {
-    // Non-empty or absent: leave whatever else the user keeps there.
-  }
-  return removed
-}
-
 function optionalString(value: unknown): boolean {
   return value === undefined || typeof value === 'string'
 }
@@ -145,7 +103,7 @@ const warnOnStderr: ConfigWarning = (message) => {
 }
 
 export function loadStoredConfig(
-  path: string = configReadPath(),
+  path: string = configPath(),
   // Shell completion passes a no-op: a warning printed mid-completion would
   // land in the middle of the user's command line.
   warn: ConfigWarning = warnOnStderr,
@@ -198,19 +156,16 @@ export function saveStoredConfig(config: StoredConfig, path: string = configPath
 }
 
 /**
- * Deletes the config file (BR-025), plus anything left at the pre-XDG
- * location so logout does not leave a usable API key behind. Returns false
- * when there was nothing anywhere — decided from unlink's own result rather
- * than a preceding existsSync, which both races and lets an
- * unreadable-directory failure escape as a raw errno.
+ * Deletes the config file (BR-025). Returns false when there was none —
+ * decided from unlink's own result rather than a preceding existsSync, which
+ * both races and lets an unreadable-directory failure escape as a raw errno.
  */
 export function deleteStoredConfig(path: string = configPath()): boolean {
-  const legacyRemoved = removeLegacyFiles()
   try {
     unlinkSync(path)
     return true
   } catch (e) {
-    if ((e as NodeJS.ErrnoException).code === 'ENOENT') return legacyRemoved
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') return false
     throw new CliError(`Cannot delete ${path}. Check file and directory permissions.`)
   }
 }

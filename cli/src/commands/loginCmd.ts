@@ -6,10 +6,8 @@ import {
   API_KEY_PATTERN,
   DEFAULT_SERVER,
   configPath,
-  legacyConfigDir,
   loadStoredConfig,
   normalizeServer,
-  removeLegacyFiles,
   saveStoredConfig,
 } from '../config'
 import { ResponseError } from '../api'
@@ -113,10 +111,5 @@ export async function runLogin(options: LoginOptions): Promise<void> {
     userEmail: me.email,
     defaultCollectionId: me.defaultCollectionId,
   })
-  // Only now that the new file is safely written: relocates an install that
-  // predates the move to XDG, so the old copy of the key does not linger.
-  if (removeLegacyFiles()) {
-    process.stderr.write(`Moved your configuration out of ${legacyConfigDir()}.\n`)
-  }
   console.log(`✓ Logged in as ${me.email}. Configuration saved to ${configPath()}`)
 }
