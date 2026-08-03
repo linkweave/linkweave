@@ -175,6 +175,21 @@ jobs:
           pnpm run check
           pnpm run build
 
+      # Packaging breaks silently: a wrong `files` or `bin` entry only shows up
+      # when somebody installs the published package. Pack it and install it
+      # into a throwaway prefix so that failure lands on the PR instead of on
+      # a release tag.
+      - name: Smoke-test the packed package
+        working-directory: cli
+        run: |
+          set -eu
+          prefix="$(mktemp -d)"
+          tarball="$(npm pack --silent)"
+          npm install -g --prefix "$prefix" "./$tarball"
+          "$prefix/bin/linkweave" --version
+          "$prefix/bin/linkweave" completion bash > /dev/null
+          rm -rf "$prefix" "$tarball"
+
   build-frontend:
     needs: [test-frontend]
     runs-on: ubuntu-latest

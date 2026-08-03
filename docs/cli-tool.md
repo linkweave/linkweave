@@ -60,6 +60,10 @@ This document describes the architecture for adding a command-line interface (CL
 - API changes break CLI builds immediately in CI (not weeks later).
 - One `git tag` covers API + frontend + CLI.
 
+> **Amended by AD-5 (2026-08-03):** the last point no longer holds. Sharing a
+> repository still gives the first two benefits, but the CLI is released on its
+> own `cli-v*` tag rather than the application's `v*`.
+
 ### AD-2b: CLI Reuses the Frontend's Generated Client (2026-07-15)
 
 **Decision:** The CLI imports the checked-in typescript-fetch client from
@@ -89,6 +93,32 @@ screenshot-service) or when npm publishing (Phase 5) becomes concrete.
 - `AuthorizationService` enforces access control at the Resource layer.
 - `AbstractEntityListener` populates audit fields via `CurrentUserService`, which depends on `SecurityIdentity` — only available through the HTTP auth chain.
 - Business logic lives in Service classes; duplicating it in the CLI would violate DRY and the project's layered architecture.
+
+### AD-5: CLI Versions and Releases Independently (2026-08-03)
+
+**Decision:** The CLI has its own version line and its own tag prefix,
+`cli-v<semver>` (e.g. `cli-v0.1.0`), published by
+`.gitea/workflows/publish-cli.yml`. The application keeps `v<semver>`.
+
+**Rationale:**
+- The CLI is at `0.1.0` while the application is at `1.5.0`. Publishing the
+  CLI's first release as `1.5.0` would claim a maturity it does not have and
+  burn every `0.x` number that signals "the flags may still move".
+- The two ship on different clocks. A CLI bug fix should not wait for an
+  application release, and an application release should not push a new CLI
+  version at users for no reason.
+- npm versions are immutable. Coupling to a tag that is cut for unrelated
+  reasons spends version numbers that cannot be reclaimed.
+
+**Consequences:**
+- `cli-v*` is deliberately *not* a trigger in `build.yml`, so a CLI release
+  never rebuilds the container images, the frontend or the extension, and
+  cannot reach the `deploy` job (which gates on `refs/tags/v`).
+- The publish workflow refuses to run when the tag and `cli/package.json`
+  disagree, and no-ops when that version is already on the registry.
+- The compatibility guarantee is unchanged: the CLI is built against the
+  checked-in generated client (AD-2b), so CI still breaks on an API change
+  regardless of which tag ships when.
 
 ---
 
@@ -282,13 +312,30 @@ server and are wired into the e2e CI workflow.
       60s in `$XDG_CACHE_HOME/linkweave/completion-cache.json`. Fails silently:
       an error printed during completion corrupts the user's command line.
       Generated bash targets 3.2 (macOS), so no `mapfile`.
-- [ ] `npm install -g @linkweave/cli` publishing setup. The package itself is
-      ready — `npm pack` produces a 25 kB tarball (LICENSE, README, package.json
-      and the single bundled `dist/main.js`), and installing it globally yields
-      a working `linkweave` binary with the right shebang and bin symlink,
-      verified by hand. What is missing is the publish: the `@linkweave` npm
-      org/scope, an automation token in CI, and a release job. Until then the
-      README documents installing from a checkout.
+- [x] Packaging verified: `npm pack` produces a 25 kB tarball (LICENSE, README,
+      package.json and the single bundled `dist/main.js`), and installing it
+      globally yields a working `linkweave` binary with the right shebang and
+      bin symlink. Guarded on every PR by the `test-cli` job, which packs the
+      package and installs it into a throwaway prefix.
+- [x] Release automation: `.gitea/workflows/publish-cli.yml`, triggered by a
+      `cli-v*` tag (AD-5). Verifies the tag against `cli/package.json`, no-ops
+      when that version is already on the registry, and publishes with
+      `pnpm publish --no-git-checks --access public`.
+- [ ] **Blocked on credentials, the last step before first release:**
+      - [ ] Confirm the `@linkweave` npm scope is ours. `npmjs.com/org/linkweave`
+            answers `403` rather than `404`, which suggests it may be taken —
+            check while logged in. If it is, rename to `@dividbzero/linkweave-cli`
+            or unscoped `linkweave-cli` in `cli/package.json`.
+      - [ ] Create a granular **Automation** token (bypasses 2FA, which CI
+            cannot satisfy), scoped to the package with write access.
+      - [ ] Add it as the Gitea secret `NPM_TOKEN`.
+      - [ ] Publish `0.1.0` by hand once (`npm publish --dry-run`, then for
+            real), to check how the page and README render before automation
+            takes over. Afterwards, releases are `git tag cli-v0.1.1 && git push
+            --tags`.
+- [ ] Decide whether BUSL-1.1 is the intended licence for a package people
+      `npm install -g`. It is a valid SPDX id and npm accepts it, but it is not
+      OSI-approved and installers tend to assume permissive terms.
 - [x] README with installation instructions (`cli/README.md`)
 - [x] `--insecure` flag for self-signed certs
 

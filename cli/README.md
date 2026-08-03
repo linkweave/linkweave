@@ -238,5 +238,27 @@ Playwright suite against a real server:
 cd ../frontend && pnpm exec playwright test e2e/cli.spec.ts --project=chromium
 ```
 
+## Releasing
+
+The CLI versions independently of the application (AD-5 in
+`docs/cli-tool.md`): the app ships on `v*` tags, the CLI on `cli-v*`.
+
+```bash
+cd cli
+npm version patch          # or minor / major — updates package.json
+git commit -am "chore(cli): release 0.1.1"
+git tag cli-v0.1.1         # must match package.json exactly
+git push && git push --tags
+```
+
+`.gitea/workflows/publish-cli.yml` takes it from there. It refuses to run if
+the tag and `package.json` disagree, and does nothing if that version is
+already on the registry, so a re-run is safe. `prepublishOnly` re-runs
+type-check, tests and the build, so a broken bundle cannot be published.
+
+A `cli-v*` tag does not trigger `build.yml`, so cutting a CLI release never
+rebuilds the container images, the frontend or the extension, and cannot
+trigger a deploy.
+
 Related docs: `docs/cli-tool.md`, use cases UC-079 (manage bookmarks via CLI)
 and UC-080 (configure CLI login).
