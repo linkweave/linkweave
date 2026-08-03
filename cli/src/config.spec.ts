@@ -1,6 +1,7 @@
 import {
   chmodSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   statSync,
@@ -162,6 +163,28 @@ describe('stored config file handling', () => {
 
     // ASSERT
     expect(statSync(path).mode & 0o777).toBe(0o600)
+  })
+
+  it('shouldNotWriteTheSecretThroughAGuessableTempPath', () => {
+    // ARRANGE: the temp name used to be `.config.json.<pid>.tmp`. Anyone able
+    // to create files in the directory could pre-create that path — writeFile
+    // ignores `mode` for an existing file, so the key landed in a file they
+    // owned, or through a symlink they chose.
+    const guessable = join(dir, `.config.json.${process.pid}.tmp`)
+    writeFileSync(guessable, 'planted', { mode: 0o666 })
+
+    // ACT
+    saveStoredConfig(STORED, path)
+
+    // ASSERT
+    expect(readFileSync(guessable, 'utf-8')).toBe('planted')
+    expect(loadStoredConfig(path)).toEqual(STORED)
+  })
+
+  it('shouldLeaveNoTemporaryFileBehind', () => {
+    saveStoredConfig(STORED, path)
+
+    expect(readdirSync(dir)).toEqual(['config.json'])
   })
 
   it('shouldReturnUndefinedWhenFileIsMissing', () => {

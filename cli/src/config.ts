@@ -7,6 +7,7 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'node:fs'
+import { randomBytes } from 'node:crypto'
 import { homedir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 
@@ -132,17 +133,23 @@ export function loadStoredConfig(
 
 /**
  * Writes owner-only content (BR-021/BR-022) into the config dir. The content
- * goes to a fresh same-directory temp file (0600 is honored at creation) and
- * is renamed over the target: the content is never on disk with looser
- * permissions — writeFileSync's `mode` is ignored for existing files, which
- * would briefly expose it under the umask — and the replacement is atomic.
+ * goes to a fresh same-directory temp file and is renamed over the target, so
+ * it is never on disk with looser permissions — writeFileSync's `mode` is
+ * ignored for a file that already exists, which would briefly expose it under
+ * the umask — and the replacement is atomic.
+ *
+ * The temp name is random and the write is exclusive (`wx` = O_CREAT|O_EXCL).
+ * A predictable name plus a plain write is a handhold whenever the directory
+ * is writable by anyone else: pre-create that path, and the API key is written
+ * into a file — or through a symlink — of their choosing, with `mode` silently
+ * ignored because the file already exists. O_EXCL refuses both.
  */
 export function writePrivateFile(path: string, content: string): void {
   const dir = dirname(path)
-  const tmp = join(dir, `.${basename(path)}.${process.pid}.tmp`)
+  const tmp = join(dir, `.${basename(path)}.${randomBytes(8).toString('hex')}.tmp`)
   try {
     mkdirSync(dir, { recursive: true, mode: 0o700 })
-    writeFileSync(tmp, content, { mode: 0o600 })
+    writeFileSync(tmp, content, { mode: 0o600, flag: 'wx' })
     renameSync(tmp, path)
   } catch (e) {
     rmSync(tmp, { force: true })
