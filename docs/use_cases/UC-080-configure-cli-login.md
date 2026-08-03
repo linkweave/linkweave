@@ -6,7 +6,7 @@
 **Use Case Name:** Configure CLI Login
 **Primary Actor:** CLI User
 **Goal:** Store a LinkWeave API key and server URL locally so that subsequent CLI commands are automatically authenticated without re-entering credentials.
-**Status:** Draft
+**Status:** Done
 
 ## Traceability
 

@@ -1,7 +1,7 @@
 # CLI Tool & API Key Architecture
 
-**Status:** In Progress — Phases 1–4 complete (API key backend, web UI, CLI with bookmark commands); Phase 5 packaging and release automation done, first npm publish pending
-**Date:** 2026-05-10 (updated 2026-07-17)
+**Status:** Done — all five phases complete. `@linkweave/cli@0.1.0` is published; releases run from a `cli-v*` tag (AD-5).
+**Date:** 2026-05-10 (updated 2026-08-03)
 
 ---
 
@@ -73,8 +73,10 @@ This document describes the architecture for adding a command-line interface (CL
 **Deliberately deferred:** extracting the client into a shared workspace
 package (root pnpm workspace + `packages/api-client`). With only two
 consumers and standalone-package CI, the restructuring isn't worth it yet.
-Revisit when a third consumer needs the client (desktop app,
-screenshot-service) or when npm publishing (Phase 5) becomes concrete.
+
+**Revisited at first publish (2026-08-03):** bundling held up — the published
+package is four files and needs no workspace resolution at install time. The
+remaining trigger is a third consumer (desktop app, screenshot-service).
 
 ### AD-3: TypeScript
 
@@ -321,21 +323,19 @@ server and are wired into the e2e CI workflow.
       `cli-v*` tag (AD-5). Verifies the tag against `cli/package.json`, no-ops
       when that version is already on the registry, and publishes with
       `pnpm publish --no-git-checks --access public`.
-- [ ] **Blocked on credentials, the last step before first release:**
-      - [ ] Confirm the `@linkweave` npm scope is ours. `npmjs.com/org/linkweave`
-            answers `403` rather than `404`, which suggests it may be taken —
-            check while logged in. If it is, rename to `@dividbzero/linkweave-cli`
-            or unscoped `linkweave-cli` in `cli/package.json`.
-      - [ ] Create a granular **Automation** token (bypasses 2FA, which CI
-            cannot satisfy), scoped to the package with write access.
-      - [ ] Add it as the Gitea secret `NPM_TOKEN`.
-      - [ ] Publish `0.1.0` by hand once (`npm publish --dry-run`, then for
-            real), to check how the page and README render before automation
-            takes over. Afterwards, releases are `git tag cli-v0.1.1 && git push
-            --tags`.
+- [x] Published: `@linkweave/cli@0.1.0` went to npm on 2026-08-03, public,
+      4 files / 140 kB unpacked. Verified by installing it anonymously from the
+      registry into a throwaway prefix — `--version`, `--help`, completion and
+      the error paths all work off the published artefact.
+      - The `@linkweave` scope was free. An earlier reading of
+        `npmjs.com/org/linkweave` as "taken" was wrong: that page answers `403`
+        for every org, existing or not.
+      - A brand-new package is briefly invisible to unauthenticated registry
+        reads. Do not read a 404 in the first minutes as a failed publish.
 - [ ] Decide whether BUSL-1.1 is the intended licence for a package people
       `npm install -g`. It is a valid SPDX id and npm accepts it, but it is not
-      OSI-approved and installers tend to assume permissive terms.
+      OSI-approved and installers tend to assume permissive terms. Note this is
+      now published against `0.1.0` and can only be changed going forward.
 - [x] README with installation instructions (`cli/README.md`)
 - [x] `--insecure` flag for self-signed certs
 

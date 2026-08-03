@@ -6,7 +6,7 @@
 **Use Case Name:** Manage Bookmarks via CLI
 **Primary Actor:** CLI User
 **Goal:** Create, list, edit, and delete bookmarks from the command line so that the user can manage bookmarks from a terminal or shell script without opening a browser.
-**Status:** Draft
+**Status:** Done
 
 ## Traceability
 
