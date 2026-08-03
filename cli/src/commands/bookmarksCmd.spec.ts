@@ -18,7 +18,7 @@ let clients: {
 vi.mock('../config', () => ({ resolveEffectiveConfig: () => CONFIG }))
 vi.mock('../client', () => ({ createAuthenticatedClients: () => clients }))
 
-const { runBookmarksAdd, runBookmarksEdit, runBookmarksList } = await import('./bookmarks')
+const { runBookmarksAdd, runBookmarksEdit, runBookmarksList } = await import('./bookmarksCmd')
 
 const COLLECTION_ID = '550e8400-e29b-41d4-a716-446655440000'
 const entityInfo = {} as TagJson['entityInfo']

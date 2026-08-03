@@ -1,6 +1,6 @@
 import type { Command, Option } from 'commander'
 
-import type { CompletionSource } from './complete'
+import type { CompletionSource } from './completeCmd'
 
 export const COMPLETION_SHELLS = ['bash', 'zsh', 'fish'] as const
 

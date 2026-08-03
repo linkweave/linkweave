@@ -1,12 +1,12 @@
 import { Argument, Command, Option } from 'commander'
 
 import pkg from '../package.json'
-import { runBookmarksAdd, runBookmarksEdit, runBookmarksList, runBookmarksRm } from './commands/bookmarks'
-import { runCollectionsList } from './commands/collections'
-import { COMPLETION_SOURCES, runComplete } from './commands/complete'
-import { COMPLETION_SHELLS, completionScript, type CompletionShell } from './commands/completion'
-import { runLogin } from './commands/login'
-import { runLogout } from './commands/logout'
+import { runBookmarksAdd, runBookmarksEdit, runBookmarksList, runBookmarksRm } from './commands/bookmarksCmd'
+import { runCollectionsList } from './commands/collectionsCmd'
+import { COMPLETION_SOURCES, runComplete } from './commands/completeCmd'
+import { COMPLETION_SHELLS, completionScript, type CompletionShell } from './commands/completionCmd'
+import { runLogin } from './commands/loginCmd'
+import { runLogout } from './commands/logoutCmd'
 import { OUTPUT_FORMATS } from './output'
 
 function formatOption(): Option {

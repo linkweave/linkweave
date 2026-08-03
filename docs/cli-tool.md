@@ -252,9 +252,9 @@ server and are wired into the e2e CI workflow.
 
 - [x] Shell completions (bash/zsh/fish): `linkweave completion <shell>` prints
       a script generated at runtime from the commander command tree, so new
-      commands/flags are picked up automatically (`cli/src/commands/completion.ts`)
+      commands/flags are picked up automatically (`cli/src/commands/completionCmd.ts`)
 - [x] Value completion for `--collection`/`--tag`/`--folder` via a hidden
-      `linkweave __complete` callback (`cli/src/commands/complete.ts`), cached
+      `linkweave __complete` callback (`cli/src/commands/completeCmd.ts`), cached
       60s in `~/.linkweave/completion-cache.json`. Fails silently by design:
       an error printed during completion corrupts the user's command line.
       Generated bash targets 3.2 (macOS), so no `mapfile`.
