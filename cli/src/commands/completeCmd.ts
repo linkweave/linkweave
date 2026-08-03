@@ -114,16 +114,40 @@ export async function runComplete(
       )
       writeCached(key, candidates)
     }
-  } catch {
+  } catch (error) {
     // Silent by design, and exiting here matters most: this is the path a
     // hung or unreachable server takes, which is exactly when a lingering
     // socket would keep the shell waiting.
+    debug(error)
     return finish('')
   }
 
   const needle = (prefix ?? '').toLowerCase()
   const matches = candidates.filter((value) => value.toLowerCase().startsWith(needle))
   finish(matches.length > 0 ? matches.join('\n') + '\n' : '')
+}
+
+/**
+ * The catch above is total so that a failure can never corrupt the command
+ * line the user is mid-way through typing. The cost is that it hides real
+ * bugs as well as expected ones: if the server's payload stops matching the
+ * checked-in generated client, the deserialiser throws a TypeError and the
+ * only symptom here is "no suggestions".
+ *
+ * LINKWEAVE_DEBUG surfaces the cause without changing the default. The
+ * generated shell scripts send stderr to /dev/null, so run the command
+ * directly to see it:
+ *
+ *     LINKWEAVE_DEBUG=1 linkweave __complete tags
+ *
+ * Note that the same drift is *not* silent elsewhere — an unrecognised error
+ * reaches the user through toCliError, so `linkweave collections list` fails
+ * loudly with the same underlying message.
+ */
+function debug(error: unknown): void {
+  if (!process.env['LINKWEAVE_DEBUG']) return
+  const detail = error instanceof Error ? (error.stack ?? error.message) : String(error)
+  process.stderr.write(`linkweave __complete failed: ${detail}\n`)
 }
 
 /**

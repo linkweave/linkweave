@@ -46,11 +46,13 @@ function folder(id: string, name: string, parentId?: string): FolderJson {
 }
 
 let stdout: string
+let stderr: string
 let exitCode: number | undefined
 
 beforeEach(() => {
   CONFIG.defaultCollectionId = 'default-collection'
   stdout = ''
+  stderr = ''
   cached = undefined
   clientsError = undefined
   writeCached.mockClear()
@@ -59,6 +61,10 @@ beforeEach(() => {
     stdout += String(chunk)
     const flushed = rest.find((arg) => typeof arg === 'function')
     if (flushed) (flushed as () => void)()
+    return true
+  }) as never)
+  vi.spyOn(process.stderr, 'write').mockImplementation(((chunk: unknown) => {
+    stderr += String(chunk)
     return true
   }) as never)
   // runComplete always exits the process; capture the code instead.
@@ -93,6 +99,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.unstubAllEnvs()
   vi.restoreAllMocks()
 })
 
@@ -240,6 +247,38 @@ describe('runComplete', () => {
     clients['collections']!['apiCollectionsGet']!.mockRejectedValue(new Error('offline'))
 
     await runComplete('collections', undefined, {}, cmd)
+    expect(stdout).toBe('')
+    expect(exitCode).toBe(0)
+  })
+
+  it('shouldStaySilentAboutFailuresByDefault', async () => {
+    // ARRANGE: a shape mismatch between server and generated client, which is
+    // what a missed `pnpm run generate-api` looks like at runtime.
+    clients['collections']!['apiCollectionsGet']!.mockRejectedValue(
+      new TypeError("Cannot read properties of undefined (reading 'map')"),
+    )
+
+    // ACT
+    await runComplete('collections', undefined, {}, cmd)
+
+    // ASSERT
+    expect(stderr).toBe('')
+    expect(exitCode).toBe(0)
+  })
+
+  it('shouldRevealTheCauseUnderLinkweaveDebug', async () => {
+    // ARRANGE: otherwise a schema regression is indistinguishable from
+    // "no candidates".
+    vi.stubEnv('LINKWEAVE_DEBUG', '1')
+    clients['collections']!['apiCollectionsGet']!.mockRejectedValue(
+      new TypeError("Cannot read properties of undefined (reading 'map')"),
+    )
+
+    // ACT
+    await runComplete('collections', undefined, {}, cmd)
+
+    // ASSERT: still no candidates and still exit 0 — only the diagnosis changes.
+    expect(stderr).toContain("Cannot read properties of undefined (reading 'map')")
     expect(stdout).toBe('')
     expect(exitCode).toBe(0)
   })

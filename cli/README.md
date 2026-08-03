@@ -186,11 +186,26 @@ linkweave bookmarks add https://x --folder <TAB>   # Dev  Dev/TypeScript
 
 Those suggestions come from a hidden `linkweave __complete` callback, cached
 for 60 seconds in `$XDG_CACHE_HOME/linkweave/completion-cache.json`
-(owner-only, like the config) so a keypress never waits on the network twice. If you are not logged
-in, offline, or the server is slow, completion silently offers nothing rather
-than printing an error into your command line. `--tags` (the comma-separated
-list on `add`/`edit`) is not value-completed; use `--tag` filtering to
-discover names.
+(owner-only, like the config) so a keypress never waits on the network twice.
+If you are not logged in, offline, or the server is slow, completion silently
+offers nothing rather than printing an error into your command line.
+
+`--tags` (the comma-separated list on `add`/`edit`) is not value-completed;
+use `--tag` filtering to discover names.
+
+### When completion offers nothing
+
+That silence also hides real faults — a server whose responses no longer match
+the bundled API client looks identical to "you have no tags". To tell the two
+apart, run the callback yourself. The completion scripts discard its stderr,
+so it has to be invoked directly:
+
+```bash
+LINKWEAVE_DEBUG=1 linkweave __complete tags
+```
+
+Note that the same fault is not silent elsewhere: `linkweave collections list`
+would fail loudly with the underlying error.
 
 **bash** — add to `~/.bashrc`:
 

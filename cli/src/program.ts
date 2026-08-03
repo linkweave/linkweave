@@ -37,6 +37,7 @@ Examples:
 Environment:
   LINKWEAVE_SERVER    server URL (overrides the config file)
   LINKWEAVE_API_KEY   API key (overrides the config file)
+  LINKWEAVE_DEBUG     report errors that are otherwise silent (shell completion)
 
 Configuration is stored in ${configPath()} (XDG_CONFIG_HOME).
 Precedence: flags > environment > config file.`,
