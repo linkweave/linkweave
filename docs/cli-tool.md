@@ -1,6 +1,6 @@
 # CLI Tool & API Key Architecture
 
-**Status:** In Progress — Phases 1–4 complete (API key backend, web UI, CLI with bookmark commands), shell completions done; npm publishing (Phase 5) pending
+**Status:** In Progress — Phases 1–4 complete (API key backend, web UI, CLI with bookmark commands); Phase 5 packaging and release automation done, first npm publish pending
 **Date:** 2026-05-10 (updated 2026-07-17)
 
 ---
