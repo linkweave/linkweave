@@ -59,6 +59,20 @@ describe('resolveCollectionId', () => {
     await expect(resolveCollectionId(api, 'links')).rejects.toThrow(/Multiple collections match/)
   })
 
+  it('shouldForwardRequestOptionsSoCallersCanImposeADeadline', async () => {
+    // ARRANGE: shell completion needs this lookup to be abortable.
+    const api = {
+      apiCollectionsGet: vi.fn().mockResolvedValue({ collections: [collection(UUID_A, 'Work')] }),
+    }
+    const signal = AbortSignal.timeout(1_000)
+
+    // ACT
+    await resolveCollectionId(api, 'Work', { signal })
+
+    // ASSERT
+    expect(api.apiCollectionsGet).toHaveBeenCalledWith({ signal })
+  })
+
   it('shouldFailWhenNoNameMatches', async () => {
     const api = { apiCollectionsGet: vi.fn().mockResolvedValue({ collections: [] }) }
     await expect(resolveCollectionId(api, 'nope')).rejects.toThrow(/No collection found/)

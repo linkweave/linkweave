@@ -24,9 +24,12 @@ type FoldersApi = Pick<FolderResourceApi, 'apiFoldersGet' | 'apiFoldersPost'>
 export async function resolveCollectionId(
   collections: CollectionsApi,
   spec: string,
+  // Shell completion passes an AbortSignal here: without it this lookup has no
+  // deadline, and a hung server would keep the completion process alive.
+  init?: RequestInit,
 ): Promise<string> {
   if (looksLikeId(spec)) return spec
-  const { collections: all } = await collections.apiCollectionsGet()
+  const { collections: all } = await collections.apiCollectionsGet(init)
   const needle = spec.toLowerCase()
   const matches = all.filter((c: CollectionSummaryJson) => c.name.toLowerCase() === needle)
   if (matches.length === 1) return matches[0]!.id

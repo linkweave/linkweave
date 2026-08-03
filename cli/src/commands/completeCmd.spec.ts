@@ -34,6 +34,9 @@ vi.mock('../cache', () => ({
 
 const { runComplete } = await import('./completeCmd')
 
+type CompletionSource = Parameters<typeof runComplete>[0]
+type CompleteOptions = Parameters<typeof runComplete>[2]
+
 const COLLECTION_ID = '550e8400-e29b-41d4-a716-446655440000'
 const entityInfo = {} as TagJson['entityInfo']
 const cmd = { optsWithGlobals: () => ({}) } as unknown as Command
@@ -43,16 +46,26 @@ function folder(id: string, name: string, parentId?: string): FolderJson {
 }
 
 let stdout: string
+let exitCode: number | undefined
 
 beforeEach(() => {
+  CONFIG.defaultCollectionId = 'default-collection'
   stdout = ''
   cached = undefined
   clientsError = undefined
   writeCached.mockClear()
-  vi.spyOn(process.stdout, 'write').mockImplementation((chunk) => {
+  // finish() exits from the write callback, so the stub must invoke it.
+  vi.spyOn(process.stdout, 'write').mockImplementation(((chunk: unknown, ...rest: unknown[]) => {
     stdout += String(chunk)
+    const flushed = rest.find((arg) => typeof arg === 'function')
+    if (flushed) (flushed as () => void)()
     return true
-  })
+  }) as never)
+  // runComplete always exits the process; capture the code instead.
+  exitCode = undefined
+  vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
+    exitCode = code
+  }) as never)
   clients = {
     collections: {
       apiCollectionsGet: vi.fn().mockResolvedValue({
@@ -159,6 +172,42 @@ describe('runComplete', () => {
     )
   })
 
+  /** Whether the mock's first call carried an AbortSignal in any argument. */
+  function calledWithSignal(mock: ReturnType<typeof vi.fn>): boolean {
+    return (mock.mock.calls[0] ?? []).some(
+      (arg) =>
+        typeof arg === 'object' && arg !== null && (arg as { signal?: unknown }).signal instanceof AbortSignal,
+    )
+  }
+
+  // Every request the completion path can make must be abortable. An
+  // unbounded one wedges the user's shell mid-completion, and the generated
+  // scripts cannot rescue it: they redirect stderr but impose no timeout, and
+  // `timeout(1)` is not present on macOS. The abort has to come from here.
+  it.each<[string, CompletionSource, CompleteOptions, string, string]>([
+    ['the collection list', 'collections', {}, 'collections', 'apiCollectionsGet'],
+    ['collection-name resolution', 'tags', { collection: 'Work' }, 'collections', 'apiCollectionsGet'],
+    ['the tag list', 'tags', { collection: COLLECTION_ID }, 'tags', 'apiTagsGet'],
+    ['the folder list', 'folders', { collection: COLLECTION_ID }, 'folders', 'apiFoldersGet'],
+  ])('shouldBoundEveryRequestByADeadline: %s', async (_label, source, options, client, method) => {
+    // ACT
+    await runComplete(source, undefined, options, cmd)
+
+    // ASSERT
+    expect(calledWithSignal(clients[client]![method]!)).toBe(true)
+  })
+
+  it('shouldBoundEveryRequestByADeadline: the default-collection lookup', async () => {
+    // ARRANGE: only reached when login stored no default collection.
+    delete CONFIG.defaultCollectionId
+
+    // ACT
+    await runComplete('tags', undefined, {}, cmd)
+
+    // ASSERT
+    expect(calledWithSignal(clients['auth']!['apiAuthMeGet']!)).toBe(true)
+  })
+
   it('shouldServeFromTheCacheWithoutTouchingTheNetwork', async () => {
     cached = ['Cached One', 'Cached Two']
 
@@ -182,15 +231,17 @@ describe('runComplete', () => {
     // is in the middle of typing.
     clientsError = new CliError('Not authenticated.')
 
-    await expect(runComplete('collections', undefined, {}, cmd)).resolves.toBeUndefined()
+    await runComplete('collections', undefined, {}, cmd)
     expect(stdout).toBe('')
+    expect(exitCode).toBe(0)
   })
 
   it('shouldPrintNothingWhenTheRequestFails', async () => {
     clients['collections']!['apiCollectionsGet']!.mockRejectedValue(new Error('offline'))
 
-    await expect(runComplete('collections', undefined, {}, cmd)).resolves.toBeUndefined()
+    await runComplete('collections', undefined, {}, cmd)
     expect(stdout).toBe('')
+    expect(exitCode).toBe(0)
   })
 
   it('shouldPrintNothingWhenNothingMatchesThePrefix', async () => {

@@ -60,8 +60,11 @@ async function fetchCandidates(
     return collections.map((collection) => collection.name)
   }
 
+  // Every request below shares the one signal, so the deadline covers the
+  // whole completion rather than resetting per call — including this lookup,
+  // which is a second round trip whenever --collection is given by name.
   const collectionId = collectionSpec
-    ? await resolveCollectionId(clients.collections, collectionSpec)
+    ? await resolveCollectionId(clients.collections, collectionSpec, { signal })
     : (defaultCollectionId ?? (await clients.auth.apiAuthMeGet({ signal })).defaultCollectionId)
 
   if (source === 'tags') {
@@ -112,10 +115,30 @@ export async function runComplete(
       writeCached(key, candidates)
     }
   } catch {
-    return
+    // Silent by design, and exiting here matters most: this is the path a
+    // hung or unreachable server takes, which is exactly when a lingering
+    // socket would keep the shell waiting.
+    return finish('')
   }
 
   const needle = (prefix ?? '').toLowerCase()
   const matches = candidates.filter((value) => value.toLowerCase().startsWith(needle))
-  if (matches.length > 0) process.stdout.write(matches.join('\n') + '\n')
+  finish(matches.length > 0 ? matches.join('\n') + '\n' : '')
+}
+
+/**
+ * Writes the candidates and exits, rather than returning and letting the event
+ * loop drain.
+ *
+ * Aborting a request settles our promise on time, but undici keeps the
+ * underlying connect attempt as an active handle until its own ~10s connect
+ * timeout. Against an unreachable server that means the process lingers long
+ * past REQUEST_TIMEOUT_MS with nothing left to do — and the shell, which is
+ * blocked on this command's output, stays wedged for the whole 10s. Exiting
+ * from the write callback keeps the 1.5s budget real while still guaranteeing
+ * the bytes are flushed first (stdout is a pipe here, so writes are async).
+ */
+function finish(text: string): void {
+  if (text === '') process.exit(0)
+  process.stdout.write(text, () => process.exit(0))
 }
