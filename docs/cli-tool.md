@@ -96,38 +96,60 @@ screenshot-service) or when npm publishing (Phase 5) becomes concrete.
 
 ```
 linkweave/
-├── api/                                    # Existing Quarkus backend
-│   └── src/main/java/org/linkweave/api/
-│       ├── auth/
-│       │   ├── AuthResource.java           # Existing
-│       │   ├── ApiKeyResource.java         # NEW: CRUD for API keys
-│       │   └── ...
-│       └── ...
-├── frontend/                               # Existing Vue.js frontend
-│   └── ...
-├── cli/                                    # NEW: CLI tool
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── src/
-│   │   ├── main.ts                         # CLI entry point (commander)
-│   │   ├── commands/
-│   │   │   ├── login.ts                    # linkweave login
-│   │   │   ├── logout.ts                   # linkweave logout
-│   │   │   ├── bookmarks/
-│   │   │   │   ├── add.ts                  # linkweave bookmarks add <url>
-│   │   │   │   ├── list.ts                 # linkweave bookmarks list
-│   │   │   │   ├── edit.ts                 # linkweave bookmarks edit <id>
-│   │   │   │   └── rm.ts                   # linkweave bookmarks rm <id>
-│   │   │   └── collections/
-│   │   │       └── list.ts                 # linkweave collections list
-│   │   ├── api/
-│   │   │   └── generated/                  # Generated from /q/openapi
-│   │   ├── config.ts                       # Read/write ~/.linkweave/config.json
-│   │   └── client.ts                       # API client with X-API-Key injection
-│   └── tests/
-├── docs/                                   # Documentation (this file)
+├── api/                                     # Quarkus backend
+│   └── src/main/java/org/linkweave/api/auth/
+│       ├── AuthResource.java                # Existing
+│       └── apikey/                          # API key credential type
+│           ├── ApiKeyResource.java          # CRUD for API keys
+│           ├── ApiKeyService.java
+│           ├── ApiKeyRepo.java
+│           ├── ApiKeyAuthMechanism.java     # X-API-Key -> SecurityIdentity
+│           ├── ApiKeyIdentityProvider.java
+│           └── ...
+├── frontend/                                # Vue.js frontend
+│   └── src/api/generated/                   # typescript-fetch client, shared
+│                                            # with the CLI (see AD-2b)
+├── cli/                                     # CLI tool
+│   ├── package.json                         # @linkweave/cli, bin -> dist/main.js
+│   ├── tsup.config.ts                       # bundles src + generated client
+│   ├── vitest.config.ts
+│   ├── README.md                            # user-facing CLI docs
+│   └── src/
+│       ├── main.ts                          # entry point: parse, map errors, exit code
+│       ├── program.ts                       # commander command tree
+│       ├── api.ts                           # re-exports the frontend's generated client
+│       ├── client.ts                        # API clients with X-API-Key injection
+│       ├── config.ts                        # ~/.linkweave/config.json (0600, atomic)
+│       ├── cache.ts                         # 60s completion-candidate cache
+│       ├── errors.ts                        # HTTP/TLS failures -> user-facing messages
+│       ├── output.ts                        # --format table/json/ids rendering
+│       ├── resolve.ts                       # collection/tag/folder name -> ID
+│       ├── *.spec.ts                        # vitest unit tests, beside their subject
+│       └── commands/
+│           ├── loginCmd.ts                  # linkweave login
+│           ├── logoutCmd.ts                 # linkweave logout
+│           ├── bookmarksCmd.ts              # bookmarks add | list | edit | rm
+│           ├── collectionsCmd.ts            # collections list
+│           ├── completionCmd.ts             # completion <shell> script generator
+│           ├── completeCmd.ts               # hidden __complete value callback
+│           └── shared.ts                    # config + error-handling helpers
+├── frontend/e2e/cli.spec.ts                 # CLI e2e, drives the built binary
+├── docs/                                    # Documentation (this file)
 └── ...
 ```
+
+Notes on the layout as built:
+
+- **Commands are one file per group, not a directory per group.** `bookmarks
+  add|list|edit|rm` are four exported `runBookmarks*` functions in
+  `bookmarksCmd.ts`; they share collection/tag/folder resolution, and splitting
+  them across four files bought nothing. `program.ts` owns the whole commander
+  tree, so the flag surface is readable in one place.
+- **No `cli/src/api/generated/`.** The CLI imports the frontend's checked-in
+  client through `cli/src/api.ts` and tsup inlines it at build time (AD-2b).
+- **No `cli/tests/`.** Unit tests sit next to their subject as `*.spec.ts`;
+  end-to-end tests live in the Playwright suite because they need a running
+  server.
 
 ---
 
@@ -137,12 +159,12 @@ linkweave/
 
 #### 1a. Entity & Repository
 
-- **`ApiKey` entity** (`api/src/main/java/org/linkweave/api/auth/ApiKey.java`)
+- **`ApiKey` entity** (`api/src/main/java/org/linkweave/api/auth/apikey/ApiKey.java`)
   - Fields: `id`, `user` (ManyToOne), `name`, `keyHash`, `keyPrefix`, `createdAt`, `lastUsedAt`, `revokedAt`
   - Extends `AbstractEntity` (gets `userErstellt`/`userMutiert` for audit)
   - `@Column` lengths from `DbConst`
 
-- **`ApiKeyRepo`** (`api/src/main/java/org/linkweave/api/auth/ApiKeyRepo.java`)
+- **`ApiKeyRepo`** (`api/src/main/java/org/linkweave/api/auth/apikey/ApiKeyRepo.java`)
   - `findByKeyHash(String hash)` — for auth lookup
   - `findActiveByUserId(ID<User> userId)` — for listing
   - `countActiveByUserId(ID<User> userId)` — for max-key enforcement
@@ -156,7 +178,7 @@ linkweave/
 
 #### 1c. Service Layer
 
-- **`ApiKeyService`** (`api/src/main/java/org/linkweave/api/auth/ApiKeyService.java`)
+- **`ApiKeyService`** (`api/src/main/java/org/linkweave/api/auth/apikey/ApiKeyService.java`)
   - `createApiKey(ID<User> userId, String name)` — generates key, hashes, stores, returns raw key once
   - `listActiveKeys(ID<User> userId)` — returns all non-revoked keys for the user
   - `revokeKey(ID<User> userId, ID<ApiKey> keyId)` — sets `revokedAt`
@@ -165,7 +187,7 @@ linkweave/
 
 #### 1d. Resource Layer
 
-- **`ApiKeyResource`** (`api/src/main/java/org/linkweave/api/auth/ApiKeyResource.java`)
+- **`ApiKeyResource`** (`api/src/main/java/org/linkweave/api/auth/apikey/ApiKeyResource.java`)
   - `@Authenticated` — requires web session (API keys cannot manage other API keys)
   - `POST /api/auth/api-keys` — create key
   - `GET /api/auth/api-keys` — list keys
@@ -175,7 +197,7 @@ linkweave/
 
 #### 1e. Authentication Mechanism
 
-- **`ApiKeyAuthenticationMechanism`** (`api/src/main/java/org/linkweave/infrastructure/auth/ApiKeyAuthenticationMechanism.java`)
+- **`ApiKeyAuthMechanism`** + **`ApiKeyIdentityProvider`** (`api/src/main/java/org/linkweave/api/auth/apikey/`)
   - Implements Quarkus `HttpAuthenticationMechanism`
   - Checks for `X-API-Key` header on every request
   - Strips `lw_` prefix, computes SHA-256, looks up via `ApiKeyService`
