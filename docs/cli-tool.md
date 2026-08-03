@@ -68,7 +68,10 @@ This document describes the architecture for adding a command-line interface (CL
 
 **Decision:** The CLI imports the checked-in typescript-fetch client from
 `frontend/src/api/generated` (via `cli/src/api.ts`) and tsup bundles it into
-`cli/dist/main.js`, so the published package is self-contained.
+`cli/dist/main.js`, so the published package carries the client itself and
+refers to nothing in the monorepo. Note this does not make it dependency-free:
+tsup treats `dependencies` as external, so `commander` is still resolved at
+install time (NFR-023).
 
 **Deliberately deferred:** extracting the client into a shared workspace
 package (root pnpm workspace + `packages/api-client`). With only two

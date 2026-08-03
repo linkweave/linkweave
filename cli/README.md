@@ -18,8 +18,8 @@ CI.
 npm install -g @linkweave/cli
 ```
 
-From a checkout instead — this builds the same self-contained bundle that gets
-published, and puts `linkweave` on your PATH:
+From a checkout instead — this builds the same bundle that gets published, and
+puts `linkweave` on your PATH:
 
 ```bash
 cd cli
@@ -238,8 +238,9 @@ only use it with servers you control.
 The API client is not hand-written: it is the typescript-fetch client
 generated from the server's OpenAPI spec, shared with the frontend
 (`frontend/src/api/generated`, regenerate with `pnpm run generate-api` there).
-`tsup` bundles it into `dist/main.js`, so the published package is
-self-contained.
+`tsup` bundles it into `dist/main.js`, so the published package carries the
+client rather than fetching it. `commander` stays a normal dependency — tsup
+leaves `dependencies` external — so a global install pulls two packages.
 
 ```bash
 pnpm run check        # type-check + unit tests
