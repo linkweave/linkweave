@@ -133,6 +133,19 @@ describe('runLogin — non-interactive', () => {
     })
   })
 
+  it('shouldRecordInsecureSoCompletionCanReachADevServer', async () => {
+    await runLogin({ apiKey: KEY, server: 'https://dev.example', insecure: true })
+
+    expect(saved?.insecure).toBe(true)
+  })
+
+  it('shouldNotRecordInsecureWhenItWasNotAskedFor', async () => {
+    // Absent rather than false, so a normal config carries no TLS opt-out.
+    await runLogin({ apiKey: KEY, server: 'https://x.example' })
+
+    expect(saved).not.toHaveProperty('insecure')
+  })
+
   it('shouldRejectAnUnusableServerUrlBeforeContactingIt', async () => {
     const failure = await failureOf(runLogin({ apiKey: KEY, server: 'not-a-url' }))
 

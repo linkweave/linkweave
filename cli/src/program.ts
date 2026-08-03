@@ -31,7 +31,7 @@ export function buildProgram(): Command {
     .version(pkg.version, '-v, --version')
     .option('-s, --server <url>', 'LinkWeave API server URL')
     .option('-k, --api-key <key>', 'API key (overrides config file and LINKWEAVE_API_KEY)')
-    .option('--insecure', 'disable TLS certificate verification (local development only)')
+    .option('--insecure', 'disable TLS certificate verification; login stores it for this server')
     .exitOverride()
     .addHelpText(
       'after',
@@ -51,21 +51,16 @@ Configuration is stored in ${configPath()} (XDG_CONFIG_HOME).
 Precedence: flags > environment > config file.`,
     )
 
-  program.hook('preAction', () => {
-    if (program.opts<{ insecure?: boolean }>().insecure) {
-      // UC-079 A7: opt-out for self-signed certs in local development. Node's
-      // built-in fetch honors this env var via the tls module defaults.
-      process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0'
-      process.stderr.write('⚠ TLS verification disabled. Only use this with trusted servers.\n')
-    }
-  })
-
   program
     .command('login')
     .description(`store the server URL and API key in ${configPath()}`)
     .action(async (_options, cmd: Command) => {
-      const { server, apiKey } = cmd.optsWithGlobals<{ server?: string; apiKey?: string }>()
-      await runLogin({ server, apiKey })
+      const { server, apiKey, insecure } = cmd.optsWithGlobals<{
+        server?: string
+        apiKey?: string
+        insecure?: boolean
+      }>()
+      await runLogin({ server, apiKey, insecure })
     })
 
   program

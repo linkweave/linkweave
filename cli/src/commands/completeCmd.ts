@@ -71,7 +71,7 @@ export async function runComplete(
   try {
     const globals = cmd.optsWithGlobals<GlobalOptions>()
     const config = resolveEffectiveConfig(
-      { server: globals.server, apiKey: globals.apiKey },
+      { server: globals.server, apiKey: globals.apiKey, insecure: globals.insecure },
       process.env,
       loadStoredConfig(configPath(), () => {}),
     )

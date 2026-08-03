@@ -22,7 +22,7 @@ export interface GlobalOptions {
 export function effectiveConfig(cmd: Command): EffectiveConfig {
   const options = cmd.optsWithGlobals<GlobalOptions>()
   return resolveEffectiveConfig(
-    { server: options.server, apiKey: options.apiKey },
+    { server: options.server, apiKey: options.apiKey, insecure: options.insecure },
     process.env,
     loadStoredConfig(),
   )

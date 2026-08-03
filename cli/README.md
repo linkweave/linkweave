@@ -258,6 +258,16 @@ linkweave -s https://localhost:8443 --insecure bookmarks list
 `--insecure` disables TLS certificate verification for the whole invocation —
 only use it with servers you control.
 
+`linkweave login --insecure` records the opt-out for that server, so later
+commands need no flag. That is also the only way tab completion can reach a
+server with a self-signed certificate: the generated scripts invoke
+`linkweave __complete` with no flags, so without the stored setting every
+completion fails TLS and silently offers nothing.
+
+The opt-out is keyed on the server, not on your identity — switching to
+another server with `-s` verifies certificates normally. Every command that
+runs without verification says so on stderr.
+
 ## Development
 
 The API client is not hand-written: it is the typescript-fetch client

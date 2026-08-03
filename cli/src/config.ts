@@ -23,6 +23,8 @@ export interface StoredConfig {
   apiKey: string
   userEmail?: string
   defaultCollectionId?: string
+  /** Recorded by `login --insecure`; see resolveEffectiveConfig. */
+  insecure?: boolean
 }
 
 function homeFrom(env: NodeJS.ProcessEnv): string {
@@ -92,7 +94,8 @@ function isStoredConfig(value: unknown): value is StoredConfig {
     parseServerUrl(server) !== undefined &&
     typeof record['apiKey'] === 'string' &&
     optionalString(record['userEmail']) &&
-    optionalString(record['defaultCollectionId'])
+    optionalString(record['defaultCollectionId']) &&
+    (record['insecure'] === undefined || typeof record['insecure'] === 'boolean')
   )
 }
 
@@ -182,11 +185,13 @@ export interface EffectiveConfig {
   apiKey?: string
   userEmail?: string
   defaultCollectionId?: string
+  insecure?: boolean
 }
 
 export interface ConfigFlags {
   server?: string
   apiKey?: string
+  insecure?: boolean
 }
 
 /**
@@ -225,12 +230,17 @@ export function resolveEffectiveConfig(
   const server = normalizeServer(
     flags.server ?? env['LINKWEAVE_SERVER'] ?? stored?.server ?? DEFAULT_SERVER,
   )
-  const usingStoredIdentity =
-    stored !== undefined && apiKey === stored.apiKey && server === normalizeServer(stored.server)
+  const sameServer = stored !== undefined && server === normalizeServer(stored.server)
+  const usingStoredIdentity = sameServer && apiKey === stored.apiKey
   return {
     server,
     apiKey,
     userEmail: usingStoredIdentity ? stored.userEmail : undefined,
     defaultCollectionId: usingStoredIdentity ? stored.defaultCollectionId : undefined,
+    // Keyed on the server alone, not the full identity: whether a certificate
+    // is trusted is a property of the host, not of who is talking to it. A
+    // different key against the same self-signed dev server still needs the
+    // opt-out.
+    insecure: flags.insecure === true || (sameServer && stored.insecure === true),
   }
 }

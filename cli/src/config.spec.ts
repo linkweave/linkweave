@@ -112,6 +112,37 @@ describe('resolveEffectiveConfig', () => {
     expect(config.defaultCollectionId).toBeUndefined()
   })
 
+  it('shouldCarryTheInsecureFlagThrough', () => {
+    expect(resolveEffectiveConfig({ insecure: true }, {}, undefined).insecure).toBe(true)
+    expect(resolveEffectiveConfig({}, {}, undefined).insecure).toBe(false)
+  })
+
+  it('shouldHonourAStoredInsecureForTheSameServer', () => {
+    // The completion scripts cannot pass flags, so this is the only way a
+    // self-signed dev server is reachable from a <TAB>.
+    const stored = { ...STORED, insecure: true }
+
+    expect(resolveEffectiveConfig({}, {}, stored).insecure).toBe(true)
+  })
+
+  it('shouldKeepStoredInsecureEvenWhenAnotherKeyIsUsed', () => {
+    // Trusting a certificate is a property of the host, not of the caller.
+    const stored = { ...STORED, insecure: true }
+
+    expect(resolveEffectiveConfig({}, { LINKWEAVE_API_KEY: KEY_B }, stored).insecure).toBe(true)
+  })
+
+  it('shouldNotLeakStoredInsecureToADifferentServer', () => {
+    // ARRANGE: the stored opt-out was for the dev box, not for production.
+    const stored = { ...STORED, insecure: true }
+
+    // ACT
+    const config = resolveEffectiveConfig({ server: 'https://other.example' }, {}, stored)
+
+    // ASSERT
+    expect(config.insecure).toBe(false)
+  })
+
   it('shouldUseDefaultServerWithoutAnySource', () => {
     // `stored` is a required parameter precisely so that this `undefined`
     // means "there is no stored config" and cannot fall back to reading the
