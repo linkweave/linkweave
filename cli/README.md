@@ -14,15 +14,12 @@ Requires **Node.js 22 or newer** — the CLI ships as a JavaScript bundle run by
 your own `node`, not as a standalone binary. Both 22 and 24 are exercised in
 CI.
 
-> **Not on npm yet.** Publishing is the remaining piece of Phase 5 in
-> `docs/cli-tool.md`. Once it lands, this is the install:
->
-> ```bash
-> npm install -g @linkweave/cli
-> ```
+```bash
+npm install -g @linkweave/cli
+```
 
-Until then, install from a checkout — this builds the same self-contained
-bundle that gets published, and puts `linkweave` on your PATH:
+From a checkout instead — this builds the same self-contained bundle that gets
+published, and puts `linkweave` on your PATH:
 
 ```bash
 cd cli
