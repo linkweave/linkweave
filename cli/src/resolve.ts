@@ -1,6 +1,7 @@
 import type {
   CollectionResourceApi,
   CollectionSummaryJson,
+  FolderJson,
   FolderResourceApi,
   TagResourceApi,
 } from './api'
@@ -127,4 +128,28 @@ export async function resolveFolderId(
     parentId = created.id
   }
   return parentId!
+}
+
+/**
+ * Builds every folder's full path (`Dev/TypeScript`), so both `folders list`
+ * and `--folder` completion speak the same syntax the flag accepts. Soft-
+ * deleted folders are skipped; the trashbin lists those separately.
+ */
+export function folderPaths(folderList: FolderJson[]): string[] {
+  const active = folderList.filter((f) => f.deletedAt === undefined || f.deletedAt === null)
+  const byId = new Map(active.map((folder) => [folder.id, folder]))
+  return active.map((folder) => {
+    const segments: string[] = []
+    let current: FolderJson | undefined = folder
+    // The guard is against a parent cycle in server data: walking one forever
+    // would hang `folders list` and, worse, the user's shell during completion.
+    const seen = new Set<string>()
+    while (current !== undefined && !seen.has(current.id)) {
+      seen.add(current.id)
+      segments.unshift(current.data.name)
+      const parentId: string | undefined = current.data.parentId
+      current = parentId === undefined ? undefined : byId.get(parentId)
+    }
+    return segments.join('/')
+  })
 }

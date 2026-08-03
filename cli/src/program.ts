@@ -3,6 +3,14 @@ import { Argument, Command, Option } from 'commander'
 import pkg from '../package.json'
 import { runBookmarksAdd, runBookmarksEdit, runBookmarksList, runBookmarksRm } from './commands/bookmarksCmd'
 import { runCollectionsList } from './commands/collectionsCmd'
+import { runFoldersList } from './commands/foldersCmd'
+import { runTagsList } from './commands/tagsCmd'
+import {
+  runTrashEmpty,
+  runTrashList,
+  runTrashPurge,
+  runTrashRestore,
+} from './commands/trashCmd'
 import { COMPLETION_SOURCES, runComplete } from './commands/completeCmd'
 import { COMPLETION_SHELLS, completionScript, type CompletionShell } from './commands/completionScriptGenerator'
 import { runLogin } from './commands/loginCmd'
@@ -110,6 +118,53 @@ Precedence: flags > environment > config file.`,
     .description('list your collections')
     .addOption(formatOption())
     .action(runCollectionsList)
+
+  const tagsCmd = program.command('tags').description('inspect tags')
+
+  tagsCmd
+    .command('list')
+    .description('list the tags in a collection')
+    .option('--collection <collection>', 'collection ID or name (defaults to your default collection)')
+    .addOption(formatOption())
+    .action(runTagsList)
+
+  const foldersCmd = program.command('folders').description('inspect folders')
+
+  foldersCmd
+    .command('list')
+    .description('list folder paths in a collection')
+    .option('--collection <collection>', 'collection ID or name (defaults to your default collection)')
+    .addOption(formatOption())
+    .action(runFoldersList)
+
+  const trashCmd = program
+    .command('trash')
+    .description('inspect and recover soft-deleted items')
+
+  trashCmd
+    .command('list')
+    .description('list everything in the trashbin')
+    .addOption(formatOption())
+    .action(runTrashList)
+
+  trashCmd
+    .command('restore')
+    .description('restore a bookmark or folder from the trashbin')
+    .argument('<id>', 'the bookmark or folder ID')
+    .action(runTrashRestore)
+
+  trashCmd
+    .command('purge')
+    .description('permanently delete one item from the trashbin')
+    .argument('<id>', 'the bookmark or folder ID')
+    .option('-y, --yes', 'skip the confirmation prompt')
+    .action(runTrashPurge)
+
+  trashCmd
+    .command('empty')
+    .description('permanently delete everything in the trashbin')
+    .option('-y, --yes', 'skip the confirmation prompt')
+    .action(runTrashEmpty)
 
   program
     .command('completion')

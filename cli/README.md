@@ -123,6 +123,31 @@ linkweave collections list --format json
 Shows ID, name, whether it is your default collection, your role, and whether
 it is shared.
 
+### `linkweave tags list` / `linkweave folders list`
+
+```bash
+linkweave tags list                      # ID + name, alphabetical
+linkweave folders list --format ids
+linkweave folders list --collection Work
+```
+
+Folders are shown as paths (`Dev/TypeScript`) — the same syntax `--folder`
+accepts, so output can be piped straight back into `bookmarks add`.
+
+### `linkweave trash`
+
+`bookmarks rm` soft-deletes; this is how you look at and undo that.
+
+```bash
+linkweave trash list                  # bookmarks and folders, newest first
+linkweave trash restore <id>          # works for either; no need to say which
+linkweave trash purge <id>            # permanent, asks first
+linkweave trash empty                 # permanent, asks first
+```
+
+`purge` and `empty` cannot be undone, so they prompt. `--yes` skips the
+prompt for scripts; without a terminal they refuse rather than assume consent.
+
 ### `linkweave login` / `linkweave logout`
 
 `login` stores the configuration (see below); `logout` deletes it. Logging in

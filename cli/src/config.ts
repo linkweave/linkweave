@@ -214,8 +214,12 @@ export function normalizeServer(url: string): string {
  */
 export function resolveEffectiveConfig(
   flags: ConfigFlags,
-  env: NodeJS.ProcessEnv = process.env,
-  stored: StoredConfig | undefined = loadStoredConfig(),
+  env: NodeJS.ProcessEnv,
+  // Required, not defaulted to loadStoredConfig(): a default would make
+  // `undefined` mean "read the disk" rather than "there is no stored config",
+  // so a caller that legitimately has none would trigger a second, unwanted
+  // read — with the stderr warning that shell completion suppresses.
+  stored: StoredConfig | undefined,
 ): EffectiveConfig {
   const apiKey = flags.apiKey ?? env['LINKWEAVE_API_KEY'] ?? stored?.apiKey
   const server = normalizeServer(

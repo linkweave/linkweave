@@ -9,6 +9,7 @@ export {
   CollectionResourceApi,
   FolderResourceApi,
   TagResourceApi,
+  TrashbinResourceApi,
   Configuration,
   ResponseError,
   FetchError,
@@ -22,5 +23,6 @@ export type {
   CollectionSummaryJson,
   FolderJson,
   TagJson,
+  TrashbinJson,
   UserInfoJson,
 } from '../../frontend/src/api/generated/index'

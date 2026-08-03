@@ -5,6 +5,7 @@ import {
   Configuration,
   FolderResourceApi,
   TagResourceApi,
+  TrashbinResourceApi,
 } from './api'
 import type { EffectiveConfig } from './config'
 import { CliError, NOT_AUTHENTICATED_MESSAGE } from './errors'
@@ -15,6 +16,7 @@ export interface ApiClients {
   collections: CollectionResourceApi
   folders: FolderResourceApi
   tags: TagResourceApi
+  trash: TrashbinResourceApi
 }
 
 /** Builds authenticated API clients. Generated paths already include `/api`. */
@@ -29,6 +31,7 @@ export function createClients(server: string, apiKey: string): ApiClients {
     collections: new CollectionResourceApi(configuration),
     folders: new FolderResourceApi(configuration),
     tags: new TagResourceApi(configuration),
+    trash: new TrashbinResourceApi(configuration),
   }
 }
 
