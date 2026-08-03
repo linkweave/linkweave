@@ -17,7 +17,7 @@
 ## Preconditions
 
 - The user has created at least one active API key via UC-077.
-- The client has the raw API key (e.g., stored in `~/.linkweave/config.json` or set via `LINKWEAVE_API_KEY` environment variable).
+- The client has the raw API key (e.g., stored in `$XDG_CONFIG_HOME/linkweave/config.json` or set via `LINKWEAVE_API_KEY` environment variable).
 
 ## Main Success Scenario
 

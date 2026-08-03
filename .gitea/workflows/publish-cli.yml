@@ -1,0 +1,76 @@
+name: Publish CLI
+
+# Linkweave CLI releases are decoupled from the application's `v*` tags (AD-5 in
+# docs/cli-tool.md): the CLI iterates on its own 0.x line while the app is on
+# 1.x. A `cli-v*` tag deliberately does not reach build.yml, so cutting a CLI
+# release never rebuilds the container images, the frontend or the extension,
+# and can never trigger a deploy.
+on:
+  push:
+    tags: ['cli-v*']
+
+concurrency:
+  # Never cancel a publish half-way: the registry write is not reversible.
+  group: publish-cli-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: cli/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: cli
+        run: pnpm install --frozen-lockfile
+
+      # The tag is what a human reads; package.json is what npm publishes. If
+      # they disagree the wrong version ships under the right name, so refuse
+      # rather than guess.
+      - name: Check the tag matches package.json
+        working-directory: cli
+        env:
+          GIT_REF_NAME: ${{ gitea.ref_name }}
+        run: |
+          set -eu
+          tagged="${GIT_REF_NAME#cli-v}"
+          packaged="$(node -p "require('./package.json').version")"
+          if [ "$tagged" != "$packaged" ]; then
+            echo "tag ${GIT_REF_NAME} implies ${tagged}, but package.json says ${packaged}" >&2
+            exit 1
+          fi
+          echo "publishing ${packaged}"
+
+      # Written to the home directory rather than cli/, so it cannot be picked
+      # up in the tarball. The token stays a literal ${NPM_TOKEN} in the file
+      # and is expanded from the environment at publish time.
+      - name: Authenticate to npm
+        run: echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > ~/.npmrc
+
+      # prepublishOnly re-runs type-check, unit tests and the build, so a
+      # broken bundle cannot reach the registry even on a manual re-run.
+      # --no-git-checks: publishing happens from a detached tag checkout.
+      - name: Publish
+        working-directory: cli
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -eu
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          if npm view "${name}@${version}" version >/dev/null 2>&1; then
+            echo "${name}@${version} is already on the registry — nothing to do"
+            exit 0
+          fi
+          pnpm publish --no-git-checks --access public

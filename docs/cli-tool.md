@@ -1,7 +1,7 @@
 # CLI Tool & API Key Architecture
 
-**Status:** In Progress — Phases 1–2 complete (API key backend + web UI); CLI (Phases 3–5) pending
-**Date:** 2026-05-10
+**Status:** In Progress — Phases 1–4 complete (API key backend, web UI, CLI with bookmark commands), shell completions done; npm publishing (Phase 5) pending
+**Date:** 2026-05-10 (updated 2026-07-17)
 
 ---
 
@@ -60,6 +60,22 @@ This document describes the architecture for adding a command-line interface (CL
 - API changes break CLI builds immediately in CI (not weeks later).
 - One `git tag` covers API + frontend + CLI.
 
+> **Amended by AD-5 (2026-08-03):** the last point no longer holds. Sharing a
+> repository still gives the first two benefits, but the CLI is released on its
+> own `cli-v*` tag rather than the application's `v*`.
+
+### AD-2b: CLI Reuses the Frontend's Generated Client (2026-07-15)
+
+**Decision:** The CLI imports the checked-in typescript-fetch client from
+`frontend/src/api/generated` (via `cli/src/api.ts`) and tsup bundles it into
+`cli/dist/main.js`, so the published package is self-contained.
+
+**Deliberately deferred:** extracting the client into a shared workspace
+package (root pnpm workspace + `packages/api-client`). With only two
+consumers and standalone-package CI, the restructuring isn't worth it yet.
+Revisit when a third consumer needs the client (desktop app,
+screenshot-service) or when npm publishing (Phase 5) becomes concrete.
+
 ### AD-3: TypeScript
 
 **Decision:** The CLI is written in TypeScript, reusing the `typescript-fetch` client generated from the OpenAPI spec.
@@ -78,44 +94,94 @@ This document describes the architecture for adding a command-line interface (CL
 - `AbstractEntityListener` populates audit fields via `CurrentUserService`, which depends on `SecurityIdentity` — only available through the HTTP auth chain.
 - Business logic lives in Service classes; duplicating it in the CLI would violate DRY and the project's layered architecture.
 
+### AD-5: CLI Versions and Releases Independently (2026-08-03)
+
+**Decision:** The CLI has its own version line and its own tag prefix,
+`cli-v<semver>` (e.g. `cli-v0.1.0`), published by
+`.gitea/workflows/publish-cli.yml`. The application keeps `v<semver>`.
+
+**Rationale:**
+- The CLI is at `0.1.0` while the application is at `1.5.0`. Publishing the
+  CLI's first release as `1.5.0` would claim a maturity it does not have and
+  burn every `0.x` number that signals "the flags may still move".
+- The two ship on different clocks. A CLI bug fix should not wait for an
+  application release, and an application release should not push a new CLI
+  version at users for no reason.
+- npm versions are immutable. Coupling to a tag that is cut for unrelated
+  reasons spends version numbers that cannot be reclaimed.
+
+**Consequences:**
+- `cli-v*` is deliberately *not* a trigger in `build.yml`, so a CLI release
+  never rebuilds the container images, the frontend or the extension, and
+  cannot reach the `deploy` job (which gates on `refs/tags/v`).
+- The publish workflow refuses to run when the tag and `cli/package.json`
+  disagree, and no-ops when that version is already on the registry.
+- The compatibility guarantee is unchanged: the CLI is built against the
+  checked-in generated client (AD-2b), so CI still breaks on an API change
+  regardless of which tag ships when.
+
 ---
 
 ## Repository Structure
 
 ```
 linkweave/
-├── api/                                    # Existing Quarkus backend
-│   └── src/main/java/org/linkweave/api/
-│       ├── auth/
-│       │   ├── AuthResource.java           # Existing
-│       │   ├── ApiKeyResource.java         # NEW: CRUD for API keys
-│       │   └── ...
-│       └── ...
-├── frontend/                               # Existing Vue.js frontend
-│   └── ...
-├── cli/                                    # NEW: CLI tool
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── src/
-│   │   ├── main.ts                         # CLI entry point (commander)
-│   │   ├── commands/
-│   │   │   ├── login.ts                    # linkweave login
-│   │   │   ├── logout.ts                   # linkweave logout
-│   │   │   ├── bookmarks/
-│   │   │   │   ├── add.ts                  # linkweave bookmarks add <url>
-│   │   │   │   ├── list.ts                 # linkweave bookmarks list
-│   │   │   │   ├── edit.ts                 # linkweave bookmarks edit <id>
-│   │   │   │   └── rm.ts                   # linkweave bookmarks rm <id>
-│   │   │   └── collections/
-│   │   │       └── list.ts                 # linkweave collections list
-│   │   ├── api/
-│   │   │   └── generated/                  # Generated from /q/openapi
-│   │   ├── config.ts                       # Read/write ~/.linkweave/config.json
-│   │   └── client.ts                       # API client with X-API-Key injection
-│   └── tests/
-├── docs/                                   # Documentation (this file)
+├── api/                                     # Quarkus backend
+│   └── src/main/java/org/linkweave/api/auth/
+│       ├── AuthResource.java                # Existing
+│       └── apikey/                          # API key credential type
+│           ├── ApiKeyResource.java          # CRUD for API keys
+│           ├── ApiKeyService.java
+│           ├── ApiKeyRepo.java
+│           ├── ApiKeyAuthMechanism.java     # X-API-Key -> SecurityIdentity
+│           ├── ApiKeyIdentityProvider.java
+│           └── ...
+├── frontend/                                # Vue.js frontend
+│   └── src/api/generated/                   # typescript-fetch client, shared
+│                                            # with the CLI (see AD-2b)
+├── cli/                                     # CLI tool
+│   ├── package.json                         # @linkweave/cli, bin -> dist/main.js
+│   ├── tsup.config.ts                       # bundles src + generated client
+│   ├── vitest.config.ts
+│   ├── README.md                            # user-facing CLI docs
+│   └── src/
+│       ├── main.ts                          # entry point: parse, map errors, exit code
+│       ├── program.ts                       # commander command tree
+│       ├── api.ts                           # re-exports the frontend's generated client
+│       ├── client.ts                        # API clients with X-API-Key injection
+│       ├── config.ts                        # XDG config path (0600, atomic)
+│       ├── cache.ts                         # 60s completion-candidate cache
+│       ├── errors.ts                        # HTTP/TLS failures -> user-facing messages
+│       ├── output.ts                        # --format table/json/ids rendering
+│       ├── resolve.ts                       # collection/tag/folder name -> ID
+│       ├── *.spec.ts                        # vitest unit tests, beside their subject
+│       └── commands/
+│           ├── loginCmd.ts                  # linkweave login
+│           ├── logoutCmd.ts                 # linkweave logout
+│           ├── bookmarksCmd.ts              # bookmarks add | list | edit | rm
+│           ├── collectionsCmd.ts            # collections list
+│           ├── completeCmd.ts               # hidden __complete value callback
+│           ├── commandHelpers.ts            # config + error-handling plumbing
+│           └── completionScriptGenerator.ts # emits the bash/zsh/fish script
+│                                            # (the last two carry no Cmd suffix:
+│                                            #  they are helpers, not commands)
+├── frontend/e2e/cli.spec.ts                 # CLI e2e, drives the built binary
+├── docs/                                    # Documentation (this file)
 └── ...
 ```
+
+Notes on the layout as built:
+
+- **Commands are one file per group, not a directory per group.** `bookmarks
+  add|list|edit|rm` are four exported `runBookmarks*` functions in
+  `bookmarksCmd.ts`; they share collection/tag/folder resolution, and splitting
+  them across four files bought nothing. `program.ts` owns the whole commander
+  tree, so the flag surface is readable in one place.
+- **No `cli/src/api/generated/`.** The CLI imports the frontend's checked-in
+  client through `cli/src/api.ts` and tsup inlines it at build time (AD-2b).
+- **No `cli/tests/`.** Unit tests sit next to their subject as `*.spec.ts`;
+  end-to-end tests live in the Playwright suite because they need a running
+  server.
 
 ---
 
@@ -125,12 +191,12 @@ linkweave/
 
 #### 1a. Entity & Repository
 
-- **`ApiKey` entity** (`api/src/main/java/org/linkweave/api/auth/ApiKey.java`)
+- **`ApiKey` entity** (`api/src/main/java/org/linkweave/api/auth/apikey/ApiKey.java`)
   - Fields: `id`, `user` (ManyToOne), `name`, `keyHash`, `keyPrefix`, `createdAt`, `lastUsedAt`, `revokedAt`
   - Extends `AbstractEntity` (gets `userErstellt`/`userMutiert` for audit)
   - `@Column` lengths from `DbConst`
 
-- **`ApiKeyRepo`** (`api/src/main/java/org/linkweave/api/auth/ApiKeyRepo.java`)
+- **`ApiKeyRepo`** (`api/src/main/java/org/linkweave/api/auth/apikey/ApiKeyRepo.java`)
   - `findByKeyHash(String hash)` — for auth lookup
   - `findActiveByUserId(ID<User> userId)` — for listing
   - `countActiveByUserId(ID<User> userId)` — for max-key enforcement
@@ -144,7 +210,7 @@ linkweave/
 
 #### 1c. Service Layer
 
-- **`ApiKeyService`** (`api/src/main/java/org/linkweave/api/auth/ApiKeyService.java`)
+- **`ApiKeyService`** (`api/src/main/java/org/linkweave/api/auth/apikey/ApiKeyService.java`)
   - `createApiKey(ID<User> userId, String name)` — generates key, hashes, stores, returns raw key once
   - `listActiveKeys(ID<User> userId)` — returns all non-revoked keys for the user
   - `revokeKey(ID<User> userId, ID<ApiKey> keyId)` — sets `revokedAt`
@@ -153,7 +219,7 @@ linkweave/
 
 #### 1d. Resource Layer
 
-- **`ApiKeyResource`** (`api/src/main/java/org/linkweave/api/auth/ApiKeyResource.java`)
+- **`ApiKeyResource`** (`api/src/main/java/org/linkweave/api/auth/apikey/ApiKeyResource.java`)
   - `@Authenticated` — requires web session (API keys cannot manage other API keys)
   - `POST /api/auth/api-keys` — create key
   - `GET /api/auth/api-keys` — list keys
@@ -163,7 +229,7 @@ linkweave/
 
 #### 1e. Authentication Mechanism
 
-- **`ApiKeyAuthenticationMechanism`** (`api/src/main/java/org/linkweave/infrastructure/auth/ApiKeyAuthenticationMechanism.java`)
+- **`ApiKeyAuthMechanism`** + **`ApiKeyIdentityProvider`** (`api/src/main/java/org/linkweave/api/auth/apikey/`)
   - Implements Quarkus `HttpAuthenticationMechanism`
   - Checks for `X-API-Key` header on every request
   - Strips `lw_` prefix, computes SHA-256, looks up via `ApiKeyService`
@@ -210,28 +276,68 @@ Implemented in `frontend/src/components/apikey/` and `frontend/src/stores/apiKey
 - [x] Revoke key confirmation
 - [x] One-time key display with copy (`ApiKeyRevealDialog.vue`)
 
-### Phase 3: CLI Scaffolding
+### Phase 3: CLI Scaffolding — ✅ Done
 
-- [ ] Create `cli/` directory with `package.json`
-- [ ] Set up TypeScript + commander
-- [ ] Configure OpenAPI client generation (reuse `typescript-fetch` pipeline)
-- [ ] Implement config management (`~/.linkweave/config.json`)
-- [ ] Implement `linkweave login` / `linkweave logout`
+Implemented in `cli/` (tsup bundle, `dist/main.js` bin entry).
 
-### Phase 4: CLI Bookmark Commands
+- [x] Create `cli/` directory with `package.json`
+- [x] Set up TypeScript + commander
+- [x] Reuse the generated `typescript-fetch` client (shared with the frontend
+      at `frontend/src/api/generated`, bundled into the CLI at build time)
+- [x] Implement config management (XDG config dir, 0600, env
+      overrides `LINKWEAVE_API_KEY`/`LINKWEAVE_SERVER`)
+- [x] Implement `linkweave login` / `linkweave logout`
 
-- [ ] `linkweave bookmarks add <url>`
-- [ ] `linkweave bookmarks list`
-- [ ] `linkweave bookmarks edit <id>`
-- [ ] `linkweave bookmarks rm <id>`
-- [ ] `linkweave collections list`
+### Phase 4: CLI Bookmark Commands — ✅ Done
+
+Vitest unit tests live next to the sources (`cli/src/*.spec.ts`); e2e tests
+run in the Playwright suite (`frontend/e2e/cli.spec.ts`) against a real
+server and are wired into the e2e CI workflow.
+
+- [x] `linkweave bookmarks add <url>` (tag-name resolution BR-019, folder-path
+      resolution BR-020, collection name/ID resolution A8)
+- [x] `linkweave bookmarks list` (`--format` table/json/ids, `--folder`/`--tag` filters)
+- [x] `linkweave bookmarks edit <id>` (via `GET /api/bookmarks/{id}`, added for
+      the CLI so edit needs no collection scan and missing IDs are a clean 404)
+- [x] `linkweave bookmarks rm <id>`
+- [x] `linkweave collections list`
 
 ### Phase 5: Polish & Distribution
 
-- [ ] Shell completions (bash/zsh/fish)
-- [ ] `npm install -g @linkweave/cli` publishing setup
-- [ ] README with installation instructions
-- [ ] `--insecure` flag for self-signed certs
+- [x] Shell completions (bash/zsh/fish): `linkweave completion <shell>` prints
+      a script generated at runtime from the commander command tree, so new
+      commands/flags are picked up automatically (`cli/src/commands/completionScriptGenerator.ts`)
+- [x] Value completion for `--collection`/`--tag`/`--folder` via a hidden
+      `linkweave __complete` callback (`cli/src/commands/completeCmd.ts`), cached
+      60s in `$XDG_CACHE_HOME/linkweave/completion-cache.json`. Fails silently:
+      an error printed during completion corrupts the user's command line.
+      Generated bash targets 3.2 (macOS), so no `mapfile`.
+- [x] Packaging verified: `npm pack` produces a 25 kB tarball (LICENSE, README,
+      package.json and the single bundled `dist/main.js`), and installing it
+      globally yields a working `linkweave` binary with the right shebang and
+      bin symlink. Guarded on every PR by the `test-cli` job, which packs the
+      package and installs it into a throwaway prefix.
+- [x] Release automation: `.gitea/workflows/publish-cli.yml`, triggered by a
+      `cli-v*` tag (AD-5). Verifies the tag against `cli/package.json`, no-ops
+      when that version is already on the registry, and publishes with
+      `pnpm publish --no-git-checks --access public`.
+- [ ] **Blocked on credentials, the last step before first release:**
+      - [ ] Confirm the `@linkweave` npm scope is ours. `npmjs.com/org/linkweave`
+            answers `403` rather than `404`, which suggests it may be taken —
+            check while logged in. If it is, rename to `@dividbzero/linkweave-cli`
+            or unscoped `linkweave-cli` in `cli/package.json`.
+      - [ ] Create a granular **Automation** token (bypasses 2FA, which CI
+            cannot satisfy), scoped to the package with write access.
+      - [ ] Add it as the Gitea secret `NPM_TOKEN`.
+      - [ ] Publish `0.1.0` by hand once (`npm publish --dry-run`, then for
+            real), to check how the page and README render before automation
+            takes over. Afterwards, releases are `git tag cli-v0.1.1 && git push
+            --tags`.
+- [ ] Decide whether BUSL-1.1 is the intended licence for a package people
+      `npm install -g`. It is a valid SPDX id and npm accepts it, but it is not
+      OSI-approved and installers tend to assume permissive terms.
+- [x] README with installation instructions (`cli/README.md`)
+- [x] `--insecure` flag for self-signed certs
 
 ---
 
@@ -241,7 +347,7 @@ Implemented in `frontend/src/components/apikey/` and `frontend/src/stores/apiKey
 |---|---|---|
 | Raw API key | Stored in DB | Never stored; only SHA-256 hash is persisted |
 | Raw API key | Logged | Never logged; only prefix appears in logs |
-| `~/.linkweave/config.json` | Read by other users | File permissions set to `0600` |
+| `$XDG_CONFIG_HOME/linkweave/config.json` | Read by other users | File permissions set to `0600` |
 | API key in transit | Intercepted | TLS required; no HTTP fallback |
 | Key brute-force | Guessed by attacker | 32 bytes of entropy (2^256); infeasible |
 | Key enumeration | Attacker probes keys | Constant-time hash comparison; generic error messages |

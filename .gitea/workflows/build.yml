@@ -147,6 +147,56 @@ jobs:
         working-directory: frontend
         run: pnpm test
 
+  test-cli:
+    runs-on: ubuntu-latest
+    strategy:
+      # cli/package.json claims engines.node >= 22, and npm only warns when
+      # that is unmet — so the floor has to be proven, not asserted. 22 is the
+      # oldest supported LTS, 24 is what most people will actually run.
+      fail-fast: false
+      matrix:
+        node-version: [22, 24]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
+          cache-dependency-path: cli/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: cli
+        run: pnpm install --frozen-lockfile
+
+      # `check` = tsc --noEmit + vitest run; the build proves the published
+      # bundle (which inlines the generated API client) still assembles.
+      - name: Type-check, unit tests, build
+        working-directory: cli
+        run: |
+          pnpm run check
+          pnpm run build
+
+      # Packaging breaks silently: a wrong `files` or `bin` entry only shows up
+      # when somebody installs the published package. Pack it and install it
+      # into a throwaway prefix so that failure lands on the PR instead of on
+      # a release tag.
+      - name: Smoke-test the packed package
+        working-directory: cli
+        run: |
+          set -eu
+          prefix="$(mktemp -d)"
+          tarball="$(npm pack --silent)"
+          npm install -g --prefix "$prefix" "./$tarball"
+          "$prefix/bin/linkweave" --version
+          "$prefix/bin/linkweave" completion bash > /dev/null
+          rm -rf "$prefix" "$tarball"
+
   build-frontend:
     needs: [test-frontend]
     runs-on: ubuntu-latest
