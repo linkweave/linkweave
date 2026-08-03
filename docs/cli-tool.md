@@ -125,6 +125,30 @@ remaining trigger is a third consumer (desktop app, screenshot-service).
   checked-in generated client (AD-2b), so CI still breaks on an API change
   regardless of which tag ships when.
 
+### AD-6: The CLI Package Is MIT, the Rest Stays BUSL (2026-08-04)
+
+**Decision:** `cli/` is licensed MIT, covering its sources and the generated
+API client bundled into `dist/main.js`. The server and web UI keep BUSL-1.1.
+
+**Rationale:**
+- BUSL grants non-production use only until its Change Date, and its Licensed
+  Work is "LinkWeave" — so as written it did not permit someone to run
+  `npm install -g @linkweave/cli` and use it for work. That is not what the
+  licence is for. BUSL protects against a competitor reselling the *service*;
+  a client people install to talk to their own instance is not that.
+- Corporate licence scanners flag BUSL as restricted, which would have blocked
+  the CLI in exactly the environments a bookmark manager is used in, while
+  protecting nothing.
+
+**Consequences:**
+- `0.1.0` was published under BUSL-1.1 and cannot be changed; the MIT grant
+  starts at `0.2.0`.
+- The bundled API client ships under MIT as a result. It is generated from our
+  own OpenAPI spec and authored solely by the Licensor, so this is ours to
+  grant — but it is a deliberate grant, not a side effect of bundling.
+- The repository root LICENSE remains BUSL-1.1; `cli/LICENSE` is the narrower
+  grant for that subtree.
+
 ---
 
 ## Repository Structure
@@ -335,10 +359,8 @@ server and are wired into the e2e CI workflow.
         for every org, existing or not.
       - A brand-new package is briefly invisible to unauthenticated registry
         reads. Do not read a 404 in the first minutes as a failed publish.
-- [ ] Decide whether BUSL-1.1 is the intended licence for a package people
-      `npm install -g`. It is a valid SPDX id and npm accepts it, but it is not
-      OSI-approved and installers tend to assume permissive terms. Note this is
-      now published against `0.1.0` and can only be changed going forward.
+- [x] Licence settled: the CLI package is MIT from `0.2.0` (AD-6). `0.1.0`
+      remains BUSL-1.1 on the registry — npm versions are immutable.
 - [x] README with installation instructions (`cli/README.md`)
 - [x] `--insecure` flag for self-signed certs
 

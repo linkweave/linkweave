@@ -314,3 +314,16 @@ trigger a deploy.
 
 Related docs: `docs/cli-tool.md`, use cases UC-079 (manage bookmarks via CLI)
 and UC-080 (configure CLI login).
+
+## Licence
+
+MIT (see `LICENSE`), covering this package — the CLI sources and the API
+client bundled into `dist/main.js`.
+
+The rest of LinkWeave (server and web UI) is under the Business Source License
+1.1. The client is deliberately separate: BUSL exists to stop someone reselling
+the service, which is no reason to restrict a tool people install to talk to
+their own instance.
+
+Version `0.1.0` was published under BUSL-1.1 and stays that way — a licence
+change applies only from `0.2.0` onward.

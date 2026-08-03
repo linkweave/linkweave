@@ -1,6 +1,6 @@
 {
   "name": "@linkweave/cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Manage LinkWeave bookmarks from the command line",
   "keywords": [
     "bookmarks",
@@ -14,7 +14,7 @@
     "url": "git+https://github.com/linkweave/linkweave.git",
     "directory": "cli"
   },
-  "license": "BUSL-1.1",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "linkweave": "dist/main.js"
