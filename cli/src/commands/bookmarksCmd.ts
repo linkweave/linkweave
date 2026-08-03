@@ -11,7 +11,7 @@ import {
   effectiveConfig,
   resolveTargetCollectionId,
   withHttpErrors,
-} from './shared'
+} from './commandHelpers'
 
 export interface BookmarkAddOptions {
   title?: string

@@ -131,8 +131,8 @@ linkweave/
 │           ├── bookmarksCmd.ts              # bookmarks add | list | edit | rm
 │           ├── collectionsCmd.ts            # collections list
 │           ├── completeCmd.ts               # hidden __complete value callback
-│           ├── completionScriptGenerator.ts # emits the bash/zsh/fish script
-│           └── shared.ts                    # config + error-handling helpers
+│           ├── commandHelpers.ts            # config + error-handling plumbing
+│           └── completionScriptGenerator.ts # emits the bash/zsh/fish script
 │                                            # (the last two carry no Cmd suffix:
 │                                            #  they are helpers, not commands)
 ├── frontend/e2e/cli.spec.ts                 # CLI e2e, drives the built binary

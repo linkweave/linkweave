@@ -3,7 +3,7 @@ import type { Command } from 'commander'
 import { CollectionSummaryJsonToJSON } from '../api'
 import { createAuthenticatedClients } from '../client'
 import { parseFormat, renderTable } from '../output'
-import { effectiveConfig, withHttpErrors } from './shared'
+import { effectiveConfig, withHttpErrors } from './commandHelpers'
 
 export interface CollectionListOptions {
   format?: string

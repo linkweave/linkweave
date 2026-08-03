@@ -6,7 +6,7 @@ import { readCached, writeCached } from '../cache'
 import type { FolderJson } from '../api'
 import { configPath, loadStoredConfig, resolveEffectiveConfig } from '../config'
 import { resolveCollectionId } from '../resolve'
-import type { GlobalOptions } from './shared'
+import type { GlobalOptions } from './commandHelpers'
 
 /** Value sets the shell scripts can ask for. */
 export const COMPLETION_SOURCES = ['collections', 'tags', 'folders'] as const
