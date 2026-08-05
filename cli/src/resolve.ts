@@ -1,6 +1,7 @@
 import type {
   CollectionResourceApi,
   CollectionSummaryJson,
+  FolderJson,
   FolderResourceApi,
   TagResourceApi,
 } from './api'
@@ -105,7 +106,7 @@ export async function resolveFolderId(
   if (segments.length === 0) throw new CliError(`Invalid folder path: '${path}'`)
 
   const { folderList } = await folders.apiFoldersGet({ collectionId })
-  const active = folderList.filter((f) => f.deletedAt === undefined || f.deletedAt === null)
+  const active = folderList.filter(isLiveFolder)
 
   let parentId: string | undefined = undefined
   for (const segment of segments) {
@@ -127,4 +128,44 @@ export async function resolveFolderId(
     parentId = created.id
   }
   return parentId!
+}
+
+/** A folder is soft-deleted until the trashbin is emptied or it is restored. */
+export function isLiveFolder(folder: FolderJson): boolean {
+  return folder.deletedAt === undefined || folder.deletedAt === null
+}
+
+export interface FolderPath {
+  folder: FolderJson
+  /** Full path, e.g. `Dev/TypeScript`, built from the folders passed in. */
+  path: string
+}
+
+/**
+ * Pairs each folder with its full path, so `folders list` and `--folder`
+ * completion speak the same syntax the flag accepts.
+ *
+ * Returns pairs rather than a bare `string[]`, and filters nothing: a caller
+ * that had to line a path array up against its own filtered copy of the input
+ * would be one predicate change away from silently mismatching ids and paths.
+ * Callers select what belongs in the result — `isLiveFolder` for the live
+ * listings, the trashed set as-is for the trashbin — and the pairing cannot
+ * drift from what they passed.
+ */
+export function folderPaths(folderList: FolderJson[]): FolderPath[] {
+  const byId = new Map(folderList.map((folder) => [folder.id, folder]))
+  return folderList.map((folder) => {
+    const segments: string[] = []
+    let current: FolderJson | undefined = folder
+    // The guard is against a parent cycle in server data: walking one forever
+    // would hang `folders list` and, worse, the user's shell during completion.
+    const seen = new Set<string>()
+    while (current !== undefined && !seen.has(current.id)) {
+      seen.add(current.id)
+      segments.unshift(current.data.name)
+      const parentId: string | undefined = current.data.parentId
+      current = parentId === undefined ? undefined : byId.get(parentId)
+    }
+    return { folder, path: segments.join('/') }
+  })
 }

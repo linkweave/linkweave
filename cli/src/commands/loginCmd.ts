@@ -16,6 +16,8 @@ import { CliError, EXIT_USAGE, isTlsError, toCliError } from '../errors'
 export interface LoginOptions {
   server?: string
   apiKey?: string
+  /** Stored, so shell completion against a self-signed server also works. */
+  insecure?: boolean
 }
 
 const KEY_FORMAT_MESSAGE = 'Invalid API key format. Expected: lw_ followed by 64 hex characters.'
@@ -81,7 +83,7 @@ export async function runLogin(options: LoginOptions): Promise<void> {
   }
 
   // BR-024: validate against the server before storing anything.
-  const clients = createClients(server, apiKey)
+  const clients = createClients(server, apiKey, options.insecure === true)
   let me
   try {
     me = await clients.auth.apiAuthMeGet()
@@ -110,6 +112,9 @@ export async function runLogin(options: LoginOptions): Promise<void> {
     apiKey,
     userEmail: me.email,
     defaultCollectionId: me.defaultCollectionId,
+    // Persisted so the completion scripts, which cannot pass flags, still
+    // reach a server with a self-signed certificate.
+    ...(options.insecure === true ? { insecure: true } : {}),
   })
   console.log(`✓ Logged in as ${me.email}. Configuration saved to ${configPath()}`)
 }

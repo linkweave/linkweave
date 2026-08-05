@@ -1,5 +1,6 @@
 import {
   chmodSync,
+  mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
@@ -111,10 +112,69 @@ describe('resolveEffectiveConfig', () => {
     expect(config.defaultCollectionId).toBeUndefined()
   })
 
+  it('shouldCarryTheInsecureFlagThrough', () => {
+    expect(resolveEffectiveConfig({ insecure: true }, {}, undefined).insecure).toBe(true)
+    expect(resolveEffectiveConfig({}, {}, undefined).insecure).toBe(false)
+  })
+
+  it('shouldHonourAStoredInsecureForTheSameServer', () => {
+    // The completion scripts cannot pass flags, so this is the only way a
+    // self-signed dev server is reachable from a <TAB>.
+    const stored = { ...STORED, insecure: true }
+
+    expect(resolveEffectiveConfig({}, {}, stored).insecure).toBe(true)
+  })
+
+  it('shouldKeepStoredInsecureEvenWhenAnotherKeyIsUsed', () => {
+    // Trusting a certificate is a property of the host, not of the caller.
+    const stored = { ...STORED, insecure: true }
+
+    expect(resolveEffectiveConfig({}, { LINKWEAVE_API_KEY: KEY_B }, stored).insecure).toBe(true)
+  })
+
+  it('shouldNotLeakStoredInsecureToADifferentServer', () => {
+    // ARRANGE: the stored opt-out was for the dev box, not for production.
+    const stored = { ...STORED, insecure: true }
+
+    // ACT
+    const config = resolveEffectiveConfig({ server: 'https://other.example' }, {}, stored)
+
+    // ASSERT
+    expect(config.insecure).toBe(false)
+  })
+
   it('shouldUseDefaultServerWithoutAnySource', () => {
+    // `stored` is a required parameter precisely so that this `undefined`
+    // means "there is no stored config" and cannot fall back to reading the
+    // caller's real ~/.config/linkweave/config.json.
     const config = resolveEffectiveConfig({}, {}, undefined)
     expect(config.server).toBe(DEFAULT_SERVER)
     expect(config.apiKey).toBeUndefined()
+  })
+
+  it('shouldNotFallBackToAConfigOnDiskWhenToldThereIsNone', () => {
+    // ARRANGE: a config that a defaulted `stored` parameter would have picked
+    // up. That is not hypothetical — it made this suite pass or fail depending
+    // on whether whoever ran it happened to be logged in, and in production it
+    // made shell completion re-read the file with the stderr warning it
+    // deliberately suppresses.
+    const home = mkdtempSync(join(tmpdir(), 'linkweave-home-'))
+    try {
+      mkdirSync(join(home, '.config', 'linkweave'), { recursive: true })
+      writeFileSync(join(home, '.config', 'linkweave', 'config.json'), JSON.stringify(STORED))
+      vi.stubEnv('HOME', home)
+      vi.stubEnv('XDG_CONFIG_HOME', join(home, '.config'))
+
+      // ACT
+      const config = resolveEffectiveConfig({}, {}, undefined)
+
+      // ASSERT
+      expect(config.apiKey).toBeUndefined()
+      expect(config.server).toBe(DEFAULT_SERVER)
+    } finally {
+      vi.unstubAllEnvs()
+      rmSync(home, { recursive: true, force: true })
+    }
   })
 })
 

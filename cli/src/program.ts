@@ -3,6 +3,14 @@ import { Argument, Command, Option } from 'commander'
 import pkg from '../package.json'
 import { runBookmarksAdd, runBookmarksEdit, runBookmarksList, runBookmarksRm } from './commands/bookmarksCmd'
 import { runCollectionsList } from './commands/collectionsCmd'
+import { runFoldersList } from './commands/foldersCmd'
+import { runTagsList } from './commands/tagsCmd'
+import {
+  runTrashEmpty,
+  runTrashList,
+  runTrashPurge,
+  runTrashRestore,
+} from './commands/trashCmd'
 import { COMPLETION_SOURCES, runComplete } from './commands/completeCmd'
 import { COMPLETION_SHELLS, completionScript, type CompletionShell } from './commands/completionScriptGenerator'
 import { runLogin } from './commands/loginCmd'
@@ -23,7 +31,7 @@ export function buildProgram(): Command {
     .version(pkg.version, '-v, --version')
     .option('-s, --server <url>', 'LinkWeave API server URL')
     .option('-k, --api-key <key>', 'API key (overrides config file and LINKWEAVE_API_KEY)')
-    .option('--insecure', 'disable TLS certificate verification (local development only)')
+    .option('--insecure', 'disable TLS certificate verification; login stores it for this server')
     .exitOverride()
     .addHelpText(
       'after',
@@ -43,21 +51,16 @@ Configuration is stored in ${configPath()} (XDG_CONFIG_HOME).
 Precedence: flags > environment > config file.`,
     )
 
-  program.hook('preAction', () => {
-    if (program.opts<{ insecure?: boolean }>().insecure) {
-      // UC-079 A7: opt-out for self-signed certs in local development. Node's
-      // built-in fetch honors this env var via the tls module defaults.
-      process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0'
-      process.stderr.write('⚠ TLS verification disabled. Only use this with trusted servers.\n')
-    }
-  })
-
   program
     .command('login')
     .description(`store the server URL and API key in ${configPath()}`)
     .action(async (_options, cmd: Command) => {
-      const { server, apiKey } = cmd.optsWithGlobals<{ server?: string; apiKey?: string }>()
-      await runLogin({ server, apiKey })
+      const { server, apiKey, insecure } = cmd.optsWithGlobals<{
+        server?: string
+        apiKey?: string
+        insecure?: boolean
+      }>()
+      await runLogin({ server, apiKey, insecure })
     })
 
   program
@@ -110,6 +113,53 @@ Precedence: flags > environment > config file.`,
     .description('list your collections')
     .addOption(formatOption())
     .action(runCollectionsList)
+
+  const tagsCmd = program.command('tags').description('inspect tags')
+
+  tagsCmd
+    .command('list')
+    .description('list the tags in a collection')
+    .option('--collection <collection>', 'collection ID or name (defaults to your default collection)')
+    .addOption(formatOption())
+    .action(runTagsList)
+
+  const foldersCmd = program.command('folders').description('inspect folders')
+
+  foldersCmd
+    .command('list')
+    .description('list folder paths in a collection')
+    .option('--collection <collection>', 'collection ID or name (defaults to your default collection)')
+    .addOption(formatOption())
+    .action(runFoldersList)
+
+  const trashCmd = program
+    .command('trash')
+    .description('inspect and recover soft-deleted items')
+
+  trashCmd
+    .command('list')
+    .description('list everything in the trashbin')
+    .addOption(formatOption())
+    .action(runTrashList)
+
+  trashCmd
+    .command('restore')
+    .description('restore a bookmark or folder from the trashbin')
+    .argument('<id>', 'the bookmark or folder ID')
+    .action(runTrashRestore)
+
+  trashCmd
+    .command('purge')
+    .description('permanently delete one item from the trashbin')
+    .argument('<id>', 'the bookmark or folder ID')
+    .option('-y, --yes', 'skip the confirmation prompt')
+    .action(runTrashPurge)
+
+  trashCmd
+    .command('empty')
+    .description('permanently delete everything in the trashbin')
+    .option('-y, --yes', 'skip the confirmation prompt')
+    .action(runTrashEmpty)
 
   program
     .command('completion')

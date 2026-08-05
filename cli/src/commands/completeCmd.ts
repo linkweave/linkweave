@@ -3,9 +3,8 @@ import type { Command } from 'commander'
 import type { ApiClients } from '../client'
 import { createAuthenticatedClients } from '../client'
 import { readCached, writeCached } from '../cache'
-import type { FolderJson } from '../api'
 import { configPath, loadStoredConfig, resolveEffectiveConfig } from '../config'
-import { resolveCollectionId } from '../resolve'
+import { folderPaths, isLiveFolder, resolveCollectionId } from '../resolve'
 import type { GlobalOptions } from './commandHelpers'
 
 /** Value sets the shell scripts can ask for. */
@@ -23,29 +22,6 @@ const REQUEST_TIMEOUT_MS = 1500
 export interface CompleteOptions {
   /** Collection ID or name scoping `tags`/`folders`, from the command line. */
   collection?: string
-}
-
-/**
- * Builds every folder's full path (`Dev/TypeScript`), so `--folder` completes
- * against the same syntax the flag accepts.
- */
-function folderPaths(folderList: FolderJson[]): string[] {
-  const active = folderList.filter((f) => f.deletedAt === undefined || f.deletedAt === null)
-  const byId = new Map(active.map((folder) => [folder.id, folder]))
-  return active.map((folder) => {
-    const segments: string[] = []
-    let current: FolderJson | undefined = folder
-    // The guard is against a parent cycle in server data: a completion helper
-    // that spins forever would wedge the user's shell.
-    const seen = new Set<string>()
-    while (current !== undefined && !seen.has(current.id)) {
-      seen.add(current.id)
-      segments.unshift(current.data.name)
-      const parentId: string | undefined = current.data.parentId
-      current = parentId === undefined ? undefined : byId.get(parentId)
-    }
-    return segments.join('/')
-  })
 }
 
 async function fetchCandidates(
@@ -72,7 +48,7 @@ async function fetchCandidates(
     return tagList.map((tag) => tag.data.name)
   }
   const { folderList } = await clients.folders.apiFoldersGet({ collectionId }, { signal })
-  return folderPaths(folderList)
+  return folderPaths(folderList.filter(isLiveFolder)).map((entry) => entry.path)
 }
 
 /**
@@ -95,7 +71,7 @@ export async function runComplete(
   try {
     const globals = cmd.optsWithGlobals<GlobalOptions>()
     const config = resolveEffectiveConfig(
-      { server: globals.server, apiKey: globals.apiKey },
+      { server: globals.server, apiKey: globals.apiKey, insecure: globals.insecure },
       process.env,
       loadStoredConfig(configPath(), () => {}),
     )

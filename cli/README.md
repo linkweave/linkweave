@@ -18,8 +18,8 @@ CI.
 npm install -g @linkweave/cli
 ```
 
-From a checkout instead — this builds the same self-contained bundle that gets
-published, and puts `linkweave` on your PATH:
+From a checkout instead — this builds the same bundle that gets published, and
+puts `linkweave` on your PATH:
 
 ```bash
 cd cli
@@ -122,6 +122,31 @@ linkweave collections list --format json
 
 Shows ID, name, whether it is your default collection, your role, and whether
 it is shared.
+
+### `linkweave tags list` / `linkweave folders list`
+
+```bash
+linkweave tags list                      # ID + name, alphabetical
+linkweave folders list --format ids
+linkweave folders list --collection Work
+```
+
+Folders are shown as paths (`Dev/TypeScript`) — the same syntax `--folder`
+accepts, so output can be piped straight back into `bookmarks add`.
+
+### `linkweave trash`
+
+`bookmarks rm` soft-deletes; this is how you look at and undo that.
+
+```bash
+linkweave trash list                  # bookmarks and folders, newest first
+linkweave trash restore <id>          # works for either; no need to say which
+linkweave trash purge <id>            # permanent, asks first
+linkweave trash empty                 # permanent, asks first
+```
+
+`purge` and `empty` cannot be undone, so they prompt. `--yes` skips the
+prompt for scripts; without a terminal they refuse rather than assume consent.
 
 ### `linkweave login` / `linkweave logout`
 
@@ -233,13 +258,24 @@ linkweave -s https://localhost:8443 --insecure bookmarks list
 `--insecure` disables TLS certificate verification for the whole invocation —
 only use it with servers you control.
 
+`linkweave login --insecure` records the opt-out for that server, so later
+commands need no flag. That is also the only way tab completion can reach a
+server with a self-signed certificate: the generated scripts invoke
+`linkweave __complete` with no flags, so without the stored setting every
+completion fails TLS and silently offers nothing.
+
+The opt-out is keyed on the server, not on your identity — switching to
+another server with `-s` verifies certificates normally. Every command that
+runs without verification says so on stderr.
+
 ## Development
 
 The API client is not hand-written: it is the typescript-fetch client
 generated from the server's OpenAPI spec, shared with the frontend
 (`frontend/src/api/generated`, regenerate with `pnpm run generate-api` there).
-`tsup` bundles it into `dist/main.js`, so the published package is
-self-contained.
+`tsup` bundles it into `dist/main.js`, so the published package carries the
+client rather than fetching it. `commander` stays a normal dependency — tsup
+leaves `dependencies` external — so a global install pulls two packages.
 
 ```bash
 pnpm run check        # type-check + unit tests
@@ -278,3 +314,16 @@ trigger a deploy.
 
 Related docs: `docs/cli-tool.md`, use cases UC-079 (manage bookmarks via CLI)
 and UC-080 (configure CLI login).
+
+## Licence
+
+MIT (see `LICENSE`), covering this package — the CLI sources and the API
+client bundled into `dist/main.js`.
+
+The rest of LinkWeave (server and web UI) is under the Business Source License
+1.1. The client is deliberately separate: BUSL exists to stop someone reselling
+the service, which is no reason to restrict a tool people install to talk to
+their own instance.
+
+Version `0.1.0` was published under BUSL-1.1 and stays that way — a licence
+change applies only from `0.2.0` onward.

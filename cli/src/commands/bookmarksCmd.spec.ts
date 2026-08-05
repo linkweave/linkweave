@@ -15,7 +15,10 @@ let clients: {
   folders: { apiFoldersGet: ReturnType<typeof vi.fn>; apiFoldersPost: ReturnType<typeof vi.fn> }
 }
 
-vi.mock('../config', () => ({ resolveEffectiveConfig: () => CONFIG }))
+vi.mock('../config', () => ({
+  resolveEffectiveConfig: () => CONFIG,
+  loadStoredConfig: () => undefined,
+}))
 vi.mock('../client', () => ({ createAuthenticatedClients: () => clients }))
 
 const { runBookmarksAdd, runBookmarksEdit, runBookmarksList } = await import('./bookmarksCmd')

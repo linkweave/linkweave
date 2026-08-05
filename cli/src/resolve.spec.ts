@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { CollectionSummaryJson, FolderJson, TagJson } from './api'
 import { CliError } from './errors'
 import {
+  folderPaths,
   looksLikeId,
   parseTagNames,
   resolveCollectionId,
@@ -163,5 +164,59 @@ describe('resolveFolderId', () => {
 describe('CliError', () => {
   it('shouldDefaultToExitCodeOne', () => {
     expect(new CliError('boom').exitCode).toBe(1)
+  })
+})
+
+describe('folderPaths', () => {
+  it('shouldPairEachFolderWithItsOwnPath', () => {
+    // ARRANGE: deliberately out of tree order, and a child listed before its
+    // parent — the pairing must follow the input, not the hierarchy.
+    const input = [folder('f2', 'TypeScript', 'f1'), folder('f1', 'Dev'), folder('f3', 'Ops')]
+
+    // ACT
+    const paths = folderPaths(input)
+
+    // ASSERT: ids travel with their paths, so a caller cannot line up the
+    // wrong pair the way a parallel string[] invited.
+    expect(paths.map((entry) => [entry.folder.id, entry.path])).toEqual([
+      ['f2', 'Dev/TypeScript'],
+      ['f1', 'Dev'],
+      ['f3', 'Ops'],
+    ])
+  })
+
+  it('shouldBuildPathsThroughSeveralLevels', () => {
+    const input = [
+      folder('f3', 'Deep', 'f2'),
+      folder('f2', 'Java', 'f1'),
+      folder('f1', 'Dev'),
+    ]
+
+    expect(folderPaths(input).map((e) => e.path)).toEqual(['Dev/Java/Deep', 'Dev/Java', 'Dev'])
+  })
+
+  it('shouldNotFilterAnything', () => {
+    // ARRANGE: the trashbin passes soft-deleted folders on purpose. Dropping
+    // them here would silently shorten the result and desync any caller that
+    // filtered separately.
+    const input = [
+      folder('f1', 'Dev'),
+      { ...folder('f9', 'Trashed'), deletedAt: new Date() },
+      folder('f3', 'Ops'),
+    ]
+
+    // ACT
+    const paths = folderPaths(input)
+
+    // ASSERT
+    expect(paths).toHaveLength(3)
+    expect(paths[1]?.folder.id).toBe('f9')
+  })
+
+  it('shouldTerminateOnAParentCycleInServerData', () => {
+    const paths = folderPaths([folder('a', 'A', 'b'), folder('b', 'B', 'a')])
+
+    expect(paths).toHaveLength(2)
+    expect(paths[0]?.path).toBe('B/A')
   })
 })

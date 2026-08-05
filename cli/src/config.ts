@@ -23,6 +23,8 @@ export interface StoredConfig {
   apiKey: string
   userEmail?: string
   defaultCollectionId?: string
+  /** Recorded by `login --insecure`; see resolveEffectiveConfig. */
+  insecure?: boolean
 }
 
 function homeFrom(env: NodeJS.ProcessEnv): string {
@@ -92,7 +94,8 @@ function isStoredConfig(value: unknown): value is StoredConfig {
     parseServerUrl(server) !== undefined &&
     typeof record['apiKey'] === 'string' &&
     optionalString(record['userEmail']) &&
-    optionalString(record['defaultCollectionId'])
+    optionalString(record['defaultCollectionId']) &&
+    (record['insecure'] === undefined || typeof record['insecure'] === 'boolean')
   )
 }
 
@@ -182,11 +185,13 @@ export interface EffectiveConfig {
   apiKey?: string
   userEmail?: string
   defaultCollectionId?: string
+  insecure?: boolean
 }
 
 export interface ConfigFlags {
   server?: string
   apiKey?: string
+  insecure?: boolean
 }
 
 /**
@@ -214,19 +219,28 @@ export function normalizeServer(url: string): string {
  */
 export function resolveEffectiveConfig(
   flags: ConfigFlags,
-  env: NodeJS.ProcessEnv = process.env,
-  stored: StoredConfig | undefined = loadStoredConfig(),
+  env: NodeJS.ProcessEnv,
+  // Required, not defaulted to loadStoredConfig(): a default would make
+  // `undefined` mean "read the disk" rather than "there is no stored config",
+  // so a caller that legitimately has none would trigger a second, unwanted
+  // read — with the stderr warning that shell completion suppresses.
+  stored: StoredConfig | undefined,
 ): EffectiveConfig {
   const apiKey = flags.apiKey ?? env['LINKWEAVE_API_KEY'] ?? stored?.apiKey
   const server = normalizeServer(
     flags.server ?? env['LINKWEAVE_SERVER'] ?? stored?.server ?? DEFAULT_SERVER,
   )
-  const usingStoredIdentity =
-    stored !== undefined && apiKey === stored.apiKey && server === normalizeServer(stored.server)
+  const sameServer = stored !== undefined && server === normalizeServer(stored.server)
+  const usingStoredIdentity = sameServer && apiKey === stored.apiKey
   return {
     server,
     apiKey,
     userEmail: usingStoredIdentity ? stored.userEmail : undefined,
     defaultCollectionId: usingStoredIdentity ? stored.defaultCollectionId : undefined,
+    // Keyed on the server alone, not the full identity: whether a certificate
+    // is trusted is a property of the host, not of who is talking to it. A
+    // different key against the same self-signed dev server still needs the
+    // opt-out.
+    insecure: flags.insecure === true || (sameServer && stored.insecure === true),
   }
 }
