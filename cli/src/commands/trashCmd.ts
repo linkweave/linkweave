@@ -7,6 +7,23 @@ import { parseFormat, renderTable } from '../output'
 import { folderPaths } from '../resolve'
 import { confirmIrreversible, effectiveConfig, withHttpErrors } from './commandHelpers'
 
+/** Errors that need no ID in the message — listing and emptying. */
+const TRASH_ERRORS = {
+  forbidden: 'Access denied. Your API key may no longer have access to this collection.',
+} as const
+
+/**
+ * findInTrash validates the ID before restore/purge run, so a 404 from the
+ * endpoint itself means the item left the trash in between — another session
+ * restored or purged it. Saying that is more use than "Not found (HTTP 404)."
+ */
+function raceErrors(id: string): { notFound: string; forbidden: string } {
+  return {
+    notFound: `'${id}' is no longer in the trash — another session may have restored or purged it.`,
+    ...TRASH_ERRORS,
+  }
+}
+
 /**
  * One row of the trashbin. The API returns bookmarks and folders as separate
  * lists; the CLI shows one table because a user thinks of the trash as a
@@ -62,7 +79,7 @@ export async function runTrashList(options: TrashListOptions, cmd: Command): Pro
   const format = parseFormat(options.format ?? 'table')
   const clients = createAuthenticatedClients(config)
 
-  const items = await withHttpErrors(config, {}, () => fetchTrash(clients))
+  const items = await withHttpErrors(config, TRASH_ERRORS, () => fetchTrash(clients))
 
   switch (format) {
     case 'json':
@@ -96,7 +113,7 @@ export async function runTrashRestore(id: string, _options: unknown, cmd: Comman
   const config = effectiveConfig(cmd)
   const clients = createAuthenticatedClients(config)
 
-  const item = await withHttpErrors(config, {}, async () => {
+  const item = await withHttpErrors(config, raceErrors(id), async () => {
     const found = await findInTrash(clients, id)
     if (found.kind === 'bookmark') {
       await clients.trash.apiTrashbinBookmarksBookmarkIdRestorePost({ bookmarkId: id })
@@ -121,12 +138,12 @@ export async function runTrashPurge(
   const config = effectiveConfig(cmd)
   const clients = createAuthenticatedClients(config)
 
-  const item = await withHttpErrors(config, {}, () => findInTrash(clients, id))
+  const item = await withHttpErrors(config, raceErrors(id), () => findInTrash(clients, id))
   await confirmIrreversible(
     `Permanently delete ${item.kind} '${item.label}'? This cannot be undone.`,
     options.yes === true,
   )
-  await withHttpErrors(config, {}, () =>
+  await withHttpErrors(config, raceErrors(id), () =>
     item.kind === 'bookmark'
       ? clients.trash.apiTrashbinBookmarksBookmarkIdDelete({ bookmarkId: id })
       : clients.trash.apiTrashbinFoldersFolderIdDelete({ folderId: id }),
@@ -139,15 +156,23 @@ export async function runTrashEmpty(options: TrashPurgeOptions, cmd: Command): P
   const config = effectiveConfig(cmd)
   const clients = createAuthenticatedClients(config)
 
-  const { count } = await withHttpErrors(config, {}, () => clients.trash.apiTrashbinCountGet())
+  const { count } = await withHttpErrors(config, TRASH_ERRORS, () =>
+    clients.trash.apiTrashbinCountGet(),
+  )
   if (count === 0) {
     console.log('The trash is already empty.')
     return
   }
+  // The count is a snapshot, not a promise. The endpoint empties the trash
+  // unconditionally and there is no compare-and-swap to bound it to a number,
+  // so anything trashed while the prompt waits is destroyed too. Saying
+  // "everything" — with the count as context — is what actually happens;
+  // "delete all 2 items" would be asking consent for a figure we cannot hold.
   await confirmIrreversible(
-    `Permanently delete all ${count} item(s) in the trash? This cannot be undone.`,
+    `Permanently delete everything in the trash? That is ${count} item(s) right now, and cannot be undone.`,
     options.yes === true,
   )
-  await withHttpErrors(config, {}, () => clients.trash.apiTrashbinDelete())
-  console.log(`✓ Trash emptied: ${count} item(s) permanently deleted.`)
+  await withHttpErrors(config, TRASH_ERRORS, () => clients.trash.apiTrashbinDelete())
+  // No figure here either: the pre-count may not be what was destroyed.
+  console.log('✓ Trash emptied.')
 }

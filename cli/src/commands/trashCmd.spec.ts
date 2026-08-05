@@ -1,6 +1,7 @@
 import type { Command } from 'commander'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { ResponseError } from '../api'
 import type { BookmarkJson, FolderJson, TagJson } from '../api'
 import type { CliError } from '../errors'
 
@@ -149,6 +150,21 @@ describe('runTrashRestore', () => {
 
     expect(failure.message).toMatch(/Nothing with ID 'nope' is in the trash/)
   })
+
+  it('shouldExplainA404AsAConcurrentChangeRatherThanARawStatus', async () => {
+    // ARRANGE: findInTrash saw the item, so a 404 from the endpoint means
+    // another session got there in between.
+    clients['trash']!['apiTrashbinBookmarksBookmarkIdRestorePost']!.mockRejectedValue(
+      new ResponseError(new Response('', { status: 404 }), 'not found'),
+    )
+
+    // ACT
+    const failure = await failureOf(runTrashRestore('b1', {}, cmd))
+
+    // ASSERT
+    expect(failure.message).toContain('no longer in the trash')
+    expect(failure.message).not.toMatch(/HTTP 404/)
+  })
 })
 
 describe('runTrashPurge', () => {
@@ -185,6 +201,19 @@ describe('runTrashPurge', () => {
     })
   })
 
+  it('shouldExplainA404FromThePurgeEndpointToo', async () => {
+    // ARRANGE
+    clients['trash']!['apiTrashbinBookmarksBookmarkIdDelete']!.mockRejectedValue(
+      new ResponseError(new Response('', { status: 404 }), 'not found'),
+    )
+
+    // ACT
+    const failure = await failureOf(runTrashPurge('b1', { yes: true }, cmd))
+
+    // ASSERT
+    expect(failure.message).toContain('no longer in the trash')
+  })
+
   it('shouldRefuseToPurgeUnattendedWithoutYes', async () => {
     // ARRANGE: a pipe has nobody to answer the prompt. Assuming consent for an
     // irreversible delete is the wrong default.
@@ -201,13 +230,29 @@ describe('runTrashPurge', () => {
 })
 
 describe('runTrashEmpty', () => {
-  it('shouldReportTheCountItIsAboutToDestroy', async () => {
+  it('shouldAskAboutEverythingWithTheCountAsContextNotAsAPromise', async () => {
+    // ARRANGE: the endpoint empties unconditionally and nothing binds it to a
+    // number, so anything trashed while the prompt waits goes too. Asking to
+    // "delete all 2 items" would seek consent for a figure we cannot hold.
+    answers = ['yes']
+
+    // ACT
+    await runTrashEmpty({}, cmd)
+
+    // ASSERT
+    expect(questions[0]).toContain('Permanently delete everything in the trash?')
+    expect(questions[0]).toContain('2 item(s) right now')
+    expect(clients['trash']!['apiTrashbinDelete']).toHaveBeenCalled()
+  })
+
+  it('shouldNotClaimHowManyItemsItDestroyed', async () => {
+    // The pre-count is stale by the time the delete lands.
     answers = ['yes']
 
     await runTrashEmpty({}, cmd)
 
-    expect(questions[0]).toContain('Permanently delete all 2 item(s)')
-    expect(clients['trash']!['apiTrashbinDelete']).toHaveBeenCalled()
+    expect(stdout.trim()).toBe('✓ Trash emptied.')
+    expect(stdout).not.toMatch(/\d/)
   })
 
   it('shouldDoNothingWhenAlreadyEmpty', async () => {
