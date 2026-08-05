@@ -21,9 +21,6 @@ interface TrashedItem {
 
 async function fetchTrash(clients: ApiClients): Promise<TrashedItem[]> {
   const { bookmarks, folders } = await clients.trash.apiTrashbinGet()
-  // Folder paths are reconstructed from the trashed set alone, so a folder
-  // whose parent is still live shows its own name rather than a full path.
-  const paths = folderPaths(folders.map((f) => ({ ...f, deletedAt: undefined })))
   return [
     ...bookmarks.map((b): TrashedItem => ({
       kind: 'bookmark',
@@ -31,11 +28,15 @@ async function fetchTrash(clients: ApiClients): Promise<TrashedItem[]> {
       label: b.data.title,
       deletedAt: b.deletedAt,
     })),
-    ...folders.map((f, index): TrashedItem => ({
+    // Passed as-is: paths are reconstructed from the trashed set alone, so a
+    // folder whose parent is still live shows its own name rather than a full
+    // path. folderPaths filters nothing, so these survive despite being
+    // soft-deleted — which is the whole point here.
+    ...folderPaths(folders).map(({ folder, path }): TrashedItem => ({
       kind: 'folder',
-      id: f.id,
-      label: paths[index] ?? f.data.name,
-      deletedAt: f.deletedAt,
+      id: folder.id,
+      label: path,
+      deletedAt: folder.deletedAt,
     })),
   ].sort((a, b) => (b.deletedAt?.getTime() ?? 0) - (a.deletedAt?.getTime() ?? 0))
 }

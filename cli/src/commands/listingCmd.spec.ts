@@ -50,9 +50,11 @@ beforeEach(() => {
       apiFoldersGet: vi.fn().mockResolvedValue({
         folderList: [
           folder('f2', 'TypeScript', 'f1'),
+          // In the middle on purpose: with the deleted folder last, a paths[]
+          // that had been filtered separately would still line up by accident.
+          { ...folder('f9', 'Trashed'), deletedAt: new Date() },
           folder('f1', 'Dev'),
           folder('f3', 'Ops'),
-          { ...folder('f9', 'Trashed'), deletedAt: new Date() },
         ],
       }),
     },

@@ -4,7 +4,7 @@ import type { ApiClients } from '../client'
 import { createAuthenticatedClients } from '../client'
 import { readCached, writeCached } from '../cache'
 import { configPath, loadStoredConfig, resolveEffectiveConfig } from '../config'
-import { folderPaths, resolveCollectionId } from '../resolve'
+import { folderPaths, isLiveFolder, resolveCollectionId } from '../resolve'
 import type { GlobalOptions } from './commandHelpers'
 
 /** Value sets the shell scripts can ask for. */
@@ -48,7 +48,7 @@ async function fetchCandidates(
     return tagList.map((tag) => tag.data.name)
   }
   const { folderList } = await clients.folders.apiFoldersGet({ collectionId }, { signal })
-  return folderPaths(folderList)
+  return folderPaths(folderList.filter(isLiveFolder)).map((entry) => entry.path)
 }
 
 /**
