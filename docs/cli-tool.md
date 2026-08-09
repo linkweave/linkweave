@@ -1,7 +1,7 @@
 # CLI Tool & API Key Architecture
 
-**Status:** Done — all five phases complete. `@linkweave/cli@0.1.0` is published; releases run from a `cli-v*` tag (AD-5).
-**Date:** 2026-05-10 (updated 2026-08-03)
+**Status:** Done — all six phases complete. `@linkweave/cli@0.1.0` is published; releases run from a `cli-v*` tag (AD-5).
+**Date:** 2026-05-10 (updated 2026-08-09)
 
 ---
 
@@ -174,7 +174,8 @@ linkweave/
 │   ├── vitest.config.ts
 │   ├── README.md                            # user-facing CLI docs
 │   └── src/
-│       ├── main.ts                          # entry point: parse, map errors, exit code
+│       ├── main.ts                          # bin entry: sets process.exitCode
+│       ├── run.ts                           # parse argv, map failures -> exit code
 │       ├── program.ts                       # commander command tree
 │       ├── api.ts                           # re-exports the frontend's generated client
 │       ├── client.ts                        # API clients with X-API-Key injection
@@ -187,8 +188,13 @@ linkweave/
 │       └── commands/
 │           ├── loginCmd.ts                  # linkweave login
 │           ├── logoutCmd.ts                 # linkweave logout
-│           ├── bookmarksCmd.ts              # bookmarks add | list | edit | rm
-│           ├── collectionsCmd.ts            # collections list
+│           ├── bookmarksCmd.ts              # bookmarks add|list|show|edit|rm|
+│           │                                #           export|import
+│           ├── collectionsCmd.ts            # collections list|create|rename|
+│           │                                #             default|rm
+│           ├── tagsCmd.ts                   # tags list|rename|rm
+│           ├── foldersCmd.ts                # folders list|create|rename|mv|rm
+│           ├── trashCmd.ts                  # trash list|restore|purge|empty
 │           ├── completeCmd.ts               # hidden __complete value callback
 │           ├── commandHelpers.ts            # config + error-handling plumbing
 │           └── completionScriptGenerator.ts # emits the bash/zsh/fish script
@@ -202,10 +208,15 @@ linkweave/
 Notes on the layout as built:
 
 - **Commands are one file per group, not a directory per group.** `bookmarks
-  add|list|edit|rm` are four exported `runBookmarks*` functions in
+  add|list|show|edit|rm` are five exported `runBookmarks*` functions in
   `bookmarksCmd.ts`; they share collection/tag/folder resolution, and splitting
-  them across four files bought nothing. `program.ts` owns the whole commander
+  them across five files bought nothing. `program.ts` owns the whole commander
   tree, so the flag surface is readable in one place.
+- **`main.ts` is only the bin entry.** Argument parsing and the
+  `CommanderError`/`CliError`/unknown → exit-code mapping live in `run.ts`, so
+  they can be unit-tested without spawning a process; `main.ts` just assigns
+  `process.exitCode` (never `process.exit()`, which would truncate a piped
+  stdout).
 - **No `cli/src/api/generated/`.** The CLI imports the frontend's checked-in
   client through `cli/src/api.ts` and tsup inlines it at build time (AD-2b).
 - **No `cli/tests/`.** Unit tests sit next to their subject as `*.spec.ts`;
@@ -363,6 +374,56 @@ server and are wired into the e2e CI workflow.
       remains BUSL-1.1 on the registry — npm versions are immutable.
 - [x] README with installation instructions (`cli/README.md`)
 - [x] `--insecure` flag for self-signed certs
+
+### Phase 6: CLI Management Commands — ✅ Done
+
+The read/add surface above left the CLI unable to organise anything: folders
+only appeared as a side effect of `bookmarks add --folder`, and collections and
+tags could only be listed.
+
+- [x] `linkweave bookmarks show <id>` — every field of one bookmark; the table
+      resolves tag IDs to names and the folder ID to its path, `--format json`
+      skips both lookups
+- [x] `linkweave collections create|rename|default|rm`. `rename` reads the
+      collection back first: the update payload also carries the screenshot
+      toggle and fetch allowlist, which the CLI does not expose and would
+      otherwise reset. It then checks the *response* — renaming is owner-only
+      and `CollectionService` enforces that by keeping the existing name rather
+      than refusing, so an admin's rename is a 200 that changed nothing and
+      would otherwise have been reported as success. `default` also rewrites
+      the `defaultCollectionId` stored at login — commands prefer that copy, so
+      changing it server-side alone would look like a no-op from the next
+      invocation on
+- [x] `linkweave tags rename|rm` — `rename` preserves the tag colour for the
+      same reason
+- [x] `linkweave folders create|rename|mv|rm`. `rename` sends the current
+      `parentId` back: `FolderService.updateFolder` reads an absent parent as
+      "move to the root", so omitting it silently re-homes the folder *and its
+      whole subtree* to the top level (confirmed against a running server, and
+      pinned by an e2e test)
+- [x] Confirmation prompts follow what is recoverable, not how the verb sounds:
+      `collections rm` and `tags rm` delete outright and prompt; `folders rm`
+      cascades to sub-folders and contained bookmarks but is a soft delete that
+      `trash restore` undoes, so it does not — the same bargain `bookmarks rm`
+      makes
+- [x] Positional-argument completion for the commands above: the generated
+      scripts work out which argument slot the cursor is in (command words
+      typed, less the command's own path) and call the same `__complete`
+      callback the option values use. A `<new-name>` slot completes nothing.
+      Bookmark and trashbin IDs are excluded — a list of bare UUIDs is no use
+      without a title, which the one-value-per-line callback cannot carry
+- [x] `linkweave bookmarks export|import` — the Netscape bookmark file every
+      browser reads, so an export restores into Firefox or Chrome unchanged.
+      Export uses the generated client's `*Raw` variant: the endpoint produces
+      `text/html`, which the generator maps to a `void` response, so the typed
+      call would discard the body. Import sends a `File` rather than a `Blob`
+      because the generated client appends the form field without a filename
+      argument, and the server rejects an upload whose name does not end
+      `.html`/`.htm`. Extension, emptiness and the 5 MB cap are all checked
+      before the upload
+- [x] The generated scripts are exercised in real bash, zsh and fish
+      (`cli/src/commands/completionShell.spec.ts`), which is the only way to
+      test the slot arithmetic; the older generator tests only inspect strings
 
 ---
 

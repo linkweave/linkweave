@@ -3,8 +3,14 @@ import { describe, expect, it, vi } from 'vitest'
 import type { CollectionSummaryJson, FolderJson, TagJson } from './api'
 import { CliError } from './errors'
 import {
+  findCollection,
+  findFolder,
+  findTag,
+  folderPathSegments,
   folderPaths,
   looksLikeId,
+  normalizeFolderPath,
+  parentFolderPath,
   parseTagNames,
   resolveCollectionId,
   resolveFolderId,
@@ -218,5 +224,138 @@ describe('folderPaths', () => {
 
     expect(paths).toHaveLength(2)
     expect(paths[0]?.path).toBe('B/A')
+  })
+})
+
+describe('normalizeFolderPath', () => {
+  it('shouldCollapseStrayWhitespaceAndSeparators', () => {
+    // So a path typed by hand still matches what `folders list` prints.
+    expect(normalizeFolderPath(' Dev / TypeScript/ ')).toBe('Dev/TypeScript')
+  })
+
+  it('shouldReduceARootishPathToTheEmptyString', () => {
+    expect(normalizeFolderPath('/')).toBe('')
+    expect(normalizeFolderPath('///')).toBe('')
+  })
+})
+
+describe('folderPathSegments', () => {
+  it('shouldDropEmptySegmentsRatherThanYieldBlankNames', () => {
+    expect(folderPathSegments('Dev//TypeScript/')).toEqual(['Dev', 'TypeScript'])
+  })
+})
+
+describe('parentFolderPath', () => {
+  it('shouldDropTheLeafSegment', () => {
+    expect(parentFolderPath('Dev/TypeScript/Articles')).toBe('Dev/TypeScript')
+  })
+
+  it('shouldBeEmptyForATopLevelFolder', () => {
+    expect(parentFolderPath('Dev')).toBe('')
+  })
+})
+
+describe('findCollection', () => {
+  it('shouldMatchByNameCaseInsensitively', async () => {
+    const api = {
+      apiCollectionsGet: vi.fn().mockResolvedValue({
+        collections: [collection(UUID_A, 'Personal'), collection(UUID_B, 'Work')],
+      }),
+    }
+
+    await expect(findCollection(api, 'work')).resolves.toMatchObject({ id: UUID_B })
+  })
+
+  it('shouldMatchByIdWithoutFallingBackToTheName', async () => {
+    // ARRANGE
+    const api = {
+      apiCollectionsGet: vi.fn().mockResolvedValue({
+        collections: [collection(UUID_A, 'Personal')],
+      }),
+    }
+
+    // ACT & ASSERT — a UUID that is not present must not match some collection
+    // whose *name* happens to be that string.
+    await expect(findCollection(api, UUID_B)).rejects.toThrow(CliError)
+  })
+
+  it('shouldRefuseToGuessBetweenDuplicateNames', async () => {
+    const api = {
+      apiCollectionsGet: vi.fn().mockResolvedValue({
+        collections: [collection(UUID_A, 'Work'), collection(UUID_B, 'work')],
+      }),
+    }
+
+    await expect(findCollection(api, 'Work')).rejects.toThrow(/Multiple collections match/)
+  })
+})
+
+describe('findTag', () => {
+  it('shouldReturnTheWholeTagSoCallersCanPreserveItsColour', async () => {
+    // ARRANGE
+    const coloured: TagJson = {
+      id: UUID_B,
+      entityInfo,
+      data: { collectionId: UUID_A, name: 'dev', color: '#ff0000' },
+    }
+    const api = { apiTagsGet: vi.fn().mockResolvedValue({ tagList: [coloured] }) }
+
+    // ACT
+    const found = await findTag(api, UUID_A, 'DEV')
+
+    // ASSERT
+    expect(found.data.color).toBe('#ff0000')
+  })
+
+  it('shouldNeverCreateAMissingTag', async () => {
+    // ARRANGE: unlike resolveTagIds, a rename or delete of a tag that is not
+    // there is a mistake, not a request to make one.
+    const api = { apiTagsGet: vi.fn().mockResolvedValue({ tagList: [] }) }
+
+    // ACT & ASSERT
+    await expect(findTag(api, UUID_A, 'nope')).rejects.toThrow(/No tag found matching/)
+  })
+})
+
+describe('findFolder', () => {
+  // Deliberately un-annotated: an explicit `{ apiFoldersGet: Mock }` would
+  // erase the call signature vi.fn() infers, and stop matching FolderLookupApi.
+  const folderApi = () => ({
+    apiFoldersGet: vi.fn().mockResolvedValue({
+      folderList: [
+        folder('f1', 'Dev'),
+        folder('f2', 'TypeScript', 'f1'),
+        { ...folder(UUID_B, 'Trashed'), deletedAt: new Date() },
+      ],
+    }),
+  })
+
+  it('shouldReturnTheFolderAndItsFullPath', async () => {
+    const found = await findFolder(folderApi(), UUID_A, 'dev/typescript')
+
+    expect(found.folder.id).toBe('f2')
+    expect(found.path).toBe('Dev/TypeScript')
+  })
+
+  it('shouldExposeTheParentSoARenameCanKeepIt', async () => {
+    // The rename endpoint reads an absent parentId as "move to the root".
+    const found = await findFolder(folderApi(), UUID_A, 'Dev/TypeScript')
+
+    expect(found.folder.data.parentId).toBe('f1')
+  })
+
+  it('shouldIgnoreTrashedFolders', async () => {
+    // They belong to the trashbin; treating one as live would resurrect it.
+    await expect(findFolder(folderApi(), UUID_A, 'Trashed')).rejects.toThrow(/No folder found/)
+  })
+
+  it('shouldRejectAPathThatNamesNoFolder', async () => {
+    await expect(findFolder(folderApi(), UUID_A, '/')).rejects.toThrow(/Invalid folder path/)
+  })
+
+  it('shouldReportAMissingIdAsAnIdRatherThanAPath', async () => {
+    await expect(findFolder(folderApi(), UUID_A, UUID_B)).rejects.toThrow(
+      `No folder found with ID '${UUID_B}' in the collection.`,
+    )
   })
 })

@@ -1,10 +1,30 @@
 import { Argument, Command, Option } from 'commander'
 
 import pkg from '../package.json'
-import { runBookmarksAdd, runBookmarksEdit, runBookmarksList, runBookmarksRm } from './commands/bookmarksCmd'
-import { runCollectionsList } from './commands/collectionsCmd'
-import { runFoldersList } from './commands/foldersCmd'
-import { runTagsList } from './commands/tagsCmd'
+import {
+  runBookmarksAdd,
+  runBookmarksEdit,
+  runBookmarksExport,
+  runBookmarksImport,
+  runBookmarksList,
+  runBookmarksRm,
+  runBookmarksShow,
+} from './commands/bookmarksCmd'
+import {
+  runCollectionsCreate,
+  runCollectionsList,
+  runCollectionsRename,
+  runCollectionsRm,
+  runCollectionsSetDefault,
+} from './commands/collectionsCmd'
+import {
+  runFoldersCreate,
+  runFoldersList,
+  runFoldersMv,
+  runFoldersRename,
+  runFoldersRm,
+} from './commands/foldersCmd'
+import { runTagsList, runTagsRename, runTagsRm } from './commands/tagsCmd'
 import {
   runTrashEmpty,
   runTrashList,
@@ -24,6 +44,8 @@ function formatOption(): Option {
 
 export function buildProgram(): Command {
   const program = new Command()
+
+  const COLLECTION_SCOPE = 'collection ID or name (defaults to your default collection)'
 
   program
     .name('linkweave')
@@ -101,10 +123,31 @@ Precedence: flags > environment > config file.`,
     .action(runBookmarksEdit)
 
   bookmarksCmd
+    .command('show')
+    .description('print every field of one bookmark')
+    .argument('<id>', 'the bookmark ID')
+    .addOption(formatOption())
+    .action(runBookmarksShow)
+
+  bookmarksCmd
     .command('rm')
     .description('remove a bookmark (moves it to the trashbin)')
     .argument('<id>', 'the bookmark ID')
     .action(async (id: string, _options, cmd: Command) => runBookmarksRm(id, cmd))
+
+  bookmarksCmd
+    .command('export')
+    .description('write a collection as a browser bookmarks HTML file')
+    .option('--collection <collection>', COLLECTION_SCOPE)
+    .option('-o, --output <file>', 'write to this file instead of stdout')
+    .action(runBookmarksExport)
+
+  bookmarksCmd
+    .command('import')
+    .description('add the bookmarks from a browser HTML export to a collection')
+    .argument('<file>', 'a bookmarks .html file')
+    .option('--collection <collection>', COLLECTION_SCOPE)
+    .action(runBookmarksImport)
 
   const collectionsCmd = program.command('collections').description('manage collections')
 
@@ -114,23 +157,95 @@ Precedence: flags > environment > config file.`,
     .addOption(formatOption())
     .action(runCollectionsList)
 
-  const tagsCmd = program.command('tags').description('inspect tags')
+  collectionsCmd
+    .command('create')
+    .description('create a collection')
+    .argument('<name>', 'the collection name')
+    .action(runCollectionsCreate)
+
+  collectionsCmd
+    .command('rename')
+    .description('rename a collection')
+    .argument('<collection>', 'collection ID or name')
+    .argument('<new-name>', 'the new name')
+    .action(runCollectionsRename)
+
+  collectionsCmd
+    .command('default')
+    .description('make a collection your default')
+    .argument('<collection>', 'collection ID or name')
+    .action(runCollectionsSetDefault)
+
+  collectionsCmd
+    .command('rm')
+    .description('delete a collection and everything in it (permanent)')
+    .argument('<collection>', 'collection ID or name')
+    .option('-y, --yes', 'skip the confirmation prompt')
+    .action(runCollectionsRm)
+
+  const tagsCmd = program.command('tags').description('manage tags')
 
   tagsCmd
     .command('list')
     .description('list the tags in a collection')
-    .option('--collection <collection>', 'collection ID or name (defaults to your default collection)')
+    .option('--collection <collection>', COLLECTION_SCOPE)
     .addOption(formatOption())
     .action(runTagsList)
 
-  const foldersCmd = program.command('folders').description('inspect folders')
+  tagsCmd
+    .command('rename')
+    .description('rename a tag')
+    .argument('<tag>', 'tag ID or name')
+    .argument('<new-name>', 'the new name')
+    .option('--collection <collection>', COLLECTION_SCOPE)
+    .action(runTagsRename)
+
+  tagsCmd
+    .command('rm')
+    .description('delete a tag and remove it from every bookmark (permanent)')
+    .argument('<tag>', 'tag ID or name')
+    .option('--collection <collection>', COLLECTION_SCOPE)
+    .option('-y, --yes', 'skip the confirmation prompt')
+    .action(runTagsRm)
+
+  const foldersCmd = program.command('folders').description('manage folders')
 
   foldersCmd
     .command('list')
     .description('list folder paths in a collection')
-    .option('--collection <collection>', 'collection ID or name (defaults to your default collection)')
+    .option('--collection <collection>', COLLECTION_SCOPE)
     .addOption(formatOption())
     .action(runFoldersList)
+
+  foldersCmd
+    .command('create')
+    .description('create a folder, and any missing parents, at a path')
+    .argument('<path>', "folder path, e.g. 'Dev/TypeScript'")
+    .option('--collection <collection>', COLLECTION_SCOPE)
+    .action(runFoldersCreate)
+
+  foldersCmd
+    .command('rename')
+    .description('rename a folder, leaving it where it is')
+    .argument('<path>', 'folder path or ID')
+    .argument('<new-name>', 'the new name (no slashes)')
+    .option('--collection <collection>', COLLECTION_SCOPE)
+    .action(runFoldersRename)
+
+  foldersCmd
+    .command('mv')
+    .description('move a folder under a different parent')
+    .argument('<path>', 'folder path or ID')
+    .argument('<destination>', "new parent folder path, or '/' for the top level")
+    .option('--collection <collection>', COLLECTION_SCOPE)
+    .action(runFoldersMv)
+
+  foldersCmd
+    .command('rm')
+    .description('remove a folder and its contents (moves them to the trashbin)')
+    .argument('<path>', 'folder path or ID')
+    .option('--collection <collection>', COLLECTION_SCOPE)
+    .action(runFoldersRm)
 
   const trashCmd = program
     .command('trash')

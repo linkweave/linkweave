@@ -188,6 +188,31 @@ export interface EffectiveConfig {
   insecure?: boolean
 }
 
+/**
+ * Records a new default collection in the stored config, returning whether it
+ * was written.
+ *
+ * `collections default` changes the default server-side, but
+ * `resolveTargetCollectionId` prefers the ID captured at login — so without
+ * this the command would appear to do nothing to every later invocation on
+ * this machine. It only writes when the credentials actually in use are the
+ * stored ones: a key from `--api-key` or the environment may belong to another
+ * user entirely, and its default is not ours to record.
+ */
+export function updateStoredDefaultCollection(
+  config: EffectiveConfig,
+  collectionId: string,
+  path: string = configPath(),
+): boolean {
+  const stored = loadStoredConfig(path)
+  if (!stored) return false
+  if (normalizeServer(stored.server) !== config.server) return false
+  if (stored.apiKey !== config.apiKey) return false
+  if (stored.defaultCollectionId === collectionId) return false
+  saveStoredConfig({ ...stored, defaultCollectionId: collectionId }, path)
+  return true
+}
+
 export interface ConfigFlags {
   server?: string
   apiKey?: string

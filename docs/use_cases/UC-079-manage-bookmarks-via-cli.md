@@ -5,7 +5,7 @@
 **Use Case ID:** UC-079
 **Use Case Name:** Manage Bookmarks via CLI
 **Primary Actor:** CLI User
-**Goal:** Create, list, edit, and delete bookmarks from the command line so that the user can manage bookmarks from a terminal or shell script without opening a browser.
+**Goal:** Create, list, inspect, edit, and delete bookmarks from the command line — along with the collections, tags and folders they are organised into, and the trashbin they are recovered from — so that the user can manage a bookmark library from a terminal or shell script without opening a browser.
 **Status:** Done
 
 ## Traceability
@@ -42,6 +42,42 @@
    - `--format=table` (default): renders a table with columns ID, Title, URL, Tags.
    - `--format=json`: outputs raw JSON to stdout (for piping to `jq` or other tools).
    - `--format=ids`: outputs one bookmark ID per line (for use in shell loops).
+
+## Main Success Scenario — Show Bookmark
+
+1. User runs `linkweave bookmarks show <bookmarkId>` with an optional `--format`.
+2. CLI sends `GET /api/bookmarks/{bookmarkId}` with the `X-API-Key` header.
+3. For `--format=table` (default) the CLI additionally fetches the collection's tags, and its folders when the bookmark sits in one, so the record reads in names rather than IDs.
+4. CLI displays one field per row: ID, Title, URL, Description, Collection, Folder, Tags, Clicks, Last clicked, Created, Updated.
+5. `--format=json` prints the raw payload and skips step 3; `--format=ids` prints the ID alone.
+
+## Main Success Scenario — Export and Import
+
+1. User runs `linkweave bookmarks export`, optionally with `--collection` and `--output`.
+2. CLI sends `GET /api/collections/{collectionId}/export` and receives a Netscape bookmark file (`text/html`) — the interchange format every browser reads and writes.
+3. Without `--output` the HTML goes to stdout, so it redirects and pipes like any other command output (BR-018); with it, the CLI writes the file and reports the path.
+4. User runs `linkweave bookmarks import <file>` to go the other way.
+5. CLI checks the file locally before uploading: the name must end `.html`/`.htm`, and the content must be non-empty and at most 5 MB — the same constraints `ImportResource` enforces, checked first so a doomed upload is not spent.
+6. CLI sends `POST /api/collections/{collectionId}/import` as `multipart/form-data`.
+7. Server parses the file, merging folders by path and skipping bookmarks whose URL is already in the collection — an import adds to a collection, it does not replace it.
+8. CLI reports the `ImportSummaryJson`: bookmarks created, folders created, and duplicates skipped.
+
+## Main Success Scenario — Manage Collections, Tags and Folders
+
+1. User runs one of the management commands (see the Command Reference below), e.g. `linkweave folders mv Dev/TypeScript Archive`.
+2. CLI resolves the target collection as for any other command (step 4 of Add Bookmark), then resolves the named tag or folder path to its ID within that collection.
+3. For an update, CLI first fetches the current record: the API replaces the whole entity, so fields the CLI does not expose are read back and resent unchanged (BR-028).
+4. CLI sends the corresponding request — `POST`/`PUT`/`DELETE /api/collections`, `/api/tags`, `/api/folders`, or `PATCH /api/folders/{id}/move`.
+5. Server authenticates via UC-078 and authorizes via `AuthorizationService`. Deleting a collection is owner-only. Renaming one is too, but the server enforces that by *keeping the existing name* rather than refusing: an admin's rename returns 200 with nothing changed, so the CLI compares the returned name against the old one and reports a failure instead of echoing back the name it asked for.
+6. CLI displays a success message naming what changed, e.g. `✓ Folder moved: Dev/TypeScript → Archive/TypeScript`.
+
+Deleting a collection or a tag cannot be undone and is gated on a confirmation (BR-027). `linkweave collections default <collection>` additionally rewrites the `defaultCollectionId` stored at login, because later commands prefer that copy over asking the server (UC-080).
+
+## Main Success Scenario — Inspect and Recover the Trashbin
+
+1. User runs `linkweave trash list` to see soft-deleted bookmarks and folders as one table, newest first.
+2. `linkweave trash restore <id>` restores either kind without the user having to say which — the CLI looks the ID up in the trashbin first and picks the matching endpoint.
+3. `linkweave trash purge <id>` and `linkweave trash empty` delete permanently, and are gated on a confirmation (BR-027).
 
 ## Main Success Scenario — Edit Bookmark
 
@@ -154,6 +190,29 @@
 - The bookmark is soft-deleted (moved to trashbin) on the server.
 - The CLI displayed a success message.
 
+### Success Postconditions (Show)
+
+- The CLI displayed every field of the bookmark in the requested format.
+- No data was modified.
+
+### Success Postconditions (Manage Structure)
+
+- The collection, tag or folder exists, is renamed, is moved, or is gone, as requested.
+- Fields the CLI does not expose are unchanged (BR-028); a renamed folder keeps its place in the hierarchy.
+- After `collections default`, the server and — when the credentials in use are the stored ones — the local config agree on the default collection.
+- The CLI displayed a success message naming what changed.
+
+### Success Postconditions (Trashbin)
+
+- A restored item, and anything soft-deleted alongside it, is live again.
+- A purged or emptied item is gone permanently.
+- The CLI displayed a success message.
+
+### Postconditions (Declined Confirmation)
+
+- No data was modified on the server.
+- The CLI displayed `Error: Aborted.` and exited with code 1, or refused with code 2 when there was no TTY to ask.
+
 ### Failure Postconditions
 
 - No data was modified on the server.
@@ -168,7 +227,9 @@ The CLI never accesses the SQLite database directly. All data operations go thro
 
 ### BR-016: Non-Interactive by Default
 
-Every CLI command must work without any interactive prompts. All required parameters are provided via flags or positional arguments. This enables scripting and automation.
+Every CLI command must be drivable without any interactive prompts. All required parameters are provided via flags or positional arguments. This enables scripting and automation.
+
+The one exception is the confirmation on an irreversible operation (BR-027), and it is still scriptable: `--yes` skips the prompt outright, and without a TTY the command refuses rather than blocking on a read that nobody will answer.
 
 ### BR-017: Exit Codes
 
@@ -190,6 +251,43 @@ The `--tags` flag accepts comma-separated tag names (not IDs). The CLI resolves 
 
 The `--folder` flag accepts a folder name (not an ID). The CLI resolves the name to an ID by calling `GET /api/folders?collectionId={id}`. If the folder is not found, the CLI creates it. For nested folders, the user can specify a path: `--folder="Dev/TypeScript/Articles"`.
 
+The management commands take the same path syntax as a positional argument, and resolve it the same way — but never create: renaming or deleting a folder that does not exist is a mistake, not a request to make one. `folders create` is the exception in the other direction, creating missing parents like `mkdir -p` while refusing a path that already exists.
+
+### BR-026: Completion Values Come From a Hidden Callback
+
+The generated shell scripts fill in collection, tag and folder values by calling `linkweave __complete <source> [prefix]`, a hidden command that prints one candidate per line. It is total by design: not being logged in, an unreachable server, a revoked key or an unreadable config all print nothing and exit 0. An error surfaced here would be written into the command line the user is part-way through typing, which is worse than offering no suggestions. `LINKWEAVE_DEBUG=1` reports the cause on stderr for diagnosis.
+
+Results are cached for 60 seconds in `$XDG_CACHE_HOME/linkweave/completion-cache.json` so a keypress never waits on the network twice. The cost is that a name created moments ago may be missing for up to a minute.
+
+Positional arguments are completed from the same sources, chosen per argument slot: the value a command operates *on* is completed, while the `<new-name>` of a rename is not. Bookmark and trashbin IDs are excluded — a list of bare UUIDs is no use without a title beside it, which a one-value-per-line callback cannot carry.
+
+### BR-027: Confirmation Is Gated on Recoverability, Not on Wording
+
+A command prompts before acting if, and only if, the server cannot undo it:
+
+| Command | Prompts | Why |
+|---|---|---|
+| `bookmarks rm` | no | soft delete; `trash restore` undoes it |
+| `folders rm` | no | soft delete, cascading to sub-folders and the bookmarks inside; restoring the folder restores what went down with it |
+| `tags rm` | yes | deletes outright and strips the tag from every bookmark that carried it |
+| `collections rm` | yes | deletes every bookmark, folder, tag, auto-tag rule and saved search in it, none of which reaches the trashbin |
+| `trash purge` / `trash empty` | yes | permanent by definition |
+
+`--yes` (`-y`) skips the prompt. Without a TTY the command refuses with exit code 2 instead of assuming consent, because silently destroying data because stdin happened to be a pipe is the wrong default.
+
+`trash empty` names the current item count as context but asks about "everything": the endpoint empties the trashbin unconditionally, so anything trashed while the prompt waits is destroyed too, and consent cannot be bound to a figure the command is unable to hold.
+
+### BR-028: Updates Replace the Whole Record
+
+The API's update endpoints take a complete entity, not a patch. Every CLI update is therefore fetch → merge → save, and any field the CLI does not expose has to be read back and resent or it is reset to a default:
+
+- `bookmarks edit` carries over title, URL, description, folder and tags.
+- `collections rename` carries over the screenshot toggle and the browser-fetch allowlist. It also has to *check* the result: the name is the one field of that payload the server may quietly decline to apply (see the scenario above).
+- `tags rename` carries over the tag colour.
+- `folders rename` carries over the colour **and the parent**: the endpoint reads an absent `parentId` as "move to the root", so omitting it silently re-homes the folder and its entire subtree to the top level.
+
+The consequence is a read-modify-write race: a change made elsewhere between the fetch and the save is overwritten without warning. This is accepted rather than solved — the API offers no optimistic-locking token to bound it, and for a single-user CLI the window is small.
+
 ---
 
 ## CLI Command Reference
@@ -205,19 +303,56 @@ The `--folder` flag accepts a folder name (not an ID). The CLI resolves the name
 | `--version` | `-v` | Show version | — |
 
 `--format`/`-f` (`table`, `json`, `ids`; default `table`) is scoped to the
-list commands (`bookmarks list`, `collections list`) — passing it to other
-commands is a usage error (exit 2) rather than being silently ignored.
+commands that emit a record set — the `list` commands plus `bookmarks show` —
+and passing it to any other command is a usage error (exit 2) rather than
+being silently ignored.
+
+`--collection` accepts an ID or a name (A8). Tags and folders are addressed the
+same way: `<tag>` is a tag name or ID, `<path>` a folder path (`Dev/TypeScript`)
+or ID. The `<new-name>` of a `rename` is a name the user is inventing, and is
+never resolved against existing ones.
 
 ### Commands
 
 ```
-linkweave login [--server <url>] [--api-key <key>]
+linkweave login [--server <url>] [--api-key <key>] [--insecure]
+linkweave logout
+
 linkweave bookmarks add <url> [--title <t>] [--collection <c>] [--folder <f>] [--tags <t1,t2>] [--description <d>]
 linkweave bookmarks list [--collection <c>] [--folder <f>] [--tag <t>] [--format <fmt>]
+linkweave bookmarks show <id> [--format <fmt>]
 linkweave bookmarks edit <id> [--title <t>] [--url <u>] [--description <d>] [--tags <t1,t2>]
 linkweave bookmarks rm <id>
+linkweave bookmarks export [--collection <c>] [--output <file>]
+linkweave bookmarks import <file> [--collection <c>]
+
 linkweave collections list [--format <fmt>]
+linkweave collections create <name>
+linkweave collections rename <collection> <new-name>
+linkweave collections default <collection>
+linkweave collections rm <collection> [--yes]
+
+linkweave tags list [--collection <c>] [--format <fmt>]
+linkweave tags rename <tag> <new-name> [--collection <c>]
+linkweave tags rm <tag> [--collection <c>] [--yes]
+
+linkweave folders list [--collection <c>] [--format <fmt>]
+linkweave folders create <path> [--collection <c>]
+linkweave folders rename <path> <new-name> [--collection <c>]
+linkweave folders mv <path> <destination> [--collection <c>]
+linkweave folders rm <path> [--collection <c>]
+
+linkweave trash list [--format <fmt>]
+linkweave trash restore <id>
+linkweave trash purge <id> [--yes]
+linkweave trash empty [--yes]
+
+linkweave completion <bash|zsh|fish>
 ```
+
+`linkweave __complete <source> [prefix]` also exists but is hidden: the
+generated completion scripts call it to fill in collection, tag and folder
+values, and it is not part of the user-facing surface (BR-026).
 
 ---
 
@@ -244,3 +379,20 @@ linkweave collections list [--format <fmt>]
 | UC-006 | View Bookmarks | CLI calls the same API endpoint |
 | UC-007 | Edit Bookmark | CLI calls the same API endpoint |
 | UC-008 | Delete Bookmark | CLI calls the same API endpoint |
+| UC-003 | List Collections | `collections list` |
+| UC-004 | Set Default Collection | `collections default` |
+| UC-026 | Create Collection | `collections create` |
+| UC-027 | Edit Collection | `collections rename` (name only) |
+| UC-028 | Delete Collection | `collections rm` |
+| UC-009 | Create Folder | `folders create`, and `add --folder` (BR-020) |
+| UC-010 | View Folders | `folders list` |
+| UC-011 | Rename Folder | `folders rename` |
+| UC-012 | Nest Folders | `folders create` with a path, `folders mv` |
+| UC-014 | Delete Folder | `folders rm` |
+| UC-016 | View Tags | `tags list` |
+| UC-017 | Edit Tag | `tags rename` (name only) |
+| UC-018 | Delete Tag | `tags rm` |
+| UC-040 | View Trashbin | `trash list` |
+| UC-041 | Restore from Trashbin | `trash restore` |
+| UC-042 | Permanently Delete from Trashbin | `trash purge` |
+| UC-043 | Empty Trashbin | `trash empty` |

@@ -1,7 +1,7 @@
 import type { Command } from 'commander'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { FolderJson, TagJson } from '../api'
+import type { CollectionSummaryJson, FolderJson, TagJson } from '../api'
 
 const CONFIG = {
   server: 'https://test.example',
@@ -19,6 +19,7 @@ vi.mock('../client', () => ({ createAuthenticatedClients: () => clients }))
 
 const { runTagsList } = await import('./tagsCmd')
 const { runFoldersList } = await import('./foldersCmd')
+const { runCollectionsList } = await import('./collectionsCmd')
 
 const COLLECTION_ID = '550e8400-e29b-41d4-a716-446655440000'
 const entityInfo = {} as TagJson['entityInfo']
@@ -30,6 +31,21 @@ function tag(id: string, name: string): TagJson {
 
 function folder(id: string, name: string, parentId?: string): FolderJson {
   return { id, entityInfo, sortOrder: 0, data: { collectionId: COLLECTION_ID, name, parentId } }
+}
+
+function collection(
+  id: string,
+  name: string,
+  extras: Partial<CollectionSummaryJson> = {},
+): CollectionSummaryJson {
+  return {
+    id,
+    name,
+    isDefault: false,
+    role: 'OWNER' as CollectionSummaryJson['role'],
+    shared: false,
+    ...extras,
+  }
 }
 
 let stdout: string
@@ -58,7 +74,14 @@ beforeEach(() => {
         ],
       }),
     },
-    collections: { apiCollectionsGet: vi.fn() },
+    collections: {
+      apiCollectionsGet: vi.fn().mockResolvedValue({
+        collections: [
+          collection('c1', 'Personal', { isDefault: true }),
+          collection('c2', 'Team Reading', { role: 'MEMBER', shared: true }),
+        ],
+      }),
+    },
     auth: { apiAuthMeGet: vi.fn() },
   }
 })
@@ -129,5 +152,51 @@ describe('runFoldersList', () => {
 
     expect(lines()[0]).toMatch(/^ID\s+Path$/)
     expect(stdout).toContain('Dev/TypeScript')
+  })
+})
+
+describe('runCollectionsList', () => {
+  it('shouldPrintOneIdPerLineForIdsFormat', async () => {
+    await runCollectionsList({ format: 'ids' }, cmd)
+
+    expect(lines()).toEqual(['c1', 'c2'])
+  })
+
+  it('shouldDefaultToTableWhenNoFormatIsGiven', async () => {
+    // The option carries a commander default, but the handler must not fall
+    // over when called without one.
+    await runCollectionsList({}, cmd)
+
+    expect(lines()[0]).toMatch(/^ID\s+Name\s+Default\s+Role\s+Shared$/)
+  })
+
+  it('shouldMarkTheDefaultAndSharedFlagsAsYesOrBlank', async () => {
+    // ARRANGE: a tick-per-row would misalign; blank reads as "no" in a table.
+
+    // ACT
+    await runCollectionsList({ format: 'table' }, cmd)
+
+    // ASSERT
+    const [, , personal, team] = lines()
+    expect(personal).toMatch(/c1\s+Personal\s+yes\s+OWNER$/)
+    expect(team).toMatch(/c2\s+Team Reading\s+MEMBER\s+yes$/)
+  })
+
+  it('shouldEmitJsonWithoutTheEnvelopeFields', async () => {
+    await runCollectionsList({ format: 'json' }, cmd)
+
+    expect(JSON.parse(stdout)).toEqual([
+      { id: 'c1', name: 'Personal', isDefault: true, role: 'OWNER', shared: false },
+      { id: 'c2', name: 'Team Reading', isDefault: false, role: 'MEMBER', shared: true },
+    ])
+  })
+
+  it('shouldRejectAnUnknownFormatBeforeCallingTheApi', async () => {
+    // ARRANGE: parseFormat guards the handler even when commander's choices()
+    // is bypassed — a usage error should not cost a round trip.
+
+    // ACT & ASSERT
+    await expect(runCollectionsList({ format: 'yaml' }, cmd)).rejects.toThrow(/Invalid format/)
+    expect(clients['collections']!['apiCollectionsGet']).not.toHaveBeenCalled()
   })
 })
