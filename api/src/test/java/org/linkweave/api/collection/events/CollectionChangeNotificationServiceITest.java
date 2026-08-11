@@ -1,5 +1,6 @@
 package org.linkweave.api.collection.events;
 
+import java.util.List;
 import java.util.Set;
 
 import io.quarkus.test.junit.QuarkusTest;
@@ -122,6 +123,43 @@ class CollectionChangeNotificationServiceITest {
         assertThat(subscriber.getItems().getFirst().getBookmarkId())
             .as("no single bookmark can be named when several changed")
             .isNull();
+        subscriber.cancel();
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ", "BOOKMARK_WRITE"})
+    void shouldAnnounceARestoredBookmarkAsAnAddition() {
+        // ARRANGE — a bookmark in the trashbin
+        Collection collection = fixtureService.createTestCollection();
+        Bookmark bookmark = persistBookmark(collection, "restored");
+        bookmarkService.removeBookmark(bookmark.getId());
+        AssertSubscriber<CollectionEventJson> subscriber = listen(collection);
+
+        // ACT
+        bookmarkService.restoreBookmark(bookmark.getId());
+
+        // ASSERT — from every other member's point of view the bookmark
+        // reappears in the collection, which is an addition
+        assertThat(subscriber.getItems()).hasSize(1);
+        assertThat(subscriber.getItems().getFirst().getKind()).isEqualTo(ChangeKind.BOOKMARK_ADDED);
+        assertThat(subscriber.getItems().getFirst().getBookmarkId()).isEqualTo(bookmark.getId());
+        subscriber.cancel();
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ", "BOOKMARK_WRITE"})
+    void shouldAnnounceNothingForABatchThatChangedNothing() {
+        // ARRANGE
+        Collection collection = fixtureService.createTestCollection();
+        AssertSubscriber<CollectionEventJson> subscriber = listen(collection);
+
+        // ACT — unreachable through the API (@NotEmpty on the request DTOs), but
+        // a direct service caller must not produce a notification for a no-op
+        bookmarkService.batchMoveToFolder(List.of(), null, collection.getId());
+        bookmarkService.batchRemove(List.of());
+
+        // ASSERT
+        subscriber.assertHasNotReceivedAnyItem();
         subscriber.cancel();
     }
 

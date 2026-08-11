@@ -32,6 +32,9 @@ public class CollectionChangeNotificationService {
     private final OriginClientIdRequestFilter originClientIdFilter;
     private final CurrentUserService currentUserService;
 
+    private @Nullable String actorName;
+    private boolean actorNameResolved;
+
     public void bookmarkAdded(@NonNull ID<Collection> collectionId, @NonNull ID<Bookmark> bookmarkId) {
         fire(collectionId, bookmarkId, ChangeKind.BOOKMARK_ADDED);
     }
@@ -64,10 +67,21 @@ public class CollectionChangeNotificationService {
     /**
      * Display name for the attribution text (BR-209), or null when nobody is
      * logged in — a background job's change is shown without attribution (A1).
+     *
+     * <p>Resolved at most once per request. {@code findCurrentUser()} is a query
+     * (with permissions fetch-joined), and one request can perform many writes —
+     * an import, a batch edit — each of which announces itself. The identity
+     * cannot change mid-request, so caching it is free correctness-wise; this
+     * bean is {@code @RequestScoped} via {@code @Service}, so the cache dies with
+     * the request rather than outliving the user it describes.
      */
     private @Nullable String currentActorName() {
-        return currentUserService.findCurrentUser()
-            .map(user -> user.getVornameName())
-            .orElse(null);
+        if (!actorNameResolved) {
+            actorName = currentUserService.findCurrentUser()
+                .map(user -> user.getVornameName())
+                .orElse(null);
+            actorNameResolved = true;
+        }
+        return actorName;
     }
 }

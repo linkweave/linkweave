@@ -171,8 +171,15 @@ public class BookmarkService {
         }
         bookmark.setDeletedAt(null);
         bookmarkRepo.persist(bookmark);
+        // A restore puts the bookmark back in everyone's list, which is the same
+        // observable change as adding one — so it is announced as one (UC-104).
+        collectionChangeNotificationService.bookmarkAdded(bookmark.getCollectionId(), bookmark.getId());
         return bookmark;
     }
+
+    // purgeBookmark and emptyTrashbin deliberately announce nothing: both act on
+    // already-deleted bookmarks, which left every member's collection view when
+    // they were trashed. The only view that changes is the actor's own trashbin.
 
     public void purgeBookmark(@NonNull ID<Bookmark> id) {
         bookmarkRepo.remove(id);
@@ -282,7 +289,7 @@ public class BookmarkService {
             bookmark.setFolder(folder);
             bookmarkRepo.persist(bookmark);
         }
-        collectionChangeNotificationService.bookmarkChanged(collectionId, onlyBookmarkId(bookmarks));
+        notifyChanged(collectionId, bookmarks);
     }
 
     public void batchRemove(@NonNull List<Bookmark> bookmarks) {
@@ -291,12 +298,31 @@ public class BookmarkService {
             bookmark.setDeletedAt(now);
             bookmarkRepo.persist(bookmark);
         }
-        if (!bookmarks.isEmpty()) {
-            // Every removal path funnels through here (removeBookmark included),
-            // so one notification site covers them all.
-            collectionChangeNotificationService.bookmarkRemoved(
-                bookmarks.getFirst().getCollectionId(), onlyBookmarkId(bookmarks));
+        // Every removal path funnels through here (removeBookmark included), so
+        // one notification site covers them all.
+        notifyRemoved(bookmarks);
+    }
+
+    /**
+     * One notification for a batch that changed something, none for a batch that
+     * did not. The empty case is unreachable through the API — {@code @NotEmpty}
+     * on the request DTOs sees to that — but a direct service caller passing an
+     * empty list has changed nothing, and nothing is what it should announce.
+     */
+    private void notifyChanged(@NonNull ID<Collection> collectionId, @NonNull List<Bookmark> bookmarks) {
+        if (bookmarks.isEmpty()) {
+            return;
         }
+        collectionChangeNotificationService.bookmarkChanged(collectionId, onlyBookmarkId(bookmarks));
+    }
+
+    /** @see #notifyChanged */
+    private void notifyRemoved(@NonNull List<Bookmark> bookmarks) {
+        if (bookmarks.isEmpty()) {
+            return;
+        }
+        collectionChangeNotificationService.bookmarkRemoved(
+            bookmarks.getFirst().getCollectionId(), onlyBookmarkId(bookmarks));
     }
 
     /**
@@ -338,7 +364,7 @@ public class BookmarkService {
             removeTags.forEach(bookmark.getTags()::remove);
             bookmarkRepo.persist(bookmark);
         }
-        collectionChangeNotificationService.bookmarkChanged(collectionId, onlyBookmarkId(bookmarks));
+        notifyChanged(collectionId, bookmarks);
     }
 
     /**

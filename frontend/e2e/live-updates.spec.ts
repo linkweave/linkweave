@@ -143,12 +143,16 @@ test.describe('Live collection updates', () => {
     expect(created.ok()).toBe(true)
     await expectToastSeen(page, 'E2E livecollab')
 
-    // ASSERT — BR-205: their change was announced, ours never was. Asserted over
-    // recorded toasts rather than the live DOM: a self-toast auto-dismisses in a
-    // few seconds, so `toHaveCount(0)` would pass whether it appeared or not.
-    expect(await seenToasts(page)).not.toContainEqual(
-      expect.stringContaining('E2E liveviewer'),
-    )
+    // ASSERT — BR-205: their change was announced, ours never was. Two things
+    // this assertion deliberately does not do: look at the live DOM (a
+    // self-toast auto-dismisses within seconds, so `toHaveCount(0)` would pass
+    // whether or not it ever appeared), and lean on an asymmetric matcher inside
+    // a deep-equality check (`not.toContainEqual(expect.stringContaining(...))`
+    // reads as if it works, but whether the matcher is honoured there is a
+    // framework detail — and a negative assertion that silently degrades to a
+    // no-op is the exact bug this whole helper exists to prevent).
+    const seen = await seenToasts(page)
+    expect(seen.some((toast) => toast.includes('E2E liveviewer'))).toBe(false)
   })
 
   test.afterAll(async ({ browser }) => {
