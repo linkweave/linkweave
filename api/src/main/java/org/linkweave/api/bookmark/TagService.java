@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.linkweave.api.bookmark.json.TagSaveJson;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.collection.CollectionRepo;
+import org.linkweave.api.collection.events.CollectionChangeNotificationService;
 import org.linkweave.infrastructure.db.UniqueConstraintUtil;
 import org.linkweave.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
@@ -22,6 +23,7 @@ public class TagService {
     private final TagRepo tagRepo;
     private final CollectionRepo collectionRepo;
     private final BookmarkRepo bookmarkRepo;
+    private final CollectionChangeNotificationService collectionChangeNotificationService;
 
     @NonNull
     public Tag createTag(@NonNull TagSaveJson json) {
@@ -35,6 +37,7 @@ public class TagService {
             Collections.emptySet()
         );
         upsertTagAndFlush(tag);
+        collectionChangeNotificationService.collectionChanged(collectionId);
         return tag;
     }
 
@@ -52,6 +55,7 @@ public class TagService {
             tag.setColor(json.getColor());
         }
         upsertTagAndFlush(tag);
+        collectionChangeNotificationService.collectionChanged(json.getCollectionId());
         return tag;
     }
 
@@ -66,11 +70,15 @@ public class TagService {
 
     public void removeTag(@NonNull ID<Tag> id) {
         Tag tag = tagRepo.getById(id);
+        ID<Collection> collectionId = tag.getCollectionId();
         List<Bookmark> bookmarksWithTag = bookmarkRepo.findByTag(tag);
         for (Bookmark bookmark : bookmarksWithTag) {
             bookmark.getTags().remove(tag);
         }
         tagRepo.remove(id);
+        // The tag disappears from every bookmark that carried it, so this is a
+        // collection-wide change even though only one row was deleted.
+        collectionChangeNotificationService.collectionChanged(collectionId);
     }
 
     public List<Tag> findByCollection(@NonNull ID<Collection> collectionID) {

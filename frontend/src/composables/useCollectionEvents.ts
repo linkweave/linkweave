@@ -26,15 +26,20 @@ const MAX_RECONNECT_DELAY_MS = 30_000
 const REFETCH_COALESCE_MS = 400
 
 /**
- * Attribution text per change kind (BR-209), in both forms: `one` when the event
- * names the bookmark it is about, `many` when it does not.
+ * Attribution text per change kind (BR-209).
+ *
+ * Bookmark kinds carry two forms — `one` when the event names the bookmark it is
+ * about, `many` when it does not — because the same kind covers a single edit and
+ * an import of a whole file. Kinds that are never about one bookmark are a plain
+ * key: a folder event names no folder (nothing needs the id, since the client
+ * re-reads everything anyway), so there is no singular case to distinguish.
  *
  * A kind absent from this table is announced not at all — silence is the right
  * default for something this client does not understand, and better than the
  * fallback a chain of conditionals lands on, which would have described a future
- * folder or permission event as "updated a bookmark".
+ * permission event as "updated a bookmark".
  */
-const ANNOUNCEMENT_KEYS: Partial<Record<ChangeKind, { one: string; many: string }>> = {
+const ANNOUNCEMENT_KEYS: Partial<Record<ChangeKind, string | { one: string; many: string }>> = {
   [ChangeKind.BookmarkAdded]: { one: 'liveUpdates.bookmarkAdded', many: 'liveUpdates.bookmarksAdded' },
   [ChangeKind.BookmarkChanged]: {
     one: 'liveUpdates.bookmarkChanged',
@@ -44,19 +49,24 @@ const ANNOUNCEMENT_KEYS: Partial<Record<ChangeKind, { one: string; many: string 
     one: 'liveUpdates.bookmarkRemoved',
     many: 'liveUpdates.bookmarksRemoved',
   },
+  [ChangeKind.FolderAdded]: 'liveUpdates.folderAdded',
+  [ChangeKind.FolderChanged]: 'liveUpdates.folderChanged',
+  [ChangeKind.FolderRemoved]: 'liveUpdates.folderRemoved',
+  [ChangeKind.CollectionChanged]: 'liveUpdates.collectionChanged',
 }
 
 /**
  * The message to show for an event, or null if this kind says nothing.
  *
- * A missing `bookmarkId` means the change covered several bookmarks at once — a
- * batch edit, or an import of a whole file. Saying "added a bookmark" for two
- * hundred of them would be wrong, and the event carries no count, so the plural
- * wording stays deliberately unquantified.
+ * A missing `bookmarkId` on a bookmark kind means the change covered several at
+ * once — a batch edit, or an import of a whole file. Saying "added a bookmark"
+ * for two hundred of them would be wrong, and the event carries no count, so the
+ * plural wording stays deliberately unquantified.
  */
 function announcementKey(event: CollectionEventJson): string | null {
   const forKind = ANNOUNCEMENT_KEYS[event.kind]
   if (!forKind) return null
+  if (typeof forKind === 'string') return forKind
   return event.bookmarkId ? forKind.one : forKind.many
 }
 
@@ -139,8 +149,14 @@ export function useCollectionEvents(currentCollectionId: () => string | null) {
       case ChangeKind.BookmarkAdded:
       case ChangeKind.BookmarkChanged:
       case ChangeKind.BookmarkRemoved:
-        // The notification says only *that* something changed; the list, its
-        // sort, filter and search selection all come from re-reading (BR-202).
+      case ChangeKind.FolderAdded:
+      case ChangeKind.FolderChanged:
+      case ChangeKind.FolderRemoved:
+      case ChangeKind.CollectionChanged:
+        // Identical handling for all of them, which is the point: the sidebar,
+        // the tag chips and the property columns all arrive in the same
+        // CollectionInfoJson as the bookmarks, so one re-read (BR-202) brings
+        // the whole view up to date whatever changed. Only the wording differs.
         refetchSoon(collectionId)
         announce(event)
         return

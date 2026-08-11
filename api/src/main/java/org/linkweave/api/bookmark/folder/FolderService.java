@@ -16,6 +16,7 @@ import org.linkweave.api.bookmark.folder.json.FolderPositionJson;
 import org.linkweave.api.bookmark.folder.json.FolderSaveJson;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.collection.CollectionRepo;
+import org.linkweave.api.collection.events.CollectionChangeNotificationService;
 import org.linkweave.api.shared.sortorder.Placement;
 import org.linkweave.api.shared.sortorder.SortOrderPlacement;
 import org.linkweave.api.shared.sortorder.SparseSortOrder;
@@ -36,6 +37,7 @@ public class FolderService {
     private final CollectionRepo collectionRepo;
     private final BookmarkRepo bookmarkRepo;
     private final AppClock appClock;
+    private final CollectionChangeNotificationService collectionChangeNotificationService;
 
 
 
@@ -60,6 +62,7 @@ public class FolderService {
         );
 
         folderRepo.persist(folder);
+        collectionChangeNotificationService.folderAdded(collectionId);
         return folder;
     }
 
@@ -112,6 +115,7 @@ public class FolderService {
         folder.setColor(json.getColor());
 
         folderRepo.persist(folder);
+        collectionChangeNotificationService.folderChanged(collectionId);
         return folder;
     }
 
@@ -140,6 +144,7 @@ public class FolderService {
         }
 
         folderRepo.persist(folder);
+        collectionChangeNotificationService.folderChanged(collectionId);
         return folder;
     }
 
@@ -189,10 +194,15 @@ public class FolderService {
     public void removeFolder(@NonNull ID<Folder> id) {
         Folder folder = folderRepo.getById(id);
         if (folder.getDeletedAt() != null) {
-            return;
+            return; // already gone: nothing changed, so nothing is announced
         }
         OffsetDateTime now = appClock.offsetDateTime().now();
+        ID<Collection> collectionId = folder.getCollectionId();
         cascadeSoftDelete(folder, now);
+        // One event for the whole cascade — the bookmarks that went with the
+        // folder are part of the same operation, and the client re-reads the
+        // collection once either way.
+        collectionChangeNotificationService.folderRemoved(collectionId);
     }
 
     private void cascadeSoftDelete(@NonNull Folder folder, @NonNull OffsetDateTime t) {
@@ -219,6 +229,7 @@ public class FolderService {
             folder.setParent(null);
         }
         cascadeRestore(folder, cascadeKey);
+        collectionChangeNotificationService.folderAdded(folder.getCollectionId());
         return folder;
     }
 

@@ -641,6 +641,10 @@
     "bookmarkRemoved": "{name} removed a bookmark",
     "bookmarksAdded": "{name} added bookmarks",
     "bookmarksChanged": "{name} updated several bookmarks",
-    "bookmarksRemoved": "{name} removed several bookmarks"
+    "bookmarksRemoved": "{name} removed several bookmarks",
+    "folderAdded": "{name} added a folder",
+    "folderChanged": "{name} changed a folder",
+    "folderRemoved": "{name} deleted a folder",
+    "collectionChanged": "{name} updated this collection"
   }
 }

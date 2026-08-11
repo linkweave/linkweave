@@ -28,6 +28,32 @@ public enum ChangeKind {
     /** A member deleted a bookmark from the collection. */
     BOOKMARK_REMOVED,
 
+    /** A member created a folder. */
+    FOLDER_ADDED,
+
+    /** A member renamed a folder, or moved it to a different parent or position. */
+    FOLDER_CHANGED,
+
+    /**
+     * A member deleted a folder. Everything inside it goes with it, so this is
+     * also the notification for the bookmarks that vanished — one event for the
+     * operation the user actually performed, rather than one per casualty.
+     */
+    FOLDER_REMOVED,
+
+    /**
+     * Something else about the collection changed: its tags, its property
+     * definitions, or its auto-tag rules.
+     *
+     * <p>One kind rather than three families of three. All of it arrives in the
+     * same {@code CollectionInfoJson} the client re-reads (BR-202), none of it
+     * makes the client do anything different, and "Ada updated this collection"
+     * is as much as the indicator can honestly say about a renamed tag without
+     * inventing detail the event does not carry. New collection-scoped entities
+     * can join this kind instead of growing the enum.
+     */
+    COLLECTION_CHANGED,
+
     /**
      * Nothing changed — traffic emitted purely to keep the connection alive
      * (BR-208). Clients ignore it.

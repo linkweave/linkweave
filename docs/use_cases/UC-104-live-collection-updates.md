@@ -25,6 +25,13 @@ BR-208 and BR-210. Covered by backend unit + integration tests, frontend unit te
 `frontend/e2e/live-updates.spec.ts` (mutation-checked in both directions — disabling the
 client, and disabling the origin-tab filter, each make it fail).
 
+Every write path that changes what a member sees now announces itself: bookmarks
+(single, batch and both import paths), folders (create, rename, move, delete with its
+cascade, restore), and the collection's shared vocabulary — tags, property definitions,
+auto-tag rules — under one `COLLECTION_CHANGED` kind. Deliberately silent: per-user state
+(`trackClick`, `dismissSuggestion`), trashbin purges (already invisible to everyone else),
+and `deleteByCollection` (the collection itself is going away).
+
 **Not implemented.** Four gaps, in the order they are worth closing:
 
 | Gap | What happens today |
@@ -32,7 +39,6 @@ client, and disabling the origin-tab filter, each make it fail).
 | **A5 — access revoked while listening** | Authorization is checked at *subscribe* only, so an open stream survives revocation. A removed member keeps receiving notifications — what changed, and who did it — until they reload or close the tab. They cannot read the data (every read is re-authorized, so the collection itself 403s), but the channel leaks change metadata to someone who has just lost access. Closing live streams for a revoked user is the fix, and this is the gap with a security flavour rather than a convenience one. |
 | **A9 — deferred capture fails** | There is no `SCREENSHOT_FAILED` kind. A failed capture is silent: the client keeps whatever placeholder it had, with no "concluded unsuccessfully" signal, until the next natural reload. The success path (A1) is fully wired, so this is one enum value plus a fire on the failure branch. |
 | **BR-209 — deferral while editing** | "A change to a bookmark the user has open in an editor is deferred until the editor closes" is not honoured: the list refreshes under an open dialog. `BookmarkDialog` edits a copy of the form state, so typed input cannot be clobbered — the practical harm is nil, but the rule as written is unmet. |
-| **Folder operations announce nothing** | Creating, renaming, reordering, deleting or restoring a folder is invisible to other members until they reload — including `FolderService`'s delete/restore cascades, which soft-delete or restore every bookmark inside the folder. The client side would already cope: folders travel inside `CollectionInfoJson`, so the existing silent refetch refreshes the sidebar too. What is missing is a decision on vocabulary — `ChangeKind` is bookmark-shaped, and firing `BOOKMARK_REMOVED` for a folder delete would misdescribe an empty folder and leave rename/reorder uncovered. Adding `FOLDER_*` kinds is the honest fix. |
 | **BR-204 / BR-206 — recovery on tab focus** | Both rules name tab focus as a recovery point ("missed changes are recovered by reloading on reconnect, tab focus, or navigation"). Reconnect and navigation both refetch; **tab focus does not** — nothing re-reads the collection on `visibilitychange`. A tab whose bounded reconnect budget ran out therefore shows stale data until the user navigates. |
 
 **A7 (session expires while listening) is partially covered.** The stream's reconnect
