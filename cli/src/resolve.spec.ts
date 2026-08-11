@@ -156,6 +156,26 @@ describe('resolveFolderId', () => {
     ).rejects.toThrow(/No folder found at path/)
   })
 
+  it('shouldWalkAPreLoadedListWithoutFetchingAgain', async () => {
+    // ARRANGE: `folders create` inspects the hierarchy before delegating here,
+    // and re-fetching it would be a round trip in which the two could disagree.
+    const api = {
+      apiFoldersGet: vi.fn(),
+      apiFoldersPost: vi.fn().mockResolvedValue(folder('f3', 'Articles', 'f2')),
+    }
+
+    // ACT
+    const id = await resolveFolderId(api, UUID_A, 'Dev/TypeScript/Articles', {
+      create: true,
+      known: existing,
+    })
+
+    // ASSERT
+    expect(id).toBe('f3')
+    expect(api.apiFoldersGet).not.toHaveBeenCalled()
+    expect(existing).toHaveLength(2)
+  })
+
   it('shouldIgnoreSoftDeletedFolders', async () => {
     const api = {
       apiFoldersGet: vi

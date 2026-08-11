@@ -54,14 +54,12 @@ function folder(
   }
 }
 
-function collection(id: string, name: string): CollectionSummaryJson {
-  return {
-    id,
-    name,
-    isDefault: false,
-    role: 'OWNER' as CollectionSummaryJson['role'],
-    shared: false,
-  }
+function collection(
+  id: string,
+  name: string,
+  role: CollectionSummaryJson['role'] = 'OWNER' as CollectionSummaryJson['role'],
+): CollectionSummaryJson {
+  return { id, name, isDefault: false, role, shared: false }
 }
 
 let stdout: string
@@ -170,17 +168,32 @@ describe('collections rename', () => {
     expect(clients['collections']!['apiCollectionsIdPut']).not.toHaveBeenCalled()
   })
 
-  it('shouldNotClaimSuccessWhenTheServerKeptTheOldName', async () => {
+  it('shouldRefuseWhenTheCallerIsNotTheOwner', async () => {
     // ARRANGE: renaming is owner-only and the server enforces it by ignoring
-    // the new name rather than refusing — an admin's rename returns 200 with
-    // nothing changed, and reporting the name we asked for would be a lie.
-    clients['collections']!['apiCollectionsIdPut']!.mockResolvedValue(collection('c2', 'Work'))
+    // the new name rather than refusing — an admin's rename returns 200 as if
+    // it had worked, so the role has to stop it before anything is sent.
+    clients['collections']!['apiCollectionsGet']!.mockResolvedValue({
+      collections: [collection('c2', 'Work', 'ADMIN' as CollectionSummaryJson['role'])],
+    })
 
     // ACT & ASSERT
     await expect(runCollectionsRename('Work', 'Werk', {}, cmd)).rejects.toThrow(
-      /is unchanged. Renaming a collection is restricted to its owner/,
+      /renaming 'Work' is restricted to its owner/,
     )
+    expect(clients['collections']!['apiCollectionsIdPut']).not.toHaveBeenCalled()
     expect(stdout).toBe('')
+  })
+
+  it('shouldNotBlameOwnershipWhenAnOwnerRenamesToTheCurrentName', async () => {
+    // ARRANGE: the name also comes back unchanged here, and nothing is wrong —
+    // the echo is why the role, not the response, decides the failure.
+    clients['collections']!['apiCollectionsIdPut']!.mockResolvedValue(collection('c2', 'Work'))
+
+    // ACT
+    await runCollectionsRename('Work', 'Work', {}, cmd)
+
+    // ASSERT
+    expect(stdout).toContain('✓ Collection renamed: Work → Work')
   })
 
   it('shouldReportTheNameTheServerActuallyStored', async () => {
@@ -339,6 +352,17 @@ describe('folders create', () => {
     )
     expect(posted).toEqual(['Rust', 'Async'])
     expect(stdout).toContain('✓ Folder created: Dev/Rust/Async')
+  })
+
+  it('shouldFetchTheFolderListOnlyOnce', async () => {
+    // ARRANGE: the existence check and the walk that creates the missing
+    // segments need the same hierarchy, so the list is fetched once and reused.
+
+    // ACT
+    await runFoldersCreate('Dev/Rust/Async', {}, cmd)
+
+    // ASSERT
+    expect(clients['folders']!['apiFoldersGet']).toHaveBeenCalledOnce()
   })
 
   it('shouldRefuseToCreateAPathThatAlreadyExists', async () => {

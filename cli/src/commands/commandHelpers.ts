@@ -13,6 +13,12 @@ import { resolveCollectionId } from '../resolve'
 export const COLLECTION_FORBIDDEN_MESSAGE =
   "Collection not found or access denied. Use 'linkweave collections list' to see your collections."
 
+/**
+ * The options bag commander hands a subcommand that declares no options of its
+ * own. This is a dedicated 'no-option' type
+ */
+export type NoOptions = Record<string, never>
+
 export interface GlobalOptions {
   server?: string
   apiKey?: string

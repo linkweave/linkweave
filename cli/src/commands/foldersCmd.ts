@@ -84,11 +84,14 @@ export async function runFoldersCreate(
   await withHttpErrors(config, { forbidden: COLLECTION_FORBIDDEN_MESSAGE }, async () => {
     const collectionId = await resolveTargetCollectionId(clients, config, options.collection)
     const { folderList } = await clients.folders.apiFoldersGet({ collectionId })
-    const existing = folderPaths(folderList.filter(isLiveFolder)).find(
+    const live = folderList.filter(isLiveFolder)
+    const existing = folderPaths(live).find(
       (entry) => entry.path.toLowerCase() === wanted.toLowerCase(),
     )
     if (existing) throw new CliError(`Folder already exists at path '${existing.path}'.`)
-    return resolveFolderId(clients.folders, collectionId, wanted, { create: true })
+    // The list just fetched is handed on, so the walk that creates the missing
+    // segments works from the same hierarchy this check looked at.
+    return resolveFolderId(clients.folders, collectionId, wanted, { create: true, known: live })
   })
   console.log(`✓ Folder created: ${wanted}`)
 }

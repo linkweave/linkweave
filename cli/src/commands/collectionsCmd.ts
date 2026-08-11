@@ -6,6 +6,7 @@ import { updateStoredDefaultCollection } from '../config'
 import { CliError } from '../errors'
 import { parseFormat, renderTable } from '../output'
 import { findCollection } from '../resolve'
+import type { NoOptions } from './commandHelpers'
 import {
   COLLECTION_FORBIDDEN_MESSAGE,
   confirmIrreversible,
@@ -57,7 +58,7 @@ export async function runCollectionsList(
 /** `linkweave collections create <name>` */
 export async function runCollectionsCreate(
   name: string,
-  _options: unknown,
+  _options: NoOptions,
   cmd: Command,
 ): Promise<void> {
   const config = effectiveConfig(cmd)
@@ -73,7 +74,7 @@ export async function runCollectionsCreate(
 export async function runCollectionsRename(
   spec: string,
   newName: string,
-  _options: unknown,
+  _options: NoOptions,
   cmd: Command,
 ): Promise<void> {
   const config = effectiveConfig(cmd)
@@ -84,6 +85,16 @@ export async function runCollectionsRename(
     { forbidden: COLLECTION_FORBIDDEN_MESSAGE },
     async () => {
       const collection = await findCollection(clients.collections, spec)
+      // Renaming is owner-only, and the server enforces that by keeping the old
+      // name rather than refusing: an admin's rename comes back 200 as if it
+      // had worked. The role on the listing is the actual reason, so it decides
+      // this — inferring it from an unchanged name would also accuse an owner
+      // who renamed a collection to the name it already had.
+      if (collection.role !== 'OWNER') {
+        throw new CliError(
+          `Collection not renamed: renaming '${collection.name}' is restricted to its owner.`,
+        )
+      }
       // The update endpoint replaces the whole collection, and its payload
       // carries the screenshot toggle and fetch allowlist as well as the name.
       // Sending defaults for those would silently reset settings the CLI does
@@ -101,15 +112,8 @@ export async function runCollectionsRename(
     },
   )
 
-  // Renaming is owner-only, and the server enforces that by keeping the old
-  // name rather than refusing: an admin's rename comes back 200 with nothing
-  // changed. Reporting the name we asked for would be a plain lie, so the
-  // response decides what this prints.
-  if (renamed.after === renamed.before) {
-    throw new CliError(
-      `Collection not renamed: '${renamed.before}' is unchanged. Renaming a collection is restricted to its owner.`,
-    )
-  }
+  // The stored name, not the requested one: the server trims and otherwise
+  // normalises it, and reporting what we asked for would be a plain lie.
   console.log(`✓ Collection renamed: ${renamed.before} → ${renamed.after}`)
 }
 
@@ -149,7 +153,7 @@ export async function runCollectionsRm(
 /** `linkweave collections default <collection>` */
 export async function runCollectionsSetDefault(
   spec: string,
-  _options: unknown,
+  _options: NoOptions,
   cmd: Command,
 ): Promise<void> {
   const config = effectiveConfig(cmd)

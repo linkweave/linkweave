@@ -4,12 +4,12 @@ import { createAuthenticatedClients } from '../client'
 import { parseFormat, renderTable } from '../output'
 import { findTag } from '../resolve'
 import {
+  COLLECTION_FORBIDDEN_MESSAGE,
   confirmIrreversible,
   effectiveConfig,
   resolveTargetCollectionId,
   withHttpErrors,
 } from './commandHelpers'
-import { COLLECTION_FORBIDDEN_MESSAGE } from './commandHelpers'
 
 export interface TagsListOptions {
   collection?: string

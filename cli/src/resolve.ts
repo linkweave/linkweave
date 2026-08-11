@@ -195,6 +195,12 @@ export function parentFolderPath(path: string): string {
 export interface ResolveFolderOptions {
   /** Auto-create missing path segments (BR-020, used by `bookmarks add`). */
   create: boolean
+  /**
+   * The collection's live folders, when the caller has already fetched them.
+   * Saves a second round trip — and with it the window in which the two lists
+   * could disagree — for callers that inspect the hierarchy first.
+   */
+  known?: FolderJson[]
 }
 
 /**
@@ -211,8 +217,12 @@ export async function resolveFolderId(
   const segments = folderPathSegments(path)
   if (segments.length === 0) throw new CliError(`Invalid folder path: '${path}'`)
 
-  const { folderList } = await folders.apiFoldersGet({ collectionId })
-  const active = folderList.filter(isLiveFolder)
+  // Copied, because created folders are appended as the walk goes on and the
+  // caller's list is not this function's to grow.
+  const active =
+    options.known !== undefined
+      ? [...options.known]
+      : (await folders.apiFoldersGet({ collectionId })).folderList.filter(isLiveFolder)
 
   let parentId: string | undefined = undefined
   for (const segment of segments) {
