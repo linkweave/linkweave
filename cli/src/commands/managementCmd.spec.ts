@@ -244,6 +244,21 @@ describe('collections rm', () => {
     expect(stdout).toContain('✓ Collection deleted: Work')
   })
 
+  it('shouldNotPromptWhenTheCallerIsNotTheOwner', async () => {
+    // ARRANGE: the server refuses with a 403, but not before the prompt has
+    // asked someone to confirm a deletion that was never going to happen.
+    clients['collections']!['apiCollectionsGet']!.mockResolvedValue({
+      collections: [collection('c2', 'Work', 'ADMIN' as CollectionSummaryJson['role'])],
+    })
+
+    // ACT & ASSERT
+    await expect(runCollectionsRm('Work', {}, cmd)).rejects.toThrow(
+      /deleting 'Work' is restricted to its owner/,
+    )
+    expect(createInterface).not.toHaveBeenCalled()
+    expect(clients['collections']!['apiCollectionsIdDelete']).not.toHaveBeenCalled()
+  })
+
   it('shouldRefuseWithoutATtyAndWithoutYes', async () => {
     // ARRANGE: piped stdin is not consent for an unrecoverable delete.
     process.stdin.isTTY = false
@@ -441,6 +456,17 @@ describe('folders mv', () => {
       folderMoveJson: { collectionId: COLLECTION_ID, parentId: undefined },
     })
     expect(stdout).toContain('→ TypeScript')
+  })
+
+  it('shouldResolveBothFoldersFromASingleFetch', async () => {
+    // ARRANGE: the subtree check compares the two paths, so they have to come
+    // out of one snapshot of the hierarchy rather than two.
+
+    // ACT
+    await runFoldersMv('Dev/TypeScript', 'Ops', {}, cmd)
+
+    // ASSERT
+    expect(clients['folders']!['apiFoldersGet']).toHaveBeenCalledOnce()
   })
 
   it('shouldRefuseToMoveAFolderIntoItself', async () => {

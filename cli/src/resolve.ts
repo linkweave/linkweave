@@ -167,8 +167,18 @@ export async function findFolder(
   path: string,
 ): Promise<FolderPath> {
   const { folderList } = await folders.apiFoldersGet({ collectionId })
-  const known = folderPaths(folderList.filter(isLiveFolder))
+  return selectFolder(folderPaths(folderList.filter(isLiveFolder)), path)
+}
 
+/**
+ * The lookup findFolder performs, over a list the caller already holds.
+ *
+ * `folders mv` resolves two folders and then compares their paths to reject a
+ * move into the folder's own subtree. Fetching the hierarchy once and picking
+ * both out of it keeps that check reading a single snapshot — two fetches could
+ * disagree, and the comparison would then be about a tree that never existed.
+ */
+export function selectFolder(known: FolderPath[], path: string): FolderPath {
   if (looksLikeId(path)) {
     const byId = known.find((entry) => entry.folder.id === path)
     if (byId) return byId

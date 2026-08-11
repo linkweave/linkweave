@@ -174,9 +174,11 @@ jobs:
         working-directory: cli
         run: pnpm install --frozen-lockfile
 
-      # `check` = tsc --noEmit + vitest run; the build proves the published
-      # bundle (which inlines the generated API client) still assembles.
-      - name: Type-check, unit tests, build
+      # `check` = tsc --noEmit + oxlint + vitest run; the build proves the
+      # published bundle (which inlines the generated API client) still
+      # assembles. Lint runs in its non-fixing form, so a violation fails the
+      # job rather than being quietly rewritten on a runner and discarded.
+      - name: Type-check, lint, unit tests, build
         working-directory: cli
         run: |
           pnpm run check

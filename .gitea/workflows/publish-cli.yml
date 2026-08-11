@@ -58,7 +58,7 @@ jobs:
       - name: Authenticate to npm
         run: echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > ~/.npmrc
 
-      # prepublishOnly re-runs type-check, unit tests and the build, so a
+      # prepublishOnly re-runs type-check, lint, unit tests and the build, so a
       # broken bundle cannot reach the registry even on a manual re-run.
       # --no-git-checks: publishing happens from a detached tag checkout.
       - name: Publish

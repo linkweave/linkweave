@@ -30,7 +30,8 @@ jobs:
         working-directory: api
         run: ./mvnw --batch-mode --no-transfer-progress pmd:cpd-check
 
-  # Frontend CSS linting (stylelint, enforced) plus fallow dead code,
+  # Frontend linting — CSS (stylelint) and JS/TS (oxlint + eslint), both
+  # enforced — plus fallow dead code,
   # duplication and health/complexity (report-only via continue-on-error).
   # Duplication/dead-code are compared against a committed baseline so only
   # new findings show up; drop `continue-on-error: true` to enforce.
@@ -57,6 +58,15 @@ jobs:
       - name: CSS lint (stylelint)
         working-directory: frontend
         run: pnpm exec stylelint "src/**/*.css"
+
+      # JS/TS lint, enforced. Deliberately not `pnpm run lint`: that script
+      # passes --fix, so on a runner it would repair the violation, pass, and
+      # throw the repair away with the container. Same two linters, no rewrite.
+      - name: JS/TS lint (oxlint + eslint)
+        working-directory: frontend
+        run: |
+          pnpm exec oxlint .
+          pnpm exec eslint .
 
       # Dead code + circular dependencies, compared against .fallow-baseline.json
       # so only NEW findings surface (the current backlog is accepted). Enforced:

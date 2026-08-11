@@ -372,10 +372,17 @@ client rather than fetching it. `commander` stays a normal dependency — tsup
 leaves `dependencies` external — so a global install pulls two packages.
 
 ```bash
-pnpm run check        # type-check + unit tests
+pnpm run check        # type-check + lint + unit tests
+pnpm run lint         # oxlint, reports only
+pnpm run lint:fix     # oxlint --fix, rewrites what it can
 pnpm run test         # vitest unit tests
 pnpm run dev -- bookmarks list   # run from source via tsx
 ```
+
+Linting is `oxlint` alone (`.oxlintrc.json`) — the frontend's eslint layer
+exists for Vue, and none of it applies here. `check` deliberately runs the
+non-fixing `lint`: it is what `prepublishOnly` calls, and a publish is no place
+to rewrite sources on the way past.
 
 End-to-end tests live in `frontend/e2e/cli.spec.ts` and run as part of the
 Playwright suite against a real server:
@@ -400,7 +407,7 @@ git push && git push --tags
 `.gitea/workflows/publish-cli.yml` takes it from there. It refuses to run if
 the tag and `package.json` disagree, and does nothing if that version is
 already on the registry, so a re-run is safe. `prepublishOnly` re-runs
-type-check, tests and the build, so a broken bundle cannot be published.
+type-check, lint, tests and the build, so a broken bundle cannot be published.
 
 A `cli-v*` tag does not trigger `build.yml`, so cutting a CLI release never
 rebuilds the container images, the frontend or the extension, and cannot

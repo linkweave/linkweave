@@ -11,6 +11,7 @@ import {
   normalizeFolderPath,
   parentFolderPath,
   resolveFolderId,
+  selectFolder,
 } from '../resolve'
 import {
   COLLECTION_FORBIDDEN_MESSAGE,
@@ -154,10 +155,12 @@ export async function runFoldersMv(
     { forbidden: COLLECTION_FORBIDDEN_MESSAGE },
     async () => {
       const collectionId = await resolveTargetCollectionId(clients, config, options.collection)
-      const found = await findFolder(clients.folders, collectionId, path)
-      const parent = toRoot
-        ? undefined
-        : await findFolder(clients.folders, collectionId, destination)
+      // One fetch for both folders: the subtree check below compares their
+      // paths, and two fetches could return hierarchies that disagree.
+      const { folderList } = await clients.folders.apiFoldersGet({ collectionId })
+      const known = folderPaths(folderList.filter(isLiveFolder))
+      const found = selectFolder(known, path)
+      const parent = toRoot ? undefined : selectFolder(known, destination)
       // Caught here for a usable message; the server also rejects it, but as a
       // generic validation failure that does not say which folder was at fault.
       if (parent?.folder.id === found.folder.id) {

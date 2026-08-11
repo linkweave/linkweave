@@ -698,6 +698,57 @@ test.describe('CLI', () => {
     expect(result.stderr).toContain('No collection found matching')
   })
 
+  test('should refuse a rename and a delete from a non-owner', async () => {
+    // ARRANGE: a second user, made ADMIN on the owner's collection. Renaming
+    // is owner-only and the server enforces it by keeping the old name rather
+    // than refusing — a 200 that changed nothing — so the CLI has to decide
+    // this from the role, and say ownership rather than echo the name back.
+    const guestCtx = await playwrightRequest.newContext({
+      baseURL: BASE_URL,
+      ignoreHTTPSErrors: true,
+    })
+    try {
+      const guest = await registerTestUser(guestCtx, 'cliguest')
+      await loginViaApi(guestCtx, guest)
+      const guestKey = await api<{ key: string }>(guestCtx, 'POST', '/api/auth/api-keys', {
+        name: 'cli-e2e-guest',
+      })
+      await api(ctx, 'POST', `/api/collections/${defaultCollectionId}/members`, {
+        email: guest.email,
+        role: 'ADMIN',
+      })
+      const asGuest = { LINKWEAVE_API_KEY: guestKey.key }
+
+      // ACT
+      const renamed = await runCli(
+        ['collections', 'rename', defaultCollectionId, 'Hijacked'],
+        asGuest,
+      )
+
+      // ASSERT
+      expect(renamed.code).toBe(1)
+      expect(renamed.stderr).toContain('restricted to its owner')
+      expect(renamed.stdout).not.toContain('✓')
+
+      // ACT — and no confirmation prompt on the way to a delete that the
+      // server would have refused with a 403 anyway.
+      const removed = await runCli(['collections', 'rm', defaultCollectionId, '--yes'], asGuest)
+
+      // ASSERT
+      expect(removed.code).toBe(1)
+      expect(removed.stderr).toContain('restricted to its owner')
+
+      // ASSERT — the owner's collection is untouched by either attempt.
+      const stillThere = JSON.parse(
+        (await runCli(['collections', 'list', '--format=json'])).stdout,
+      ) as Array<{ id: string; name: string }>
+      expect(stillThere.find((c) => c.id === defaultCollectionId)?.name).not.toBe('Hijacked')
+    } finally {
+      await guestCtx.delete('/api/auth/me').catch(() => {})
+      await guestCtx.dispose()
+    }
+  })
+
   test('should login non-interactively, use the stored config, and logout', async () => {
     const fakeHome = mkdtempSync(path.join(tmpdir(), 'linkweave-cli-e2e-'))
     try {

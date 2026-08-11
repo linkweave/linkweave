@@ -23,9 +23,17 @@ cd api && ./mvnw quarkus:dev        # Dev mode with hot reload, assume running
 cd frontend && pnpm run dev # frontend dev mode, assume running
 cd frontend && pnpm run type-check # frontend type checking
 cd frontend && pnpm run check      # PRE-PUSH GATE: type-check + lint + analyze:deadcode (fallow). Run before pushing frontend changes.
+cd cli && pnpm run check           # PRE-PUSH GATE for the CLI: type-check + lint (oxlint) + vitest. Run before pushing cli changes.
 pnpm exec playwright test --project=chromium  
 
 ```
+
+## CI & releases
+
+CI is **Gitea** (`.gitea/workflows/`); `.github/` holds only `build-desktop.yml` — never conclude "no CI runs X" from `.github/` alone.
+Tags: `v*` = app + desktop, `cli-v*` = CLI only. New gates go in a module's `check` script, not a new CI step.
+Before changing a gate, cutting a release, or claiming what CI runs: **[docs/build-and-deploy.md](docs/build-and-deploy.md)**.
+
 ## Architecture
 
 Adhere to the layering model: **Entities → Repository → Service → (Mapper) → Resource**.  

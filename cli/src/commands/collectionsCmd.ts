@@ -133,6 +133,15 @@ export async function runCollectionsRm(
   const collection = await withHttpErrors(config, { forbidden: COLLECTION_FORBIDDEN_MESSAGE }, () =>
     findCollection(clients.collections, spec),
   )
+  // Deleting is owner-only and the server does refuse — but with a 403 that
+  // only arrives after the prompt below has made someone confirm destroying a
+  // collection they were never able to destroy. The role settles it first; the
+  // 403 mapping stays for access that changes in between.
+  if (collection.role !== 'OWNER') {
+    throw new CliError(
+      `Collection not deleted: deleting '${collection.name}' is restricted to its owner.`,
+    )
+  }
   // Nothing about this reaches the trashbin: the bookmarks, folders, tags,
   // auto-tag rules and saved searches inside are all deleted outright.
   await confirmIrreversible(
