@@ -108,31 +108,106 @@ save is a whole-bookmark replace (fetch → merge → save): a concurrent change
 made elsewhere between fetch and save is overwritten. `--tags` replaces the
 complete tag list; `--tags ""` removes every tag.
 
+### `linkweave bookmarks show <id>`
+
+```bash
+linkweave bookmarks show 3f8a...
+linkweave bookmarks show 3f8a... --format json
+```
+
+Prints one bookmark as field/value rows: title, URL, description, collection,
+folder path, tags, click count and timestamps. The table resolves tag IDs to
+names and the folder ID to its path; `--format json` is the raw payload and
+skips those lookups.
+
+### `linkweave bookmarks export` / `linkweave bookmarks import <file>`
+
+```bash
+linkweave bookmarks export > backup.html          # or --output backup.html
+linkweave bookmarks export --collection Work -o work.html
+linkweave bookmarks import ~/Downloads/bookmarks.html
+linkweave bookmarks import chrome.html --collection Archive
+```
+
+The format is the Netscape bookmarks HTML that every browser reads and writes,
+so an export restores into Firefox or Chrome unchanged, and anything they
+export imports here. Folder structure survives the round trip.
+
+`export` writes to stdout unless `--output`/`-o` is given, so it redirects and
+pipes like any other command. `import` adds to the target collection rather
+than replacing it, and the server skips bookmarks whose URL is already there —
+the summary line reports how many were created and how many were skipped.
+
+The file must be `.html` or `.htm` and at most 5 MB; both are checked before
+anything is uploaded.
+
 ### `linkweave bookmarks rm <id>`
 
 Soft-deletes: the bookmark moves to the trashbin and can be restored in the
-web UI.
+web UI or with `linkweave trash restore`.
 
-### `linkweave collections list`
+### `linkweave collections`
 
 ```bash
-linkweave collections list
-linkweave collections list --format json
+linkweave collections list                       # ID, name, default, role, shared
+linkweave collections create Archive
+linkweave collections rename Archive "Cold storage"
+linkweave collections default Work
+linkweave collections rm Archive                 # permanent, asks first
 ```
 
-Shows ID, name, whether it is your default collection, your role, and whether
-it is shared.
+`create`, `rename` and `rm` take a collection ID or a name, matched
+case-insensitively. `rename` preserves the screenshot and fetch-allowlist
+settings that the CLI does not otherwise expose.
 
-### `linkweave tags list` / `linkweave folders list`
+Renaming is restricted to the collection's owner, and the server enforces that
+by keeping the existing name rather than returning an error — so on a shared
+collection where you are an admin rather than the owner, `rename` fails with
+`Collection not renamed: '<name>' is unchanged` instead of reporting a success
+that did not happen.
+
+`default` changes your default collection server-side **and** updates the copy
+stored on this machine, so the next `bookmarks add` targets it. It only
+rewrites the stored config when the credentials in use are the stored ones — a
+key passed via `--api-key` or `LINKWEAVE_API_KEY` may belong to someone else.
+
+`rm` deletes the collection and every bookmark, folder, tag, auto-tag rule and
+saved search in it. None of that reaches the trashbin, so it prompts; `--yes`
+skips the prompt and without a terminal it refuses rather than assume consent.
+The server will not let you delete your last remaining collection.
+
+### `linkweave tags`
 
 ```bash
 linkweave tags list                      # ID + name, alphabetical
-linkweave folders list --format ids
-linkweave folders list --collection Work
+linkweave tags rename java jvm
+linkweave tags rm jvm --yes              # permanent, asks first
 ```
 
-Folders are shown as paths (`Dev/TypeScript`) — the same syntax `--folder`
-accepts, so output can be piped straight back into `bookmarks add`.
+Tags are addressed by name or ID and scoped with `--collection`. `rename`
+preserves the tag's colour. `rm` removes the tag from every bookmark that
+carried it and cannot be undone, so it prompts.
+
+### `linkweave folders`
+
+```bash
+linkweave folders list --format ids
+linkweave folders create Dev/Rust/Async  # missing parents are created
+linkweave folders rename Dev/Rust/Async Tokio
+linkweave folders mv Dev/Rust/Tokio Dev  # '/' as the destination means the top level
+linkweave folders rm Dev/Rust
+```
+
+Folders are shown and addressed as paths (`Dev/TypeScript`) — the same syntax
+`--folder` accepts, so output can be piped straight back into `bookmarks add`.
+A folder ID works anywhere a path does.
+
+`create` behaves like `mkdir -p` for missing parents, but like plain `mkdir` it
+refuses a path that already exists; `bookmarks add --folder` is the idempotent
+way to create one in passing. `rename` changes the last segment only and leaves
+the folder where it is — use `mv` to reparent it. `rm` soft-deletes the folder,
+its subfolders and the bookmarks inside; all of it lands in the trashbin, so
+there is no prompt and `trash restore` undoes it.
 
 ### `linkweave trash`
 
@@ -206,6 +281,25 @@ linkweave bookmarks list --tag <TAB>          # tags in your default collection
 linkweave bookmarks add https://x --folder <TAB>   # Dev  Dev/TypeScript
 ```
 
+The management commands complete their *arguments* from the server too, so the
+thing you are about to rename, move or delete can be picked rather than typed:
+
+```bash
+linkweave folders mv <TAB>                    # Dev  Dev/TypeScript  Ops
+linkweave folders mv Dev/TypeScript <TAB>     # the destination, likewise
+linkweave tags rm <TAB>                       # dev  java
+linkweave collections rename <TAB>            # My Links  Work
+```
+
+Only the argument naming an *existing* thing is completed. The `<new-name>` of
+a `rename` is left alone — it is a name you are inventing, and offering the
+names already in use would be worse than offering nothing. `--collection`
+scopes these the same way it scopes option values.
+
+Bookmark and trashbin IDs (`bookmarks show`, `trash restore`, …) are not
+completed: a list of bare UUIDs is no use without the title beside it, which
+the one-value-per-line callback has nowhere to put.
+
 Those suggestions come from a hidden `linkweave __complete` callback, cached
 for 60 seconds in `$XDG_CACHE_HOME/linkweave/completion-cache.json`
 (owner-only, like the config) so a keypress never waits on the network twice.
@@ -278,10 +372,17 @@ client rather than fetching it. `commander` stays a normal dependency — tsup
 leaves `dependencies` external — so a global install pulls two packages.
 
 ```bash
-pnpm run check        # type-check + unit tests
+pnpm run check        # type-check + lint + unit tests
+pnpm run lint         # oxlint, reports only
+pnpm run lint:fix     # oxlint --fix, rewrites what it can
 pnpm run test         # vitest unit tests
 pnpm run dev -- bookmarks list   # run from source via tsx
 ```
+
+Linting is `oxlint` alone (`.oxlintrc.json`) — the frontend's eslint layer
+exists for Vue, and none of it applies here. `check` deliberately runs the
+non-fixing `lint`: it is what `prepublishOnly` calls, and a publish is no place
+to rewrite sources on the way past.
 
 End-to-end tests live in `frontend/e2e/cli.spec.ts` and run as part of the
 Playwright suite against a real server:
@@ -306,7 +407,7 @@ git push && git push --tags
 `.gitea/workflows/publish-cli.yml` takes it from there. It refuses to run if
 the tag and `package.json` disagree, and does nothing if that version is
 already on the registry, so a re-run is safe. `prepublishOnly` re-runs
-type-check, tests and the build, so a broken bundle cannot be published.
+type-check, lint, tests and the build, so a broken bundle cannot be published.
 
 A `cli-v*` tag does not trigger `build.yml`, so cutting a CLI release never
 rebuilds the container images, the frontend or the extension, and cannot

@@ -3,6 +3,7 @@ import type {
   CollectionSummaryJson,
   FolderJson,
   FolderResourceApi,
+  TagJson,
   TagResourceApi,
 } from './api'
 import { CliError } from './errors'
@@ -15,7 +16,9 @@ export function looksLikeId(value: string): boolean {
 
 type CollectionsApi = Pick<CollectionResourceApi, 'apiCollectionsGet'>
 type TagsApi = Pick<TagResourceApi, 'apiTagsGet' | 'apiTagsPost'>
+type TagLookupApi = Pick<TagResourceApi, 'apiTagsGet'>
 type FoldersApi = Pick<FolderResourceApi, 'apiFoldersGet' | 'apiFoldersPost'>
+type FolderLookupApi = Pick<FolderResourceApi, 'apiFoldersGet'>
 
 /**
  * Resolves a `--collection` value to a collection ID (UC-079 A8): UUIDs pass
@@ -39,6 +42,56 @@ export async function resolveCollectionId(
   }
   throw new CliError(
     `No collection found with name '${spec}'. Use 'linkweave collections list' to see your collections.`,
+  )
+}
+
+/**
+ * Like resolveCollectionId, but returns the collection itself.
+ *
+ * The management commands need more than the ID — the name for their
+ * confirmation prompts and result messages — and an ID that only ever gets
+ * echoed back is no help to someone deciding whether to delete something.
+ */
+export async function findCollection(
+  collections: CollectionsApi,
+  spec: string,
+): Promise<CollectionSummaryJson> {
+  const { collections: all } = await collections.apiCollectionsGet()
+  const needle = spec.toLowerCase()
+  const matches = looksLikeId(spec)
+    ? all.filter((c) => c.id === spec)
+    : all.filter((c) => c.name.toLowerCase() === needle)
+  if (matches.length === 1) return matches[0]!
+  if (matches.length > 1) {
+    throw new CliError(`Multiple collections match '${spec}'. Use the collection ID instead.`)
+  }
+  throw new CliError(
+    `No collection found matching '${spec}'. Use 'linkweave collections list' to see your collections.`,
+  )
+}
+
+/**
+ * Resolves a tag spec — an ID or a name — to the tag itself, without ever
+ * creating one. `resolveTagIds` auto-creates because tagging a bookmark with a
+ * new name is a normal thing to do; renaming or deleting a tag that does not
+ * exist is not, so a miss here is an error.
+ */
+export async function findTag(
+  tags: TagLookupApi,
+  collectionId: string,
+  spec: string,
+): Promise<TagJson> {
+  const { tagList } = await tags.apiTagsGet({ collectionId })
+  const needle = spec.toLowerCase()
+  const matches = looksLikeId(spec)
+    ? tagList.filter((tag) => tag.id === spec)
+    : tagList.filter((tag) => tag.data.name.toLowerCase() === needle)
+  if (matches.length === 1) return matches[0]!
+  if (matches.length > 1) {
+    throw new CliError(`Multiple tags match '${spec}'. Use the tag ID instead.`)
+  }
+  throw new CliError(
+    `No tag found matching '${spec}' in the collection. Use 'linkweave tags list' to see them.`,
   )
 }
 
@@ -83,9 +136,81 @@ export async function resolveTagIds(
   return ids
 }
 
+/** Splits a folder path into its trimmed, non-empty segments. */
+export function folderPathSegments(path: string): string[] {
+  return path
+    .split('/')
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length > 0)
+}
+
+/**
+ * Canonical form of a user-typed folder path, so `Dev / TypeScript/` matches
+ * the `Dev/TypeScript` that `folders list` prints.
+ */
+export function normalizeFolderPath(path: string): string {
+  return folderPathSegments(path).join('/')
+}
+
+/**
+ * Resolves a folder path — or a folder ID — to the folder and its full path.
+ *
+ * The management commands need the whole folder, not just its ID: renaming
+ * sends a full FolderSaveJson back, and the server treats an absent parentId
+ * as "move to the root", so the current parent has to be read first and passed
+ * through unchanged. The path comes back too, so their messages can name the
+ * folder the same way `folders list` does even when an ID was passed in.
+ */
+export async function findFolder(
+  folders: FolderLookupApi,
+  collectionId: string,
+  path: string,
+): Promise<FolderPath> {
+  const { folderList } = await folders.apiFoldersGet({ collectionId })
+  return selectFolder(folderPaths(folderList.filter(isLiveFolder)), path)
+}
+
+/**
+ * The lookup findFolder performs, over a list the caller already holds.
+ *
+ * `folders mv` resolves two folders and then compares their paths to reject a
+ * move into the folder's own subtree. Fetching the hierarchy once and picking
+ * both out of it keeps that check reading a single snapshot — two fetches could
+ * disagree, and the comparison would then be about a tree that never existed.
+ */
+export function selectFolder(known: FolderPath[], path: string): FolderPath {
+  if (looksLikeId(path)) {
+    const byId = known.find((entry) => entry.folder.id === path)
+    if (byId) return byId
+    throw new CliError(`No folder found with ID '${path}' in the collection.`)
+  }
+
+  const wanted = normalizeFolderPath(path)
+  if (wanted === '') throw new CliError(`Invalid folder path: '${path}'`)
+  const matches = known.filter((entry) => entry.path.toLowerCase() === wanted.toLowerCase())
+  if (matches.length === 1) return matches[0]!
+  if (matches.length > 1) {
+    throw new CliError(`Multiple folders match '${path}'. Use the folder ID instead.`)
+  }
+  throw new CliError(
+    `No folder found at path '${wanted}' in the collection. Use 'linkweave folders list' to see them.`,
+  )
+}
+
+/** The path of a folder path's parent, or '' when it sits at the root. */
+export function parentFolderPath(path: string): string {
+  return folderPathSegments(path).slice(0, -1).join('/')
+}
+
 export interface ResolveFolderOptions {
   /** Auto-create missing path segments (BR-020, used by `bookmarks add`). */
   create: boolean
+  /**
+   * The collection's live folders, when the caller has already fetched them.
+   * Saves a second round trip — and with it the window in which the two lists
+   * could disagree — for callers that inspect the hierarchy first.
+   */
+  known?: FolderJson[]
 }
 
 /**
@@ -99,14 +224,15 @@ export async function resolveFolderId(
   path: string,
   options: ResolveFolderOptions,
 ): Promise<string> {
-  const segments = path
-    .split('/')
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0)
+  const segments = folderPathSegments(path)
   if (segments.length === 0) throw new CliError(`Invalid folder path: '${path}'`)
 
-  const { folderList } = await folders.apiFoldersGet({ collectionId })
-  const active = folderList.filter(isLiveFolder)
+  // Copied, because created folders are appended as the walk goes on and the
+  // caller's list is not this function's to grow.
+  const active =
+    options.known !== undefined
+      ? [...options.known]
+      : (await folders.apiFoldersGet({ collectionId })).folderList.filter(isLiveFolder)
 
   let parentId: string | undefined = undefined
   for (const segment of segments) {

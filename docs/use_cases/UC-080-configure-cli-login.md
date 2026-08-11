@@ -38,6 +38,10 @@
      "defaultCollectionId": "550e8400-..."
    }
    ```
+   `login --insecure` adds `"insecure": true`, so that the shell-completion
+   callback — which cannot be passed flags — can still reach a server with a
+   self-signed certificate. `collections default` later rewrites
+   `defaultCollectionId` in place (UC-079).
 10. CLI displays: `✓ Logged in as user@example.com. Configuration saved to <resolved config path>`
 
 ## Main Success Scenario — Non-Interactive Login
@@ -64,7 +68,10 @@
 **Flow:**
 
 1. CLI displays: `Error: Invalid API key format. Expected: lw_ followed by 64 hex characters.`
-2. CLI prompts again (interactive mode) or exits with code 2 (non-interactive mode).
+2. Interactive mode re-prompts, for three attempts in total, then exits with
+   code 1 rather than looping forever on a paste that will never be valid.
+3. Non-interactive mode (`--api-key`) exits with code 2 — a malformed flag
+   value is a usage error, not a runtime one.
 
 ### A2: Key Rejected by Server
 
@@ -80,8 +87,12 @@
 **Trigger:** The HTTP request to verify the key fails due to network error (step 7).
 **Flow:**
 
-1. CLI displays: `Error: Cannot reach server at {url}. Check the URL and your network connection.`
-2. CLI prompts to retry or abort (interactive mode) or exits with code 1 (non-interactive mode).
+1. CLI displays: `Error: Cannot reach LinkWeave server at {url}. Check your network connection and server URL.`
+2. CLI does not save the configuration.
+3. CLI exits with code 1, in interactive mode as well as non-interactive. There
+   is no retry prompt: by this point the key has already been collected, so
+   retrying would mean re-running `login`, which is cheap and keeps the
+   unreachable-server path identical in both modes.
 
 ### A4: Config File Already Exists
 

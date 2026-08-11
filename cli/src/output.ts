@@ -46,6 +46,8 @@ export function displayWidth(value: string): number {
  * C0 control and DEL collapses to a single space.
  */
 function sanitize(value: string): string {
+  // Matching control characters is the entire point, per the note above.
+  // oxlint-disable-next-line no-control-regex
   return value.replace(/[\u0000-\u001F\u007F]+/gu, ' ')
 }
 

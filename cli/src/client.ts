@@ -3,7 +3,9 @@ import {
   BookmarkResourceApi,
   CollectionResourceApi,
   Configuration,
+  ExportResourceApi,
   FolderResourceApi,
+  ImportResourceApi,
   TagResourceApi,
   TrashbinResourceApi,
 } from './api'
@@ -14,7 +16,9 @@ export interface ApiClients {
   auth: AuthResourceApi
   bookmarks: BookmarkResourceApi
   collections: CollectionResourceApi
+  export: ExportResourceApi
   folders: FolderResourceApi
+  import: ImportResourceApi
   tags: TagResourceApi
   trash: TrashbinResourceApi
 }
@@ -53,7 +57,9 @@ export function createClients(server: string, apiKey: string, insecure = false):
     auth: new AuthResourceApi(configuration),
     bookmarks: new BookmarkResourceApi(configuration),
     collections: new CollectionResourceApi(configuration),
+    export: new ExportResourceApi(configuration),
     folders: new FolderResourceApi(configuration),
+    import: new ImportResourceApi(configuration),
     tags: new TagResourceApi(configuration),
     trash: new TrashbinResourceApi(configuration),
   }

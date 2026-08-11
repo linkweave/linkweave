@@ -5,6 +5,7 @@ import { createAuthenticatedClients } from '../client'
 import { CliError } from '../errors'
 import { parseFormat, renderTable } from '../output'
 import { folderPaths } from '../resolve'
+import type { NoOptions } from './commandHelpers'
 import { confirmIrreversible, effectiveConfig, withHttpErrors } from './commandHelpers'
 
 /** Errors that need no ID in the message — listing and emptying. */
@@ -109,7 +110,7 @@ export async function runTrashList(options: TrashListOptions, cmd: Command): Pro
 }
 
 /** `linkweave trash restore <id>` — works for a bookmark or a folder. */
-export async function runTrashRestore(id: string, _options: unknown, cmd: Command): Promise<void> {
+export async function runTrashRestore(id: string, _options: NoOptions, cmd: Command): Promise<void> {
   const config = effectiveConfig(cmd)
   const clients = createAuthenticatedClients(config)
 

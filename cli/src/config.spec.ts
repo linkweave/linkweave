@@ -1,5 +1,6 @@
 import {
   chmodSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
@@ -24,6 +25,7 @@ import {
   normalizeServer,
   resolveEffectiveConfig,
   saveStoredConfig,
+  updateStoredDefaultCollection,
   type StoredConfig,
 } from './config'
 
@@ -336,5 +338,109 @@ describe('XDG base directories', () => {
 
   it('shouldPutTheConfigFileInsideTheConfigDir', () => {
     expect(configPath({ HOME })).toBe(join(HOME, '.config', 'linkweave', 'config.json'))
+  })
+})
+
+describe('updateStoredDefaultCollection', () => {
+  let dir: string
+  let path: string
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'linkweave-default-'))
+    path = join(dir, 'config.json')
+  })
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('shouldRecordTheNewDefaultForTheStoredIdentity', () => {
+    // ARRANGE
+    saveStoredConfig(STORED, path)
+
+    // ACT
+    const written = updateStoredDefaultCollection(
+      { server: 'https://stored.example', apiKey: KEY_A },
+      'new-collection',
+      path,
+    )
+
+    // ASSERT
+    expect(written).toBe(true)
+    expect(loadStoredConfig(path)?.defaultCollectionId).toBe('new-collection')
+  })
+
+  it('shouldLeaveEveryOtherStoredFieldAlone', () => {
+    // ARRANGE
+    saveStoredConfig(STORED, path)
+
+    // ACT
+    updateStoredDefaultCollection(
+      { server: 'https://stored.example', apiKey: KEY_A },
+      'new-collection',
+      path,
+    )
+
+    // ASSERT
+    expect(loadStoredConfig(path)).toEqual({ ...STORED, defaultCollectionId: 'new-collection' })
+  })
+
+  it('shouldNotWriteForAKeyThatIsNotTheStoredOne', () => {
+    // ARRANGE: a key from --api-key or the environment may belong to another
+    // user, whose default is not ours to record.
+    saveStoredConfig(STORED, path)
+
+    // ACT
+    const written = updateStoredDefaultCollection(
+      { server: 'https://stored.example', apiKey: KEY_B },
+      'new-collection',
+      path,
+    )
+
+    // ASSERT
+    expect(written).toBe(false)
+    expect(loadStoredConfig(path)?.defaultCollectionId).toBe('stored-collection')
+  })
+
+  it('shouldNotWriteWhenPointedAtADifferentServer', () => {
+    // ARRANGE
+    saveStoredConfig(STORED, path)
+
+    // ACT
+    const written = updateStoredDefaultCollection(
+      { server: 'https://other.example', apiKey: KEY_A },
+      'new-collection',
+      path,
+    )
+
+    // ASSERT
+    expect(written).toBe(false)
+  })
+
+  it('shouldNotRewriteAFileThatAlreadySaysTheSameThing', () => {
+    // ARRANGE: re-running the command should not touch the file at all.
+    saveStoredConfig(STORED, path)
+
+    // ACT
+    const written = updateStoredDefaultCollection(
+      { server: 'https://stored.example', apiKey: KEY_A },
+      'stored-collection',
+      path,
+    )
+
+    // ASSERT
+    expect(written).toBe(false)
+  })
+
+  it('shouldDoNothingWhenThereIsNoStoredConfig', () => {
+    // Credentials came from the environment; there is no file to update.
+    const written = updateStoredDefaultCollection(
+      { server: 'https://stored.example', apiKey: KEY_A },
+      'new-collection',
+      path,
+    )
+
+    expect(written).toBe(false)
+    expect(existsSync(path)).toBe(false)
   })
 })

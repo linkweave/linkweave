@@ -217,3 +217,74 @@ __linkweave_values tags`
     expect(script).toContain('-x -a "table json ids"')
   })
 })
+
+describe('positional argument sources', () => {
+  it('shouldGiveEachDynamicSlotItsSourceAndTheCommandsOwnPathLength', () => {
+    // ARRANGE: the shells derive the positional slot as
+    // (command words typed) - (this command's path length).
+    const script = completionScript('bash', program)
+
+    // ACT
+    const arm = script.split('\n').find((line) => line.startsWith('    "folders mv"*)'))
+
+    // ASSERT
+    expect(arm).toContain('pathlen=2')
+    expect(arm).toContain('argsources=(folders folders)')
+  })
+
+  it('shouldNotOfferExistingNamesForARenamesNewName', () => {
+    // ARRANGE: `folders rename <path> <new-name>` completes only the first
+    // slot; the array length is what stops the second one.
+    const script = completionScript('bash', program)
+
+    // ACT
+    const arm = script.split('\n').find((line) => line.startsWith('    "folders rename"*)'))
+
+    // ASSERT
+    expect(arm).toContain('argsources=(folders)')
+  })
+
+  it('shouldLeaveCommandsWithoutADynamicSlotUntouched', () => {
+    // ARRANGE: `bookmarks add <url>` has nothing to complete from the server,
+    // so its arm keeps the defaults set before the case.
+    const script = completionScript('bash', program)
+
+    // ACT
+    const arm = script.split('\n').find((line) => line.startsWith('    "bookmarks add"*)'))
+
+    // ASSERT
+    expect(arm).not.toContain('argsources=')
+    expect(arm).not.toContain('pathlen=')
+  })
+
+  it('shouldIndexTheZshArrayFromOne', () => {
+    // zsh arrays are 1-based, unlike bash's.
+    expect(completionScript('zsh', program)).toContain('argsources[idx + 1]')
+  })
+
+  it('shouldGateEachFishSlotOnItsOwnPositionalIndex', () => {
+    // ARRANGE: fish has no shared dispatch, so each slot is its own rule.
+    const script = completionScript('fish', program)
+
+    // ACT
+    const lines = script.split('\n').filter((line) => line.includes('__linkweave_positional_index'))
+
+    // ASSERT
+    expect(lines.join('\n')).toContain('test (__linkweave_positional_index 2) -eq 0')
+    expect(lines.join('\n')).toContain('test (__linkweave_positional_index 2) -eq 1')
+  })
+
+  it('shouldTeachTheFishHelperEveryFlagThatSwallowsAValue', () => {
+    // ARRANGE: a value-taking flag missing from this list would let its value
+    // be counted as a positional and shift every later slot.
+    const script = completionScript('fish', program)
+
+    // ACT
+    const line = script.split('\n').find((entry) => entry.includes('contains -- $w'))
+
+    // ASSERT
+    for (const flag of ['--collection', '--tag', '--folder', '--format', '--server', '--api-key']) {
+      expect(line, `${flag} should be skipped`).toContain(flag)
+    }
+  })
+})
