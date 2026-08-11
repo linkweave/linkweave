@@ -634,5 +634,10 @@
     "toastBoth": "{addNames} zu {addK} hinzugefügt, {removeNames} von {removeK} entfernt.",
     "applyError": "Tags konnten nicht aktualisiert werden. Es wurden keine Änderungen vorgenommen.",
     "applyErrorOrphans": "Tags konnten nicht aktualisiert werden, und einige erstellte Tags konnten nicht bereinigt werden."
+  },
+  "liveUpdates": {
+    "bookmarkAdded": "{name} hat ein Lesezeichen hinzugefügt",
+    "bookmarkChanged": "{name} hat ein Lesezeichen geändert",
+    "bookmarkRemoved": "{name} hat ein Lesezeichen entfernt"
   }
 }

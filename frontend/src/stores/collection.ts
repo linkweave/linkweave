@@ -92,7 +92,17 @@ export const useCollectionStore = defineStore('collection', () => {
   // overwrite the current collection's data. Only the newest request may write.
   let latestInfoRequest = 0
 
-  async function fetchCollectionInfo(collectionId: string) {
+  /**
+   * `silent` is for refreshes the user did not ask for — today the live-update
+   * channel (UC-104). Such a refresh must be invisible when it works and
+   * harmless when it does not: no spinner (the list is already on screen and
+   * would blink on every notification), and on failure the current data stays
+   * put with no error toast, because a background refresh that fails has cost
+   * the user nothing and the channel is an enhancement, never a dependency
+   * (BR-206). A user-initiated load keeps the opposite behaviour on both counts.
+   */
+  async function fetchCollectionInfo(collectionId: string, opts: { silent?: boolean } = {}) {
+    const silent = opts.silent ?? false
     if (!collectionId) {
       // Clearing is terminal: the discarded request will no longer touch
       // `loading`, so this path owns switching the spinner off.
@@ -104,7 +114,7 @@ export const useCollectionStore = defineStore('collection', () => {
     }
 
     const requestId = ++latestInfoRequest
-    loading.value = true
+    if (!silent) loading.value = true
     try {
       const [info, fetchedSettings] = await Promise.all([
         collectionApi.apiCollectionsIdGet({ id: collectionId }),
@@ -121,12 +131,12 @@ export const useCollectionStore = defineStore('collection', () => {
       }
     } catch (err) {
       console.error('Failed to fetch collection info:', err)
-      if (requestId !== latestInfoRequest) return
+      if (requestId !== latestInfoRequest || silent) return
       collectionInfo.value = null
       const notification = useNotificationStore()
       notification.handleApiError(err, 'Failed to load collection')
     } finally {
-      if (requestId === latestInfoRequest) loading.value = false
+      if (requestId === latestInfoRequest && !silent) loading.value = false
     }
   }
 

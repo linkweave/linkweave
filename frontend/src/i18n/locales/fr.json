@@ -634,5 +634,10 @@
     "toastBoth": "{addNames} ajouté(s) à {addK}, {removeNames} retiré(s) de {removeK}.",
     "applyError": "Échec de la mise à jour des tags. Aucune modification nʼa été apportée.",
     "applyErrorOrphans": "Échec de la mise à jour des tags, et certains tags créés nʼont pas pu être nettoyés."
+  },
+  "liveUpdates": {
+    "bookmarkAdded": "{name} a ajouté un signet",
+    "bookmarkChanged": "{name} a modifié un signet",
+    "bookmarkRemoved": "{name} a supprimé un signet"
   }
 }

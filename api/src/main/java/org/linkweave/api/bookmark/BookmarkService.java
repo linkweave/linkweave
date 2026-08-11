@@ -22,6 +22,8 @@ import org.linkweave.api.bookmark.json.BookmarkPositionJson;
 import org.linkweave.api.bookmark.json.BookmarkSaveJson;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.collection.CollectionRepo;
+import org.linkweave.api.collection.events.CollectionChangeNotificationService;
+import org.linkweave.api.collection.events.CollectionChanged;
 import ch.dvbern.oss.commons.i18nl10n.I18nMessage;
 import org.linkweave.api.shared.sortorder.Placement;
 import org.linkweave.api.shared.sortorder.SortOrderPlacement;
@@ -45,6 +47,7 @@ public class BookmarkService {
     private final FolderRepo folderRepo;
     private final TagRepo tagRepo;
     private final AppClock appClock;
+    private final CollectionChangeNotificationService collectionChangeNotificationService;
 
     /**
      * Returned shape for {@link #findFaviconEvictionCandidatesOldestFirst()}. Keeps the entity
@@ -114,6 +117,7 @@ public class BookmarkService {
         );
 
         bookmarkRepo.persist(bookmark);
+        collectionChangeNotificationService.bookmarkAdded(collectionId, bookmark.getId());
         return bookmark;
     }
 
@@ -138,6 +142,7 @@ public class BookmarkService {
         bookmark.setTags(tags);
 
         bookmarkRepo.persist(bookmark);
+        collectionChangeNotificationService.bookmarkChanged(collectionId, bookmarkId);
         return bookmark;
     }
 
@@ -277,6 +282,7 @@ public class BookmarkService {
             bookmark.setFolder(folder);
             bookmarkRepo.persist(bookmark);
         }
+        collectionChangeNotificationService.bookmarkChanged(collectionId, onlyBookmarkId(bookmarks));
     }
 
     public void batchRemove(@NonNull List<Bookmark> bookmarks) {
@@ -285,6 +291,20 @@ public class BookmarkService {
             bookmark.setDeletedAt(now);
             bookmarkRepo.persist(bookmark);
         }
+        if (!bookmarks.isEmpty()) {
+            // Every removal path funnels through here (removeBookmark included),
+            // so one notification site covers them all.
+            collectionChangeNotificationService.bookmarkRemoved(
+                bookmarks.getFirst().getCollectionId(), onlyBookmarkId(bookmarks));
+        }
+    }
+
+    /**
+     * The bookmark to name in a notification: the one that changed, or null when
+     * several did — see {@link CollectionChanged}.
+     */
+    private static @Nullable ID<Bookmark> onlyBookmarkId(@NonNull List<Bookmark> bookmarks) {
+        return bookmarks.size() == 1 ? bookmarks.getFirst().getId() : null;
     }
 
     /**
@@ -318,6 +338,7 @@ public class BookmarkService {
             removeTags.forEach(bookmark.getTags()::remove);
             bookmarkRepo.persist(bookmark);
         }
+        collectionChangeNotificationService.bookmarkChanged(collectionId, onlyBookmarkId(bookmarks));
     }
 
     /**

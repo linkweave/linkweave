@@ -25,7 +25,11 @@ import org.jspecify.annotations.Nullable;
  */
 public record CollectionChanged(
     @NonNull ID<Collection> collectionId,
-    @NonNull ID<Bookmark> bookmarkId,
+    // Null when the change covers several bookmarks at once (a batch move,
+    // delete or tag edit): the client re-reads the whole collection anyway
+    // (BR-202), so naming one of them would be arbitrary — and one event per
+    // operation keeps a 500-bookmark batch from becoming 500 frames.
+    @Nullable ID<Bookmark> bookmarkId,
     @NonNull ChangeKind kind,
     // Not an entity id — the originating browser tab's own UUID (BR-205). So the tab does not need to apply the event
     @IgnoreForIdClassTest @Nullable String originClientId,

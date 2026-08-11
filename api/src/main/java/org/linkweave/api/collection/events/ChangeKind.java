@@ -15,6 +15,19 @@ public enum ChangeKind {
      */
     SCREENSHOT_READY,
 
+    /** A member added a bookmark to the collection. */
+    BOOKMARK_ADDED,
+
+    /**
+     * A member edited a bookmark, moved it, or changed its tags. One kind rather
+     * than one per field: the client re-reads the collection either way (BR-202),
+     * so a finer split would be detail nobody acts on.
+     */
+    BOOKMARK_CHANGED,
+
+    /** A member deleted a bookmark from the collection. */
+    BOOKMARK_REMOVED,
+
     /**
      * Nothing changed — traffic emitted purely to keep the connection alive
      * (BR-208). Clients ignore it.

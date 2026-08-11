@@ -24,13 +24,21 @@ Three business rules that normally cost real work are free with this design:
 | BR-204 — no replay, no backlog | Mutiny `BroadcastProcessor` [drops items when no subscriber is present](https://smallrye.io/smallrye-mutiny/latest/guides/hot-streams/) and never replays to late subscribers |
 | BR-210 — scope is the collection | One processor per collection ID; a subscriber can only ever reach the one it asked for |
 
-## Scope of phase 1
+## Delivery — both phases shipped
 
-Alternative flow A1 only — **deferred screenshot capture completing**. It is the one
-asynchronous producer that already exists (`ScreenshotCaptureJobService`, 30s tick),
-and it is verifiable in a single browser with no second user. Collaborator events
-(the main success scenario) are a second event kind on the same channel and follow
-once the transport is proven.
+**Phase 1 — A1, deferred screenshot capture completing.** Chosen first because it was
+the only asynchronous producer that already existed (`ScreenshotCaptureJobService`,
+30s tick) and could be proven in one browser with no second user.
+
+**Phase 2 — the main success scenario.** Collaborator add / change / remove, with
+attribution, as three more kinds on the same channel. No new transport, no second
+connection: the shape below is unchanged from phase 1 apart from the kinds and the
+per-tab id now also travelling on mutating requests.
+
+The one clause of the use case still unimplemented is BR-209's "a change to a bookmark
+the user has open in an editor is deferred until the editor closes": the list does
+refresh under an open dialog. `BookmarkDialog` edits a copy of the form state, so
+typed input cannot be clobbered — but the rule as written is not met.
 
 ---
 
@@ -39,13 +47,15 @@ once the transport is proven.
 ### Event
 
 ```java
-public record CollectionEventJson(
-    String collectionId,
-    String bookmarkId,
-    ChangeKind kind,                    // SCREENSHOT_READY | SCREENSHOT_FAILED | BOOKMARK_ADDED | ...
-    @Nullable String originClientId,    // null when a background job caused it
-    @Nullable String actorName          // null when a background job caused it
-) {}
+public class CollectionEventJson {                 // @Value, per the project's DTO style
+    ID<Collection> collectionId;
+    @Nullable ID<Bookmark> bookmarkId;             // null for HEARTBEAT and for batch changes
+    ChangeKind kind;                               // SCREENSHOT_READY | BOOKMARK_ADDED
+                                                   //  | BOOKMARK_CHANGED | BOOKMARK_REMOVED
+                                                   //  | HEARTBEAT
+    @Nullable String originClientId;               // null when a background job caused it
+    @Nullable String actorName;                    // null when a background job caused it
+}
 ```
 
 Carries no authoritative state (BR-202) — the client refetches through the normal
@@ -60,7 +70,14 @@ open in two tabs would have the second tab discard updates it genuinely needs. T
 bug is invisible until someone opens a second tab, and absent entirely when testing
 with two different users.
 
-Both are `null` for the capture job, which is exactly A1's "no attribution is shown".
+Both are `null` for the capture job, which is exactly A1's "no attribution is shown" —
+and the client uses that directly: no `actorName`, no toast.
+
+`bookmarkId` is null in two cases, which the client must tell apart from "unknown":
+a `HEARTBEAT` names nothing because nothing changed, and a batch operation names
+nothing because one event covers several bookmarks. Naming one of them would be
+arbitrary, and one event per bookmark would turn a 500-bookmark batch into 500 frames
+for a client that re-reads the whole collection anyway.
 
 ### Broadcaster
 
@@ -71,8 +88,12 @@ public class CollectionEventBroadcaster {
     private final Map<ID<Collection>, BroadcastProcessor<CollectionEventJson>> processors
         = new ConcurrentHashMap<>();
 
-    public Multi<CollectionEventJson> subscribe(ID<Collection> collectionId) { ... }
+    // excludeClientId: the calling tab, so it never hears its own change (BR-205).
+    // Filtering lives here rather than in the resource so it is unit-testable.
+    public Multi<CollectionEventJson> subscribe(
+        ID<Collection> collectionId, @Nullable String excludeClientId) { ... }
 
+    // Routing key comes from the event itself — one source of truth.
     public void publish(CollectionEventJson event) { ... }   // no-op when nobody listens
 }
 ```
@@ -112,6 +133,30 @@ exactly the "notified about a write that never landed" bug.
 `Bookmark` already implements `BelongsToCollection`, so `getCollectionId()` is
 available without traversing the entity graph.
 
+**Collaborator changes (phase 2) fire the same way**, from `BookmarkService` at the
+*batch* primitives — `createBookmark`, `updateBookmark`, `batchMoveToFolder`,
+`batchEditTags`, `batchRemove` — so single-item callers (`removeBookmark` delegates
+to `batchRemove`) are covered by one notification site rather than five.
+
+What the write services must **not** grow is a `clientId` parameter threaded through
+every signature. `CollectionChangeNotificationService` resolves the acting user and
+the originating tab from the ambient request instead — the same trick
+`AbstractEntityListener` already uses to stamp audit columns:
+
+```java
+@Service                                   // layer stereotype, not @ApplicationScoped:
+public class CollectionChangeNotificationService {   // it reads entities (getVornameName)
+
+    public void bookmarkAdded(ID<Collection> collectionId, ID<Bookmark> bookmarkId) { ... }
+    public void bookmarkChanged(ID<Collection> collectionId, @Nullable ID<Bookmark> id) { ... }
+    public void bookmarkRemoved(ID<Collection> collectionId, @Nullable ID<Bookmark> id) { ... }
+}
+```
+
+The tab id arrives on `X-Client-Id`, captured by a `@RequestScoped`
+`OriginClientIdRequestFilter`. It is absent for anything that is not a browser (the
+CLI, API-key clients, tests), which simply means no filtering — the safe direction.
+
 ### Endpoint
 
 ```java
@@ -123,8 +168,9 @@ available without traversing the entity graph.
 public Multi<CollectionEventJson> stream(@RestPath ID<Collection> collectionId,
                                          @RestQuery String clientId) {
     authorizationService.requireCollectionAccess(collectionId);   // BR-201
-    return broadcaster.subscribe(collectionId)
-        .filter(e -> !clientId.equals(e.originClientId()));       // BR-205, null passes
+    return Multi.createBy().merging().streams(
+        broadcaster.subscribe(collectionId, clientId),            // BR-205
+        heartbeats(collectionId, HEARTBEAT_INTERVAL));            // BR-208
 }
 ```
 
@@ -174,18 +220,40 @@ unbounded one would fail the stream.
 
 ## Frontend
 
-A `useCollectionEvents(collectionId)` composable:
+`useCollectionEvents(collectionId)`, held by `CollectionView` so the stream's lifetime
+is the view's:
 
-- generates `clientId` once per tab with `crypto.randomUUID()`, held **in memory** —
-  `localStorage` is shared across tabs and would recreate the per-user filtering bug
 - opens `EventSource` on `/api/collections/{id}/events?clientId=…`
 - on event → refetch the collection through the existing store path (BR-202); never
-  apply the event payload directly
+  applies the event payload directly
 - tears down and reopens on collection change (BR-207 — one stream per client)
 - reconnects with **jittered** backoff, bounded, then gives up silently (BR-206, A4)
 - on reconnect, refetches in full, since gaps are not replayed (BR-204)
 - skips subscribing entirely when offline, resuming via the existing `network-status.ts`
   path (A6)
+
+`lib/client-id.ts` owns the per-tab `crypto.randomUUID()`, held **in memory** —
+`localStorage` is shared across tabs and would recreate the per-user filtering bug. It
+is shared, not private to the composable, because the same value must ride
+`X-Client-Id` on every mutating request (`api/client.ts`); a tab that subscribes with
+one id and writes with another would be told about its own changes.
+
+Two effects, not one, for `SCREENSHOT_READY`, because a capture changes two things:
+
+- `lib/preview-nonce.ts` bumps that bookmark's cache-busting nonce. A screenshot is
+  **not** in the collection JSON — it is a separate endpoint answering 204 until a
+  capture exists — so refetching alone would change nothing on screen; only a new URL
+  makes the browser look again. The same module backs the manual refresh action, so
+  both routes to "this preview is stale" are one mechanism.
+- a coalesced (400 ms) `fetchCollectionInfo(id, { silent: true })` picks up the
+  description backfilled from the captured page, which *is* in the JSON. `silent`
+  exists for this: a background refresh must not raise the shared `loading` flag (the
+  list would blink on every notification) and must not wipe the view with an error
+  toast when it fails — the channel is an enhancement, never a dependency (BR-206).
+
+Collaborator kinds take the refetch and deliberately **not** the nonce bump: only a
+capture changes an image. Attribution (BR-209) is a `notification.info` toast naming
+`actorName`, skipped entirely when there is none — a background job is nobody.
 
 Session expiry during a stream (A7) routes into the existing `lib/session-watch.ts`
 handling rather than reconnecting.
@@ -222,21 +290,64 @@ negotiates h2, so the HTTP/1.1 six-connections-per-origin limit does not apply.
 
 ## Tests
 
-Per CLAUDE.md, both layers:
+What exists, by layer:
 
-- **Backend unit** — `CollectionEventBroadcaster`: fan-out to multiple subscribers,
-  no replay to a late subscriber, `originClientId` filtering, processor removal at
-  zero subscribers.
-- **Backend integration** — `CollectionEventResourceITest`, consuming the stream with a
-  `@RegisterRestClient` interface returning `Multi<CollectionEventJson>`
-  ([REST client SSE support](https://quarkus.io/guides/rest-client#server-sent-event-sse-support)),
-  which is far less awkward than driving SSE through RestAssured: 403 without collection
-  access (BR-201); an event published after a committed capture reaches a subscriber;
-  **no event is delivered when the transaction rolls back** (BR-203 — the test that
-  actually earns its keep).
-- **Frontend** — composable unit test with a mocked `EventSource` covering self-filtering
-  and teardown-on-collection-change; optionally an e2e asserting a preview appears
-  without a reload.
+- **Backend unit** — `CollectionEventBroadcasterTest` (11): fan-out, no cross-collection
+  leak (BR-210), no replay to a late subscriber (BR-204), the four `excludeClientId`
+  cases (BR-205), sink released at zero subscribers, and two regressions for the
+  acquire/release asymmetry — a stream never subscribed to must pin nothing, and two
+  subscriptions of one stream must be tracked separately.
+  `CollectionEventResourceTest` pins the heartbeat: an opening frame **immediately**
+  on subscribe (what completes the browser's handshake), then repeating.
+- **Backend integration** — `CollectionEventPublisherITest`: published after commit, and
+  **nothing published when the transaction rolls back** (BR-203, the one that earns its
+  keep). `CollectionEventResourceITest`: 403/401 over HTTP (BR-201), plus the accepted
+  path driven through CDI rather than RestAssured — a successful subscribe never
+  completes, so consuming the `Multi` directly is what makes it assertable, including
+  that cancellation releases the sink through the heartbeat merge.
+  `CollectionChangeNotificationServiceITest`: the write paths announce themselves, one
+  event per batch, and the acting tab hears nothing (BR-205 over real HTTP with
+  `X-Client-Id`). `ScreenshotWriteServiceITest` covers the A1 producer.
+- **Frontend unit** — `useCollectionEvents.spec.ts` (13) against a fake `EventSource`:
+  heartbeats ignored, nonce invalidation, burst coalescing, attribution present/absent,
+  one stream per collection, teardown on unmount, offline skip and resume, refetch on
+  reconnect, bounded give-up.
+- **Frontend e2e** — `live-updates.spec.ts`, below.
+
+An earlier draft proposed consuming the stream in the ITest with a
+`@RegisterRestClient` interface returning `Multi<CollectionEventJson>`. Not needed:
+calling the resource through CDI covers the same assembly without a second HTTP client
+to keep alive.
+
+### What only e2e can prove
+
+Everything above stubs at least one boundary. `live-updates.spec.ts` is the only test
+where a real browser holds a real `EventSource` through the dev proxy while a *second
+user's* write travels the whole path, and it is deliberately narrow for that reason:
+
+| Case | Rule | Why e2e |
+| --- | --- | --- |
+| A collaborator's bookmark appears with no reload | Main scenario | The whole chain end to end |
+| The toast names the collaborator | BR-209 | Attribution reaching the DOM |
+| A collaborator's deletion disappears | Main scenario | The removal kind, same path |
+| The acting tab is told nothing about its own write | BR-205 | `X-Client-Id` on a real request from a real tab — the one wiring no unit test can see |
+
+Deliberately **not** e2e: A1's preview appearing (needs the capture sidecar to actually
+fetch a page — slow and flaky for what two integration tests already prove), reconnect
+backoff (fake timers do it better), and BR-207's stream re-targeting (asserting on
+connection identity from Playwright is far more fragile than the unit test).
+
+The e2e is mutation-checked in both directions: with `useCollectionEvents` disabled in
+`CollectionView` the delivery tests fail, and with `OriginClientIdRequestFilter`
+returning null the BR-205 test fails. A live-update test that passes without live
+updates would be worse than no test at all.
+
+That second check is why `e2e/helpers/toasts.ts` exists. **Asserting a toast's absence
+against the live DOM proves nothing**: a toast that appears and auto-dismisses before
+the assertion runs is indistinguishable from one that never appeared, and the first
+version of the BR-205 test passed against a deliberately broken server for exactly
+that reason. The helper records every toast as it appears, so "this was never
+announced" is asserted over history rather than over a snapshot.
 
 ---
 

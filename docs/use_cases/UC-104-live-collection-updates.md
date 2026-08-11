@@ -189,14 +189,16 @@ An earlier draft justified this channel with three asynchronous flows. Two of th
 
 That leaves two: **deferred screenshot capture** (A1) and **a collaborator's change** (the main scenario). Both are real; they differ in what the missing update costs — a cosmetic thumbnail in the first case, another person's work in the second.
 
-### Delivery order
+### Delivery order — both steps shipped
 
 Design document: [plans/live-collection-updates.md](../plans/live-collection-updates.md).
 
-1. **Channel + deferred screenshot-capture completion (A1).** Screenshot capture is the only asynchronous producer that exists today (`ScreenshotCaptureJobService`), and it is verifiable in a single browser with no second user — so it proves the transport with the least moving parts.
-2. **Bookmark added/changed by another member** — the main scenario, as an additional change kind on the same channel.
+1. **Channel + deferred screenshot-capture completion (A1).** ✅ Screenshot capture was the only asynchronous producer that existed, and it is verifiable in a single browser with no second user — so it proved the transport with the least moving parts.
+2. **Bookmark added / changed / removed by another member** — the main scenario, as three more change kinds on the same channel, with attribution. ✅
 
-Stopping after step 1 must leave a coherent, shippable feature.
+The requirement that stopping after step 1 leave a coherent, shippable feature held: step 1 shipped with its own client and e2e-verifiable behaviour before step 2 began.
+
+**Still open:** the BR-209 clause deferring a change to a bookmark the user has open in an editor. The list refreshes under an open dialog; `BookmarkDialog` edits a copy of the form state, so typed input cannot be clobbered, but the rule as written is not met.
 
 ### Considered: WebSocket (rejected for now)
 
