@@ -7,7 +7,7 @@
 **Primary Actor:** User
 **Secondary Actors:** Collection Owner (enables/disables feature per collection), Playwright Screenshot Service (sidecar)
 **Goal:** Display a visual screenshot preview of each bookmarked page so that the user can identify bookmarks at a glance without reading titles or URLs.
-**Status:** Open
+**Status:** Implemented
 
 ## Traceability
 

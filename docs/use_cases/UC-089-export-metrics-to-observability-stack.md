@@ -6,7 +6,7 @@
 **Use Case Name:** Export Metrics to Observability Stack
 **Primary Actor:** Operator
 **Goal:** Expose collected application metrics (UC-088) on a dedicated HTTP endpoint in a format that an external metrics scraper can ingest, so that the operator can integrate LinkWeave into their existing observability infrastructure.
-**Status:** Draft
+**Status:** Implemented
 
 ## Traceability
 

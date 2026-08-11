@@ -6,7 +6,7 @@
 **Use Case Name:** Reorder Bookmarks Within a Folder   
 **Primary Actor:** User   
 **Goal:** Arrange the bookmarks of a folder into a custom, persistent order by dragging them to a new position in the bookmark list.   
-**Status:** Draft   
+**Status:** Implemented
 
 ## Traceability
 

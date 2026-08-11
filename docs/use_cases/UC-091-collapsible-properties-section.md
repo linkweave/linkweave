@@ -6,7 +6,7 @@
 **Use Case Name:** Collapsible Properties Section in Edit Bookmark Dialog
 **Primary Actor:** User
 **Goal:** Keep the Edit Bookmark dialog manageable when a collection has many properties by making the Properties section collapsible, while surfacing a "filled" hint so the user knows data is present without having to expand the section.
-**Status:** Open
+**Status:** Implemented
 
 ## Traceability
 

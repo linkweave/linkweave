@@ -6,7 +6,7 @@
 **Use Case Name:** Set Bookmark Properties in Extension
 **Primary Actor:** User
 **Goal:** Assign property values to a bookmark when saving it from the browser extension popup so that structured metadata is captured at save time without switching to the web app.
-**Status:** Open
+**Status:** Draft
 
 ## Traceability
 

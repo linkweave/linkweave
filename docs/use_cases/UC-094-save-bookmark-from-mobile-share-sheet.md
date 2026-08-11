@@ -6,7 +6,7 @@
 **Use Case Name:** Save Bookmark from Mobile Share Sheet
 **Primary Actor:** User (on an Android device, reading a page in any app that exposes the system Share sheet)
 **Goal:** Save the page currently being read as a LinkWeave bookmark via the OS share sheet, without copy-pasting the URL
-**Status:** Open
+**Status:** Draft
 
 **Notes:**
 - The feature is implemented via the [Web Share Target API](https://developer.chrome.com/docs/web-platform/web-share-target): the LinkWeave PWA declares a `share_target` entry in its Web App Manifest, so Android lists it in the system Share sheet alongside other apps.

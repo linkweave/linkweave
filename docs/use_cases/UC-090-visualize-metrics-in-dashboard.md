@@ -6,7 +6,7 @@
 **Use Case Name:** Visualize Metrics in Dashboard
 **Primary Actor:** Operator
 **Goal:** Connect an external dashboarding tool (e.g., Grafana) to the metrics storage backend that is scraping LinkWeave's metrics endpoint (UC-089), so that the operator can visualize system health, request rates, error rates, and business metrics over time through interactive charts and alerts.
-**Status:** Draft
+**Status:** Implemented
 
 ## Traceability
 

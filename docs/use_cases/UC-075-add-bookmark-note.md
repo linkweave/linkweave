@@ -6,7 +6,7 @@
 **Use Case Name:** Add Bookmark Note   
 **Primary Actor:** User   
 **Goal:** Add a personal note to a bookmark so that I can remember why I saved it or add context beyond what the page title and description provide.   
-**Status:** Open   
+**Status:** Draft
 
 ## Traceability
 

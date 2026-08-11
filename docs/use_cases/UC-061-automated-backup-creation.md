@@ -7,7 +7,7 @@
 **Primary Actor:** User
 **Secondary Actors:** Scheduler
 **Goal:** Automatically create periodic backups of a user's bookmarks, folders, tags, and collection data so that data can be restored in case of accidental deletion, corruption, or migration.
-**Status:** Open
+**Status:** Draft
 
 ---
 

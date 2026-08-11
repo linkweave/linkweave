@@ -6,7 +6,7 @@
 **Use Case Name:** Batch Tag Bookmarks   
 **Primary Actor:** User   
 **Goal:** Add or remove tags from multiple bookmarks at once so that I can categorize large groups efficiently.   
-**Status:** Open   
+**Status:** Implemented
 
 ## Traceability
 

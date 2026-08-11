@@ -7,7 +7,7 @@
 **Primary Actor:** Scheduler
 **Secondary Actors:** Operator (configures job parameters)
 **Goal:** Keep the on-disk screenshot cache directory within a configurable size budget so that long-running deployments do not accumulate unbounded disk usage.
-**Status:** Open
+**Status:** Implemented
 
 ## Traceability
 

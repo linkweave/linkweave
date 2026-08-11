@@ -6,7 +6,7 @@
 **Use Case Name:** View Preview on Compact Grouped View
 **Primary Actor:** User
 **Goal:** See a screenshot preview popup when hovering a compact bookmark row in the grouped layout, so that bookmarks can be identified visually without leaving the dense, multi-folder grouped view.
-**Status:** Open
+**Status:** Draft
 
 ## Traceability
 

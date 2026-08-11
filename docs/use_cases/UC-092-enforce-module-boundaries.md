@@ -6,7 +6,8 @@
 **Use Case Name:** Enforce Module Boundaries and Prevent Circular-Dependency Regressions
 **Primary Actor:** Developer (with the CI pipeline as supporting actor)
 **Goal:** Keep the frontend free of *new* circular dependencies and architecture-boundary violations, so the existing cycle backlog can be paid down without silently growing.
-**Status:** Implemented (stores boundary + cycle ratchet); further zone rules optional
+**Status:** Implemented
+**Scope note:** Covers the stores boundary and the cycle ratchet; further zone rules remain optional.
 
 ## Traceability
 

@@ -6,7 +6,7 @@
 **Use Case Name:** Collect Application Metrics
 **Primary Actor:** System (automatic — no actor interaction required)
 **Goal:** Continuously collect application-level metrics (HTTP request rates and latencies, JVM health, database pool usage, scheduled job execution, and custom business counters) so that operators can monitor system health and diagnose issues.
-**Status:** Draft
+**Status:** Implemented
 
 ## Traceability
 

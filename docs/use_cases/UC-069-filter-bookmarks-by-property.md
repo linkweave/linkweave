@@ -6,7 +6,7 @@
 **Use Case Name:** Filter Bookmarks by Property   
 **Primary Actor:** User   
 **Goal:** Filter the bookmark list by one or more property values so that I can quickly find bookmarks matching specific metadata criteria.   
-**Status:** Open   
+**Status:** Implemented
 
 ## Traceability
 

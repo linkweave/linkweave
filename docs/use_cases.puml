@@ -129,7 +129,7 @@ rectangle "LinkWeave Bookmark Manager" {
 
     rectangle "Auto-Tagging" {
         usecase "UC-045\nAuto-Tag Bookmark\nby URL Pattern" as UC045 <<implemented>>
-        usecase "UC-097\nAuto-Tag Bookmark\nwith Local LLM" as UC097
+        usecase "UC-097\nAuto-Tag Bookmark\nwith Local LLM" as UC097 <<implemented>>
     }
 
     rectangle "Favicons" {

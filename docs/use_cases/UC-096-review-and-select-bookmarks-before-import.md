@@ -6,7 +6,7 @@
 **Use Case Name:** Review and Select Bookmarks Before Import
 **Primary Actor:** User
 **Goal:** Inspect the contents of a parsed bookmark file and deselect folders, individual bookmarks, and known duplicates before anything is written, so I import only what I want.
-**Status:** Proposed
+**Status:** Implemented
 
 ## Traceability
 
