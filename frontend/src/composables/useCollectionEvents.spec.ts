@@ -196,6 +196,23 @@ describe('useCollectionEvents', () => {
     expect(info).toHaveBeenCalledWith(expect.stringContaining('Ada Lovelace'))
   })
 
+  it('does not claim a single bookmark when a batch changed many', () => {
+    // ARRANGE
+    mountWatching(ref('col-1'))
+    FakeEventSource.last.open()
+    const info = vi.spyOn(useNotificationStore(), 'info')
+
+    // ACT — an import names no single bookmark
+    FakeEventSource.last.emit({
+      collectionId: 'col-1',
+      kind: ChangeKind.BookmarkAdded,
+      actorName: 'Ada Lovelace',
+    })
+
+    // ASSERT — "added a bookmark" would be a lie for a file of two hundred
+    expect(info).toHaveBeenCalledWith('Ada Lovelace added bookmarks')
+  })
+
   it('says nothing when a change has no person behind it', () => {
     // ARRANGE
     mountWatching(ref('col-1'))

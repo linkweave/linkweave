@@ -638,6 +638,9 @@
   "liveUpdates": {
     "bookmarkAdded": "{name} hat ein Lesezeichen hinzugefügt",
     "bookmarkChanged": "{name} hat ein Lesezeichen geändert",
-    "bookmarkRemoved": "{name} hat ein Lesezeichen entfernt"
+    "bookmarkRemoved": "{name} hat ein Lesezeichen entfernt",
+    "bookmarksAdded": "{name} hat Lesezeichen hinzugefügt",
+    "bookmarksChanged": "{name} hat mehrere Lesezeichen geändert",
+    "bookmarksRemoved": "{name} hat mehrere Lesezeichen entfernt"
   }
 }

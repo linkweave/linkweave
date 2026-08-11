@@ -638,6 +638,9 @@
   "liveUpdates": {
     "bookmarkAdded": "{name} a ajouté un signet",
     "bookmarkChanged": "{name} a modifié un signet",
-    "bookmarkRemoved": "{name} a supprimé un signet"
+    "bookmarkRemoved": "{name} a supprimé un signet",
+    "bookmarksAdded": "{name} a ajouté des signets",
+    "bookmarksChanged": "{name} a modifié plusieurs signets",
+    "bookmarksRemoved": "{name} a supprimé plusieurs signets"
   }
 }

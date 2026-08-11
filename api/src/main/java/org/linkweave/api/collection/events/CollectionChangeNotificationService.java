@@ -35,14 +35,15 @@ public class CollectionChangeNotificationService {
     private @Nullable String actorName;
     private boolean actorNameResolved;
 
-    public void bookmarkAdded(@NonNull ID<Collection> collectionId, @NonNull ID<Bookmark> bookmarkId) {
+    /**
+     * {@code bookmarkId} is null when the change covered several bookmarks at
+     * once — an import, for instance — see {@link CollectionChanged}.
+     */
+    public void bookmarkAdded(@NonNull ID<Collection> collectionId, @Nullable ID<Bookmark> bookmarkId) {
         fire(collectionId, bookmarkId, ChangeKind.BOOKMARK_ADDED);
     }
 
-    /**
-     * {@code bookmarkId} is null when the change covered several bookmarks — see
-     * {@link CollectionChanged}.
-     */
+    /** @see #bookmarkAdded */
     public void bookmarkChanged(@NonNull ID<Collection> collectionId, @Nullable ID<Bookmark> bookmarkId) {
         fire(collectionId, bookmarkId, ChangeKind.BOOKMARK_CHANGED);
     }

@@ -35,10 +35,12 @@ attribution, as three more kinds on the same channel. No new transport, no secon
 connection: the shape below is unchanged from phase 1 apart from the kinds and the
 per-tab id now also travelling on mutating requests.
 
-The one clause of the use case still unimplemented is BR-209's "a change to a bookmark
-the user has open in an editor is deferred until the editor closes": the list does
-refresh under an open dialog. `BookmarkDialog` edits a copy of the form state, so
-typed input cannot be clobbered — but the rule as written is not met.
+Four clauses of the use case remain unimplemented — A5 (revocation does not close an
+open stream), A9 (a failed capture announces nothing), BR-209's deferral while an editor
+is open, and the tab-focus recovery point in BR-204/BR-206. The authoritative list, with
+what each one means in practice, lives in
+[UC-104's implementation status](../use_cases/UC-104-live-collection-updates.md#implementation-status);
+it is not repeated here so the two cannot drift apart.
 
 ---
 

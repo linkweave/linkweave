@@ -25,6 +25,41 @@ const MAX_RECONNECT_DELAY_MS = 30_000
  */
 const REFETCH_COALESCE_MS = 400
 
+/**
+ * Attribution text per change kind (BR-209), in both forms: `one` when the event
+ * names the bookmark it is about, `many` when it does not.
+ *
+ * A kind absent from this table is announced not at all — silence is the right
+ * default for something this client does not understand, and better than the
+ * fallback a chain of conditionals lands on, which would have described a future
+ * folder or permission event as "updated a bookmark".
+ */
+const ANNOUNCEMENT_KEYS: Partial<Record<ChangeKind, { one: string; many: string }>> = {
+  [ChangeKind.BookmarkAdded]: { one: 'liveUpdates.bookmarkAdded', many: 'liveUpdates.bookmarksAdded' },
+  [ChangeKind.BookmarkChanged]: {
+    one: 'liveUpdates.bookmarkChanged',
+    many: 'liveUpdates.bookmarksChanged',
+  },
+  [ChangeKind.BookmarkRemoved]: {
+    one: 'liveUpdates.bookmarkRemoved',
+    many: 'liveUpdates.bookmarksRemoved',
+  },
+}
+
+/**
+ * The message to show for an event, or null if this kind says nothing.
+ *
+ * A missing `bookmarkId` means the change covered several bookmarks at once — a
+ * batch edit, or an import of a whole file. Saying "added a bookmark" for two
+ * hundred of them would be wrong, and the event carries no count, so the plural
+ * wording stays deliberately unquantified.
+ */
+function announcementKey(event: CollectionEventJson): string | null {
+  const forKind = ANNOUNCEMENT_KEYS[event.kind]
+  if (!forKind) return null
+  return event.bookmarkId ? forKind.one : forKind.many
+}
+
 function reconnectDelay(attempt: number): number {
   const backoff = Math.min(BASE_RECONNECT_DELAY_MS * 2 ** attempt, MAX_RECONNECT_DELAY_MS)
   // Jittered so that a server restart does not bring every open tab back in the
@@ -83,13 +118,9 @@ export function useCollectionEvents(currentCollectionId: () => string | null) {
    */
   function announce(event: CollectionEventJson) {
     if (!event.actorName) return
-    const message =
-      event.kind === ChangeKind.BookmarkAdded
-        ? t('liveUpdates.bookmarkAdded', { name: event.actorName })
-        : event.kind === ChangeKind.BookmarkRemoved
-          ? t('liveUpdates.bookmarkRemoved', { name: event.actorName })
-          : t('liveUpdates.bookmarkChanged', { name: event.actorName })
-    notification.info(message)
+    const key = announcementKey(event)
+    if (!key) return
+    notification.info(t(key, { name: event.actorName }))
   }
 
   function handle(event: CollectionEventJson, collectionId: string) {

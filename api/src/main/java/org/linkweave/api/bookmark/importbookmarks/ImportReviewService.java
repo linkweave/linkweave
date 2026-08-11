@@ -31,6 +31,7 @@ import org.linkweave.api.bookmark.property.PropertyDefinitionRepo;
 import org.linkweave.api.shared.sortorder.SortOrderAllocator;
 import org.linkweave.api.bookmark.property.PropertyType;
 import org.linkweave.api.collection.Collection;
+import org.linkweave.api.collection.events.CollectionChangeNotificationService;
 import org.linkweave.api.collection.CollectionRepo;
 import org.linkweave.api.shared.config.ConfigService;
 import org.linkweave.infrastructure.db.DbConst;
@@ -65,6 +66,7 @@ public class ImportReviewService {
     private final PropertyDefinitionRepo propertyDefinitionRepo;
     private final BookmarkPropertyValueRepo bookmarkPropertyValueRepo;
     private final ConfigService configService;
+    private final CollectionChangeNotificationService collectionChangeNotificationService;
     private final AppClock appClock;
 
     // --- Preview --------------------------------------------------------------
@@ -219,6 +221,12 @@ public class ImportReviewService {
         for (ImportNodeJson node : request.nodes()) {
             writeNode(node, destination, ctx, 0);
         }
+        // Same reasoning as BookmarkImportService: one notification for the whole
+        // commit, and only when it actually created something (UC-104).
+        if (ctx.counts.imported > 0 || ctx.counts.foldersCreated > 0) {
+            collectionChangeNotificationService.bookmarkAdded(collectionId, null);
+        }
+
         return new ImportCommitResultJson(
             ctx.counts.imported, ctx.counts.foldersCreated, ctx.counts.duplicatesSkipped);
     }

@@ -638,6 +638,9 @@
   "liveUpdates": {
     "bookmarkAdded": "{name} added a bookmark",
     "bookmarkChanged": "{name} updated a bookmark",
-    "bookmarkRemoved": "{name} removed a bookmark"
+    "bookmarkRemoved": "{name} removed a bookmark",
+    "bookmarksAdded": "{name} added bookmarks",
+    "bookmarksChanged": "{name} updated several bookmarks",
+    "bookmarksRemoved": "{name} removed several bookmarks"
   }
 }
