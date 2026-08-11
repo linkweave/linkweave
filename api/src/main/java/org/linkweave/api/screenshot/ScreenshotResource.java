@@ -15,9 +15,10 @@ import org.linkweave.api.bookmark.Bookmark;
 import org.linkweave.api.bookmark.BookmarkService;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.shared.auth.AuthorizationService;
+import org.linkweave.infrastructure.ratelimit.RateLimitConst;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 
-@RateLimit(value = 15000, window = 1, windowUnit = ChronoUnit.MINUTES)
+@RateLimit(value = RateLimitConst.HIGH_FANOUT_PER_MINUTE, window = 1, windowUnit = ChronoUnit.MINUTES)
 @JaxResource
 @RequiredArgsConstructor
 @Authenticated

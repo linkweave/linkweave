@@ -109,6 +109,20 @@ export default defineConfig(({ command }) => {
               proxyReq.setHeader('X-Forwarded-Proto', 'https')
               proxyReq.setHeader('X-Forwarded-Port', '5173')
             })
+            // SSE (UC-104): http-proxy holds the upstream's response headers
+            // until it has body bytes to write, so a stream that stays idle
+            // after subscribing never completes its handshake and EventSource
+            // hangs in CONNECTING. Push the headers out as soon as they arrive.
+            // Same class of problem as the `encode` exclusion in frontend/Caddyfile.
+            // setImmediate, not a direct call: this event fires before http-proxy
+            // copies the upstream headers onto the response, so flushing inline
+            // ships a bare 200 without `content-type: text/event-stream` and
+            // EventSource rejects the stream.
+            proxy.on('proxyRes', (proxyRes, _req, res) => {
+              if (proxyRes.headers['content-type']?.includes('text/event-stream')) {
+                setImmediate(() => res.flushHeaders())
+              }
+            })
             // Mirror Caddy's behavior: upstream-down → 502, timeout → 504.
             // Without this handler, http-proxy emits a socket hang up that
             // surfaces as a TypeError in the browser, diverging from prod.

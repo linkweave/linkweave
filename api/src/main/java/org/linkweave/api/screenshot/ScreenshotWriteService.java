@@ -2,11 +2,14 @@ package org.linkweave.api.screenshot;
 
 import java.time.OffsetDateTime;
 
+import jakarta.enterprise.event.Event;
 import org.linkweave.infrastructure.runas.RunAs;
 import org.linkweave.api.types.id.ID;
 import lombok.RequiredArgsConstructor;
 import org.linkweave.api.bookmark.Bookmark;
 import org.linkweave.api.bookmark.BookmarkRepo;
+import org.linkweave.api.collection.events.ChangeKind;
+import org.linkweave.api.collection.events.CollectionChanged;
 import org.linkweave.infrastructure.db.DbConst;
 import org.linkweave.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
@@ -26,6 +29,7 @@ import static org.linkweave.api.shared.auth.BerechtigungName.SYSTEM_ADMIN;
 public class ScreenshotWriteService {
 
     private final BookmarkRepo bookmarkRepo;
+    private final Event<CollectionChanged> collectionChanged;
 
     /**
      * Stamps {@code screenshotCapturedAt} and, when the bookmark has no
@@ -51,6 +55,11 @@ public class ScreenshotWriteService {
         if (backfill != null) {
             bookmark.setDescription(backfill);
         }
+        // Fired inside this transaction, delivered only if it commits (BR-203) —
+        // see CollectionChanged. Null origin/actor: a scheduled job has no
+        // originating browser tab to filter out and nobody to attribute it to.
+        collectionChanged.fire(new CollectionChanged(
+            bookmark.getCollectionId(), bookmarkId, ChangeKind.SCREENSHOT_READY, null, null));
     }
 
     /**

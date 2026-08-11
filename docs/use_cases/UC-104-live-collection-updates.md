@@ -14,6 +14,8 @@
 
 This use case introduces **one** per-collection notification channel serving deferred server-side completions and collaborator changes alike. The channel carries *notifications*, not data — see BR-202.
 
+**Design document:** [plans/live-collection-updates.md](../plans/live-collection-updates.md)
+
 **Related:** UC-023 (Share Collection), UC-025 (Revoke Collection Access), UC-054 (View Bookmark Screenshot Previews), UC-031 (Import Browser Bookmarks), UC-096 (Review and Select Bookmarks Before Import), UC-048 (Browse Bookmarks Offline), UC-049 (Resume Online Session), UC-098 (Proactive Session Expiry Detection on Tab Focus) — shares the tab-focus recovery path used as this feature's fallback.
 
 ---
@@ -178,26 +180,21 @@ Notifications are scoped to a single collection. A user with access to several c
 
 ## Notes / Future Considerations
 
-### Honest assessment of the value (read before implementing)
+### What this channel does and does not serve
 
-An earlier draft justified this channel with three asynchronous flows. Two of them do not survive inspection:
+An earlier draft justified this channel with three asynchronous flows. Two of them do not survive inspection, and are recorded here so they are not re-explored:
 
 - **LLM auto-tagging is synchronous and pre-save.** Suggestions are requested from the form, returned in the response, and never persisted (BR-078). No deferred completion exists to announce.
 - **Import commits synchronously.** The request returns after the write; the client already has the result.
 
-That leaves two justifications: **a collaborator's change** (the main scenario) and **deferred screenshot capture** (A1). The collaborator case is now the stronger of the two and holds the main scenario accordingly — it is the only one where the missing update hides *another person's work* rather than a cosmetic detail. But both are latency-tolerant:
+That leaves two: **deferred screenshot capture** (A1) and **a collaborator's change** (the main scenario). Both are real; they differ in what the missing update costs — a cosmetic thumbnail in the first case, another person's work in the second.
 
-- Shared collections are low-concurrency; nobody is harmed by seeing a colleague's link a minute late.
-- A missing preview thumbnail resolves on the next navigation, and the capture job runs on an interval anyway — the user waits regardless of how they learn about it.
+### Delivery order
 
-**The cheaper alternative that covers most of both:** refetch the collection on tab focus, reusing the visibility hook already installed for UC-098. That is roughly a day's less work and no new transport, no connection budget, no reconnect logic, no proxy-buffering concerns. It covers the realistic collaboration pattern — "I come back to the tab and want current state" — while genuinely missing only the case where two members are looking at the same collection simultaneously.
+Design document: [plans/live-collection-updates.md](../plans/live-collection-updates.md).
 
-Build the channel when that simultaneous case becomes real (a team actively curating together), or when a flow appears where the user is genuinely blocked waiting on deferred server-side work — a long-running export, link-rot checking, a background re-crawl. Until one of those holds, prefer focus-refetch.
-
-### Suggested delivery order (if built)
-
-1. Channel + bookmark added/changed by another member — the main scenario, and the case with a real user visible on the other end.
-2. Deferred screenshot-capture completion (A1) — one additional event kind on the same channel.
+1. **Channel + deferred screenshot-capture completion (A1).** Screenshot capture is the only asynchronous producer that exists today (`ScreenshotCaptureJobService`), and it is verifiable in a single browser with no second user — so it proves the transport with the least moving parts.
+2. **Bookmark added/changed by another member** — the main scenario, as an additional change kind on the same channel.
 
 Stopping after step 1 must leave a coherent, shippable feature.
 

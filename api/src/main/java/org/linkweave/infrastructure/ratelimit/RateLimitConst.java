@@ -37,6 +37,19 @@ public class RateLimitConst {
      */
     public static final int EXTERNAL_LLM_PER_MINUTE = 60;
 
+    /**
+     * Cap for endpoints where one screenful of UI legitimately produces a burst of calls, or where
+     * the annotation is present only because it is mandatory.
+     *
+     * <p>{@link #STANDARD_PER_MINUTE} is the wrong size for these. A single collection view fans
+     * out one screenshot request per visible bookmark, and the live-update stream must never be the
+     * thing that locks a user out of the API (BR-208) — yet
+     * {@code JaxResourceTest.enforce_rate_limit_on_all_methods} makes omitting the annotation
+     * impossible. Deliberately high enough to be unreachable by real usage while still bounding a
+     * runaway client, since the bucket is process-wide and a lockout here hits everyone.</p>
+     */
+    public static final int HIGH_FANOUT_PER_MINUTE = 15000;
+
     // Deliberately no separate warm-up cap — see BookmarkAutoTagResource#warmUp for why it keeps
     // STANDARD_PER_MINUTE despite living next to the metered endpoints.
 }

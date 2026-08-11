@@ -5,12 +5,16 @@ import java.time.OffsetDateTime;
 import org.linkweave.infrastructure.runas.RunAs;
 import org.linkweave.api.types.id.ID;
 import io.quarkus.test.junit.QuarkusTest;
+import io.smallrye.mutiny.helpers.test.AssertSubscriber;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
 import org.linkweave.api.bookmark.Bookmark;
 import org.linkweave.api.bookmark.BookmarkRepo;
 import org.linkweave.api.collection.Collection;
+import org.linkweave.api.collection.events.ChangeKind;
+import org.linkweave.api.collection.events.CollectionEventBroadcaster;
+import org.linkweave.api.collection.events.json.CollectionEventJson;
 import org.linkweave.api.shared.user.User;
 import org.linkweave.api.testutil.fixture.FixtureService;
 import org.junit.jupiter.api.Test;
@@ -43,6 +47,37 @@ class ScreenshotWriteServiceITest {
 
     @Inject
     SystemAdminFixture fixture;
+
+    @Inject
+    CollectionEventBroadcaster broadcaster;
+
+    /**
+     * The other half of UC-104 A1: the capture write is what tells open clients a
+     * preview exists. Asserted here rather than only in
+     * {@code CollectionEventPublisherITest} (which fires the CDI event itself)
+     * because this is the one place the production wiring is exercised — dropping
+     * the {@code fire(...)} would otherwise break the feature silently.
+     */
+    @Test
+    void shouldNotifyOpenClientsOnceTheCaptureIsCommitted() {
+        // ARRANGE
+        ID<Bookmark> bookmarkId = fixture.createBookmark(null);
+        ID<Collection> collectionId = bookmarkRepo.getById(bookmarkId).getCollectionId();
+        AssertSubscriber<CollectionEventJson> subscriber = broadcaster.subscribe(collectionId, null)
+            .subscribe().withSubscriber(AssertSubscriber.create(10));
+
+        // ACT
+        writer.applyCapture(bookmarkId, CAPTURED_AT, "Scraped from the page");
+
+        // ASSERT
+        Assertions.assertThat(subscriber.getItems()).hasSize(1);
+        CollectionEventJson notification = subscriber.getItems().getFirst();
+        Assertions.assertThat(notification.getKind()).isEqualTo(ChangeKind.SCREENSHOT_READY);
+        Assertions.assertThat(notification.getBookmarkId()).isEqualTo(bookmarkId);
+        Assertions.assertThat(notification.getOriginClientId())
+            .as("a scheduled job has no originating tab to filter out")
+            .isNull();
+    }
 
     @Test
     void shouldPersistCaptureFromAnonymousThreadAndStampSystemAdmin() {
