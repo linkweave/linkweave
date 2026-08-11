@@ -634,5 +634,13 @@
     "toastBoth": "Added {addNames} to {addK}, removed {removeNames} from {removeK}.",
     "applyError": "Failed to update tags. No changes were made.",
     "applyErrorOrphans": "Failed to update tags, and some created tags could not be cleaned up."
+  },
+  "liveUpdates": {
+    "bookmarkAdded": "{name} added a bookmark",
+    "bookmarkChanged": "{name} updated a bookmark",
+    "bookmarkRemoved": "{name} removed a bookmark",
+    "bookmarksAdded": "{name} added bookmarks",
+    "bookmarksChanged": "{name} updated several bookmarks",
+    "bookmarksRemoved": "{name} removed several bookmarks"
   }
 }

@@ -11,6 +11,7 @@ import BookmarkDialog from '@/components/bookmark/BookmarkDialog.vue'
 import { MainLayout } from '@/components/layout'
 import { ResponsiveButton, SearchBar } from '@/components/ui'
 import HeaderSearchMobile from '@/components/ui/HeaderSearchMobile.vue'
+import { useCollectionEvents } from '@/composables/useCollectionEvents'
 import { useEffectiveLayout } from '@/composables/useEffectiveLayout'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import { useSelectionShortcuts } from '@/composables/useSelectionShortcuts'
@@ -37,6 +38,10 @@ const searchPlaceholder = computed(() =>
 )
 
 const effectiveLayout = useEffectiveLayout()
+
+// Live updates for whichever collection is open (UC-104). Scoped to this view
+// so the stream closes when the user leaves it, and re-targets on switch.
+useCollectionEvents(() => collectionStore.currentCollectionId)
 
 // Anchor here so both the toolbar slot and the bookmark list (in turn the
 // teleported preview popup) can reach the same element. The toolbar

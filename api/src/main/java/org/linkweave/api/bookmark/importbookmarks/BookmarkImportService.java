@@ -22,6 +22,7 @@ import org.linkweave.api.bookmark.property.PropertyDefinition;
 import org.linkweave.api.bookmark.property.PropertyDefinitionRepo;
 import org.linkweave.api.bookmark.property.PropertyType;
 import org.linkweave.api.collection.Collection;
+import org.linkweave.api.collection.events.CollectionChangeNotificationService;
 import org.linkweave.api.collection.CollectionRepo;
 import org.linkweave.api.shared.config.ConfigService;
 import org.linkweave.api.shared.sortorder.SortOrderAllocator;
@@ -41,6 +42,7 @@ public class BookmarkImportService {
     private final PropertyDefinitionRepo propertyDefinitionRepo;
     private final BookmarkPropertyValueRepo bookmarkPropertyValueRepo;
     private final ConfigService configService;
+    private final CollectionChangeNotificationService collectionChangeNotificationService;
     private final AppClock appClock;
 
     @NonNull
@@ -75,6 +77,16 @@ public class BookmarkImportService {
         for (ParsedFolder parsedFolder : importDTO.rootFolders()) {
             importFolderRecursive(
                 parsedFolder, collection, null, summary, importSourceDef, fileName, sortOrders, bookmarkSortOrders);
+        }
+
+        // One notification for the whole import (UC-104), not one per bookmark —
+        // an import is the bulk-add case those semantics exist for, and the
+        // client re-reads the collection once either way. Fired here rather than
+        // in the per-bookmark writer because this service persists directly
+        // instead of going through BookmarkService, which is exactly how the
+        // path stayed silent to other members until now.
+        if (summary.getBookmarksCreated() > 0) {
+            collectionChangeNotificationService.bookmarkAdded(collectionId, null);
         }
 
         return summary;

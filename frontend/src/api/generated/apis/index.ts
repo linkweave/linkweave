@@ -7,6 +7,7 @@ export * from './bookmark-auto-tag-resource-api';
 export * from './bookmark-property-value-resource-api';
 export * from './bookmark-resource-api';
 export * from './cleanup-suggestion-resource-api';
+export * from './collection-event-resource-api';
 export * from './collection-resource-api';
 export * from './export-resource-api';
 export * from './favicon-resource-api';

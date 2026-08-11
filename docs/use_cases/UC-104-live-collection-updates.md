@@ -6,7 +6,7 @@
 **Use Case Name:** Receive Live Collection Updates
 **Primary Actor:** User
 **Goal:** See a collection's content update on its own — when deferred server-side work on its bookmarks completes, and when another member of a shared collection changes something — without manually reloading the page or hunting for a refresh button.
-**Status:** Draft
+**Status:** Partially Implemented — see [Implementation status](#implementation-status)
 
 **Context:** When a collection is shared (UC-023), a member's additions are invisible to everyone else until they happen to reload — two people working the same collection cannot see each other's work. The same gap appears without any second user: screenshot capture (UC-054) is performed by a scheduled batch job *after* the save returns, so a freshly saved bookmark shows no preview until a reload. In both cases the server knows something changed and has no way to say so.
 
@@ -15,6 +15,30 @@
 This use case introduces **one** per-collection notification channel serving deferred server-side completions and collaborator changes alike. The channel carries *notifications*, not data — see BR-202.
 
 **Design document:** [plans/live-collection-updates.md](../plans/live-collection-updates.md)
+
+---
+
+## Implementation status
+
+**Shipped and verified.** Main success scenario, A1, A2, A3, A4, A6, A8; BR-201 through
+BR-208 and BR-210. Covered by backend unit + integration tests, frontend unit tests, and
+`frontend/e2e/live-updates.spec.ts` (mutation-checked in both directions — disabling the
+client, and disabling the origin-tab filter, each make it fail).
+
+**Not implemented.** Four gaps, in the order they are worth closing:
+
+| Gap | What happens today |
+| --- | --- |
+| **A5 — access revoked while listening** | Authorization is checked at *subscribe* only, so an open stream survives revocation. A removed member keeps receiving notifications — what changed, and who did it — until they reload or close the tab. They cannot read the data (every read is re-authorized, so the collection itself 403s), but the channel leaks change metadata to someone who has just lost access. Closing live streams for a revoked user is the fix, and this is the gap with a security flavour rather than a convenience one. |
+| **A9 — deferred capture fails** | There is no `SCREENSHOT_FAILED` kind. A failed capture is silent: the client keeps whatever placeholder it had, with no "concluded unsuccessfully" signal, until the next natural reload. The success path (A1) is fully wired, so this is one enum value plus a fire on the failure branch. |
+| **BR-209 — deferral while editing** | "A change to a bookmark the user has open in an editor is deferred until the editor closes" is not honoured: the list refreshes under an open dialog. `BookmarkDialog` edits a copy of the form state, so typed input cannot be clobbered — the practical harm is nil, but the rule as written is unmet. |
+| **Folder operations announce nothing** | Creating, renaming, reordering, deleting or restoring a folder is invisible to other members until they reload — including `FolderService`'s delete/restore cascades, which soft-delete or restore every bookmark inside the folder. The client side would already cope: folders travel inside `CollectionInfoJson`, so the existing silent refetch refreshes the sidebar too. What is missing is a decision on vocabulary — `ChangeKind` is bookmark-shaped, and firing `BOOKMARK_REMOVED` for a folder delete would misdescribe an empty folder and leave rename/reorder uncovered. Adding `FOLDER_*` kinds is the honest fix. |
+| **BR-204 / BR-206 — recovery on tab focus** | Both rules name tab focus as a recovery point ("missed changes are recovered by reloading on reconnect, tab focus, or navigation"). Reconnect and navigation both refetch; **tab focus does not** — nothing re-reads the collection on `visibilitychange`. A tab whose bounded reconnect budget ran out therefore shows stale data until the user navigates. |
+
+**A7 (session expires while listening) is partially covered.** The stream's reconnect
+attempts are rejected and its bounded budget runs out silently, which is the correct
+end state, but the client is not *routed* by the stream — the existing session-expiry
+handling (UC-098) picks the user up on their next action or on tab focus instead.
 
 **Related:** UC-023 (Share Collection), UC-025 (Revoke Collection Access), UC-054 (View Bookmark Screenshot Previews), UC-031 (Import Browser Bookmarks), UC-096 (Review and Select Bookmarks Before Import), UC-048 (Browse Bookmarks Offline), UC-049 (Resume Online Session), UC-098 (Proactive Session Expiry Detection on Tab Focus) — shares the tab-focus recovery path used as this feature's fallback.
 
@@ -189,14 +213,16 @@ An earlier draft justified this channel with three asynchronous flows. Two of th
 
 That leaves two: **deferred screenshot capture** (A1) and **a collaborator's change** (the main scenario). Both are real; they differ in what the missing update costs — a cosmetic thumbnail in the first case, another person's work in the second.
 
-### Delivery order
+### Delivery order — both steps shipped
 
 Design document: [plans/live-collection-updates.md](../plans/live-collection-updates.md).
 
-1. **Channel + deferred screenshot-capture completion (A1).** Screenshot capture is the only asynchronous producer that exists today (`ScreenshotCaptureJobService`), and it is verifiable in a single browser with no second user — so it proves the transport with the least moving parts.
-2. **Bookmark added/changed by another member** — the main scenario, as an additional change kind on the same channel.
+1. **Channel + deferred screenshot-capture completion (A1).** ✅ Screenshot capture was the only asynchronous producer that existed, and it is verifiable in a single browser with no second user — so it proved the transport with the least moving parts.
+2. **Bookmark added / changed / removed by another member** — the main scenario, as three more change kinds on the same channel, with attribution. ✅
 
-Stopping after step 1 must leave a coherent, shippable feature.
+The requirement that stopping after step 1 leave a coherent, shippable feature held: step 1 shipped with its own client and e2e-verifiable behaviour before step 2 began.
+
+**Still open:** the BR-209 clause deferring a change to a bookmark the user has open in an editor. The list refreshes under an open dialog; `BookmarkDialog` edits a copy of the form state, so typed input cannot be clobbered, but the rule as written is not met.
 
 ### Considered: WebSocket (rejected for now)
 

@@ -77,6 +77,10 @@ class ScreenshotWriteServiceITest {
         Assertions.assertThat(notification.getOriginClientId())
             .as("a scheduled job has no originating tab to filter out")
             .isNull();
+
+        // The broadcaster is @ApplicationScoped: a subscription left open here
+        // outlives the test and leaks its sink for the rest of the JVM.
+        subscriber.cancel();
     }
 
     @Test

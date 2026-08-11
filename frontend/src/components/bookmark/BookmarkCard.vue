@@ -6,6 +6,7 @@ import BookmarkRowMenu from '@/components/bookmark/BookmarkRowMenu.vue'
 import { DRAG_TYPE_BOOKMARK, setDraggingBookmarkId } from '@/composables/useDragState'
 import { useBookmarkReorder } from '@/composables/useBookmarkReorder'
 import { setCompactDragImage } from '@/lib/dragImage'
+import { bumpPreviewNonce, previewNonceOf } from '@/lib/preview-nonce'
 import { useScreenshotRefresh } from '@/composables/useScreenshotRefresh'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import { useShowPropertyBadges, useShowPreviewPopup } from '@/composables/usePropertyDisplayPrefs'
@@ -61,9 +62,11 @@ const previewsVisible = computed(
   () => ui.previewsEnabled && (collectionStore.collectionInfo?.screenshotEnabled ?? false),
 )
 
-// Bumped on a successful refresh so the preview component reloads from the
-// server with a cache-busting query param.
-const previewNonce = ref(0)
+// Bumped so the preview component reloads from the server with a cache-busting
+// query param. Shared state rather than a local ref: the same invalidation
+// arrives either from this card's refresh action or from a live
+// SCREENSHOT_READY notification (UC-104 A1).
+const previewNonce = computed(() => previewNonceOf(props.bookmark.id))
 
 function getTagById(tagId: string) {
   return tagStore.tags.find((t) => t.id === tagId)
@@ -286,7 +289,7 @@ const refreshScreenshot = useScreenshotRefresh()
 
 async function refreshPreview() {
   if (await refreshScreenshot(props.bookmark.id)) {
-    previewNonce.value = Date.now()
+    bumpPreviewNonce(props.bookmark.id)
   }
 }
 
