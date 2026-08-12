@@ -223,6 +223,35 @@ linkweave trash empty                 # permanent, asks first
 `purge` and `empty` cannot be undone, so they prompt. `--yes` skips the
 prompt for scripts; without a terminal they refuse rather than assume consent.
 
+### `linkweave watch`
+
+Follows a collection and prints changes as they happen — yours from another
+device, a collaborator's, or a screenshot the server finished capturing after
+the save returned.
+
+```bash
+linkweave watch                                  # your default collection
+linkweave watch --collection Work                # by name or ID
+linkweave watch --format json | jq -r .kind      # one JSON object per line
+linkweave watch --retries 0                      # exit on the first drop
+```
+
+```
+Watching collection 3f0e…. Press Ctrl-C to stop.
+bookmark added (ebaf4e39-…) by Ada Lovelace
+folder removed by Ada Lovelace
+```
+
+The connection is held open until you stop it. Keep-alive traffic is not
+printed, and the "Watching…" line goes to stderr, so `--format json` pipes
+cleanly into `jq` or a `while read` loop with nothing else mixed in.
+
+If the connection drops it reconnects with an increasing, jittered delay,
+giving up after `--retries` *consecutive* failures (default 6) — a connection
+that delivers something resets the count, so a watch left running for days
+survives the odd blip. A revoked key or lost access to the collection stops it
+immediately rather than retrying into a wall.
+
 ### `linkweave login` / `linkweave logout`
 
 `login` stores the configuration (see below); `logout` deletes it. Logging in
@@ -240,6 +269,15 @@ Data goes to stdout, errors and warnings to stderr, so output pipes cleanly:
 ```bash
 linkweave bookmarks list --format json | jq -r '.[].url'
 linkweave bookmarks list --format ids | while read -r id; do ...; done
+```
+
+`watch` streams instead of returning, which makes it a source for a pipeline
+that reacts to changes rather than polling for them:
+
+```bash
+linkweave watch --format json | while read -r event; do
+  [ "$(jq -r .kind <<<"$event")" = 'BOOKMARK_ADDED' ] && notify-send 'New bookmark'
+done
 ```
 
 Exit codes:

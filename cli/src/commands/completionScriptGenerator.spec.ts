@@ -122,6 +122,20 @@ describe('completionScript', () => {
     expect(words).toEqual(['My\\ Links', 'Work'])
   })
 
+  it('shouldCompleteACommandAddedWithoutTouchingTheGenerator', () => {
+    // ARRANGE / ACT — `watch` is generated from the real command tree, and its
+    // --collection values from the flag's server-backed source. Both come for
+    // free, which is worth pinning: the next command added should also need no
+    // change here, and a regression would silently degrade to no completion.
+    const flags = bashComplete(['linkweave', 'watch', '--'])
+    const collections = bashComplete(['linkweave', 'watch', '--collection', ''])
+
+    // ASSERT
+    expect(flags).toContain('--collection')
+    expect(flags).toContain('--retries')
+    expect(collections).toEqual(['My\\ Links', 'Work'])
+  })
+
   it('shouldCompleteTagAndFolderValuesFromTheServer', () => {
     expect(bashComplete(['linkweave', 'bookmarks', 'list', '--tag', ''])).toEqual(['dev', 'java'])
     expect(bashComplete(['linkweave', 'bookmarks', 'add', 'https://x', '--folder', ''])).toEqual([

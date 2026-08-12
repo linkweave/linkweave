@@ -34,6 +34,7 @@ import {
 import { COMPLETION_SOURCES, runComplete } from './commands/completeCmd'
 import { COMPLETION_SHELLS, completionScript, type CompletionShell } from './commands/completionScriptGenerator'
 import { runLogin } from './commands/loginCmd'
+import { runWatch } from './commands/watchCmd'
 import { runLogout } from './commands/logoutCmd'
 import { configPath } from './config'
 import { OUTPUT_FORMATS } from './output'
@@ -84,6 +85,14 @@ Precedence: flags > environment > config file.`,
       }>()
       await runLogin({ server, apiKey, insecure })
     })
+
+  program
+    .command('watch')
+    .description('follow a collection\'s changes as they happen (Ctrl-C to stop)')
+    .option('--collection <collection>', 'collection ID or name (defaults to your default collection)')
+    .option('--retries <n>', 'reconnect attempts before giving up', '6')
+    .addOption(formatOption())
+    .action(runWatch)
 
   program
     .command('logout')

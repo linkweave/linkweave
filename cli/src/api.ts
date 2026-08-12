@@ -21,6 +21,8 @@ export {
 
 export type {
   BookmarkJson,
+  ChangeKind,
+  CollectionEventJson,
   BookmarkSaveJson,
   CollectionSummaryJson,
   FolderJson,
