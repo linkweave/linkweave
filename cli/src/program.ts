@@ -34,6 +34,8 @@ import {
 import { COMPLETION_SOURCES, runComplete } from './commands/completeCmd'
 import { COMPLETION_SHELLS, completionScript, type CompletionShell } from './commands/completionScriptGenerator'
 import { runLogin } from './commands/loginCmd'
+import { runOpen } from './commands/openCmd'
+import { runSearch } from './commands/searchCmd'
 import { runWatch } from './commands/watchCmd'
 import { runLogout } from './commands/logoutCmd'
 import { configPath } from './config'
@@ -85,6 +87,22 @@ Precedence: flags > environment > config file.`,
       }>()
       await runLogin({ server, apiKey, insecure })
     })
+
+  program
+    .command('search')
+    .description('find bookmarks by title, URL or tag name')
+    .argument('<query...>', 'words that must all appear somewhere in the bookmark')
+    .option('--collection <collection>', 'collection ID or name (defaults to your default collection)')
+    .addOption(formatOption())
+    .action(runSearch)
+
+  program
+    .command('open')
+    .description('open a bookmark in your browser')
+    .argument('<bookmark...>', 'bookmark ID, or words matching exactly one bookmark')
+    .option('--collection <collection>', 'collection ID or name (defaults to your default collection)')
+    .option('--print', 'print the URL instead of opening it (records no click)')
+    .action(runOpen)
 
   program
     .command('watch')

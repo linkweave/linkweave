@@ -6,6 +6,8 @@ the REST API of a LinkWeave server and authenticates with a personal API key
 
 ```bash
 linkweave bookmarks add https://example.com --tags reading --folder Inbox
+linkweave search rust async     # find it again
+linkweave open rust async       # open it in your browser
 ```
 
 ## Installation
@@ -222,6 +224,41 @@ linkweave trash empty                 # permanent, asks first
 
 `purge` and `empty` cannot be undone, so they prompt. `--yes` skips the
 prompt for scripts; without a terminal they refuse rather than assume consent.
+
+### `linkweave search <query...>`
+
+Finds bookmarks whose title, URL or tag names contain **every** word given —
+the "I half-remember this link" command.
+
+```bash
+linkweave search rust                     # anywhere in title, URL or tags
+linkweave search async book               # both words must match, in any field
+linkweave search tokio --format ids       # for piping
+```
+
+Plain case-insensitive substrings, not the web UI's query language: `#tag`,
+`under:folder` and negation are app-side syntax and are treated as literal text
+here. Use `bookmarks list --tag/--folder` when you want to filter precisely.
+Matching nothing prints a note on stderr and exits 0, like `grep`.
+
+### `linkweave open <bookmark...>`
+
+Opens a bookmark in your browser.
+
+```bash
+linkweave open 3f8a...                    # by ID
+linkweave open vue docs                   # by words, if they match exactly one
+linkweave open tokio --print              # print the URL instead of opening it
+```
+
+The words are matched the same way `search` matches them. Anything but exactly
+one match is an error: nothing found says so, and several found lists the
+candidates with their IDs rather than guessing — opening the wrong page is a
+mistake you notice too late.
+
+Opening records the click, exactly as clicking it in the web UI does, so click
+counts and "never opened" stay meaningful when you work from a terminal.
+`--print` does not: the URL may be going somewhere that never visits it.
 
 ### `linkweave watch`
 

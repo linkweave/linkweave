@@ -194,6 +194,79 @@ describe('runWatch', () => {
     expect(out).toContain('bookmark removed (bm-1) by Ada Lovelace')
   })
 
+  it('stops rather than retrying when the key was revoked', async () => {
+    // ARRANGE
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 401 })))
+
+    // ACT / ASSERT — an unauthenticated client will not become authenticated by
+    // waiting, so the retry budget must not be spent on it
+    await expect(runWatch({ retries: '5', collection: COLLECTION }, cmdWith())).rejects.toThrow(
+      /API key/i,
+    )
+  })
+
+  it('reports an unexpected status instead of treating it as a dropped stream', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 503 })))
+    await expect(runWatch({ retries: '5', collection: COLLECTION }, cmdWith())).rejects.toThrow(/503/)
+  })
+
+  it('prints a kind it does not know rather than dropping the event', async () => {
+    // ARRANGE — a newer server with a kind this build predates
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(
+        sseBody(frame({ collectionId: 'col-1', kind: 'SOMETHING_NEW', actorName: 'Ada' })),
+        { status: 200, headers: { 'content-type': 'text/event-stream' } },
+      )),
+    )
+
+    // ACT
+    await expect(runWatch({ retries: '0', collection: COLLECTION }, cmdWith())).rejects.toBeInstanceOf(
+      CliError,
+    )
+
+    // ASSERT — silence would make an upgraded server look broken
+    expect(out).toEqual(['SOMETHING_NEW by Ada'])
+  })
+
+  it('prints a change with no actor behind it', async () => {
+    // ARRANGE — the capture job is nobody
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(
+        sseBody(frame({ collectionId: 'col-1', bookmarkId: 'bm-3', kind: 'SCREENSHOT_READY' })),
+        { status: 200, headers: { 'content-type': 'text/event-stream' } },
+      )),
+    )
+
+    // ACT
+    await expect(runWatch({ retries: '0', collection: COLLECTION }, cmdWith())).rejects.toBeInstanceOf(
+      CliError,
+    )
+
+    // ASSERT — no trailing "by", which a naive template would leave behind
+    expect(out).toEqual(['screenshot ready (bm-3)'])
+  })
+
+  it('skips a frame it cannot parse without ending the stream', async () => {
+    // ARRANGE
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(
+        sseBody('data:{not json\n\n', frame({ collectionId: 'col-1', bookmarkId: 'b', kind: 'BOOKMARK_ADDED', actorName: 'Ada' })),
+        { status: 200, headers: { 'content-type': 'text/event-stream' } },
+      )),
+    )
+
+    // ACT
+    await expect(runWatch({ retries: '0', collection: COLLECTION }, cmdWith())).rejects.toBeInstanceOf(
+      CliError,
+    )
+
+    // ASSERT — one bad frame must not cost the events after it
+    expect(out).toEqual(['bookmark added (b) by Ada'])
+  })
+
   it('rejects a nonsense retry budget instead of silently defaulting', async () => {
     await expect(runWatch({ retries: 'lots', collection: COLLECTION }, cmdWith())).rejects.toThrow(/--retries/)
   })

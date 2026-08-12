@@ -31,3 +31,4 @@ export type {
   TrashbinJson,
   UserInfoJson,
 } from '../../frontend/src/api/generated/index'
+
