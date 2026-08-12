@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.linkweave.api.bookmark.property.json.PropertyDefinitionSaveJson;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.collection.CollectionRepo;
+import org.linkweave.api.collection.events.CollectionChangeNotificationService;
 import org.linkweave.infrastructure.db.UniqueConstraintUtil;
 import org.linkweave.infrastructure.errorhandling.AppValidationException;
 import org.linkweave.infrastructure.errorhandling.AppValidationMessage;
@@ -23,6 +24,7 @@ public class PropertyDefinitionService {
     private final PropertyDefinitionRepo propertyDefinitionRepo;
     private final BookmarkPropertyValueRepo bookmarkPropertyValueRepo;
     private final CollectionRepo collectionRepo;
+    private final CollectionChangeNotificationService collectionChangeNotificationService;
 
     @NonNull
     public PropertyDefinition create(@NonNull PropertyDefinitionSaveJson json) {
@@ -34,6 +36,7 @@ public class PropertyDefinitionService {
             json.getSortOrder()
         );
         persistAndFlush(def);
+        collectionChangeNotificationService.collectionChanged(json.getCollectionId());
         return def;
     }
 
@@ -56,12 +59,16 @@ public class PropertyDefinitionService {
         def.setAllowedValues(json.getAllowedValues());
         def.setSortOrder(json.getSortOrder());
         persistAndFlush(def);
+        collectionChangeNotificationService.collectionChanged(json.getCollectionId());
         return def;
     }
 
     public void remove(@NonNull ID<PropertyDefinition> id) {
+        ID<Collection> collectionId = propertyDefinitionRepo.getById(id).getCollectionId();
         bookmarkPropertyValueRepo.deleteByPropertyDefinition(id);
         propertyDefinitionRepo.remove(id);
+        // Every bookmark that carried a value for it loses that value too.
+        collectionChangeNotificationService.collectionChanged(collectionId);
     }
 
     public long countUsage(@NonNull ID<PropertyDefinition> id) {

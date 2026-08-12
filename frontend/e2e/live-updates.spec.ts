@@ -118,6 +118,39 @@ test.describe('Live collection updates', () => {
     await expect(page.getByText(title)).toBeHidden({ timeout: 15_000 })
   })
 
+  test("removes a folder's bookmarks when the collaborator deletes the folder", async ({ page }) => {
+    // ARRANGE — a folder with a bookmark in it, both visible to the viewer
+    const folderName = `Shared folder ${Date.now()}`
+    const folder = await collaboratorApi.post('/api/folders', {
+      data: { collectionId, name: folderName },
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    })
+    expect(folder.ok()).toBe(true)
+    const folderId = (await folder.json()).id as string
+
+    const title = `Inside the folder ${Date.now()}`
+    const created = await collaboratorApi.post('/api/bookmarks', {
+      data: { collectionId, folderId, title, url: 'https://example.com/inside' },
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    })
+    expect(created.ok()).toBe(true)
+
+    await page.goto(`/collections/${collectionId}`)
+    await expect(page.getByText(title)).toBeVisible()
+    await recordToasts(page)
+
+    // ACT — one click on their side takes the folder and everything in it
+    const deleted = await collaboratorApi.delete(`/api/folders/${folderId}`, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    })
+    expect(deleted.ok()).toBe(true)
+
+    // ASSERT — the cascade reaches the viewer as one notification, and the
+    // bookmark inside disappears without a reload
+    await expect(page.getByText(title)).toBeHidden({ timeout: 15_000 })
+    await expectToastSeen(page, 'E2E livecollab')
+  })
+
   test('tells the acting tab nothing about its own change', async ({ page }) => {
     // ARRANGE
     await page.goto(`/collections/${collectionId}`)

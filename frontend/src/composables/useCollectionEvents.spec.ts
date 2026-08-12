@@ -213,6 +213,44 @@ describe('useCollectionEvents', () => {
     expect(info).toHaveBeenCalledWith('Ada Lovelace added bookmarks')
   })
 
+  it('reloads and announces structural changes the same way as bookmark ones', () => {
+    // ARRANGE — the sidebar, tag chips and property columns all arrive in the
+    // same document as the bookmarks, so one re-read covers every kind
+    mountWatching(ref('col-1'))
+    FakeEventSource.last.open()
+    const info = vi.spyOn(useNotificationStore(), 'info')
+
+    // ACT
+    FakeEventSource.last.emit({
+      collectionId: 'col-1',
+      kind: ChangeKind.FolderRemoved,
+      actorName: 'Ada Lovelace',
+    })
+    vi.advanceTimersByTime(REFETCH_COALESCE_MS)
+
+    // ASSERT — a folder event names no folder, so it must not fall into the
+    // bookmark plural wording
+    expect(fetchCollectionInfo).toHaveBeenCalledWith('col-1', { silent: true })
+    expect(info).toHaveBeenCalledWith('Ada Lovelace deleted a folder')
+  })
+
+  it('announces a tag or property change as a collection change', () => {
+    // ARRANGE
+    mountWatching(ref('col-1'))
+    FakeEventSource.last.open()
+    const info = vi.spyOn(useNotificationStore(), 'info')
+
+    // ACT
+    FakeEventSource.last.emit({
+      collectionId: 'col-1',
+      kind: ChangeKind.CollectionChanged,
+      actorName: 'Ada Lovelace',
+    })
+
+    // ASSERT
+    expect(info).toHaveBeenCalledWith('Ada Lovelace updated this collection')
+  })
+
   it('says nothing when a change has no person behind it', () => {
     // ARRANGE
     mountWatching(ref('col-1'))

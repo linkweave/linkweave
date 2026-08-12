@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.linkweave.api.bookmark.json.AutoTagRuleSaveJson;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.collection.CollectionRepo;
+import org.linkweave.api.collection.events.CollectionChangeNotificationService;
 import org.linkweave.api.shared.abstractentity.AbstractEntity;
 import org.linkweave.infrastructure.errorhandling.AppValidationException;
 import org.linkweave.infrastructure.errorhandling.AppValidationMessage;
@@ -28,6 +29,7 @@ public class AutoTagRuleService {
 
     private final AutoTagRuleRepo autoTagRuleRepo;
     private final CollectionRepo collectionRepo;
+    private final CollectionChangeNotificationService collectionChangeNotificationService;
 
     @NonNull
     public List<AutoTagRule> findByCollection(@NonNull ID<Collection> collectionId) {
@@ -55,6 +57,7 @@ public class AutoTagRuleService {
             nextSortOrder
         );
         autoTagRuleRepo.persistAndFlush(rule);
+        collectionChangeNotificationService.collectionChanged(json.getCollectionId());
         return rule;
     }
 
@@ -66,23 +69,36 @@ public class AutoTagRuleService {
         rule.setDescription(json.getDescription());
         rule.setEnabled(json.isEnabled());
         autoTagRuleRepo.persistAndFlush(rule);
+        collectionChangeNotificationService.collectionChanged(json.getCollectionId());
         return rule;
     }
 
     public void removeRule(@NonNull ID<AutoTagRule> id) {
+        ID<Collection> collectionId = autoTagRuleRepo.getById(id).getCollectionId();
         autoTagRuleRepo.remove(id);
+        collectionChangeNotificationService.collectionChanged(collectionId);
     }
 
     public void reorder(@NonNull ID<Collection> collectionId, @NonNull List<ID<AutoTagRule>> orderedIds) {
         List<AutoTagRule> rules = autoTagRuleRepo.findByCollectionOrderedBySortOrder(collectionId);
         var byId = rules.stream().collect(Collectors.toMap(AbstractEntity::getId, r -> r));
         int order = SORT_ORDER_STEP;
+        int reordered = 0;
         for (ID<AutoTagRule> id : orderedIds) {
             AutoTagRule r = byId.get(id);
             if (r != null) {
                 r.setSortOrder(order);
                 order += SORT_ORDER_STEP;
+                reordered++;
             }
+        }
+        // Only when something actually moved. Ids that match no rule of this
+        // collection are skipped above, so an empty list — or one naming only
+        // foreign rules — writes nothing, and a request that changed nothing
+        // must not make every other member reload and read "updated this
+        // collection".
+        if (reordered > 0) {
+            collectionChangeNotificationService.collectionChanged(collectionId);
         }
     }
 

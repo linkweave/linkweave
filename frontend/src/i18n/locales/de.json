@@ -641,6 +641,10 @@
     "bookmarkRemoved": "{name} hat ein Lesezeichen entfernt",
     "bookmarksAdded": "{name} hat Lesezeichen hinzugefügt",
     "bookmarksChanged": "{name} hat mehrere Lesezeichen geändert",
-    "bookmarksRemoved": "{name} hat mehrere Lesezeichen entfernt"
+    "bookmarksRemoved": "{name} hat mehrere Lesezeichen entfernt",
+    "folderAdded": "{name} hat einen Ordner hinzugefügt",
+    "folderChanged": "{name} hat einen Ordner geändert",
+    "folderRemoved": "{name} hat einen Ordner gelöscht",
+    "collectionChanged": "{name} hat diese Sammlung aktualisiert"
   }
 }

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.linkweave.api.bookmark.Bookmark;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.shared.user.CurrentUserService;
+import org.linkweave.api.shared.user.User;
 import org.linkweave.api.types.id.ID;
 import org.linkweave.infrastructure.stereotypes.Service;
 import org.jspecify.annotations.NonNull;
@@ -52,6 +53,30 @@ public class CollectionChangeNotificationService {
         fire(collectionId, bookmarkId, ChangeKind.BOOKMARK_REMOVED);
     }
 
+    public void folderAdded(@NonNull ID<Collection> collectionId) {
+        fire(collectionId, null, ChangeKind.FOLDER_ADDED);
+    }
+
+    public void folderChanged(@NonNull ID<Collection> collectionId) {
+        fire(collectionId, null, ChangeKind.FOLDER_CHANGED);
+    }
+
+    /**
+     * Covers the bookmarks that went down with the folder — one notification for
+     * the operation, not one per casualty. See {@link ChangeKind#FOLDER_REMOVED}.
+     */
+    public void folderRemoved(@NonNull ID<Collection> collectionId) {
+        fire(collectionId, null, ChangeKind.FOLDER_REMOVED);
+    }
+
+    /**
+     * Tags, property definitions, auto-tag rules — see
+     * {@link ChangeKind#COLLECTION_CHANGED}.
+     */
+    public void collectionChanged(@NonNull ID<Collection> collectionId) {
+        fire(collectionId, null, ChangeKind.COLLECTION_CHANGED);
+    }
+
     private void fire(
         @NonNull ID<Collection> collectionId,
         @Nullable ID<Bookmark> bookmarkId,
@@ -79,7 +104,7 @@ public class CollectionChangeNotificationService {
     private @Nullable String currentActorName() {
         if (!actorNameResolved) {
             actorName = currentUserService.findCurrentUser()
-                .map(user -> user.getVornameName())
+                .map(User::getVornameName)
                 .orElse(null);
             actorNameResolved = true;
         }

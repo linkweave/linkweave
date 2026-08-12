@@ -641,6 +641,10 @@
     "bookmarkRemoved": "{name} a supprimé un signet",
     "bookmarksAdded": "{name} a ajouté des signets",
     "bookmarksChanged": "{name} a modifié plusieurs signets",
-    "bookmarksRemoved": "{name} a supprimé plusieurs signets"
+    "bookmarksRemoved": "{name} a supprimé plusieurs signets",
+    "folderAdded": "{name} a ajouté un dossier",
+    "folderChanged": "{name} a modifié un dossier",
+    "folderRemoved": "{name} a supprimé un dossier",
+    "collectionChanged": "{name} a mis à jour cette collection"
   }
 }

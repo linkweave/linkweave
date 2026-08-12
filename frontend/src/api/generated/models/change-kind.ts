@@ -22,6 +22,10 @@ export const ChangeKind = {
     BookmarkAdded: 'BOOKMARK_ADDED',
     BookmarkChanged: 'BOOKMARK_CHANGED',
     BookmarkRemoved: 'BOOKMARK_REMOVED',
+    FolderAdded: 'FOLDER_ADDED',
+    FolderChanged: 'FOLDER_CHANGED',
+    FolderRemoved: 'FOLDER_REMOVED',
+    CollectionChanged: 'COLLECTION_CHANGED',
     Heartbeat: 'HEARTBEAT'
 } as const;
 export type ChangeKind = typeof ChangeKind[keyof typeof ChangeKind];
