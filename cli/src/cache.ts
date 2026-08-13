@@ -10,7 +10,7 @@ import { cacheDir, writePrivateFile } from './config'
  */
 const TTL_MS = 60_000
 
-export function cachePath(): string {
+function cachePath(): string {
   return join(cacheDir(), 'completion-cache.json')
 }
 

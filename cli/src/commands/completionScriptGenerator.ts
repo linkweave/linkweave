@@ -48,7 +48,7 @@ function toOptionInfo(option: Option): OptionInfo {
  * shell scripts below are always generated from the real program definition —
  * a new command or flag shows up in completions without touching this file.
  */
-export function collectNodes(root: Command): CompletionNode[] {
+function collectNodes(root: Command): CompletionNode[] {
   const nodes: CompletionNode[] = []
   const visit = (cmd: Command, path: string[]): void => {
     // visibleCommands filters out hidden ones (`__complete`), which must never

@@ -24,6 +24,30 @@ export interface OpenOptions {
 const AMBIGUITY_SAMPLE = 5
 
 /**
+ * What a bookmark opener may hand to the operating system.
+ *
+ * Anything else — `file:`, `javascript:`, a custom protocol registered by some
+ * installed application — is a URL somebody else may have put in a shared
+ * collection, and passing it to the platform handler makes opening a bookmark a
+ * way to reach the rest of the machine. Printing one is fine; that is text.
+ */
+const OPENABLE_SCHEMES = new Set(['http:', 'https:'])
+
+function requireOpenableUrl(url: string): void {
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    throw new CliError(`'${url}' is not a URL that can be opened. Use --print to see it.`)
+  }
+  if (!OPENABLE_SCHEMES.has(parsed.protocol)) {
+    throw new CliError(
+      `Refusing to open a '${parsed.protocol}' URL — only http and https are opened. Use --print to see it.`,
+    )
+  }
+}
+
+/**
  * The platform's "open this URL in whatever handles it" command. Exported for
  * tests: two of the three branches run on platforms this project is not
  * developed on, so a wrong argv would only surface as a silent failure on
@@ -34,9 +58,12 @@ export function browserCommand(url: string): { command: string; args: string[] }
     case 'darwin':
       return { command: 'open', args: [url] }
     case 'win32':
-      // Through cmd, whose `start` treats a quoted first argument as a window
-      // title — hence the empty one before the URL.
-      return { command: 'cmd', args: ['/c', 'start', '', url] }
+      // Not `cmd /c start`: cmd re-parses its command line and treats `&` as a
+      // command separator, and Node's argv quoting only escapes whitespace and
+      // quotes — so `?a=1&b=2` would be truncated at best, and a bookmark from a
+      // shared collection could run commands on the machine that opens it.
+      // rundll32 receives the URL as one argv with no shell in between.
+      return { command: 'rundll32.exe', args: ['url.dll,FileProtocolHandler', url] }
     default:
       return { command: 'xdg-open', args: [url] }
   }
@@ -48,7 +75,7 @@ export function browserCommand(url: string): { command: string; args: string[] }
  * otherwise the CLI would sit there holding a pipe for a window the user is
  * already reading.
  */
-export function openInBrowser(url: string): void {
+function openInBrowser(url: string): void {
   const { command, args } = browserCommand(url)
   const child = spawn(command, args, { detached: true, stdio: 'ignore' })
   child.on('error', () => {
@@ -111,6 +138,7 @@ export async function runOpen(target: string[], options: OpenOptions, cmd: Comma
     return
   }
 
+  requireOpenableUrl(bookmark.data.url)
   openInBrowser(bookmark.data.url)
   process.stderr.write(`Opening ${bookmark.data.title}\n`)
 
