@@ -120,7 +120,8 @@ export async function runBookmarksList(options: BookmarkListOptions, cmd: Comman
   }
 }
 
-function printBookmarkTable(bookmarks: BookmarkJson[], tagNames: Map<string, string>): void {
+/** Shared with `search`, so both render a bookmark list identically. */
+export function printBookmarkTable(bookmarks: BookmarkJson[], tagNames: Map<string, string>): void {
   console.log(
     renderTable(
       ['ID', 'Title', 'URL', 'Tags'],

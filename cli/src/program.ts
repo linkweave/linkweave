@@ -34,6 +34,9 @@ import {
 import { COMPLETION_SOURCES, runComplete } from './commands/completeCmd'
 import { COMPLETION_SHELLS, completionScript, type CompletionShell } from './commands/completionScriptGenerator'
 import { runLogin } from './commands/loginCmd'
+import { runOpen } from './commands/openCmd'
+import { runSearch } from './commands/searchCmd'
+import { runWatch } from './commands/watchCmd'
 import { runLogout } from './commands/logoutCmd'
 import { configPath } from './config'
 import { OUTPUT_FORMATS } from './output'
@@ -84,6 +87,35 @@ Precedence: flags > environment > config file.`,
       }>()
       await runLogin({ server, apiKey, insecure })
     })
+
+  program
+    .command('search')
+    .description('find bookmarks by title, URL or tag name')
+    .argument('<query...>', 'words that must all appear somewhere in the bookmark')
+    .option('--collection <collection>', 'collection ID or name (defaults to your default collection)')
+    .addOption(formatOption())
+    .action(runSearch)
+
+  program
+    .command('open')
+    .description('open a bookmark in your browser')
+    .argument('<bookmark...>', 'bookmark ID, or words matching exactly one bookmark')
+    .option('--collection <collection>', 'collection ID or name (defaults to your default collection)')
+    .option('--print', 'print the URL instead of opening it (records no click)')
+    .action(runOpen)
+
+  program
+    .command('watch')
+    .description('follow a collection\'s changes as they happen (Ctrl-C to stop)')
+    .option('--collection <collection>', 'collection ID or name (defaults to your default collection)')
+    .option('--retries <n>', 'reconnect attempts before giving up', '6')
+    // Not the shared formatOption(): 'ids' has no meaning for a stream whose
+    // folder and collection events name no bookmark, and an option must not
+    // advertise a format it then ignores.
+    .addOption(
+      new Option('-f, --format <format>', 'output format').choices(['table', 'json']).default('table'),
+    )
+    .action(runWatch)
 
   program
     .command('logout')

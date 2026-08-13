@@ -21,6 +21,8 @@ export {
 
 export type {
   BookmarkJson,
+  ChangeKind,
+  CollectionEventJson,
   BookmarkSaveJson,
   CollectionSummaryJson,
   FolderJson,
@@ -29,3 +31,4 @@ export type {
   TrashbinJson,
   UserInfoJson,
 } from '../../frontend/src/api/generated/index'
+
