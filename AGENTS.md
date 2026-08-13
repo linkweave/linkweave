@@ -23,7 +23,7 @@ cd api && ./mvnw quarkus:dev        # Dev mode with hot reload, assume running
 cd frontend && pnpm run dev # frontend dev mode, assume running
 cd frontend && pnpm run type-check # frontend type checking
 cd frontend && pnpm run check      # PRE-PUSH GATE: type-check + lint + analyze:deadcode (fallow). Run before pushing frontend changes.
-cd cli && pnpm run check           # PRE-PUSH GATE for the CLI: type-check + lint (oxlint) + vitest. Run before pushing cli changes.
+cd cli && pnpm run check           # PRE-PUSH GATE for the CLI: type-check + lint (oxlint) + fallow dead-code + vitest. Run before pushing cli changes.
 pnpm exec playwright test --project=chromium  
 
 ```

@@ -260,6 +260,10 @@ Opening records the click, exactly as clicking it in the web UI does, so click
 counts and "never opened" stay meaningful when you work from a terminal.
 `--print` does not: the URL may be going somewhere that never visits it.
 
+Only `http` and `https` URLs are opened. In a shared collection the URL is
+somebody else's input, and the platform handler opens far more than web pages —
+`--print` still shows anything, since printing hands nothing to the system.
+
 ### `linkweave watch`
 
 Follows a collection and prints changes as they happen — yours from another
@@ -456,12 +460,18 @@ client rather than fetching it. `commander` stays a normal dependency — tsup
 leaves `dependencies` external — so a global install pulls two packages.
 
 ```bash
-pnpm run check        # type-check + lint + unit tests
+pnpm run check        # type-check + lint + dead-code + unit tests
 pnpm run lint         # oxlint, reports only
 pnpm run lint:fix     # oxlint --fix, rewrites what it can
 pnpm run test         # vitest unit tests
+pnpm run analyze:deadcode  # fallow: exports nobody imports
 pnpm run dev -- bookmarks list   # run from source via tsx
 ```
+
+The dead-code gate (`fallow`, as in the frontend) fails on an exported symbol
+with no consumer. Specs count as consumers, so a helper exported purely to be
+tested is fine; an export nobody imports at all is not. There is deliberately no
+baseline file here — the package started clean and should stay that way.
 
 Linting is `oxlint` alone (`.oxlintrc.json`) — the frontend's eslint layer
 exists for Vue, and none of it applies here. `check` deliberately runs the

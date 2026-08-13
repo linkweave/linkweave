@@ -14,7 +14,7 @@ is wrong every time; it has been made at least once.
 | --- | --- | --- |
 | `.gitea/workflows/build.yml` | push/PR to `main`, tags `v*` | The main pipeline: API, frontend, CLI, extension, images, deploy, release |
 | `.gitea/workflows/e2e.yml` | push/PR to `main` | Playwright suite against a real API + Vite pair. Separate from `build.yml` so a flake cannot block image publishing |
-| `.gitea/workflows/quality.yml` | push/PR to `main` | Java CPD (enforced), frontend lint — stylelint + oxlint + eslint (enforced), fallow dead-code (enforced vs. baseline), duplication/health (report-only) |
+| `.gitea/workflows/quality.yml` | push/PR to `main` | Java CPD (enforced), frontend lint — stylelint + oxlint + eslint (enforced), fallow dead-code (enforced vs. baseline), duplication/health (report-only). **Frontend only** — the CLI's dead-code gate rides its own `check` in `build.yml`. |
 | `.gitea/workflows/publish-cli.yml` | tags `cli-v*` | Publishes `@linkweave/cli` to npm |
 | `.gitea/workflows/site.yml` | push/PR touching `site/**` | Builds + type-checks the marketing page (deployed via Cloudflare Pages, not Docker) |
 | `.gitea/workflows/pi-review.yml` | PR opened/synchronized | Automated code review comments |
@@ -27,7 +27,7 @@ These are what CI runs, so run them locally before pushing.
 ```bash
 cd api      && ./mvnw package        # compiles + runs every test (all match surefire's *Test)
 cd frontend && pnpm run check        # type-check + lint + fallow dead-code
-cd cli      && pnpm run check        # type-check + oxlint + vitest
+cd cli      && pnpm run check        # type-check + oxlint + fallow dead-code + vitest
 ```
 
 Where each is enforced:

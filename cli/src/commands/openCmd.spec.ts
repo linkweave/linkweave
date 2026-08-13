@@ -152,6 +152,40 @@ describe('runOpen', () => {
     expect(spawn).toHaveBeenCalled()
   })
 
+  it('refuses to hand a non-web URL to the operating system', async () => {
+    // ARRANGE — in a shared collection the URL is somebody else's input, and
+    // the platform handler will open far more than web pages
+    stubApi([bookmarkPayload(BOOKMARK_ID, 'Local file', 'file:///etc/passwd')])
+
+    // ACT / ASSERT
+    await expect(runOpen(['local'], { collection: COLLECTION }, cmdWith())).rejects.toThrow(
+      /only http and https/i,
+    )
+    expect(spawn).not.toHaveBeenCalled()
+  })
+
+  it('still prints a non-web URL, which is only text', async () => {
+    // ARRANGE
+    stubApi([bookmarkPayload(BOOKMARK_ID, 'Local file', 'file:///etc/passwd')])
+
+    // ACT
+    await runOpen(['local'], { collection: COLLECTION, print: true }, cmdWith())
+
+    // ASSERT — printing hands nothing to the OS; the user decides what to do
+    expect(out).toEqual(['file:///etc/passwd'])
+  })
+
+  it('opens an ordinary URL with a query string', async () => {
+    // ARRANGE — the common case the Windows path used to truncate
+    stubApi([bookmarkPayload(BOOKMARK_ID, 'Search', 'https://x.test/p?a=1&b=2')])
+
+    // ACT
+    await runOpen(['search'], { collection: COLLECTION }, cmdWith())
+
+    // ASSERT
+    expect(vi.mocked(spawn).mock.calls[0]?.[1]).toContain('https://x.test/p?a=1&b=2')
+  })
+
   it('prints the URL without opening or recording a click', async () => {
     // ARRANGE
     const clicks = stubApi([bookmarkPayload(BOOKMARK_ID, 'Vue docs', 'https://vuejs.org')])
@@ -186,15 +220,19 @@ describe('browserCommand', () => {
     })
   })
 
-  it("passes an empty window title on Windows, or start eats the URL", () => {
-    // ARRANGE — cmd's `start` reads a quoted first argument as the window
-    // title, so without the empty one the browser never sees the URL
+  it('keeps a query string intact on Windows instead of handing it to cmd', () => {
+    // ARRANGE — `cmd /c start` re-parses its command line, where & separates
+    // commands: the URL would be truncated at best, and a bookmark saved by a
+    // collaborator could run commands on the machine that opens it. Node's argv
+    // quoting does not escape &, only whitespace and quotes.
     onPlatform('win32')
 
-    // ACT / ASSERT
-    expect(browserCommand('https://x.test')).toEqual({
-      command: 'cmd',
-      args: ['/c', 'start', '', 'https://x.test'],
-    })
+    // ACT
+    const { command, args } = browserCommand('https://x.test/p?a=1&b=2')
+
+    // ASSERT — no shell in between, and the whole URL is a single argument
+    expect(command).toBe('rundll32.exe')
+    expect(command).not.toContain('cmd')
+    expect(args).toEqual(['url.dll,FileProtocolHandler', 'https://x.test/p?a=1&b=2'])
   })
 })

@@ -23,12 +23,8 @@ export type {
   BookmarkJson,
   ChangeKind,
   CollectionEventJson,
-  BookmarkSaveJson,
   CollectionSummaryJson,
   FolderJson,
-  ImportSummaryJson,
   TagJson,
-  TrashbinJson,
-  UserInfoJson,
 } from '../../frontend/src/api/generated/index'
 
