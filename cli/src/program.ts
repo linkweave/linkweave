@@ -109,7 +109,12 @@ Precedence: flags > environment > config file.`,
     .description('follow a collection\'s changes as they happen (Ctrl-C to stop)')
     .option('--collection <collection>', 'collection ID or name (defaults to your default collection)')
     .option('--retries <n>', 'reconnect attempts before giving up', '6')
-    .addOption(formatOption())
+    // Not the shared formatOption(): 'ids' has no meaning for a stream whose
+    // folder and collection events name no bookmark, and an option must not
+    // advertise a format it then ignores.
+    .addOption(
+      new Option('-f, --format <format>', 'output format').choices(['table', 'json']).default('table'),
+    )
     .action(runWatch)
 
   program

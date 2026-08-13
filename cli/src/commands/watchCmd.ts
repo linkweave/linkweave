@@ -2,7 +2,7 @@ import type { Command } from 'commander'
 
 import type { ChangeKind, CollectionEventJson } from '../api'
 import { createAuthenticatedClients } from '../client'
-import { AUTH_FAILED_MESSAGE, CliError } from '../errors'
+import { AUTH_FAILED_MESSAGE, CliError, isTlsError, TLS_FAILED_MESSAGE } from '../errors'
 import {
   COLLECTION_FORBIDDEN_MESSAGE,
   effectiveConfig,
@@ -44,6 +44,45 @@ const DESCRIPTIONS: Partial<Record<ChangeKind, string>> = {
   SCREENSHOT_READY: 'screenshot ready',
 }
 
+/** Statuses that mean "try again later" rather than "this will never work". */
+const GATEWAY_STATUSES = new Set([502, 503, 504])
+
+/** A failure that should be retried, carrying what to say if the budget runs out. */
+class RetryableFailure extends Error {}
+
+/**
+ * The most specific thing we can say about why the connection failed.
+ *
+ * Node's `fetch` rejects with a bare `TypeError: fetch failed` and puts the
+ * detail on `cause` — an `AggregateError` carrying `code: 'ECONNREFUSED'` for a
+ * refusal, `UND_ERR_SOCKET` for a reset, or only a message ('bad port') when
+ * there is no code. Without unwrapping it, every network failure reads the same.
+ */
+function describeNetworkError(error: unknown): string {
+  const cause = (error as { cause?: { code?: string; message?: string } } | undefined)?.cause
+  if (cause?.code) return cause.code
+  if (cause?.message) return cause.message
+  return error instanceof Error ? error.message : String(error)
+}
+
+/**
+ * The message for a watch that has stopped. A network failure gets the same
+ * wording every other command gives for an unreachable server — a bare `fetch`
+ * rejection would otherwise surface as `TypeError: fetch failed`, since only the
+ * generated client's rejections pass through the shared translation.
+ */
+function giveUp(server: string, received: boolean, lastFailure: string | undefined): CliError {
+  if (lastFailure) {
+    return new CliError(
+      `Cannot reach LinkWeave server at ${server} (${lastFailure}). ` +
+        'Check your network connection and server URL.',
+    )
+  }
+  return received
+    ? new CliError('The server closed the connection.')
+    : new CliError('Lost the connection to the server and gave up reconnecting.')
+}
+
 function reconnectDelay(attempt: number): number {
   const backoff = Math.min(reconnectTuning.baseDelayMs * 2 ** attempt, MAX_RECONNECT_DELAY_MS)
   return backoff / 2 + Math.random() * (backoff / 2)
@@ -64,7 +103,9 @@ export async function* parseSseFrames(body: ReadableStream<Uint8Array>): AsyncGe
   for (;;) {
     const { done, value } = await reader.read()
     if (done) return
-    buffer += decoder.decode(value, { stream: true })
+    // Normalised first: an intermediary that rewrites line endings would
+    // otherwise stall the parser forever, since '\r\n\r\n' contains no '\n\n'.
+    buffer += decoder.decode(value, { stream: true }).replace(/\r\n?/g, '\n')
     let separator = buffer.indexOf('\n\n')
     while (separator !== -1) {
       const frame = buffer.slice(0, separator)
@@ -73,7 +114,9 @@ export async function* parseSseFrames(body: ReadableStream<Uint8Array>): AsyncGe
         .split('\n')
         .filter((line) => line.startsWith('data:'))
         .map((line) => line.slice('data:'.length).trim())
-        .join('')
+        // Newline, per the SSE spec: consecutive data: lines are one payload
+        // split across lines, not one line to concatenate.
+        .join('\n')
       if (data) yield data
       separator = buffer.indexOf('\n\n')
     }
@@ -122,10 +165,13 @@ async function consume(
 export async function runWatch(options: WatchOptions, cmd: Command): Promise<void> {
   const config = effectiveConfig(cmd)
   const json = (options.format ?? 'table') === 'json'
-  const maxRetries = Number.parseInt(options.retries ?? String(DEFAULT_RETRIES), 10)
-  if (!Number.isInteger(maxRetries) || maxRetries < 0) {
-    throw new CliError(`--retries must be a non-negative whole number, got '${options.retries}'`)
+  // Deliberately not parseInt, which reads '6.5' as 6 and '0x6' as 0 — a budget
+  // silently different from what was typed is worse than a rejected one.
+  const retriesText = options.retries ?? String(DEFAULT_RETRIES)
+  if (!/^\d+$/.test(retriesText)) {
+    throw new CliError(`--retries must be a non-negative whole number, got '${retriesText}'`)
   }
+  const maxRetries = Number(retriesText)
   const clients = createAuthenticatedClients(config)
 
   const collectionId = await withHttpErrors(config, { forbidden: COLLECTION_FORBIDDEN_MESSAGE }, () =>
@@ -139,27 +185,48 @@ export async function runWatch(options: WatchOptions, cmd: Command): Promise<voi
   // or `--retries 0` — "do not reconnect" — would loop forever against a server
   // that keeps accepting, delivering and dropping.
   let attempt = 0
+  let lastFailure: string | undefined
   for (;;) {
-    const response = await fetch(url, {
-      headers: { 'X-API-Key': config.apiKey ?? '', Accept: 'text/event-stream' },
-    })
-    // Authorization is re-checked on every reconnect, so a key revoked or an
-    // access removed mid-watch stops the loop instead of retrying into a wall.
-    if (response.status === 401) throw new CliError(AUTH_FAILED_MESSAGE)
-    if (response.status === 403) throw new CliError(COLLECTION_FORBIDDEN_MESSAGE)
-    if (!response.ok) throw new CliError(`Server responded with ${response.status}.`)
+    let received = false
+    try {
+      const response = await fetch(url, {
+        headers: { 'X-API-Key': config.apiKey ?? '', Accept: 'text/event-stream' },
+      })
+      // Authorization is re-checked on every reconnect, so a key revoked or an
+      // access removed mid-watch stops the loop instead of retrying into a wall.
+      if (response.status === 401) throw new CliError(AUTH_FAILED_MESSAGE)
+      if (response.status === 403) throw new CliError(COLLECTION_FORBIDDEN_MESSAGE)
+      // A gateway status is the shape of a server restarting behind a proxy —
+      // the blip this command exists to survive. Anything else is a bug or a
+      // wrong URL, which waiting will not fix.
+      if (GATEWAY_STATUSES.has(response.status)) {
+        throw new RetryableFailure(`server responded with ${response.status}`)
+      }
+      if (!response.ok) throw new CliError(`Server responded with ${response.status}.`)
 
-    const received = await consume(response, json, () =>
-      process.stderr.write(`Watching collection ${collectionId}. Press Ctrl-C to stop.\n`),
-    )
-    if (received) attempt = 0
-    if (attempt >= maxRetries) {
-      throw new CliError(
-        received
-          ? 'The server closed the connection.'
-          : 'Lost the connection to the server and gave up reconnecting.',
+      received = await consume(response, json, () =>
+        process.stderr.write(`Watching collection ${collectionId}. Press Ctrl-C to stop.\n`),
       )
+      lastFailure = undefined
+    } catch (error) {
+      // Deliberate stops (auth, a URL that will never work) must not be retried.
+      if (error instanceof CliError) throw error
+      // Nor a certificate the client will keep rejecting; --insecure or a fixed
+      // cert is the fix, not patience.
+      if (isTlsError(error)) throw new CliError(TLS_FAILED_MESSAGE)
+      // Everything else is the network: a refused connection, DNS, a TLS reset,
+      // Wi-Fi coming back, or a read that failed mid-stream. Those are exactly
+      // what the budget is for, and they arrive as a raw rejection from `fetch`
+      // rather than through the generated client's error handling.
+      lastFailure = error instanceof RetryableFailure ? error.message : describeNetworkError(error)
     }
+
+    // Only a clean end resets the budget. A stream that delivered frames and
+    // then errored does not: a server that accepts, sends, and drops in a loop
+    // would otherwise be retried forever, which is the same trap `--retries 0`
+    // fell into before.
+    if (received) attempt = 0
+    if (attempt >= maxRetries) throw giveUp(config.server, received, lastFailure)
     attempt++
     await new Promise((resolve) => setTimeout(resolve, reconnectDelay(attempt)))
   }

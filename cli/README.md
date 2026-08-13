@@ -285,9 +285,18 @@ cleanly into `jq` or a `while read` loop with nothing else mixed in.
 
 If the connection drops it reconnects with an increasing, jittered delay,
 giving up after `--retries` *consecutive* failures (default 6) — a connection
-that delivers something resets the count, so a watch left running for days
-survives the odd blip. A revoked key or lost access to the collection stops it
-immediately rather than retrying into a wall.
+that runs and ends cleanly resets the count, so a watch left running for days
+survives the odd blip. A stream that fails part-way through counts as a failure
+even if it delivered something first, or a server that accepts and drops in a
+loop would be retried forever. Refused connections, DNS hiccups, a reset mid-stream and
+a restarting server (502/503/504) all count as blips and are retried.
+
+Three things stop it immediately instead, because waiting will not fix them: a
+revoked key, lost access to the collection, and a certificate the client will
+not accept (use `--insecure`, or fix the certificate).
+
+`--format` is `table` or `json` here — there is no `ids`, since folder and
+collection events name no bookmark.
 
 ### `linkweave login` / `linkweave logout`
 
