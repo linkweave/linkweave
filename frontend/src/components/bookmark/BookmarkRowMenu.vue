@@ -4,6 +4,7 @@ import { MoreHorizontal } from '@lucide/vue'
 import { DropdownMenuRoot, DropdownMenuTrigger } from 'radix-vue'
 import { DropdownMenuContentLw, DropdownMenuItemLw } from '@/components/ui'
 import { useI18n } from 'vue-i18n'
+import { useNotificationStore } from '@/stores/notification'
 import type { BookmarkJson } from '@/api/generated'
 
 // Shared row-action menu. Previously this exact lazy-mount + dropdown markup
@@ -15,7 +16,7 @@ import type { BookmarkJson } from '@/api/generated'
 // (BookmarkCard reveals on `group-hover`, the grouped row on `group-hover/row`,
 // the popup footer is always visible). Tailwind still picks those classes up
 // because they appear literally in each caller's template string.
-withDefaults(
+const props = withDefaults(
   defineProps<{
     bookmark: BookmarkJson
     // Render the "Refresh preview" item (BookmarkCard + popup footer only).
@@ -46,6 +47,19 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const notification = useNotificationStore()
+
+// Copy URL is a pure client-side side effect (no dialog orchestration needed),
+// so unlike edit/move/delete it is handled right here in the shared menu —
+// every call site (card, grouped row, preview popup footer) gets it for free.
+async function copyUrl() {
+  try {
+    await navigator.clipboard.writeText(props.bookmark.data.url)
+    notification.success(t('bookmark.copiedToast'))
+  } catch {
+    notification.error(t('bookmark.copyError'))
+  }
+}
 
 // Lazy radix mount: a plain trigger button until first click, then the full
 // DropdownMenuRoot (auto-opened). With many cards on screen this avoids
@@ -92,6 +106,9 @@ function onRootUpdateOpen(open: boolean) {
       </DropdownMenuItemLw>
       <DropdownMenuItemLw @select="emit('move', bookmark)">
         {{ t('bookmark.moveToFolder') }}
+      </DropdownMenuItemLw>
+      <DropdownMenuItemLw data-testid="bookmark-menu-copy-url" @select="copyUrl">
+        {{ t('bookmark.copyUrl') }}
       </DropdownMenuItemLw>
       <DropdownMenuItemLw v-if="showRefreshPreview" @select="emit('refreshPreview', bookmark)">
         {{ t('bookmark.refreshPreview') }}
