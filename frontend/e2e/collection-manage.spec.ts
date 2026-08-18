@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures'
+import { createBookmarkViaApi } from './helpers/api'
 import { CollectionManagePageObject } from './models/CollectionManagePageObject'
 import {
   deleteTestUserCleanup,
@@ -96,7 +97,6 @@ test.describe('Collection Management', () => {
     // ARRANGE
     const manage = new CollectionManagePageObject(page)
     const name = `Make Default ${`${Date.now()}-${Math.random().toString(36).slice(2, 6)}`}`
-
     await manage.createCollection(name)
     const collectionId = await manage.getCollectionIdByName(name)
 
@@ -105,6 +105,33 @@ test.describe('Collection Management', () => {
     // ASSERT
     await expect(manage.collectionSetDefaultBtn(collectionId)).not.toBeVisible()
   })
+
+  test('should show the new collection as empty after following its link, not the previous collection bookmarks', async ({
+    page,
+    request,
+  }) => {
+    // ARRANGE — the user is on a collection with a bookmark, then creates a
+    // fresh one from the manage view.
+    const marker = `RouterSync ${`${Date.now()}-${Math.random().toString(36).slice(2, 6)}`}`
+    await createBookmarkViaApi(request, collectionId, marker, 'https://example.com/router-sync')
+    await page.goto(`/collections/${collectionId}`)
+    await expect(page.getByRole('heading', { name: marker })).toBeVisible()
+
+    const manage = new CollectionManagePageObject(page)
+    await manage.navigate()
+    await manage.createCollection(`Empty ${marker}`)
+    const emptyId = await manage.getCollectionIdByName(`Empty ${marker}`)
+
+    // ACT — follow the plain router-link on the manage view (no switchCollection).
+    await page.getByRole('link', { name: `Empty ${marker}` }).click()
+    await expect(page).toHaveURL(new RegExp(`${emptyId}`))
+
+    // ASSERT — the fresh collection is empty; the previous collection's
+    // bookmark must not leak into it just because the store was never re-pointed.
+    await expect(page.getByRole('heading', { name: marker })).toHaveCount(0)
+    await expect(page.getByText('No bookmarks yet', { exact: false })).toBeVisible()
+  })
+
 
   test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => user))
 })

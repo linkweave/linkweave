@@ -76,6 +76,16 @@ router.beforeEach(async (to) => {
   const auth = useAuthStore()
   const collection = useCollectionStore()
 
+  // The store, not the URL, is what CollectionView renders — bookmarks, name,
+  // live-update stream all read `currentCollectionId`. In-app links to
+  // /collections/:id (manage view) and browser back/forward change only the
+  // route, so without this the previous collection's data would keep showing
+  // under the new URL. `initializeSession` cannot own this: it runs once per
+  // session, on first load only.
+  if (to.name === 'collection' && typeof to.params.id === 'string') {
+    collection.setCurrentCollectionId(to.params.id)
+  }
+
   // Post-login landing (UC-099): if a session expiry captured a return
   // target, send the user back there instead of the default landing. Both
   // login flows funnel through here — form login pushes `/` (home) and the
