@@ -7,7 +7,7 @@
 **Primary Actor:** Developer / Architect
 **Secondary Actors:** Agroal connection pool (quarkus-datasource), CI load-test harness
 **Goal:** Determine how to make LinkWeave's single-file SQLite database (C-003) scale to concurrent write workloads (interactive requests *plus* background jobs running simultaneously) without `SQLITE_BUSY` stalls, and produce a documented, recommendation-backed decision on (a) enabling WAL mode, (b) adopting Turso Database (Limbo, the Rust SQLite rewrite whose MVCC/`BEGIN CONCURRENT` is the one SQLite-family path to true concurrent writers), or (c) an application-level write-serialization strategy.
-**Status:** Draft
+**Status:** Done
 
 ## Traceability
 

@@ -179,3 +179,32 @@
 - `docs/requirements.md` - Added NFR-010.
 - `docs/vision.md` - Updated Quality Goals.
 - `CHANGELOG.md` - Added Step 9.
+
+## [1.0.3] - 2026-08-23
+
+### Updated - Step 10: Requirements Status Sync
+
+Verified implemented features against the codebase and flipped their requirement statuses from `Open` to `Done`:
+
+- **FR-078** Multi-Select Bookmarks, **FR-079** Batch Tag Application, **FR-080** Batch Move and Delete
+  (PRs #72 / #86: selection model, `BatchActionBar`, `/bookmarks/batch-move|batch-delete|batch-tag` endpoints).
+- **NFR-018** Batch Operation Atomicity (batch service methods execute in one transaction; rollback hardening).
+- **C-017** Batch Size Limit (`@Size(max = 500)` on batch DTOs → HTTP 400).
+- **FR-094** Review and Select Bookmarks Before Import (`/import/preview` + `/import/commit`, `ImportReviewView.vue`).
+- **FR-095** Auto-Tag Bookmarks with a Local LLM, **FR-096** LLM Feature Flag (`linkweave.autotag.llm.enabled`),
+  **FR-097** Pluggable LLM Provider (`linkweave.autotag.provider`: `ollama` | `openai`) (PR #96).
+- **FR-083** Manage API Keys, **FR-084** Authenticate via API Key, **NFR-020** API Key Storage Security,
+  **NFR-021** API Key Rotation Limit, **C-018** Custom `HttpAuthenticationMechanism`
+  (`api/.../auth/apikey/`: `ApiKey` entity, SHA-256 hash storage, reveal-once UI, `MAX_ACTIVE_KEYS = 10`).
+
+Not changed (still genuinely open): FR-081 Bookmark Notes, FR-087 Extension Property Support,
+FR-092 Mobile Share Sheet (spec-only commit, no implementation yet). The CLI (FR-085/086),
+NFR-028 WAL feasibility report, and FR-098–FR-102 landed upstream in the meantime and are
+reflected here via the rebase onto origin/main.
+
+### Files Changed
+
+- `docs/requirements.md` - Status updates for FR-078, FR-079, FR-080, FR-083, FR-084, FR-094, FR-095, FR-096, FR-097, NFR-018, NFR-020, NFR-021, C-017, C-018; document date refreshed.
+- `docs/use_cases/UC-096-review-and-select-bookmarks-before-import.md` - Status Proposed → Implemented.
+- `docs/use_cases/UC-097-autotag-bookmark-with-local-llm.md` - Status Draft → Implemented.
+- `CHANGELOG.md` - Added Step 10.
