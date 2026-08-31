@@ -7,6 +7,7 @@ export const OPS = [
   { trigger: 'folder', full: 'folder:', hintKey: 'opFolder' },
   { trigger: 'under', full: 'under:', hintKey: 'opUnder' },
   { trigger: 'property', full: 'property:', hintKey: 'opProperty' },
+  { trigger: 'url', full: 'url:', hintKey: 'opUrl' },
 ] as const
 
 export interface CursorToken {

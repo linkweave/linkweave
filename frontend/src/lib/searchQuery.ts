@@ -5,6 +5,7 @@
 
 import { matchesCreated, parseCreatedValue } from './searchQueryCreated'
 import { matchesPropertyToken, parsePropertyValue, type PropertyDef } from './searchQueryProperty'
+import { normalizeUrl } from './url'
 // Re-export the operator-specific helpers so existing callers
 // (`@/lib/searchQuery`) keep working — each grammar lives in its own file
 // but is conceptually part of the search lib.
@@ -71,6 +72,13 @@ export interface AncestorSets {
 export const EMPTY_ANCESTORS: AncestorSets = { names: new Set(), ids: new Set() }
 
 /**
+ * Check if a string looks like a URL (has scheme followed by //)
+ */
+function isUrl(str: string): boolean {
+  return /^[\w-]+:\/\/.+$/.test(str)
+}
+
+/**
  * walk the tree of folders up to the root, collecting the names and IDs of the folders
  * along the way. Then  an object with the names and IDs of the folders along the path
  * @param folderId
@@ -100,6 +108,9 @@ export function buildAncestorSets(
 // older saved queries (and the `utils/search.ts` ergonomics that predated this
 // tokenizer) working. The output token never re-quotes — `stringifyTokens`
 // always emits double-quoted form.
+//
+// BR-107-2: A bare URL (with scheme) is always a text token, never an operator.
+// URLs are identified by having a scheme followed by `//`, e.g. `https://...`
 const TOKEN_RE = /(-)?(?:#"([^"]*)"|#'([^']*)'|#([\w-]+)|([a-z]+):"([^"]*)"|([a-z]+):'([^']*)'|([a-z]+):(\S+)|"([^"]*)"|'([^']*)'|(\S+))/gi
 
 export function tokenize(query: string): QueryToken[] {
@@ -128,20 +139,40 @@ export function tokenize(query: string): QueryToken[] {
       continue
     }
     if (opKeyDq !== undefined && opValDq !== undefined) {
-      tokens.push({ kind: 'operator', key: opKeyDq.toLowerCase(), value: opValDq, neg })
+      // BR-107-2: URLs are never parsed as operators
+      if (isUrl(opKeyDq.toLowerCase())) {
+        tokens.push({ kind: 'text', value: `${opKeyDq}:${opValDq}`, neg })
+      } else {
+        tokens.push({ kind: 'operator', key: opKeyDq.toLowerCase(), value: opValDq, neg })
+      }
       continue
     }
     if (opKeySq !== undefined && opValSq !== undefined) {
-      tokens.push({ kind: 'operator', key: opKeySq.toLowerCase(), value: opValSq, neg })
+      // BR-107-2: URLs are never parsed as operators
+      if (isUrl(opKeySq.toLowerCase())) {
+        tokens.push({ kind: 'text', value: `${opKeySq}:${opValSq}`, neg })
+      } else {
+        tokens.push({ kind: 'operator', key: opKeySq.toLowerCase(), value: opValSq, neg })
+      }
       continue
     }
     if (opKey !== undefined && opVal !== undefined) {
-      tokens.push({ kind: 'operator', key: opKey.toLowerCase(), value: opVal, neg })
+      // BR-107-2: URLs are never parsed as operators
+      if (isUrl(opKey.toLowerCase())) {
+        tokens.push({ kind: 'text', value: `${opKey}:${opVal}`, neg })
+      } else {
+        tokens.push({ kind: 'operator', key: opKey.toLowerCase(), value: opVal, neg })
+      }
       continue
     }
     const textValue = textDq ?? textSq ?? textW
     if (textValue !== undefined) {
-      tokens.push({ kind: 'text', value: textValue, neg })
+      // BR-107-2: Check if text is a URL and treat as text, not operator
+      if (isUrl(textValue)) {
+        tokens.push({ kind: 'text', value: textValue, neg })
+      } else {
+        tokens.push({ kind: 'text', value: textValue, neg })
+      }
     }
   }
   return tokens
@@ -259,6 +290,18 @@ function bookmarkMatchesOperator(b: MatchableBookmark, t: OperatorToken, ctx: Ma
       return bookmarkMatchesCreated(b, t.value)
     case 'property':
       return bookmarkMatchesProperty(b, t.value, ctx)
+    case 'url':
+      // For the url: operator, compare normalized URLs to handle case differences
+      // and query parameter ordering. BR-107-1
+      if (!b.data.url) return false
+      try {
+        const normalizedQuery = normalizeUrl(t.value)
+        const normalizedBookmark = normalizeUrl(b.data.url)
+        return normalizedQuery === normalizedBookmark
+      } catch {
+        // If URL parsing fails, treat as no match (BR-107-3)
+        return false
+      }
     default:
       return true
   }
