@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import { isKnownOperator } from './searchOperators'
 import {
   buildAncestorSets,
+  isInvalidToken,
   type MatchableBookmark,
   type MatchContext,
   matchesTokens,
@@ -59,6 +61,48 @@ describe('tokenize', () => {
       { kind: 'operator', key: 'created', value: '>today', neg: false },
     ])
   })
+
+  it('tokenizes a pasted absolute URL as a single free-text term (BR-107-2)', () => {
+    expect(tokenize('https://example.com/a')).toEqual([
+      { kind: 'text', value: 'https://example.com/a', neg: false },
+    ])
+    expect(tokenize('http://example.com/a?b=1')).toEqual([
+      { kind: 'text', value: 'http://example.com/a?b=1', neg: false },
+    ])
+  })
+
+  it('tokenizes an uppercase-scheme URL as free text, preserving its value', () => {
+    expect(tokenize('HTTPS://Example.COM/a')).toEqual([
+      { kind: 'text', value: 'HTTPS://Example.COM/a', neg: false },
+    ])
+  })
+
+  it('tokenizes a negated pasted URL as a negated free-text term', () => {
+    expect(tokenize('-https://example.com/a')).toEqual([
+      { kind: 'text', value: 'https://example.com/a', neg: true },
+    ])
+  })
+
+  it('tokenizes url: with an absolute URL value as one operator token', () => {
+    expect(tokenize('url:https://example.com/a')).toEqual([
+      { kind: 'operator', key: 'url', value: 'https://example.com/a', neg: false },
+    ])
+    expect(tokenize('-url:https://example.com/a')).toEqual([
+      { kind: 'operator', key: 'url', value: 'https://example.com/a', neg: true },
+    ])
+  })
+
+  it('tokenizes a quoted url: value with spaces as one operator token (A5)', () => {
+    expect(tokenize('url:"https://example.com/a b"')).toEqual([
+      { kind: 'operator', key: 'url', value: 'https://example.com/a b', neg: false },
+    ])
+  })
+
+  it('keeps a non-URL key:value token an operator (unknown → invalid, not text)', () => {
+    expect(tokenize('bogus:value')).toEqual([
+      { kind: 'operator', key: 'bogus', value: 'value', neg: false },
+    ])
+  })
 })
 
 describe('stringifyTokens', () => {
@@ -88,6 +132,31 @@ describe('stringifyTokens', () => {
     const original: QueryToken[] = [{ kind: 'tag', value: 'foo=bar', neg: false }]
     const str = stringifyTokens(original)
     expect(tokenize(str)).toEqual(original)
+  })
+
+  it('round-trips a url: token unquoted (A6 / AC-6)', () => {
+    const original: QueryToken[] = [
+      { kind: 'operator', key: 'url', value: 'https://example.com/a?b=2&a=1', neg: false },
+    ]
+    const str = stringifyTokens(original)
+    expect(str).toBe('url:https://example.com/a?b=2&a=1')
+    expect(tokenize(str)).toEqual(original)
+  })
+
+  it('re-quotes a url: value containing spaces and round-trips it (A5)', () => {
+    const original: QueryToken[] = [
+      { kind: 'operator', key: 'url', value: 'https://example.com/a b', neg: false },
+    ]
+    const str = stringifyTokens(original)
+    expect(str).toBe('url:"https://example.com/a b"')
+    expect(tokenize(str)).toEqual(original)
+  })
+
+  it('round-trips a negated url: token (A4)', () => {
+    const original: QueryToken[] = [
+      { kind: 'operator', key: 'url', value: 'https://example.com/a', neg: true },
+    ]
+    expect(tokenize(stringifyTokens(original))).toEqual(original)
   })
 })
 
@@ -258,14 +327,14 @@ describe('matchesTokens', () => {
     ).toBe(true)
   })
 
-  it('treats unknown operators as no-op match-all', () => {
+  it('treats unknown operators as invalid — they match nothing (BR-107-3)', () => {
     expect(
       matchesTokens(
         bookmark,
-        [{ kind: 'operator', key: 'unknown', value: 'foo', neg: false }],
+        [{ kind: 'operator', key: 'bogus', value: 'value', neg: false }],
         ctx,
       ),
-    ).toBe(true)
+    ).toBe(false)
   })
 
   it('matches free text against title / url / description', () => {
@@ -273,6 +342,121 @@ describe('matchesTokens', () => {
     expect(matchesTokens(bookmark, [{ kind: 'text', value: 'absent', neg: false }], ctx)).toBe(
       false,
     )
+  })
+})
+
+// UC-107 — the `url:` exact-URL operator. All cases compare through the shared
+// normalizeUrl contract (BR-107-1); the bookmarks below are the acceptance
+// criteria's fixture set.
+describe('matchesTokens with url:', () => {
+  const ctx: MatchContext = {
+    tagNamesById: new Map(),
+    folderName: null,
+    ancestorFolderNames: new Set(),
+    ancestorFolderIds: new Set(),
+  }
+  function bmWithUrl(url: string | null): MatchableBookmark {
+    return { data: { title: 't', url, description: null } }
+  }
+  function urlToken(value: string, neg = false): QueryToken {
+    return { kind: 'operator', key: 'url', value, neg }
+  }
+
+  it('matches a stored URL that differs in host case, trailing slash, or fragment (AC-2)', () => {
+    const query = 'https://example.com/a'
+    expect(matchesTokens(bmWithUrl('https://Example.com/a/'), [urlToken(query)], ctx)).toBe(true)
+    expect(matchesTokens(bmWithUrl('https://example.com/a#top'), [urlToken(query)], ctx)).toBe(true)
+    expect(matchesTokens(bmWithUrl('https://example.com/a'), [urlToken(query)], ctx)).toBe(true)
+  })
+
+  it('does not match a deeper path or a different query string (AC-2)', () => {
+    const query = 'https://example.com/a'
+    expect(matchesTokens(bmWithUrl('https://example.com/a/b'), [urlToken(query)], ctx)).toBe(false)
+    expect(
+      matchesTokens(bmWithUrl('https://example.com/a?utm_source=x'), [urlToken(query)], ctx),
+    ).toBe(false)
+  })
+
+  it('keeps tracking parameters significant on both sides (BR-107-1)', () => {
+    expect(
+      matchesTokens(bmWithUrl('https://example.com/a?utm_source=x'), [urlToken('https://example.com/a?utm_source=x')], ctx),
+    ).toBe(true)
+    expect(
+      matchesTokens(bmWithUrl('https://example.com/a'), [urlToken('https://example.com/a?utm_source=x')], ctx),
+    ).toBe(false)
+  })
+
+  it('sorts query parameters before comparing (AC-3)', () => {
+    expect(
+      matchesTokens(bmWithUrl('https://example.com/a?a=1&b=2'), [urlToken('https://example.com/a?b=2&a=1')], ctx),
+    ).toBe(true)
+  })
+
+  it('compares path case-sensitively while scheme/host ignore case (BR-107-4)', () => {
+    expect(matchesTokens(bmWithUrl('https://example.com/A'), [urlToken('https://example.com/a')], ctx)).toBe(false)
+    expect(matchesTokens(bmWithUrl('https://example.com/A'), [urlToken('https://Example.com/A')], ctx)).toBe(true)
+  })
+
+  it('negation returns the complement (AC-4)', () => {
+    const exact = bmWithUrl('https://Example.com/a/')
+    const deeper = bmWithUrl('https://example.com/a/b')
+    expect(matchesTokens(exact, [urlToken('https://example.com/a', true)], ctx)).toBe(false)
+    expect(matchesTokens(deeper, [urlToken('https://example.com/a', true)], ctx)).toBe(true)
+  })
+
+  it('an unparseable value is invalid syntax and matches nothing (A3 / BR-107-3)', () => {
+    expect(matchesTokens(bmWithUrl('https://example.com/a'), [urlToken('???')], ctx)).toBe(false)
+    expect(matchesTokens(bmWithUrl('https://example.com/a'), [urlToken('example.com/a')], ctx)).toBe(false)
+  })
+
+  it('a bookmark without a URL never matches', () => {
+    expect(matchesTokens(bmWithUrl(null), [urlToken('https://example.com/a')], ctx)).toBe(false)
+  })
+
+  it('combines with other tokens using AND (UC-070 BR-081)', () => {
+    const b: MatchableBookmark = {
+      data: { title: 'Guide', url: 'https://example.com/a', description: null },
+    }
+    const tokens: QueryToken[] = [
+      urlToken('https://example.com/a'),
+      { kind: 'text', value: 'guide', neg: false },
+    ]
+    expect(matchesTokens(b, tokens, ctx)).toBe(true)
+    expect(matchesTokens(b, [...tokens, { kind: 'text', value: 'absent', neg: false }], ctx)).toBe(
+      false,
+    )
+  })
+})
+
+describe('isKnownOperator / isInvalidToken', () => {
+  it('knows the documented operator set (BR-107-7)', () => {
+    for (const key of ['tag', 'folder', 'under', 'url', 'note', 'created', 'property']) {
+      expect(isKnownOperator(key)).toBe(true)
+    }
+    expect(isKnownOperator('bogus')).toBe(false)
+    expect(isKnownOperator('https')).toBe(false)
+    expect(isKnownOperator('URL')).toBe(true) // lookup is case-insensitive like the tokenizer
+  })
+
+  it('flags unknown operator keys as invalid', () => {
+    expect(isInvalidToken({ kind: 'operator', key: 'bogus', value: 'v', neg: false })).toBe(true)
+    expect(isInvalidToken({ kind: 'operator', key: 'match', value: 'OR', neg: false })).toBe(true)
+  })
+
+  it('flags a url: token whose value is not an absolute URL (A3)', () => {
+    expect(isInvalidToken({ kind: 'operator', key: 'url', value: '???', neg: false })).toBe(true)
+    expect(isInvalidToken({ kind: 'operator', key: 'url', value: '', neg: false })).toBe(true)
+    expect(
+      isInvalidToken({ kind: 'operator', key: 'url', value: 'https://example.com/a', neg: false }),
+    ).toBe(false)
+  })
+
+  it('does not flag text or tag tokens, or valid operators', () => {
+    expect(isInvalidToken({ kind: 'text', value: 'https://example.com', neg: false })).toBe(false)
+    expect(isInvalidToken({ kind: 'tag', value: 'x', neg: false })).toBe(false)
+    expect(
+      isInvalidToken({ kind: 'operator', key: 'folder', value: 'work', neg: false }),
+    ).toBe(false)
   })
 })
 

@@ -2,7 +2,7 @@
 import { parsePropertyValue, type QueryToken } from '@/lib/searchQuery'
 import { useFolderStore } from '@/stores/folder'
 import { useTagStore } from '@/stores/tag'
-import { Box, Calendar, Folder, FolderTree, Hash, Minus, X } from '@lucide/vue'
+import { Box, Calendar, Folder, FolderTree, Hash, Link2, Minus, X } from '@lucide/vue'
 import { type Component, computed } from 'vue'
 
 const props = defineProps<{
@@ -28,6 +28,7 @@ interface PillVariant {
 const OPERATOR_VARIANTS: Record<string, { icon: Component; label: string }> = {
   folder: { icon: Folder, label: 'folder:' },
   under: { icon: FolderTree, label: 'under:' },
+  url: { icon: Link2, label: 'url:' },
   created: { icon: Calendar, label: 'created:' },
   property: { icon: Box, label: 'property:' },
 }

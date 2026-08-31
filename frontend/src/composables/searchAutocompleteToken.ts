@@ -2,12 +2,15 @@
 // from `useSearchAutocomplete` so it can be unit-tested without pulling in the
 // Pinia stores (and, transitively, i18n / browser globals).
 
-export const OPS = [
-  { trigger: 'tag', full: 'tag:', hintKey: 'opTag' },
-  { trigger: 'folder', full: 'folder:', hintKey: 'opFolder' },
-  { trigger: 'under', full: 'under:', hintKey: 'opUnder' },
-  { trigger: 'property', full: 'property:', hintKey: 'opProperty' },
-] as const
+import { OPERATOR_DEFS } from '@/lib/searchOperators'
+
+// Derived from the parser's operator table (UC-107 BR-107-7) — the autocomplete
+// never defines its own operator list, so the two cannot drift.
+export const OPS = OPERATOR_DEFS.filter((d) => d.discoverable).map((d) => ({
+  trigger: d.key,
+  full: `${d.key}:`,
+  hintKey: d.hintKey ?? '',
+}))
 
 export interface CursorToken {
   token: string // raw token the cursor sits on

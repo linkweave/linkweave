@@ -3,9 +3,10 @@ import { useTagStore } from '@/stores/tag'
 import { useFolderStore } from '@/stores/folder'
 import { usePropertyStore } from '@/stores/property'
 import { useBookmarkStore } from '@/stores/bookmark'
+import { isAbsoluteUrl } from '@/lib/url'
 import { OPS, tokenAtCursor } from './searchAutocompleteToken'
 
-export type AcMode = 'tag' | 'folder' | 'under' | 'prop-key' | 'prop-val' | 'operator'
+export type AcMode = 'tag' | 'folder' | 'under' | 'prop-key' | 'prop-val' | 'operator' | 'url'
 
 export interface AcItem {
   key: string
@@ -156,6 +157,30 @@ export function useSearchAutocomplete() {
           filter: valFilter,
         }))
       return { mode: 'prop-val', label: propKey, items, range }
+    }
+
+    // ── Absolute URL under the cursor → offer the exact-URL conversion
+    // (UC-107 BR-107-6). The offer is never applied automatically: the pasted
+    // URL keeps its substring semantics until the user opts in. The full
+    // token (range slice) is offered — `token` alone would truncate at the
+    // caret when the cursor sits inside the URL.
+    const fullToken = query.slice(range[0], range[1])
+    if (isAbsoluteUrl(fullToken)) {
+      return {
+        mode: 'url' as const,
+        label: 'exactUrl',
+        items: [
+          {
+            key: 'url-exact',
+            label: fullToken,
+            insert: `url:${fullToken}`,
+            type: 'url' as const,
+            hint: 'opUrlConvert',
+            filter: '',
+          },
+        ],
+        range,
+      }
     }
 
     // ── Operator discovery: "fo", "ta", "prop" …

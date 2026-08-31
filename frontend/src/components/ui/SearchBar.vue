@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { Search, X } from '@lucide/vue'
+import { useI18n } from 'vue-i18n'
 import SearchAutocompleteDropdown from './SearchAutocompleteDropdown.vue'
+import { isInvalidToken, tokenize } from '@/lib/searchQuery'
 import { useSearchAutocomplete, type AcResult, type AcItem } from '@/composables/useSearchAutocomplete'
+
+const { t } = useI18n()
 
 const props = withDefaults(defineProps<{
   modelValue: string
@@ -118,6 +122,20 @@ function onAcMouseDown() {
   }, 200)
 }
 
+// Invalid-syntax flagging (UC-070 A2 / UC-107 BR-107-3): operator tokens with
+// unknown keys (or an unparseable `url:` value) are underlined in red with a
+// syntax-help tooltip and match nothing, so a typo can never look like an
+// unfiltered result set.
+const invalidTokenLabels = computed(() => {
+  const seen = new Set<string>()
+  for (const tok of tokenize(props.modelValue)) {
+    if (isInvalidToken(tok) && tok.kind === 'operator') {
+      seen.add(`${tok.key}:${tok.value}`)
+    }
+  }
+  return [...seen]
+})
+
 const shortcutKeys = computed(() => {
   if (navigator.userAgent.includes('Mac')) return ['⌘', 'K']
   return ['Ctrl', 'K']
@@ -194,6 +212,23 @@ onUnmounted(() => {
     >
       <X class="h-4 w-4" />
     </button>
+
+    <!-- Container is pointer-events-none so the flag never blocks clicks on
+         the page beneath it; the token span re-enables pointer events so the
+         native title tooltip (syntax help, UC-070 A2) can actually show. -->
+    <p
+      v-if="invalidTokenLabels.length"
+      data-testid="search-invalid-operators"
+      class="absolute top-[calc(100%+2px)] left-2 z-40 max-w-full truncate text-[11px] text-destructive pointer-events-none"
+    >
+      <span
+        class="font-mono underline decoration-wavy decoration-destructive/60 underline-offset-2 pointer-events-auto cursor-help"
+        :title="t('search.unknownOperatorHint')"
+      >
+        {{ invalidTokenLabels.join(' ') }}
+      </span>
+      {{ t('search.unknownOperator') }}
+    </p>
 
     <SearchAutocompleteDropdown
       v-if="acResult"

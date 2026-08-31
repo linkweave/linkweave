@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { tokenAtCursor } from './searchAutocompleteToken'
+import { OPS, tokenAtCursor } from './searchAutocompleteToken'
+
+describe('OPS', () => {
+  it('is derived from the parser operator table and includes url: (BR-107-7)', () => {
+    expect(OPS.map((op) => op.full)).toContain('url:')
+    for (const op of OPS) {
+      expect(op.full).toBe(`${op.trigger}:`)
+    }
+  })
+})
 
 describe('tokenAtCursor', () => {
   it('returns the token at the end of the query', () => {
@@ -27,6 +36,7 @@ describe('tokenAtCursor', () => {
     expect(tokenAtCursor('folder', 6).colonToken).toBe('folder:')
     expect(tokenAtCursor('tag', 3).colonToken).toBe('tag:')
     expect(tokenAtCursor('under', 5).colonToken).toBe('under:')
+    expect(tokenAtCursor('url', 3).colonToken).toBe('url:')
     expect(tokenAtCursor('property', 8).colonToken).toBe('property:')
   })
 

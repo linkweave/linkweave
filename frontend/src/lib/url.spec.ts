@@ -1,4 +1,4 @@
-import { ensureUrlProtocol, normalizeUrl } from './url'
+import { ensureUrlProtocol, isAbsoluteUrl, normalizeUrl } from './url'
 
 describe('ensureUrlProtocol', () => {
   it('prepends https:// when no colon present', () => {
@@ -42,5 +42,25 @@ describe('normalizeUrl', () => {
 
   it('drops the fragment and sorts query params', () => {
     expect(normalizeUrl('https://example.com/x?b=2&a=1#frag')).toBe('https://example.com/x?a=1&b=2')
+  })
+})
+
+describe('isAbsoluteUrl', () => {
+  it('accepts scheme + // URLs in any case', () => {
+    expect(isAbsoluteUrl('https://example.com/a')).toBe(true)
+    expect(isAbsoluteUrl('http://example.com')).toBe(true)
+    expect(isAbsoluteUrl('HTTPS://Example.COM/a')).toBe(true)
+    expect(isAbsoluteUrl('ftp://files.example.com/x')).toBe(true)
+  })
+
+  it('rejects values without a scheme// separator', () => {
+    expect(isAbsoluteUrl('example.com/a')).toBe(false)
+    expect(isAbsoluteUrl('???')).toBe(false)
+    expect(isAbsoluteUrl('')).toBe(false)
+    expect(isAbsoluteUrl('url:https://example.com/a')).toBe(false)
+  })
+
+  it('rejects scheme-only values like mailto: (no //)', () => {
+    expect(isAbsoluteUrl('mailto:foo@bar.com')).toBe(false)
   })
 })
