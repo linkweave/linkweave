@@ -10,7 +10,9 @@
 
 ## Traceability
 
-**Maps to:** FR-071, FR-072, FR-073, FR-074
+**Maps to:** FR-071, FR-072, FR-073, FR-074, FR-103
+
+**Extended by:** [UC-107](UC-107-search-bookmark-by-exact-url.md) (exact-URL operator `url:`)
 
 ---
 
@@ -31,8 +33,11 @@
 ### Supported Operators
 
 - `#tagname` — filter by tag (exact match). Multi-word tags: `#"tag name"`.
+- `tag:name` — alias for `#tagname`, identical semantics.
 - `-#tagname` — exclude tag.
 - `folder:name` — filter by folder name (substring match).
+- `under:name` — filter by folder *subtree*: matches bookmarks in that folder or any descendant of it. Accepts a folder ID (the unambiguous form written by a sidebar click) or a folder name (case-insensitive; ambiguous when names repeat).
+- `url:<url>` — filter by **exact URL** (see [UC-107](UC-107-search-bookmark-by-exact-url.md)). Compares the normalized query value against the bookmark's normalized URL, so `https://Example.com/a/` and `https://example.com/a` are the same URL, while `https://example.com/a/b` is not. Quote the value if it contains spaces: `url:"..."`.
 - `property:value` — filter by property value (exact for select/boolean, substring for text).
 - `created:YYYY-MM-DD` — filter by creation date. Supports `>` and `<` prefixes for ranges.
 - `created:>today-Nd` — relative date filter (e.g., `created:>today-30d` for last 30 days).
@@ -99,6 +104,14 @@
 ### BR-079: Operator Parsing
 
 Operators are space-delimited. Quoted strings (`"..."`) preserve spaces within values. The parser must handle nested quotes gracefully.
+
+### BR-070-1: The Operator Set Is Closed and Enumerable
+
+The grammar has exactly one list of known operator keys — the ones documented under "Supported Operators" above. That list is defined once in the parser and consumed by the matcher, the autocomplete, and the invalid-syntax highlighting, so a new operator cannot be half-added. An operator that parses but does nothing (a no-op match-all) is not an operator: it is either implemented or it is unknown, and unknown keys follow BR-070-2.
+
+### BR-070-2: Unknown Operators Never Match Everything
+
+A `key:value` token whose key is outside the known set must never be treated as satisfied. It is re-interpreted as free text, or reported as invalid syntax (A2) and matched as false. This rule exists because the search bar's most common input — a pasted URL such as `https://example.com/a` — parses as `key=https`, and a match-all fallback turns it into a silently unfiltered list that is indistinguishable from a real result. A bare absolute URL is a free-text term, never an operator (UC-107 BR-107-2).
 
 ### BR-080: Case-Insensitive Matching
 

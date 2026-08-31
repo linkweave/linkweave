@@ -87,6 +87,7 @@ rectangle "LinkWeave Bookmark Manager" {
         usecase "UC-071\nSave Search Query" as UC071 <<implemented>>
         usecase "UC-072\nUse Smart Collection" as UC072 <<implemented>>
         usecase "UC-046\nMulti-Term Search\nBookmarks" as UC046 <<implemented>>
+        usecase "UC-107\nSearch Bookmarks\nby Exact URL" as UC107
     }
 
     rectangle "Batch Operations" {
@@ -130,6 +131,7 @@ rectangle "LinkWeave Bookmark Manager" {
     rectangle "Auto-Tagging" {
         usecase "UC-045\nAuto-Tag Bookmark\nby URL Pattern" as UC045 <<implemented>>
         usecase "UC-097\nAuto-Tag Bookmark\nwith Local LLM" as UC097 <<implemented>>
+        usecase "UC-108\nDegrade Gracefully When\nTag Model Stalls" as UC108
     }
 
     rectangle "Favicons" {
@@ -151,6 +153,7 @@ rectangle "LinkWeave Bookmark Manager" {
         usecase "UC-056\nSession Data Cleanup" as UC056 <<implemented>>
         usecase "UC-092\nEnforce Module\nBoundaries" as UC092 <<implemented>>
         usecase "UC-095\nExplore SQLite WAL\n& Turso Multi-Writer" as UC095
+        usecase "UC-109\nSurvive SQLite\nLock Contention" as UC109
     }
 
     rectangle "Offline Mode" {
@@ -168,6 +171,7 @@ rectangle "LinkWeave Bookmark Manager" {
         usecase "UC-057\nImprove Mobile\nResponsiveness" as UC057 <<implemented>>
         usecase "UC-058\nInvestigate Form\nLabel-Input Spacing" as UC058 <<implemented>>
         usecase "UC-094\nSave Bookmark from\nMobile Share Sheet" as UC094
+        usecase "UC-110\nAdjust Group Card Size\n(Grouped Layout)" as UC110
     }
 
     rectangle "Backup" {
@@ -268,6 +272,18 @@ user --> UC071
 user --> UC072
 
 UC070 ..> UC071 : <<extend>>
+user --> UC107
+UC107 ..> UC070 : <<extend>>
+UC107 ..> UC053 : <<extend>>
+
+note right of UC107
+  Exact URL via `url:` operator,
+  normalized like duplicate
+  detection (UC-096 BR-080).
+  A pasted URL is free text —
+  unknown operators must never
+  match everything.
+end note
 UC071 ..> UC072 : <<extend>>
 
 ' Batch Operations
@@ -428,6 +444,36 @@ note right of UC104
   that is synchronous, pre-save.
   Deferred: prefer refetch-on-focus
   until a blocking async flow exists.
+end note
+
+' Operational Resilience (2026-08-28 incident)
+user --> UC108
+operator --> UC108
+UC108 ..> UC097 : <<extend>>
+
+user --> UC109
+operator --> UC109
+scheduler --> UC109
+UC109 ..> UC095 : <<extend>>
+
+note right of UC109
+  Same incident, two causes:
+  UC-108 model pull storms load
+  the host; UC-109 lock contention
+  stalls saves and 500s the auth
+  read. Fixing one alone still
+  reproduces the symptom.
+end note
+
+' Grouped-layout sizing
+user --> UC110
+developer --> UC110
+UC110 ..> UC006 : <<extend>>
+
+note right of UC110
+  Specification-first: the axis of
+  adjustment is not decided yet.
+  See UC-110 S1-S9.
 end note
 
 legend right
