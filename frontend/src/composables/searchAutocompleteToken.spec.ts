@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { OPS, tokenAtCursor } from './searchAutocompleteToken'
 
 describe('OPS', () => {
-  it('is derived from the parser operator table and includes url: (BR-107-7)', () => {
+  it('is derived from the parser operator table and includes url:', () => {
     expect(OPS.map((op) => op.full)).toContain('url:')
     for (const op of OPS) {
       expect(op.full).toBe(`${op.trigger}:`)

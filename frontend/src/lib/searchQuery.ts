@@ -1,9 +1,8 @@
 // UC-070 search-query tokenizer + matcher.
-// Implements: #tag, tag:, folder:, under:, url: (UC-107 exact URL), note:,
-// created:, property:, free text, and negation (-).
-// The known-operator set lives in searchOperators.ts (BR-107-7); an operator
-// key outside that set is invalid syntax and matches nothing (BR-070-2 /
-// BR-107-3) — never a silent match-all.
+// Implements: #tag, tag:, folder:, under:, url: (exact URL), note:, created:,
+// property:, free text, and negation (-).
+// The known-operator set lives in searchOperators.ts; an operator key outside
+// that set is invalid syntax and matches nothing — never a silent match-all.
 
 import { isAbsoluteUrl, normalizeUrl } from './url'
 import { isKnownOperator } from './searchOperators'
@@ -140,12 +139,12 @@ export function tokenize(query: string): QueryToken[] {
       continue
     }
     if (opKey !== undefined && opVal !== undefined) {
-      // UC-107 BR-107-2: an unquoted `key:value` whose whole raw text parses as
-      // an absolute URL (scheme + `//`, e.g. `https://example.com/a`) is a
-      // single free-text term, never an operator — pasting a URL must never
-      // degrade to an `https:` operator (which would match everything, see
-      // BR-107-3). Only the unquoted form can produce a bare URL; the quoted
-      // forms always contain quote characters and are never valid URLs.
+      // An unquoted `key:value` whose whole raw text parses as an absolute URL
+      // (scheme + `//`, e.g. `https://example.com/a`) is a single free-text
+      // term, never an operator — pasting a URL must never degrade to an
+      // `https:` operator (which would match everything). Only the unquoted
+      // form can produce a bare URL; the quoted forms always contain quote
+      // characters and are never valid URLs.
       const raw = `${opKey}:${opVal}`
       if (isAbsoluteUrl(raw)) {
         tokens.push({ kind: 'text', value: raw, neg })
@@ -255,14 +254,13 @@ function bookmarkMatchesProperty(b: MatchableBookmark, value: string, ctx: Match
   return matchesPropertyToken(b.propertyValues, ctx.propertyDefsByName, parsed)
 }
 
-// `url:` exact match (UC-107 BR-107-1): both sides are compared in their
-// normalized forms via the shared `normalizeUrl` contract (lowercased scheme
-// and host, trailing slashes stripped, query parameters sorted, fragment
-// dropped, tracking parameters kept) — the same normalization used for
-// duplicate detection (UC-096 BR-080). A value that is not an absolute URL is
-// invalid syntax and matches nothing (A3 / BR-107-3). The value is used
-// verbatim, not lowercased: path and query compare case-sensitively
-// (BR-107-4).
+// `url:` exact match: both sides are compared in their normalized forms via
+// the shared `normalizeUrl` contract (lowercased scheme and host, trailing
+// slashes stripped, query parameters sorted, fragment dropped, tracking
+// parameters kept) — the same normalization used for duplicate detection
+// (UC-096 BR-080). A value that is not an absolute URL is invalid syntax and
+// matches nothing. The value is used verbatim, not lowercased: path and query
+// compare case-sensitively.
 function bookmarkMatchesUrl(b: MatchableBookmark, value: string): boolean {
   if (!isAbsoluteUrl(value)) return false
   const url = b.data.url
@@ -292,8 +290,8 @@ function bookmarkMatchesOperator(b: MatchableBookmark, t: OperatorToken, ctx: Ma
     case 'property':
       return bookmarkMatchesProperty(b, t.value, ctx)
     default:
-      // Unknown operator key (BR-107-3): invalid syntax, matches nothing — a
-      // match-all fallback would turn a typo into a silently unfiltered list.
+      // Unknown operator key: invalid syntax, matches nothing — a match-all
+      // fallback would turn a typo into a silently unfiltered list.
       return false
   }
 }
@@ -323,9 +321,9 @@ export function matchesTokens(
 }
 
 /**
- * Whether a token is invalid syntax that must be flagged (UC-070 A2) instead
- * of silently filtering nothing: an operator with an unknown key (BR-107-3),
- * or a `url:` operator whose value is not an absolute URL (UC-107 A3).
+ * Whether a token is invalid syntax that must be flagged instead of silently
+ * filtering nothing: an operator with an unknown key, or a `url:` operator
+ * whose value is not an absolute URL.
  */
 export function isInvalidToken(t: QueryToken): boolean {
   if (t.kind !== 'operator') return false

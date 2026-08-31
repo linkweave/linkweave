@@ -8,12 +8,14 @@ import {
   type TestUser,
 } from './models/TestUser'
 
-// E2E coverage for UC-107 — Search Bookmarks by Exact URL.
+// E2E coverage for the exact-URL search operator (`url:`, UC-070).
 //
 // The world is a set of near-identical URLs (mixed-case host, trailing slash,
 // deeper path, tracking parameter, shuffled query) plus one unrelated
-// bookmark, seeded over HTTP. Each test then exercises one acceptance
-// criterion (or alternative flow) through the header search bar.
+// bookmark, seeded over HTTP. Each test then exercises one flow through the
+// header search bar: substring paste, exact match, negation, invalid-syntax
+// flagging, the autocomplete conversion, the saved-search round-trip, and
+// the empty-result substring fallback.
 
 test.describe.configure({ mode: 'serial' })
 
@@ -83,7 +85,7 @@ async function search(page: Page, query: string) {
   await input.fill(query)
 }
 
-test.describe('UC-107 Search Bookmarks by Exact URL', () => {
+test.describe('Exact-URL Search (url: operator)', () => {
   test.beforeAll(async ({ browser }) => {
     ;({ user, storageState, collectionId } = await registerAndCaptureStorageState(
       browser,
@@ -99,7 +101,7 @@ test.describe('UC-107 Search Bookmarks by Exact URL', () => {
     await gotoCollection(page)
   })
 
-  test('pasting a URL filters by substring and never returns everything (AC-1)', async ({
+  test('pasting a URL filters by substring and never returns everything', async ({
     page,
   }) => {
     // ACT
@@ -111,28 +113,28 @@ test.describe('UC-107 Search Bookmarks by Exact URL', () => {
     )
   })
 
-  test('url: matches exactly, through the normalization contract (AC-2)', async ({ page }) => {
+  test('url: matches exactly, through the normalization contract', async ({ page }) => {
     // ACT
     await search(page, 'url:https://example.com/a ')
     // ASSERT — the stored mixed-case/trailing-slash URL matches; deeper path
     // and tracking-parameter variants do not.
     await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleExact]))
-    // …and per UC-107 step 7 / UC-070 steps 5–6 the operator is rendered as a
-    // token pill with the result count shown.
+    // …and per UC-070 steps 5–6 the operator is rendered as a token pill
+    // with the result count shown.
     const pill = page.locator('[data-testid="filter-pill"][data-token-key="url"]')
     await expect(pill).toBeVisible()
     await expect(pill).toHaveAttribute('data-token-value', 'https://example.com/a')
     await expect(page.getByTestId('filter-strip')).toContainText('1 result')
   })
 
-  test('url: sorts query parameters before comparing (AC-3)', async ({ page }) => {
+  test('url: sorts query parameters before comparing', async ({ page }) => {
     // ACT
     await search(page, 'url:https://example.com/a?b=2&a=1 ')
     // ASSERT
     await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleSorted]))
   })
 
-  test('-url: returns the complement of the exact match (AC-4)', async ({ page }) => {
+  test('-url: returns the complement of the exact match', async ({ page }) => {
     // ACT
     await search(page, '-url:https://example.com/a ')
     // ASSERT — everything except the exact match remains.
@@ -141,7 +143,7 @@ test.describe('UC-107 Search Bookmarks by Exact URL', () => {
     )
   })
 
-  test('an unknown operator matches nothing and is flagged invalid (AC-5)', async ({ page }) => {
+  test('an unknown operator matches nothing and is flagged invalid', async ({ page }) => {
     // ACT
     await search(page, 'bogus:value ')
     // ASSERT — empty result, never the unfiltered list…
@@ -152,7 +154,7 @@ test.describe('UC-107 Search Bookmarks by Exact URL', () => {
     await expect(flag).toContainText('bogus:value')
   })
 
-  test('an unparseable url: value matches nothing and is flagged invalid (A3)', async ({
+  test('an unparseable url: value matches nothing and is flagged invalid', async ({
     page,
   }) => {
     // ACT
@@ -165,12 +167,12 @@ test.describe('UC-107 Search Bookmarks by Exact URL', () => {
     await expect(flag).toContainText('url:???')
   })
 
-  test('pasting a URL offers the url: conversion; accepting it finds the bookmark (AC-7)', async ({
+  test('pasting a URL offers the url: conversion; accepting it finds the bookmark', async ({
     page,
   }) => {
     // ARRANGE — paste (fill) the stored mixed-case URL.
     await search(page, 'https://Example.com/a/')
-    // ASSERT (pre-acceptance, BR-107-6) — the conversion is offered but NOT
+    // ASSERT (pre-acceptance) — the conversion is offered but NOT
     // applied: the query still runs with substring semantics. The pasted
     // value (trailing slash included) is a substring of the exact bookmark
     // and the deeper path, but not of the ?query variants.
@@ -185,7 +187,7 @@ test.describe('UC-107 Search Bookmarks by Exact URL', () => {
     await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleExact]))
   })
 
-  test('copy URL from a bookmark → paste → convert → finds exactly that bookmark (AC-7, UC-106)', async ({
+  test('copy URL from a bookmark → paste → convert → finds exactly that bookmark', async ({
     page,
     context,
   }) => {
@@ -211,7 +213,7 @@ test.describe('UC-107 Search Bookmarks by Exact URL', () => {
     await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleExact]))
   })
 
-  test('a url: query survives save → reload → re-run with the same result set (AC-6)', async ({
+  test('a url: query survives save → reload → re-run with the same result set', async ({
     page,
   }) => {
     const name = `url-exact-${ts}`
@@ -243,7 +245,7 @@ test.describe('UC-107 Search Bookmarks by Exact URL', () => {
     await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleSorted]))
   })
 
-  test('an empty exact-URL result offers the substring fallback (A1)', async ({ page }) => {
+  test('an empty exact-URL result offers the substring fallback', async ({ page }) => {
     // ARRANGE — `…/deep` is no bookmark's exact URL, but it is a substring of
     // the stored `…/deep/page`.
     await search(page, 'url:https://example.com/deep ')

@@ -13,10 +13,10 @@ export function ensureUrlProtocol(value: string): string {
 }
 
 /**
- * Whether the value parses as an absolute URL in the sense of UC-107
- * BR-107-2: a scheme followed by `//` (e.g. `https://…`, `http://…`).
- * Such a token is a single free-text search term, never an operator, so
- * pasting a URL can never degrade to a match-all operator parse.
+ * Whether the value parses as an absolute URL: a scheme followed by `//`
+ * (e.g. `https://…`, `http://…`). Such a token is a single free-text search
+ * term, never an operator, so pasting a URL can never degrade to a match-all
+ * operator parse.
  */
 export function isAbsoluteUrl(value: string): boolean {
   return /^[a-z][a-z0-9+.-]*:\/\//i.test(value)

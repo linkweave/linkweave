@@ -160,7 +160,7 @@ export function useSearchAutocomplete() {
     }
 
     // ── Absolute URL under the cursor → offer the exact-URL conversion
-    // (UC-107 BR-107-6). The offer is never applied automatically: the pasted
+    // (UC-070 A6). The offer is never applied automatically: the pasted
     // URL keeps its substring semantics until the user opts in. The full
     // token (range slice) is offered — `token` alone would truncate at the
     // caret when the cursor sits inside the URL.

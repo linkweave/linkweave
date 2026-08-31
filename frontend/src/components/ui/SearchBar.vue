@@ -122,10 +122,10 @@ function onAcMouseDown() {
   }, 200)
 }
 
-// Invalid-syntax flagging (UC-070 A2 / UC-107 BR-107-3): operator tokens with
-// unknown keys (or an unparseable `url:` value) are underlined in red with a
-// syntax-help tooltip and match nothing, so a typo can never look like an
-// unfiltered result set.
+// Invalid-syntax flagging (UC-070 A2): operator tokens with unknown keys (or
+// an unparseable `url:` value) are underlined in red with a syntax-help
+// tooltip and match nothing, so a typo can never look like an unfiltered
+// result set.
 const invalidTokenLabels = computed(() => {
   const seen = new Set<string>()
   for (const tok of tokenize(props.modelValue)) {

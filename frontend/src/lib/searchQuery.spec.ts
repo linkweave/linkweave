@@ -62,7 +62,7 @@ describe('tokenize', () => {
     ])
   })
 
-  it('tokenizes a pasted absolute URL as a single free-text term (BR-107-2)', () => {
+  it('tokenizes a pasted absolute URL as a single free-text term', () => {
     expect(tokenize('https://example.com/a')).toEqual([
       { kind: 'text', value: 'https://example.com/a', neg: false },
     ])
@@ -92,7 +92,7 @@ describe('tokenize', () => {
     ])
   })
 
-  it('tokenizes a quoted url: value with spaces as one operator token (A5)', () => {
+  it('tokenizes a quoted url: value with spaces as one operator token', () => {
     expect(tokenize('url:"https://example.com/a b"')).toEqual([
       { kind: 'operator', key: 'url', value: 'https://example.com/a b', neg: false },
     ])
@@ -134,7 +134,7 @@ describe('stringifyTokens', () => {
     expect(tokenize(str)).toEqual(original)
   })
 
-  it('round-trips a url: token unquoted (A6 / AC-6)', () => {
+  it('round-trips a url: token unquoted', () => {
     const original: QueryToken[] = [
       { kind: 'operator', key: 'url', value: 'https://example.com/a?b=2&a=1', neg: false },
     ]
@@ -143,7 +143,7 @@ describe('stringifyTokens', () => {
     expect(tokenize(str)).toEqual(original)
   })
 
-  it('re-quotes a url: value containing spaces and round-trips it (A5)', () => {
+  it('re-quotes a url: value containing spaces and round-trips it', () => {
     const original: QueryToken[] = [
       { kind: 'operator', key: 'url', value: 'https://example.com/a b', neg: false },
     ]
@@ -152,7 +152,7 @@ describe('stringifyTokens', () => {
     expect(tokenize(str)).toEqual(original)
   })
 
-  it('round-trips a negated url: token (A4)', () => {
+  it('round-trips a negated url: token', () => {
     const original: QueryToken[] = [
       { kind: 'operator', key: 'url', value: 'https://example.com/a', neg: true },
     ]
@@ -327,7 +327,7 @@ describe('matchesTokens', () => {
     ).toBe(true)
   })
 
-  it('treats unknown operators as invalid — they match nothing (BR-107-3)', () => {
+  it('treats unknown operators as invalid — they match nothing', () => {
     expect(
       matchesTokens(
         bookmark,
@@ -345,9 +345,9 @@ describe('matchesTokens', () => {
   })
 })
 
-// UC-107 — the `url:` exact-URL operator. All cases compare through the shared
-// normalizeUrl contract (BR-107-1); the bookmarks below are the acceptance
-// criteria's fixture set.
+// The `url:` exact-URL operator. All cases compare through the shared
+// normalizeUrl contract (lowercased scheme/host, sorted query params,
+// tracking parameters kept).
 describe('matchesTokens with url:', () => {
   const ctx: MatchContext = {
     tagNamesById: new Map(),
@@ -362,14 +362,14 @@ describe('matchesTokens with url:', () => {
     return { kind: 'operator', key: 'url', value, neg }
   }
 
-  it('matches a stored URL that differs in host case, trailing slash, or fragment (AC-2)', () => {
+  it('matches a stored URL that differs in host case, trailing slash, or fragment', () => {
     const query = 'https://example.com/a'
     expect(matchesTokens(bmWithUrl('https://Example.com/a/'), [urlToken(query)], ctx)).toBe(true)
     expect(matchesTokens(bmWithUrl('https://example.com/a#top'), [urlToken(query)], ctx)).toBe(true)
     expect(matchesTokens(bmWithUrl('https://example.com/a'), [urlToken(query)], ctx)).toBe(true)
   })
 
-  it('does not match a deeper path or a different query string (AC-2)', () => {
+  it('does not match a deeper path or a different query string', () => {
     const query = 'https://example.com/a'
     expect(matchesTokens(bmWithUrl('https://example.com/a/b'), [urlToken(query)], ctx)).toBe(false)
     expect(
@@ -377,7 +377,7 @@ describe('matchesTokens with url:', () => {
     ).toBe(false)
   })
 
-  it('keeps tracking parameters significant on both sides (BR-107-1)', () => {
+  it('keeps tracking parameters significant on both sides', () => {
     expect(
       matchesTokens(bmWithUrl('https://example.com/a?utm_source=x'), [urlToken('https://example.com/a?utm_source=x')], ctx),
     ).toBe(true)
@@ -386,25 +386,25 @@ describe('matchesTokens with url:', () => {
     ).toBe(false)
   })
 
-  it('sorts query parameters before comparing (AC-3)', () => {
+  it('sorts query parameters before comparing', () => {
     expect(
       matchesTokens(bmWithUrl('https://example.com/a?a=1&b=2'), [urlToken('https://example.com/a?b=2&a=1')], ctx),
     ).toBe(true)
   })
 
-  it('compares path case-sensitively while scheme/host ignore case (BR-107-4)', () => {
+  it('compares path case-sensitively while scheme/host ignore case', () => {
     expect(matchesTokens(bmWithUrl('https://example.com/A'), [urlToken('https://example.com/a')], ctx)).toBe(false)
     expect(matchesTokens(bmWithUrl('https://example.com/A'), [urlToken('https://Example.com/A')], ctx)).toBe(true)
   })
 
-  it('negation returns the complement (AC-4)', () => {
+  it('negation returns the complement', () => {
     const exact = bmWithUrl('https://Example.com/a/')
     const deeper = bmWithUrl('https://example.com/a/b')
     expect(matchesTokens(exact, [urlToken('https://example.com/a', true)], ctx)).toBe(false)
     expect(matchesTokens(deeper, [urlToken('https://example.com/a', true)], ctx)).toBe(true)
   })
 
-  it('an unparseable value is invalid syntax and matches nothing (A3 / BR-107-3)', () => {
+  it('an unparseable value is invalid syntax and matches nothing', () => {
     expect(matchesTokens(bmWithUrl('https://example.com/a'), [urlToken('???')], ctx)).toBe(false)
     expect(matchesTokens(bmWithUrl('https://example.com/a'), [urlToken('example.com/a')], ctx)).toBe(false)
   })
@@ -429,7 +429,7 @@ describe('matchesTokens with url:', () => {
 })
 
 describe('isKnownOperator / isInvalidToken', () => {
-  it('knows the documented operator set (BR-107-7)', () => {
+  it('knows the documented operator set', () => {
     for (const key of ['tag', 'folder', 'under', 'url', 'note', 'created', 'property']) {
       expect(isKnownOperator(key)).toBe(true)
     }
@@ -443,7 +443,7 @@ describe('isKnownOperator / isInvalidToken', () => {
     expect(isInvalidToken({ kind: 'operator', key: 'match', value: 'OR', neg: false })).toBe(true)
   })
 
-  it('flags a url: token whose value is not an absolute URL (A3)', () => {
+  it('flags a url: token whose value is not an absolute URL', () => {
     expect(isInvalidToken({ kind: 'operator', key: 'url', value: '???', neg: false })).toBe(true)
     expect(isInvalidToken({ kind: 'operator', key: 'url', value: '', neg: false })).toBe(true)
     expect(

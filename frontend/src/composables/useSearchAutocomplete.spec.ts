@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useSearchAutocomplete } from './useSearchAutocomplete'
 
-// UC-107 BR-107-6: a pasted URL keeps its substring semantics — the dropdown
-// may only *offer* the `url:` conversion, never apply it silently.
+// A pasted URL keeps its substring semantics — the dropdown may only *offer*
+// the `url:` conversion, never apply it silently.
 describe('useSearchAutocomplete – URL conversion offer', () => {
   beforeEach(() => {
     setActivePinia(createPinia())

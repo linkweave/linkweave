@@ -1,6 +1,6 @@
-// Single source of truth for the known search-operator set (UC-070 BR-070-1,
-// UC-107 BR-107-7). Consumed by the matcher (`searchQuery.ts`), the
-// autocomplete (`searchAutocompleteToken.ts` derives `OPS` from it), and the
+// Single source of truth for the known search-operator set (UC-070
+// BR-070-1). Consumed by the matcher (`searchQuery.ts`), the autocomplete
+// (`searchAutocompleteToken.ts` derives `OPS` from it), and the
 // invalid-syntax highlighting (`isInvalidToken` / SearchBar). Adding an
 // operator = one row here plus its matcher case — nowhere else.
 

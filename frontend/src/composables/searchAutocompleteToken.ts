@@ -4,8 +4,8 @@
 
 import { OPERATOR_DEFS } from '@/lib/searchOperators'
 
-// Derived from the parser's operator table (UC-107 BR-107-7) — the autocomplete
-// never defines its own operator list, so the two cannot drift.
+// Derived from the parser's operator table (UC-070 BR-070-1) — the
+// autocomplete never defines its own operator list, so the two cannot drift.
 export const OPS = OPERATOR_DEFS.filter((d) => d.discoverable).map((d) => ({
   trigger: d.key,
   full: `${d.key}:`,

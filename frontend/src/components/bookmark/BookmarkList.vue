@@ -65,7 +65,7 @@ const renderItems = computed<RenderItem[]>(() => {
   return items
 })
 
-// UC-107 A1: when an exact `url:` query matches nothing, offer the substring
+// UC-070 A7: when an exact `url:` query matches nothing, offer the substring
 // interpretation of the same value as a one-click fallback so a near-miss
 // (different query string, trailing path segment) stays findable.
 const urlFallbackValue = computed(() => {
