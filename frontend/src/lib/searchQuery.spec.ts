@@ -409,6 +409,24 @@ describe('matchesTokens with url:', () => {
     expect(matchesTokens(bmWithUrl('https://example.com/a'), [urlToken('example.com/a')], ctx)).toBe(false)
   })
 
+  it('a malformed authority is invalid: the flag and the matcher agree', () => {
+    // `https://two words` passes the bare-token prefix check but fails the
+    // URL round-trip — it must be flagged AND match nothing, never silently
+    // one or the other.
+    const token = urlToken('https://two words')
+    expect(matchesTokens(bmWithUrl('https://two words'), [token], ctx)).toBe(false)
+    expect(isInvalidToken(token)).toBe(true)
+  })
+
+  it('matches non-hierarchical schemes stored via API or import (mailto:)', () => {
+    expect(
+      matchesTokens(bmWithUrl('mailto:dev@example.com'), [urlToken('mailto:dev@example.com')], ctx),
+    ).toBe(true)
+    expect(matchesTokens(bmWithUrl('https://example.com/a'), [urlToken('mailto:x@y.de')], ctx)).toBe(
+      false,
+    )
+  })
+
   it('a bookmark without a URL never matches', () => {
     expect(matchesTokens(bmWithUrl(null), [urlToken('https://example.com/a')], ctx)).toBe(false)
   })

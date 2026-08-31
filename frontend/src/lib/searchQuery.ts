@@ -4,7 +4,7 @@
 // The known-operator set lives in searchOperators.ts; an operator key outside
 // that set is invalid syntax and matches nothing — never a silent match-all.
 
-import { isAbsoluteUrl, normalizeUrl } from './url'
+import { isAbsoluteUrl, normalizeUrl, parseAbsoluteUrl } from './url'
 import { isKnownOperator } from './searchOperators'
 import { matchesCreated, parseCreatedValue } from './searchQueryCreated'
 import { matchesPropertyToken, parsePropertyValue, type PropertyDef } from './searchQueryProperty'
@@ -258,11 +258,14 @@ function bookmarkMatchesProperty(b: MatchableBookmark, value: string, ctx: Match
 // the shared `normalizeUrl` contract (lowercased scheme and host, trailing
 // slashes stripped, query parameters sorted, fragment dropped, tracking
 // parameters kept) — the same normalization used for duplicate detection
-// (UC-096 BR-080). A value that is not an absolute URL is invalid syntax and
-// matches nothing. The value is used verbatim, not lowercased: path and query
-// compare case-sensitively.
+// (UC-096 BR-080). A value that does not parse as an absolute URL (the same
+// `parseAbsoluteUrl` rule `isInvalidToken` applies, so the flag and the
+// matcher can never disagree) is invalid syntax and matches nothing. The
+// value is used verbatim, not lowercased: path and query compare
+// case-sensitively. Non-hierarchical schemes the app can store via API or
+// import (`mailto:…`) compare through the same normalization.
 function bookmarkMatchesUrl(b: MatchableBookmark, value: string): boolean {
-  if (!isAbsoluteUrl(value)) return false
+  if (!parseAbsoluteUrl(value)) return false
   const url = b.data.url
   if (!url) return false
   return normalizeUrl(url) === normalizeUrl(value)
@@ -323,11 +326,12 @@ export function matchesTokens(
 /**
  * Whether a token is invalid syntax that must be flagged instead of silently
  * filtering nothing: an operator with an unknown key, or a `url:` operator
- * whose value is not an absolute URL.
+ * whose value does not parse as an absolute URL (`parseAbsoluteUrl` — the
+ * same rule the matcher applies).
  */
 export function isInvalidToken(t: QueryToken): boolean {
   if (t.kind !== 'operator') return false
   if (!isKnownOperator(t.key)) return true
-  if (t.key === 'url') return !isAbsoluteUrl(t.value)
+  if (t.key === 'url') return parseAbsoluteUrl(t.value) === null
   return false
 }

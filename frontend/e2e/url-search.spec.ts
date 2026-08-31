@@ -27,6 +27,7 @@ const titleTracked = `Tracked ${ts}`
 const titleSorted = `Sorted Query ${ts}`
 const titleUnrelated = `Unrelated ${ts}`
 const titleDeep = `Deep Page ${ts}`
+const titleMailto = `Contact Mail ${ts}`
 
 let user: TestUser
 let storageState: StorageState
@@ -43,6 +44,10 @@ async function seedWorld(browser: Browser): Promise<void> {
       { title: titleSorted, url: 'https://example.com/a?a=1&b=2' },
       { title: titleUnrelated, url: 'https://other.example.org/z' },
       { title: titleDeep, url: 'https://example.com/deep/page' },
+      // The UI only creates http/https bookmarks (zod httpUrlSchema), but the
+      // API accepts any non-blank URL — non-hierarchical schemes are storable
+      // and must be exactly searchable.
+      { title: titleMailto, url: 'mailto:dev@example.com' },
     ]
     for (const bm of bookmarks) {
       await api<Created>(ctx.request, 'POST', '/api/bookmarks', {
@@ -139,8 +144,15 @@ test.describe('Exact-URL Search (url: operator)', () => {
     await search(page, '-url:https://example.com/a ')
     // ASSERT — everything except the exact match remains.
     await expect.poll(() => visibleCardTitles(page)).toEqual(
-      sorted([titleSubPath, titleTracked, titleSorted, titleUnrelated, titleDeep]),
+      sorted([titleSubPath, titleTracked, titleSorted, titleUnrelated, titleDeep, titleMailto]),
     )
+  })
+
+  test('url: matches non-hierarchical schemes stored via the API (mailto:)', async ({ page }) => {
+    // ACT
+    await search(page, 'url:mailto:dev@example.com ')
+    // ASSERT — exactly the mailto bookmark; nothing else.
+    await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleMailto]))
   })
 
   test('an unknown operator matches nothing and is flagged invalid', async ({ page }) => {
@@ -165,6 +177,13 @@ test.describe('Exact-URL Search (url: operator)', () => {
     const flag = page.getByTestId('search-invalid-operators')
     await expect(flag).toBeVisible()
     await expect(flag).toContainText('url:???')
+
+    // A value with a malformed authority (space inside the host) passes the
+    // bare-token prefix check but must still be flagged — the flag and the
+    // matcher agree.
+    await search(page, 'url:"https://two words"')
+    await expect.poll(() => visibleCardTitles(page)).toEqual([])
+    await expect(flag).toContainText('url:https://two words')
   })
 
   test('pasting a URL offers the url: conversion; accepting it finds the bookmark', async ({

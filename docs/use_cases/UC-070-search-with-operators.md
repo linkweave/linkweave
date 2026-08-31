@@ -35,7 +35,7 @@
 - `-#tagname` — exclude tag.
 - `folder:name` — filter by folder name (substring match).
 - `under:name` — filter by folder *subtree*: matches bookmarks in that folder or any descendant of it. Accepts a folder ID (the unambiguous form written by a sidebar click) or a folder name (case-insensitive; ambiguous when names repeat).
-- `url:<url>` — filter by **exact URL**. Compares the normalized query value against the bookmark's normalized URL (BR-086), so `https://Example.com/a/` and `https://example.com/a` are the same URL, while `https://example.com/a/b` and `https://example.com/a?utm_source=x` are not. Quote the value if it contains spaces: `url:"..."`. A value that is not an absolute URL is invalid syntax (A2) and matches nothing.
+- `url:<url>` — filter by **exact URL**. Compares the normalized query value against the bookmark's normalized URL (BR-086), so `https://Example.com/a/` and `https://example.com/a` are the same URL, while `https://example.com/a/b` and `https://example.com/a?utm_source=x` are not. Quote the value if it contains spaces: `url:"..."`. The value must parse as an absolute URL — non-hierarchical schemes the API can store (e.g. `mailto:…`) included; anything else is invalid syntax (A2) and matches nothing.
 - `property:value` — filter by property value (exact for select/boolean, substring for text).
 - `created:YYYY-MM-DD` — filter by creation date. Supports `>` and `<` prefixes for ranges.
 - `created:>today-Nd` — relative date filter (e.g., `created:>today-30d` for last 30 days).

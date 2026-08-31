@@ -67,7 +67,10 @@ const renderItems = computed<RenderItem[]>(() => {
 
 // UC-070 A7: when an exact `url:` query matches nothing, offer the substring
 // interpretation of the same value as a one-click fallback so a near-miss
-// (different query string, trailing path segment) stays findable.
+// (different query string, trailing path segment) stays findable. Gated on
+// the strict scheme:// shape (not the looser `url:` value rule): only such
+// values re-tokenize as free text — e.g. a `mailto:…` fallback would parse
+// as an unknown operator and match nothing again.
 const urlFallbackValue = computed(() => {
   for (const tok of searchQueryStore.queryTokens) {
     if (tok.kind === 'operator' && tok.key === 'url' && !tok.neg && isAbsoluteUrl(tok.value)) {

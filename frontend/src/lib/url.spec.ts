@@ -1,4 +1,4 @@
-import { ensureUrlProtocol, isAbsoluteUrl, normalizeUrl } from './url'
+import { ensureUrlProtocol, isAbsoluteUrl, normalizeUrl, parseAbsoluteUrl } from './url'
 
 describe('ensureUrlProtocol', () => {
   it('prepends https:// when no colon present', () => {
@@ -62,5 +62,34 @@ describe('isAbsoluteUrl', () => {
 
   it('rejects scheme-only values like mailto: (no //)', () => {
     expect(isAbsoluteUrl('mailto:foo@bar.com')).toBe(false)
+  })
+})
+
+describe('parseAbsoluteUrl', () => {
+  it('parses hierarchical URLs and non-hierarchical schemes alike', () => {
+    expect(parseAbsoluteUrl('https://example.com/a')?.protocol).toBe('https:')
+    expect(parseAbsoluteUrl('mailto:foo@bar.com')?.protocol).toBe('mailto:')
+    // Spaces in the path are legal (percent-encoded by the parser).
+    expect(parseAbsoluteUrl('https://example.com/a b')).not.toBeNull()
+  })
+
+  it('rejects values the prefix check would pass but a parser does not', () => {
+    // A malformed authority (space inside the host) passes isAbsoluteUrl's
+    // scheme:// prefix test yet fails the URL round-trip — the flag and the
+    // matcher must agree, so validity is defined by this parse, not the prefix.
+    // The explicit guard also matters cross-runtime: Node rejects this URL,
+    // Chromium accepts it — without the guard the flag would differ between
+    // vitest and the browser.
+    expect(isAbsoluteUrl('https://two words')).toBe(true)
+    expect(parseAbsoluteUrl('https://two words')).toBeNull()
+    // Spaces in the path are legal (percent-encoded by the parser) and stay valid.
+    expect(parseAbsoluteUrl('https://example.com/a b')).not.toBeNull()
+  })
+
+  it('rejects non-URLs, scheme-less values, and empty hosts', () => {
+    expect(parseAbsoluteUrl('???')).toBeNull()
+    expect(parseAbsoluteUrl('example.com/a')).toBeNull()
+    expect(parseAbsoluteUrl('https://')).toBeNull()
+    expect(parseAbsoluteUrl('')).toBeNull()
   })
 })
