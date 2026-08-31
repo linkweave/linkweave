@@ -337,6 +337,15 @@ describe('matchesTokens', () => {
     ).toBe(false)
   })
 
+  it('negation does not rescue an invalid token — -bogus:x and -url:??? match nothing', () => {
+    expect(
+      matchesTokens(bookmark, [{ kind: 'operator', key: 'bogus', value: 'x', neg: true }], ctx),
+    ).toBe(false)
+    expect(
+      matchesTokens(bookmark, [{ kind: 'operator', key: 'url', value: '???', neg: true }], ctx),
+    ).toBe(false)
+  })
+
   it('matches free text against title / url / description', () => {
     expect(matchesTokens(bookmark, [{ kind: 'text', value: 'guide', neg: false }], ctx)).toBe(true)
     expect(matchesTokens(bookmark, [{ kind: 'text', value: 'absent', neg: false }], ctx)).toBe(
@@ -402,6 +411,18 @@ describe('matchesTokens with url:', () => {
     const deeper = bmWithUrl('https://example.com/a/b')
     expect(matchesTokens(exact, [urlToken('https://example.com/a', true)], ctx)).toBe(false)
     expect(matchesTokens(deeper, [urlToken('https://example.com/a', true)], ctx)).toBe(true)
+  })
+
+  it('a valid negated url that matches nothing keeps the bookmark (exclude-nothing)', () => {
+    // -url:<valid but absent> is legitimate exclusion semantics — only
+    // invalid syntax is hard-failed regardless of negation.
+    expect(
+      matchesTokens(
+        bmWithUrl('https://example.com/a'),
+        [urlToken('https://nowhere.example.com', true)],
+        ctx,
+      ),
+    ).toBe(true)
   })
 
   it('an unparseable value is invalid syntax and matches nothing', () => {

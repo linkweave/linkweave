@@ -112,7 +112,7 @@
 
 ### Failure Postconditions
 
-- Bookmark list remains unfiltered.
+- An unknown or unparseable token filters the list to **nothing** and is flagged in the search bar — never a silently unfiltered list that looks like a result.
 
 ## Business Rules
 
@@ -126,7 +126,7 @@ The grammar has exactly one list of known operator keys — the ones documented 
 
 ### BR-070-2: Unknown Operators Never Match Everything
 
-A `key:value` token whose key is outside the known set must never be treated as satisfied. It is re-interpreted as free text, or reported as invalid syntax (A2) and matched as false. This rule exists because the search bar's most common input — a pasted URL such as `https://example.com/a` — parses as `key=https`, and a match-all fallback turns it into a silently unfiltered list that is indistinguishable from a real result. A bare absolute URL is a free-text term, never an operator.
+A `key:value` token whose key is outside the known set must never be treated as satisfied. It is re-interpreted as free text, or reported as invalid syntax (A2) and matched as false. This rule exists because the search bar's most common input — a pasted URL such as `https://example.com/a` — parses as `key=https`, and a match-all fallback turns it into a silently unfiltered list that is indistinguishable from a real result. A bare absolute URL is a free-text term, never an operator. Invalid syntax matches nothing **regardless of negation**: `-bogus:x` is not a vacuous "exclude nothing" that returns everything — the token is invalid, so the whole query filters to nothing.
 
 ### BR-080: Case-Insensitive Matching
 

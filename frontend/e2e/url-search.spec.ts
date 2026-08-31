@@ -164,6 +164,12 @@ test.describe('Exact-URL Search (url: operator)', () => {
     const flag = page.getByTestId('search-invalid-operators')
     await expect(flag).toBeVisible()
     await expect(flag).toContainText('bogus:value')
+
+    // Negation must not flip an invalid token back to match-all: a query of
+    // just -bogus:x still filters to nothing (and stays flagged).
+    await search(page, '-bogus:x ')
+    await expect.poll(() => visibleCardTitles(page)).toEqual([])
+    await expect(flag).toContainText('bogus:x')
   })
 
   test('an unparseable url: value matches nothing and is flagged invalid', async ({

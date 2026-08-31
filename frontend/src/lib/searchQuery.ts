@@ -316,6 +316,10 @@ export function matchesTokens(
   ctx: MatchContext,
 ): boolean {
   for (const t of tokens) {
+    // Invalid syntax matches nothing — negation must not flip it back to a
+    // vacuous match-all (`-bogus:x` showing the entire collection is the
+    // same silent-unfiltered failure mode as `bogus:x` matching everything).
+    if (isInvalidToken(t)) return false
     let ok = bookmarkMatchesToken(b, t, ctx)
     if (t.neg) ok = !ok
     if (!ok) return false
