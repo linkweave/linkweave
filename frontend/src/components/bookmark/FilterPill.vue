@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { isInvalidToken, parsePropertyValue, type QueryToken } from '@/lib/searchQuery'
+import { KNOWN_OPERATORS_HINT } from '@/lib/searchOperators'
 import { useFolderStore } from '@/stores/folder'
 import { useTagStore } from '@/stores/tag'
 import {
@@ -105,6 +106,18 @@ const tagColor = computed(() => {
 // to the result count it explains.
 const invalid = computed(() => isInvalidToken(props.token))
 
+// A `url:` value can run to hundreds of characters. The pill truncates it so
+// one pasted URL can't stretch the filter strip sideways on a narrow viewport,
+// and the full value moves into the tooltip — which the invalid-syntax help
+// takes over when the token is broken.
+const TOOLTIP_FROM_LENGTH = 40
+
+const pillTitle = computed(() => {
+  if (invalid.value) return t('search.invalidTokenHint', { operators: KNOWN_OPERATORS_HINT })
+  const display = pillVariant.value.display
+  return display.length > TOOLTIP_FROM_LENGTH ? display : undefined
+})
+
 const variantClass = computed(() => {
   if (invalid.value) {
     // Invalid syntax: destructive tint without strike-through — the token
@@ -149,8 +162,8 @@ const iconStyle = computed<Record<string, string> | undefined>(() => {
     :data-token-value="token.value"
     :data-token-neg="token.neg ? 'true' : 'false'"
     :data-invalid="invalid ? 'true' : 'false'"
-    :title="invalid ? t('search.invalidTokenHint') : undefined"
-    class="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full text-xs border transition-colors"
+    :title="pillTitle"
+    class="inline-flex max-w-full items-center gap-1 pl-2 pr-1 py-0.5 rounded-full text-xs border transition-colors"
     :class="[variantClass, invalid ? 'cursor-help' : '']"
     :style="tagColor ? { '--tag-color': tagColor } : undefined"
   >
@@ -173,9 +186,11 @@ const iconStyle = computed<Record<string, string> | undefined>(() => {
     <span v-if="pillVariant.operatorSymbol" class="text-muted-foreground/70 mx-0.5">{{
       pillVariant.operatorSymbol
     }}</span>
-    <span :class="{ 'font-mono': token.kind === 'operator' && token.key === 'property' }">{{
-      token.kind === 'text' ? `"${pillVariant.display}"` : pillVariant.display
-    }}</span>
+    <span
+      class="max-w-[18rem] truncate"
+      :class="{ 'font-mono': token.kind === 'operator' && token.key === 'property' }"
+      >{{ token.kind === 'text' ? `"${pillVariant.display}"` : pillVariant.display }}</span
+    >
     <button
       type="button"
       data-testid="filter-pill-remove"

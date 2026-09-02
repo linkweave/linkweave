@@ -18,6 +18,8 @@ import {
   type AcItem,
 } from '@/composables/useSearchAutocomplete'
 import { useSearchQueryStore } from '@/stores/searchQuery'
+import { KNOWN_OPERATORS_HINT } from '@/lib/searchOperators'
+import { useI18n } from 'vue-i18n'
 
 withDefaults(
   defineProps<{
@@ -27,6 +29,7 @@ withDefaults(
   { placeholder: 'Search...', variant: 'default' },
 )
 
+const { t } = useI18n()
 const searchQueryStore = useSearchQueryStore()
 const barRef = ref<InstanceType<typeof SearchBar> | null>(null)
 
@@ -115,6 +118,7 @@ function onAcMouseDown() {
     :placeholder="placeholder"
     :variant="variant"
     :invalid="searchQueryStore.hasInvalidTokens"
+    :invalid-message="t('search.invalidTokenHint', { operators: KNOWN_OPERATORS_HINT })"
     @caret="refreshAc"
     @keydown="onAcKeyDown"
     @blur="onBlur"

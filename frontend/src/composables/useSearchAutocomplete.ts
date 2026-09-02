@@ -212,8 +212,12 @@ export function useSearchAutocomplete() {
     }
 
     // ── Operator discovery: "fo", "ta", "prop" …
+    // The fully-typed key is offered too. Keys with a value list never reach
+    // here — `folder` normalizes to `folder:` and its own branch above answers
+    // first — so this only matters for the ones without one: typing `url` in
+    // full used to make the dropdown vanish instead of offering `url:`.
     if (token.length >= 2 && !token.includes(':')) {
-      const matched = OPS.filter((op) => op.trigger.startsWith(tl) && tl !== op.trigger)
+      const matched = OPS.filter((op) => op.trigger.startsWith(tl))
       if (matched.length) {
         return {
           mode: 'operator',

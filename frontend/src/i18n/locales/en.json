@@ -431,7 +431,7 @@
     "clear": "Clear search",
     "filters": "Filters",
     "clearAll": "Clear all",
-    "invalidTokenHint": "Invalid token — it matches nothing. Known operators: #tag, tag:, folder:, under:, url:, note:, created:, property:, match:",
+    "invalidTokenHint": "Invalid token — it matches nothing. Known operators: {operators}",
     "searchAnywhere": "Search anywhere for \"{value}\"",
     "autocomplete": {
       "tags": "Tags",

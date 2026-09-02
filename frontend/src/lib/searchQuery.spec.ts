@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isKnownOperator } from './searchOperators'
+import { isKnownOperator, KNOWN_OPERATORS_HINT, OPERATOR_DEFS } from './searchOperators'
 import {
   buildAncestorSets,
   compileQuery,
@@ -875,6 +875,24 @@ describe('compileQuery', () => {
           hit: matchesTokens(b, tokens, ctx),
         })
       }
+    }
+  })
+})
+
+// The syntax-help tooltip names the known operators. Composing it from the
+// table is what stops it drifting the way three hand-written locale strings did.
+describe('KNOWN_OPERATORS_HINT', () => {
+  it('lists every known operator, tags first', () => {
+    expect(KNOWN_OPERATORS_HINT.startsWith('#tag, ')).toBe(true)
+    for (const def of OPERATOR_DEFS) {
+      expect(KNOWN_OPERATORS_HINT).toContain(`${def.key}:`)
+    }
+  })
+
+  it('names nothing the grammar does not know', () => {
+    for (const entry of KNOWN_OPERATORS_HINT.split(', ')) {
+      if (entry === '#tag') continue
+      expect(isKnownOperator(entry.replace(':', ''))).toBe(true)
     }
   })
 })

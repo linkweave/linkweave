@@ -4,13 +4,13 @@
 // derives `OPS` from it), and the invalid-syntax flag (`isInvalidToken`).
 //
 // Adding an operator means: a row here, a `case` in `prepareOperator`, and —
-// until they too derive from this table — three presentation lists that still
+// until they too derive from this table — two presentation lists that still
 // enumerate operators by hand:
 //   • `OPERATOR_VARIANTS` in `components/bookmark/FilterPill.vue` (pill icon + label)
 //   • the footer legend in `SearchAutocompleteDropdown.vue`
-//   • the operator list spelled out in `search.invalidTokenHint` (en/de/fr)
 // An operator added only here renders as a pill with no icon and is missing
-// from the syntax help. (That component's `modeIcon` map and prefix chain are
+// from the dropdown's syntax legend. The syntax-help tooltip needs no update:
+// it interpolates `KNOWN_OPERATORS_HINT` below. (That component's `modeIcon` map and prefix chain are
 // keyed by suggestion *mode*, not by operator, so they only need touching when
 // an operator brings a new kind of suggestion list with it.)
 
@@ -58,3 +58,11 @@ const KNOWN_KEYS: ReadonlySet<string> = new Set(OPERATOR_DEFS.map((d) => d.key))
 export function isKnownOperator(key: string): boolean {
   return KNOWN_KEYS.has(key.toLowerCase())
 }
+
+/**
+ * The known operators as one human-readable list, interpolated into the
+ * invalid-syntax tooltip (`search.invalidTokenHint`). Composed here so the
+ * help text cannot drift from the grammar the way a hand-written list in
+ * three locale files does. `#tag` leads because it is the form users type.
+ */
+export const KNOWN_OPERATORS_HINT = ['#tag', ...OPERATOR_DEFS.map((d) => `${d.key}:`)].join(', ')

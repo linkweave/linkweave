@@ -226,6 +226,19 @@ test.describe('Exact-URL Search (url: operator)', () => {
     await search(page, 'created:banana ')
     await expect.poll(() => visibleCardTitles(page)).toEqual([])
     await expect(flag).toContainText('created:banana')
+
+    // The state is not colour-only: the input is marked invalid and points at
+    // a message naming the known operators, so a screen reader is told why the
+    // list is empty.
+    const input = headerInput(page)
+    await expect(input).toHaveAttribute('aria-invalid', 'true')
+    const describedBy = await input.getAttribute('aria-describedby')
+    expect(describedBy).toBeTruthy()
+    await expect(page.locator(`#${describedBy}`)).toContainText('property:')
+
+    // Cleared once the query is valid again.
+    await search(page, 'created:2026-05-16 ')
+    await expect(input).not.toHaveAttribute('aria-invalid', 'true')
   })
 
   test('an unparseable url: value matches nothing and is flagged invalid', async ({

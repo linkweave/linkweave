@@ -431,7 +431,7 @@
     "clear": "Effacer la recherche",
     "filters": "Filtres",
     "clearAll": "Tout effacer",
-    "invalidTokenHint": "Jeton invalide — aucun résultat. Opérateurs connus : #tag, tag:, folder:, under:, url:, note:, created:, property:, match:",
+    "invalidTokenHint": "Jeton invalide — aucun résultat. Opérateurs connus : {operators}",
     "searchAnywhere": "Rechercher « {value} » partout",
     "autocomplete": {
       "tags": "Tags",

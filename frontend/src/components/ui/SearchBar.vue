@@ -5,8 +5,9 @@
 // `caret` / `keydown` / `blur` and renders its dropdown into the `overlay`
 // slot. Keeping the two apart is what lets `CollectionManageView` filter
 // collection names by substring without inheriting bookmark autocomplete.
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, useId } from 'vue'
 import { Search, X } from '@lucide/vue'
+import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(defineProps<{
   modelValue: string
@@ -17,11 +18,25 @@ const props = withDefaults(defineProps<{
    * What counts as wrong is the caller's business; this component only shows it.
    */
   invalid?: boolean
+  /**
+   * Why the value is invalid. Colour alone is not a signal a screen-reader or
+   * colour-blind user receives, so this is announced politely and wired to the
+   * input through `aria-describedby` whenever `invalid` is set.
+   */
+  invalidMessage?: string
 }>(), {
   placeholder: 'Search...',
   variant: 'default',
   invalid: false,
+  invalidMessage: '',
 })
+
+const { t } = useI18n()
+
+const messageId = useId()
+const describedBy = computed(() =>
+  props.invalid && props.invalidMessage ? messageId : undefined,
+)
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
@@ -90,6 +105,11 @@ function handleShortcut(e: KeyboardEvent) {
 
 function clear() {
   emit('update:modelValue', '')
+  // Report the emptied value too: an overlay reading the token under the
+  // cursor must close rather than hang over a field it no longer describes.
+  // Clicking a button does not blur the input in every browser, so the blur
+  // handler cannot be relied on here.
+  emit('caret', '', 0)
   focusAt()
 }
 
@@ -112,6 +132,8 @@ onUnmounted(() => {
       :value="props.modelValue"
       :placeholder="props.placeholder"
       data-search-input
+      :aria-invalid="props.invalid ? 'true' : undefined"
+      :aria-describedby="describedBy"
       :class="[
         'flex w-full rounded-md border bg-secondary pl-10 pr-20 py-1 text-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1',
         props.variant === 'header' ? 'h-9' : 'h-10',
@@ -143,13 +165,25 @@ onUnmounted(() => {
         >
       </template>
     </kbd>
+    <!-- An icon-only control needs a name: without one it reads as "button". -->
     <button
       v-if="props.modelValue"
+      type="button"
+      data-testid="search-clear"
+      :aria-label="t('search.clear')"
       class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
       @click="clear"
     >
       <X class="h-4 w-4" />
     </button>
+
+    <!-- The invalid state reaches assistive tech here: `aria-invalid` marks the
+         field, and this politely-announced message says what is wrong. It is
+         visually hidden because the sighted equivalent is the destructive
+         border plus whatever the caller renders elsewhere. -->
+    <p v-if="describedBy" :id="messageId" class="sr-only" role="status">
+      {{ props.invalidMessage }}
+    </p>
 
     <!-- Rendered inside the positioned container so an overlay can anchor to
          the input with plain `absolute top-full`. -->

@@ -431,7 +431,7 @@
     "clear": "Suche löschen",
     "filters": "Filter",
     "clearAll": "Alle löschen",
-    "invalidTokenHint": "Ungültiges Token — trifft nichts. Bekannte Operatoren: #tag, tag:, folder:, under:, url:, note:, created:, property:, match:",
+    "invalidTokenHint": "Ungültiges Token — trifft nichts. Bekannte Operatoren: {operators}",
     "searchAnywhere": "Überall nach „{value}“ suchen",
     "autocomplete": {
       "tags": "Tags",

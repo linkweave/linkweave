@@ -313,6 +313,22 @@ test.describe('FR-072 Search Autocomplete', () => {
     await expect(input).toHaveValue('#quar')
   })
 
+  test('the clear button closes the dropdown', async ({ page }) => {
+    // ARRANGE — an open dropdown over a non-empty field.
+    const input = headerInput(page)
+    await input.click()
+    await input.fill('#')
+    await expect(dropdown(page)).toBeVisible()
+
+    // ACT — the ✕ empties the field. Clicking a button does not blur the input
+    // in every browser, so the dropdown must be closed by the clear itself.
+    await page.locator('header [data-testid="search-clear"]').click()
+
+    // ASSERT
+    await expect(input).toHaveValue('')
+    await expect(dropdown(page)).toHaveCount(0)
+  })
+
   test('clicking outside the dropdown closes it', async ({ page }) => {
     const input = headerInput(page)
     await input.click()

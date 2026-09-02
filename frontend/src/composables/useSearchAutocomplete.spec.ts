@@ -95,3 +95,28 @@ describe('useSearchAutocomplete – match: modes', () => {
     expect(result?.items[0]?.insert).toBe('match:or')
   })
 })
+
+// Typing a prefix of an operator key offers the key. The fully-typed key must
+// too, for operators that have no value list of their own to show.
+describe('useSearchAutocomplete – operator discovery', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  function parse(query: string, cursor = query.length) {
+    return useSearchAutocomplete().parseQueryForAutoCompl(query, cursor)
+  }
+
+  it('offers url: for both a prefix and the complete key', () => {
+    expect(parse('ur')?.items.map((i) => i.insert)).toContain('url:')
+    // Regression: the exact key was filtered out, so the dropdown vanished at
+    // the moment the user finished typing it.
+    expect(parse('url')?.items.map((i) => i.insert)).toContain('url:')
+  })
+
+  it('still lets a key with its own value list answer first', () => {
+    // `match` normalizes to `match:`, whose branch offers the modes rather
+    // than the operator key itself.
+    expect(parse('match')?.mode).toBe('match-val')
+  })
+})
