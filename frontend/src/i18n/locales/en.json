@@ -431,8 +431,7 @@
     "clear": "Clear search",
     "filters": "Filters",
     "clearAll": "Clear all",
-    "unknownOperator": "unknown operator — matches nothing",
-    "unknownOperatorHint": "Unknown operator. Known operators: #tag, tag:, folder:, under:, url:, note:, created:, property:",
+    "invalidTokenHint": "Invalid token — it matches nothing. Known operators: #tag, tag:, folder:, under:, url:, note:, created:, property:, match:",
     "searchAnywhere": "Search anywhere for \"{value}\"",
     "autocomplete": {
       "tags": "Tags",
@@ -453,7 +452,11 @@
       "opUrlConvert": "match exactly this URL",
       "opProperty": "filter by property value",
       "or": "or",
-      "negate": "negate"
+      "negate": "negate",
+      "opMatch": "combine free-text terms with OR",
+      "matchModes": "Match modes",
+      "opMatchAnd": "require every free-text term (default)",
+      "opMatchOr": "any free-text term is enough"
     }
   },
   "collectionSearch": {

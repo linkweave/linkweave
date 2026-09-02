@@ -10,8 +10,8 @@
 //
 // `today` resolves at match time so a long-lived tab eventually rolls over.
 // Unparseable values fall back to `null` from `parseCreatedValue`; the matcher
-// then treats the token as no-op match-all so a typo doesn't silently hide
-// every bookmark.
+// then treats the token as invalid syntax — flagged in the search bar and
+// matched as false — so a typo can never silently return the unfiltered list.
 
 export type DateOp = 'eq' | 'gt' | 'lt'
 

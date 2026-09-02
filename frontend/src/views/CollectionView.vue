@@ -9,14 +9,14 @@ import {
 import BatchActionBar from '@/components/bookmark/BatchActionBar.vue'
 import BookmarkDialog from '@/components/bookmark/BookmarkDialog.vue'
 import { MainLayout } from '@/components/layout'
-import { ResponsiveButton, SearchBar } from '@/components/ui'
-import HeaderSearchMobile from '@/components/ui/HeaderSearchMobile.vue'
+import { ResponsiveButton } from '@/components/ui'
+import BookmarkSearchBar from '@/components/bookmark/BookmarkSearchBar.vue'
+import HeaderSearchMobile from '@/components/bookmark/HeaderSearchMobile.vue'
 import { useCollectionEvents } from '@/composables/useCollectionEvents'
 import { useEffectiveLayout } from '@/composables/useEffectiveLayout'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import { useSelectionShortcuts } from '@/composables/useSelectionShortcuts'
 import { provideStickyToolbar } from '@/composables/useStickyToolbar'
-import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
 import { useOfflineStore } from '@/stores/offline'
@@ -27,7 +27,6 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const collectionStore = useCollectionStore()
-const searchQueryStore = useSearchQueryStore()
 const folderStore = useFolderStore()
 const offline = useOfflineStore()
 const isAddingBookmark = ref(false)
@@ -62,8 +61,7 @@ const containerClass = computed(() => {
 <template>
   <MainLayout>
     <template #header-search>
-      <SearchBar
-        v-model="searchQueryStore.searchQuery"
+      <BookmarkSearchBar
         :placeholder="searchPlaceholder"
         variant="header"
       />

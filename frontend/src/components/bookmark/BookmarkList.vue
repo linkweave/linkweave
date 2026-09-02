@@ -5,7 +5,6 @@ import { useEffectiveLayout } from '@/composables/useEffectiveLayout'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useNotificationStore } from '@/stores/notification'
-import { isAbsoluteUrl } from '@/lib/url'
 import { stringifyTokens } from '@/lib/searchQuery'
 import BookmarkCard from './BookmarkCard.vue'
 import BookmarkGroupedLayout from './BookmarkGroupedLayout.vue'
@@ -67,15 +66,18 @@ const renderItems = computed<RenderItem[]>(() => {
 
 // UC-070 A7: when an exact `url:` query matches nothing, offer the substring
 // interpretation of the same value as a one-click fallback so a near-miss
-// (different query string, trailing path segment) stays findable. Gated on
-// the strict scheme:// shape (not the looser `url:` value rule): only such
-// values re-tokenize as free text — e.g. a `mailto:…` fallback would parse
-// as an unknown operator and match nothing again.
+// (different query string, trailing path segment) stays findable.
+//
+// Suppressed when any token is invalid syntax: an empty list caused by a
+// broken query is not a near-miss, and offering "search anywhere" beside a
+// red invalid-syntax flag tells the user two contradictory things about the
+// same query. Every scheme works — after BR-070-2 an unknown key such as
+// `mailto` re-tokenizes as free text, so the fallback is no longer limited to
+// the `scheme://` shape.
 const urlFallbackValue = computed(() => {
+  if (searchQueryStore.hasInvalidTokens) return null
   for (const tok of searchQueryStore.queryTokens) {
-    if (tok.kind === 'operator' && tok.key === 'url' && !tok.neg && isAbsoluteUrl(tok.value)) {
-      return tok.value
-    }
+    if (tok.kind === 'operator' && tok.key === 'url' && !tok.neg) return tok.value
   }
   return null
 })

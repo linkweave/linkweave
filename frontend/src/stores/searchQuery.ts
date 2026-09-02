@@ -1,4 +1,11 @@
-import { type QueryToken, stringifyTokens, toggleToken, tokenize } from '@/lib/searchQuery'
+import {
+  type CompiledQuery,
+  compileQuery,
+  type QueryToken,
+  stringifyTokens,
+  toggleToken,
+  tokenize,
+} from '@/lib/searchQuery'
 import { registerStoreReset } from '@/lib/storeReset'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
@@ -21,6 +28,14 @@ export const useSearchQueryStore = defineStore('searchQuery', () => {
   }
 
   const queryTokens = computed<QueryToken[]>(() => tokenize(searchQuery.value))
+
+  // Compiled once per query change and shared by every consumer: the bookmark
+  // filter matches against it, while the search bar and the empty state read
+  // `hasInvalidTokens` off it. One derivation means the red border, the
+  // flagged pill and the empty result set can never disagree (UC-070 A2).
+  const compiledQuery = computed<CompiledQuery>(() => compileQuery(queryTokens.value))
+
+  const hasInvalidTokens = computed(() => compiledQuery.value.invalid)
 
   function toggleQueryToken(token: QueryToken, modifier?: 'exclude') {
     const next = toggleToken(queryTokens.value, token, modifier)
@@ -58,6 +73,8 @@ export const useSearchQueryStore = defineStore('searchQuery', () => {
   return {
     searchQuery,
     queryTokens,
+    compiledQuery,
+    hasInvalidTokens,
     setSearchQuery,
     clearSearchQuery,
     toggleQueryToken,

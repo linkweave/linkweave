@@ -215,6 +215,39 @@ test.describe('FR-072 Search Autocomplete', () => {
     await expect(items(page).filter({ hasText: 'under:' })).toBeVisible()
   })
 
+  test('match: offers its two modes and completing one clears the invalid flag', async ({
+    page,
+  }) => {
+    // ARRANGE — `match:` is prefix-discoverable, so the dropdown has to be able
+    // to finish the token: a bare `match:` is invalid syntax (UC-070 A2/BR-081).
+    const input = headerInput(page)
+    await input.click()
+
+    // ACT
+    await input.fill('ma')
+    // ASSERT — discovery offers the key…
+    await expect(items(page).filter({ hasText: 'match:' })).toBeVisible()
+
+    // ACT — …and the bare operator offers the closed set of modes.
+    await input.fill('match:')
+    // ASSERT
+    await expect(dropdown(page)).toBeVisible()
+    await expect(items(page).filter({ hasText: 'and' })).toBeVisible()
+    await expect(items(page).filter({ hasText: 'or' })).toBeVisible()
+
+    // ACT — a half-typed mode is a real operator token, so it is flagged…
+    await input.fill('match:o')
+    // ASSERT
+    await expect(input).toHaveClass(/border-destructive/)
+    await expect(items(page).filter({ hasText: 'or' })).toBeVisible()
+
+    // ACT — …and picking the suggestion completes it.
+    await items(page).filter({ hasText: 'or' }).first().click()
+    // ASSERT
+    await expect(input).toHaveValue('match:or ')
+    await expect(input).not.toHaveClass(/border-destructive/)
+  })
+
   test('ArrowDown moves the active selection', async ({ page }) => {
     const input = headerInput(page)
     await input.click()

@@ -57,9 +57,9 @@ export function parsePropertyValue(raw: string): ParsedProperty | null {
  *   - `>` `<` `>=` `<=` → numeric comparison; non-numeric operands → no match
  *
  * Unknown property names → no match (consistent with "you typed a property that
- * isn't defined on this collection"). The matcher conventionally returns true
- * for unknown *operators* but we treat property names more strictly because
- * silently matching everything would be more confusing than a transparent miss.
+ * isn't defined on this collection" — a transparent miss). Unknown *operators*
+ * and syntactically unparseable payloads are handled earlier, by the matcher's
+ * invalid-token rule: they match nothing and are flagged.
  */
 export function matchesPropertyToken(
   values: BookmarkPropertyValueJson[] | undefined,

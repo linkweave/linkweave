@@ -28,6 +28,9 @@ const titleSorted = `Sorted Query ${ts}`
 const titleUnrelated = `Unrelated ${ts}`
 const titleDeep = `Deep Page ${ts}`
 const titleMailto = `Contact Mail ${ts}`
+// A colon in ordinary text is the BR-070-2 regression case: this title must
+// stay findable by typing it verbatim, colon and all.
+const titleColon = `Bug:${ts} regression`
 
 let user: TestUser
 let storageState: StorageState
@@ -48,6 +51,7 @@ async function seedWorld(browser: Browser): Promise<void> {
       // API accepts any non-blank URL — non-hierarchical schemes are storable
       // and must be exactly searchable.
       { title: titleMailto, url: 'mailto:dev@example.com' },
+      { title: titleColon, url: `https://example.com/issues/${ts}` },
     ]
     for (const bm of bookmarks) {
       await api<Created>(ctx.request, 'POST', '/api/bookmarks', {
@@ -144,7 +148,15 @@ test.describe('Exact-URL Search (url: operator)', () => {
     await search(page, '-url:https://example.com/a ')
     // ASSERT — everything except the exact match remains.
     await expect.poll(() => visibleCardTitles(page)).toEqual(
-      sorted([titleSubPath, titleTracked, titleSorted, titleUnrelated, titleDeep, titleMailto]),
+      sorted([
+        titleSubPath,
+        titleTracked,
+        titleSorted,
+        titleUnrelated,
+        titleDeep,
+        titleMailto,
+        titleColon,
+      ]),
     )
   })
 
@@ -155,21 +167,65 @@ test.describe('Exact-URL Search (url: operator)', () => {
     await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleMailto]))
   })
 
-  test('an unknown operator matches nothing and is flagged invalid', async ({ page }) => {
-    // ACT
+  test('an unquoted unknown key is free text, so a colon in a search term still works', async ({
+    page,
+  }) => {
+    // ACT — the whole point of BR-070-2: `Bug:123` is a search term, not an
+    // operator, and must find the bookmark whose title contains it verbatim.
+    await search(page, `Bug:${ts} `)
+    // ASSERT
+    await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleColon]))
+    // …with no invalid-syntax cue anywhere: it is ordinary text.
+    await expect(page.locator('[data-testid="filter-pill"][data-invalid="true"]')).toHaveCount(0)
+    await expect(headerInput(page)).not.toHaveClass(/border-destructive/)
+
+    // An unknown key that matches nothing is an empty result, not an error…
     await search(page, 'bogus:value ')
+    await expect.poll(() => visibleCardTitles(page)).toEqual([])
+    await expect(page.locator('[data-testid="filter-pill"][data-invalid="true"]')).toHaveCount(0)
+
+    // …and negating free text excludes rather than voiding the query.
+    await search(page, '-bogus:x ')
+    await expect
+      .poll(() => visibleCardTitles(page))
+      .toEqual(
+        sorted([
+          titleExact,
+          titleSubPath,
+          titleTracked,
+          titleSorted,
+          titleUnrelated,
+          titleDeep,
+          titleMailto,
+          titleColon,
+        ]),
+      )
+  })
+
+  test('a quoted unknown key and an unparseable known value are flagged invalid', async ({
+    page,
+  }) => {
+    // ACT — quoting is deliberate operator shape, so it earns the A2 flag.
+    await search(page, 'bogus:"x y" ')
     // ASSERT — empty result, never the unfiltered list…
     await expect.poll(() => visibleCardTitles(page)).toEqual([])
-    // …and the invalid token is flagged in the search bar.
-    const flag = page.getByTestId('search-invalid-operators')
+    // …and the invalid token is flagged: destructive pill in the filter strip
+    // (the input border turns destructive as the at-the-source cue).
+    const flag = page.locator('[data-testid="filter-pill"][data-invalid="true"]')
     await expect(flag).toBeVisible()
-    await expect(flag).toContainText('bogus:value')
+    await expect(flag).toContainText('bogus:x y')
+    await expect(headerInput(page)).toHaveClass(/border-destructive/)
 
-    // Negation must not flip an invalid token back to match-all: a query of
-    // just -bogus:x still filters to nothing (and stays flagged).
-    await search(page, '-bogus:x ')
+    // Negation must not flip an invalid token back to match-all.
+    await search(page, '-bogus:"x y" ')
     await expect.poll(() => visibleCardTitles(page)).toEqual([])
-    await expect(flag).toContainText('bogus:x')
+    await expect(flag).toBeVisible()
+
+    // Unparseable values of known operators are invalid too — never a silent
+    // unfiltered list.
+    await search(page, 'created:banana ')
+    await expect.poll(() => visibleCardTitles(page)).toEqual([])
+    await expect(flag).toContainText('created:banana')
   })
 
   test('an unparseable url: value matches nothing and is flagged invalid', async ({
@@ -178,9 +234,10 @@ test.describe('Exact-URL Search (url: operator)', () => {
     // ACT
     await search(page, 'url:??? ')
     // ASSERT — invalid syntax filters to nothing (AND-combined with any other
-    // tokens), never to everything, and the token is flagged in the search bar.
+    // tokens), never to everything, and the token is flagged as an invalid
+    // pill in the filter strip.
     await expect.poll(() => visibleCardTitles(page)).toEqual([])
-    const flag = page.getByTestId('search-invalid-operators')
+    const flag = page.locator('[data-testid="filter-pill"][data-invalid="true"]')
     await expect(flag).toBeVisible()
     await expect(flag).toContainText('url:???')
 
@@ -190,6 +247,10 @@ test.describe('Exact-URL Search (url: operator)', () => {
     await search(page, 'url:"https://two words"')
     await expect.poll(() => visibleCardTitles(page)).toEqual([])
     await expect(flag).toContainText('url:https://two words')
+
+    // A broken query is not a near-miss: the substring fallback must stay away
+    // so the empty state never contradicts the invalid-syntax flag.
+    await expect(page.getByTestId('url-search-anywhere')).toHaveCount(0)
   })
 
   test('pasting a URL offers the url: conversion; accepting it finds the bookmark', async ({

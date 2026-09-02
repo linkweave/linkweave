@@ -2,14 +2,17 @@
 // from `useSearchAutocomplete` so it can be unit-tested without pulling in the
 // Pinia stores (and, transitively, i18n / browser globals).
 
-import { OPERATOR_DEFS } from '@/lib/searchOperators'
+import { type OperatorDef, OPERATOR_DEFS } from '@/lib/searchOperators'
+
+type DiscoverableDef = Extract<OperatorDef, { discoverable: true }>
+const isDiscoverable = (d: OperatorDef): d is DiscoverableDef => d.discoverable === true
 
 // Derived from the parser's operator table (UC-070 BR-070-1) — the
 // autocomplete never defines its own operator list, so the two cannot drift.
-export const OPS = OPERATOR_DEFS.filter((d) => d.discoverable).map((d) => ({
+export const OPS = OPERATOR_DEFS.filter(isDiscoverable).map((d) => ({
   trigger: d.key,
   full: `${d.key}:`,
-  hintKey: d.hintKey ?? '',
+  hintKey: d.hintKey,
 }))
 
 export interface CursorToken {

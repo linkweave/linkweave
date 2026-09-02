@@ -431,8 +431,7 @@
     "clear": "Suche löschen",
     "filters": "Filter",
     "clearAll": "Alle löschen",
-    "unknownOperator": "unbekannter Operator — trifft nichts",
-    "unknownOperatorHint": "Unbekannter Operator. Bekannte Operatoren: #tag, tag:, folder:, under:, url:, note:, created:, property:",
+    "invalidTokenHint": "Ungültiges Token — trifft nichts. Bekannte Operatoren: #tag, tag:, folder:, under:, url:, note:, created:, property:, match:",
     "searchAnywhere": "Überall nach „{value}“ suchen",
     "autocomplete": {
       "tags": "Tags",
@@ -453,7 +452,11 @@
       "opUrlConvert": "genau diese URL finden",
       "opProperty": "nach Eigenschaftswert filtern",
       "or": "oder",
-      "negate": "ausschließen"
+      "negate": "ausschließen",
+      "opMatch": "Freitext-Begriffe mit ODER verknüpfen",
+      "matchModes": "Verknüpfung",
+      "opMatchAnd": "alle Freitext-Begriffe müssen zutreffen (Standard)",
+      "opMatchOr": "ein Freitext-Begriff genügt"
     }
   },
   "collectionSearch": {

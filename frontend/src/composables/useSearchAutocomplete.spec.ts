@@ -60,3 +60,38 @@ describe('useSearchAutocomplete – URL conversion offer', () => {
     expect(parse('-https://example.com/a')).toBeNull()
   })
 })
+
+// `match:` is prefix-discoverable, so the dropdown has to be able to finish
+// the token: a bare `match:` is invalid syntax, and the modes are a closed set
+// of two (UC-070 BR-081).
+describe('useSearchAutocomplete – match: modes', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  function parse(query: string, cursor = query.length) {
+    return useSearchAutocomplete().parseQueryForAutoCompl(query, cursor)
+  }
+
+  it('offers both modes for a bare match:', () => {
+    const result = parse('match:')
+    expect(result?.mode).toBe('match-val')
+    expect(result?.items).toEqual([
+      { key: 'and', label: 'and', insert: 'match:and', type: 'match-val', hint: 'opMatchAnd', filter: '' },
+      { key: 'or', label: 'or', insert: 'match:or', type: 'match-val', hint: 'opMatchOr', filter: '' },
+    ])
+  })
+
+  it('filters the modes by what has been typed', () => {
+    expect(parse('match:o')?.items.map((i) => i.key)).toEqual(['or'])
+    expect(parse('match:A')?.items.map((i) => i.key)).toEqual(['and'])
+    expect(parse('match:xor')?.items).toEqual([])
+  })
+
+  it('replaces only the match: token, leaving the rest of the query alone', () => {
+    const q = '#java match:o quarkus'
+    const result = parse(q, 13) // caret right after `match:o`
+    expect(result?.range).toEqual([6, 13])
+    expect(result?.items[0]?.insert).toBe('match:or')
+  })
+})

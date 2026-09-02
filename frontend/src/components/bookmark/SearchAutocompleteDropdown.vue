@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Hash, Folder, Box, Zap, Link2 } from '@lucide/vue'
-import HighlightMatch from './HighlightMatch.vue'
+import { Hash, Folder, Box, Combine, Zap, Link2 } from '@lucide/vue'
+import HighlightMatch from '@/components/ui/HighlightMatch.vue'
 import type { AcResult, AcItem, AcMode } from '@/composables/useSearchAutocomplete'
 
 const props = defineProps<{
@@ -28,6 +28,7 @@ const modeIcon: Record<AcMode, typeof Hash> = {
   under: Folder,
   'prop-key': Box,
   'prop-val': Box,
+  'match-val': Combine,
   operator: Zap,
   url: Link2,
 }
@@ -47,6 +48,8 @@ const headerLabel = computed(() => {
       return t('search.autocomplete.exactUrl')
     case 'prop-val':
       return t('search.autocomplete.propValues', { key: props.result.label })
+    case 'match-val':
+      return t('search.autocomplete.matchModes')
     default:
       return ''
   }
@@ -118,6 +121,7 @@ function hintText(item: AcItem): string {
             <template v-else-if="item.type === 'prop-key'">property:</template>
             <template v-else-if="item.type === 'prop-val'">property:{{ item.propKey }}=</template>
             <template v-else-if="item.type === 'url'">url:</template>
+            <template v-else-if="item.type === 'match-val'">match:</template>
           </span>
           <HighlightMatch :text="item.label" :filter="item.filter" />
           <span
@@ -148,6 +152,8 @@ function hintText(item: AcItem): string {
       <span><b class="font-semibold text-foreground/75">url:</b>…</span>
       <span class="opacity-30">·</span>
       <span><b class="font-semibold text-foreground/75">property:</b>k=v</span>
+      <span class="opacity-30">·</span>
+      <span><b class="font-semibold text-foreground/75">match:</b>and|or</span>
       <span class="opacity-30">·</span>
       <span><b class="font-semibold text-foreground/75">-</b>{{ t('search.autocomplete.negate') }}</span>
     </div>

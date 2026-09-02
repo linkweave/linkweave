@@ -153,6 +153,7 @@ rectangle "LinkWeave Bookmark Manager" {
         usecase "UC-092\nEnforce Module\nBoundaries" as UC092 <<implemented>>
         usecase "UC-095\nExplore SQLite WAL\n& Turso Multi-Writer" as UC095
         usecase "UC-109\nSurvive SQLite\nLock Contention" as UC109
+        usecase "UC-111\nGate Builds on\nCRAP Metrics" as UC111
     }
 
     rectangle "Offline Mode" {
@@ -297,6 +298,7 @@ developer --> UC036
 developer --> UC056
 developer --> UC092
 developer --> UC095
+developer --> UC111
 
 ' Offline Mode
 user --> UC047

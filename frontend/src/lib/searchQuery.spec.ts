@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { isKnownOperator } from './searchOperators'
 import {
   buildAncestorSets,
+  compileQuery,
   isInvalidToken,
   type MatchableBookmark,
   type MatchContext,
@@ -98,9 +99,40 @@ describe('tokenize', () => {
     ])
   })
 
-  it('keeps a non-URL key:value token an operator (unknown → invalid, not text)', () => {
-    expect(tokenize('bogus:value')).toEqual([
-      { kind: 'operator', key: 'bogus', value: 'value', neg: false },
+  it('treats an unquoted unknown key as free text, not an operator (BR-070-2)', () => {
+    // The colon is ordinary punctuation in a search term far more often than it
+    // is operator syntax, so `Bug:123` must keep finding `Bug:123`.
+    expect(tokenize('bogus:value')).toEqual([{ kind: 'text', value: 'bogus:value', neg: false }])
+    expect(tokenize('Bug:123')).toEqual([{ kind: 'text', value: 'Bug:123', neg: false }])
+    expect(tokenize('localhost:5173/x')).toEqual([
+      { kind: 'text', value: 'localhost:5173/x', neg: false },
+    ])
+    expect(tokenize('-TODO:refactor')).toEqual([
+      { kind: 'text', value: 'TODO:refactor', neg: true },
+    ])
+  })
+
+  it('keeps an explicitly quoted unknown key an operator, so A2 can flag it', () => {
+    // Quoting is deliberate operator shape — nobody types `bogus:"x y"` meaning
+    // a literal string — so it stays an operator and earns the invalid flag.
+    expect(tokenize('bogus:"x y"')).toEqual([
+      { kind: 'operator', key: 'bogus', value: 'x y', neg: false },
+    ])
+  })
+
+  it('keeps a known key an operator even when its value starts with //', () => {
+    // `note://internal` is a note search for `//internal`, not a free-text term.
+    expect(tokenize('note://internal')).toEqual([
+      { kind: 'operator', key: 'note', value: '//internal', neg: false },
+    ])
+    expect(tokenize('folder://shared')).toEqual([
+      { kind: 'operator', key: 'folder', value: '//shared', neg: false },
+    ])
+  })
+
+  it('unescapes a quoted value carrying a literal double quote', () => {
+    expect(tokenize('"https://x/a\\"b"')).toEqual([
+      { kind: 'text', value: 'https://x/a"b', neg: false },
     ])
   })
 })
@@ -150,6 +182,38 @@ describe('stringifyTokens', () => {
     const str = stringifyTokens(original)
     expect(str).toBe('url:"https://example.com/a b"')
     expect(tokenize(str)).toEqual(original)
+  })
+
+  it('round-trips a value containing a double quote instead of splitting it', () => {
+    // Regression: `quoteIfNeeded` used to wrap without escaping, so removing any
+    // pill rewrote `https://x/a"b` into two tokens that matched nothing.
+    const original: QueryToken[] = [{ kind: 'text', value: 'https://x/a"b', neg: false }]
+    const str = stringifyTokens(original)
+    expect(str).toBe('"https://x/a\\"b"')
+    expect(tokenize(str)).toEqual(original)
+  })
+
+  it('round-trips a value whose first character is grammar', () => {
+    // Regression: `needsQuoting` only guarded a leading known-operator key, so
+    // a free-text term starting with `-`, `#` or `'` changed meaning the first
+    // time any pill was removed — `-foo` came back as a *negated* token.
+    const cases: QueryToken[][] = [
+      [{ kind: 'text', value: '-foo', neg: false }],
+      [{ kind: 'text', value: '#java', neg: false }],
+      [{ kind: 'text', value: "'quoted'", neg: false }],
+      [{ kind: 'operator', key: 'folder', value: "'x'", neg: false }],
+      [{ kind: 'tag', value: "'x'", neg: false }],
+    ]
+    for (const original of cases) {
+      expect(tokenize(stringifyTokens(original))).toEqual(original)
+    }
+  })
+
+  it('round-trips an operator value that starts with //', () => {
+    const original: QueryToken[] = [
+      { kind: 'operator', key: 'folder', value: '//shared', neg: false },
+    ]
+    expect(tokenize(stringifyTokens(original))).toEqual(original)
   })
 
   it('round-trips a negated url: token', () => {
@@ -479,7 +543,7 @@ describe('isKnownOperator / isInvalidToken', () => {
 
   it('flags unknown operator keys as invalid', () => {
     expect(isInvalidToken({ kind: 'operator', key: 'bogus', value: 'v', neg: false })).toBe(true)
-    expect(isInvalidToken({ kind: 'operator', key: 'match', value: 'OR', neg: false })).toBe(true)
+    expect(isInvalidToken({ kind: 'operator', key: 'zzz', value: 'v', neg: false })).toBe(true)
   })
 
   it('flags a url: token whose value is not an absolute URL', () => {
@@ -490,12 +554,117 @@ describe('isKnownOperator / isInvalidToken', () => {
     ).toBe(false)
   })
 
+  it('flags a created: token whose value does not parse as a date', () => {
+    expect(isInvalidToken({ kind: 'operator', key: 'created', value: 'garbage', neg: false })).toBe(true)
+    expect(isInvalidToken({ kind: 'operator', key: 'created', value: '2026-13-99', neg: false })).toBe(true)
+    // Every implemented form stays valid, with and without comparators.
+    // (Note: `YYYY-MM` / `YYYY` are NOT implemented — only full dates,
+    // German dates, and `today` offsets — despite BR-084's older wording.)
+    for (const v of ['2026-05-16', '1.5.2026', '>today', '>today-30d', '<2026-05-16', 'today']) {
+      expect(isInvalidToken({ kind: 'operator', key: 'created', value: v, neg: false })).toBe(false)
+    }
+  })
+
+  it('flags a property: token with a syntactically unparseable payload', () => {
+    expect(isInvalidToken({ kind: 'operator', key: 'property', value: '???', neg: false })).toBe(true)
+    expect(isInvalidToken({ kind: 'operator', key: 'property', value: '=draft', neg: false })).toBe(true)
+    // Bare keys are valid existence checks — unknown names are a transparent
+    // miss (no match, no flag), not invalid syntax.
+    expect(isInvalidToken({ kind: 'operator', key: 'property', value: 'status', neg: false })).toBe(false)
+    expect(
+      isInvalidToken({ kind: 'operator', key: 'property', value: 'status=draft', neg: false }),
+    ).toBe(false)
+  })
+
   it('does not flag text or tag tokens, or valid operators', () => {
     expect(isInvalidToken({ kind: 'text', value: 'https://example.com', neg: false })).toBe(false)
     expect(isInvalidToken({ kind: 'tag', value: 'x', neg: false })).toBe(false)
     expect(
       isInvalidToken({ kind: 'operator', key: 'folder', value: 'work', neg: false }),
     ).toBe(false)
+  })
+})
+
+// UC-070 BR-081: `match:` is a query-level setting for how FREE-TEXT terms
+// combine. Operators always AND; exclusions are never ORed.
+describe('matchesTokens with match: (BR-081)', () => {
+  const ctx: MatchContext = {
+    tagNamesById: new Map([['t1', 'java']]),
+    folderName: 'work',
+    ancestorFolderNames: new Set(['work']),
+    ancestorFolderIds: new Set(),
+  }
+  function bm(title: string, tagIds: string[] = []): MatchableBookmark {
+    return {
+      data: { title, url: null, description: null, tagIds: new Set(tagIds) },
+    }
+  }
+  const or: QueryToken = { kind: 'operator', key: 'match', value: 'or', neg: false }
+  const text = (value: string, neg = false): QueryToken => ({ kind: 'text', value, neg })
+
+  it('satisfies a bookmark matching any one free-text term', () => {
+    const tokens = [or, text('quarkus'), text('hibernate')]
+    expect(matchesTokens(bm('Quarkus guide'), tokens, ctx)).toBe(true)
+    expect(matchesTokens(bm('Hibernate guide'), tokens, ctx)).toBe(true)
+    expect(matchesTokens(bm('Spring guide'), tokens, ctx)).toBe(false)
+  })
+
+  it('still ANDs the same terms without the mode token', () => {
+    const tokens = [text('quarkus'), text('hibernate')]
+    expect(matchesTokens(bm('Quarkus guide'), tokens, ctx)).toBe(false)
+    expect(matchesTokens(bm('Quarkus and Hibernate'), tokens, ctx)).toBe(true)
+  })
+
+  it('keeps structured operators ANDed across the OR', () => {
+    const tokens: QueryToken[] = [
+      { kind: 'tag', value: 'java', neg: false },
+      or,
+      text('quarkus'),
+      text('hibernate'),
+    ]
+    expect(matchesTokens(bm('Quarkus guide', ['t1']), tokens, ctx)).toBe(true)
+    // The tag is not part of the OR — losing it loses the bookmark.
+    expect(matchesTokens(bm('Quarkus guide'), tokens, ctx)).toBe(false)
+  })
+
+  it('applies wherever the mode token sits, and lets the last one win', () => {
+    const and: QueryToken = { kind: 'operator', key: 'match', value: 'and', neg: false }
+    expect(matchesTokens(bm('Quarkus guide'), [text('quarkus'), text('hibernate'), or], ctx)).toBe(
+      true,
+    )
+    expect(matchesTokens(bm('Quarkus guide'), [or, text('quarkus'), text('hibernate'), and], ctx))
+      .toBe(false)
+  })
+
+  it('keeps exclusions unconditional in OR mode', () => {
+    const tokens = [or, text('quarkus'), text('hibernate'), text('draft', true)]
+    expect(matchesTokens(bm('Quarkus guide'), tokens, ctx)).toBe(true)
+    // A positive term hit, but the exclusion still removes the bookmark.
+    expect(matchesTokens(bm('Quarkus guide draft'), tokens, ctx)).toBe(false)
+  })
+
+  it('constrains nothing when there are no free-text terms to combine', () => {
+    const tokens: QueryToken[] = [{ kind: 'tag', value: 'java', neg: false }, or]
+    expect(matchesTokens(bm('anything', ['t1']), tokens, ctx)).toBe(true)
+    expect(matchesTokens(bm('anything'), tokens, ctx)).toBe(false)
+  })
+
+  it('accepts and/or case-insensitively and flags anything else', () => {
+    for (const v of ['or', 'OR', 'and', 'And']) {
+      expect(isInvalidToken({ kind: 'operator', key: 'match', value: v, neg: false })).toBe(false)
+    }
+    expect(isInvalidToken({ kind: 'operator', key: 'match', value: 'xor', neg: false })).toBe(true)
+    expect(isInvalidToken({ kind: 'operator', key: 'match', value: '', neg: false })).toBe(true)
+    // A mode cannot be negated — flag it rather than guess what it means.
+    expect(isInvalidToken({ kind: 'operator', key: 'match', value: 'or', neg: true })).toBe(true)
+  })
+
+  it('tokenizes and round-trips the mode token', () => {
+    expect(tokenize('match:OR')).toEqual([
+      { kind: 'operator', key: 'match', value: 'OR', neg: false },
+    ])
+    const original: QueryToken[] = [{ kind: 'operator', key: 'match', value: 'or', neg: false }]
+    expect(tokenize(stringifyTokens(original))).toEqual(original)
   })
 })
 
@@ -623,11 +792,13 @@ describe('matchesTokens with created:', () => {
     ).toBe(false)
   })
 
-  it('unparseable date → no-op match-all (avoid silently hiding everything)', () => {
+  it('unparseable date is invalid syntax and matches nothing', () => {
     const b = bm(new Date(2026, 4, 16))
+    const token: QueryToken = { kind: 'operator', key: 'created', value: 'garbage', neg: false }
     expect(
       matchesTokens(b, [{ kind: 'operator', key: 'created', value: 'garbage', neg: false }], ctx),
-    ).toBe(true)
+    ).toBe(false)
+    expect(isInvalidToken(token)).toBe(true)
   })
 
   it('bookmark without entityInfo timestamp never matches a created: filter', () => {
@@ -639,5 +810,71 @@ describe('matchesTokens with created:', () => {
         ctx,
       ),
     ).toBe(false)
+  })
+})
+
+// `compileQuery` resolves everything query-side once so the per-bookmark path
+// never re-parses a value. The contract it must keep: same answers as
+// `matchesTokens`, and `invalid` agreeing with `isInvalidToken`.
+describe('compileQuery', () => {
+  const ctx: MatchContext = {
+    tagNamesById: new Map([['t1', 'java']]),
+    folderName: 'work',
+    ancestorFolderNames: new Set(['work']),
+    ancestorFolderIds: new Set(),
+  }
+  const bm = (url: string | null, title = 'x'): MatchableBookmark => ({
+    data: { title, url, description: null, tagIds: new Set() },
+  })
+
+  it('reports invalid syntax without needing a bookmark, and matches nothing', () => {
+    const compiled = compileQuery(tokenize('url:???'))
+    expect(compiled.invalid).toBe(true)
+    expect(compiled.matches(bm('https://example.com/a'), ctx)).toBe(false)
+  })
+
+  it('is not invalid for a well-formed query', () => {
+    expect(compileQuery(tokenize('url:https://example.com/a')).invalid).toBe(false)
+    expect(compileQuery([]).invalid).toBe(false)
+  })
+
+  it('reuses one compilation across many bookmarks', () => {
+    const compiled = compileQuery(tokenize('url:https://example.com/a'))
+    expect(compiled.matches(bm('https://example.com/a/'), ctx)).toBe(true)
+    expect(compiled.matches(bm('https://example.com/b'), ctx)).toBe(false)
+    expect(compiled.matches(bm(null), ctx)).toBe(false)
+    // …and stays stable when called again in any order.
+    expect(compiled.matches(bm('https://example.com/a'), ctx)).toBe(true)
+  })
+
+  it('agrees with matchesTokens on every form the grammar has', () => {
+    const queries = [
+      '#java',
+      '-#java',
+      'tag:java folder:work',
+      'under:work',
+      'note:hello',
+      'created:>today-30d',
+      'url:https://example.com/a',
+      'match:or quarkus hibernate',
+      'match:or quarkus -draft',
+      'bogus:"x y"',
+      'quarkus',
+    ]
+    const bookmarks = [
+      bm('https://example.com/a', 'Quarkus guide'),
+      bm('https://example.com/b', 'Hibernate draft'),
+      bm(null, 'java'),
+    ]
+    for (const q of queries) {
+      const tokens = tokenize(q)
+      const compiled = compileQuery(tokens)
+      for (const b of bookmarks) {
+        expect({ q, hit: compiled.matches(b, ctx) }).toEqual({
+          q,
+          hit: matchesTokens(b, tokens, ctx),
+        })
+      }
+    }
   })
 })
