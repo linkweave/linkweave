@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { isKnownOperator, KNOWN_OPERATORS_HINT, OPERATOR_DEFS } from './searchOperators'
 import {
   buildAncestorSets,
@@ -110,6 +110,19 @@ describe('tokenize', () => {
     expect(tokenize('-TODO:refactor')).toEqual([
       { kind: 'text', value: 'TODO:refactor', neg: true },
     ])
+  })
+
+  it('keeps a bare known key an operator so it can be flagged, not searched', () => {
+    // `folder:` is an operator the user has not finished typing. As free text
+    // it would search for the literal string "folder:", and as a folder filter
+    // with an empty value it would match every bookmark — both silent.
+    expect(tokenize('url:')).toEqual([{ kind: 'operator', key: 'url', value: '', neg: false }])
+    expect(tokenize('folder:')).toEqual([
+      { kind: 'operator', key: 'folder', value: '', neg: false },
+    ])
+    expect(tokenize('-match:')).toEqual([{ kind: 'operator', key: 'match', value: '', neg: true }])
+    // An unknown bare key stays free text, exactly as `bogus:value` does.
+    expect(tokenize('bogus:')).toEqual([{ kind: 'text', value: 'bogus:', neg: false }])
   })
 
   it('keeps an explicitly quoted unknown key an operator, so A2 can flag it', () => {
@@ -894,5 +907,71 @@ describe('KNOWN_OPERATORS_HINT', () => {
       if (entry === '#tag') continue
       expect(isKnownOperator(entry.replace(':', ''))).toBe(true)
     }
+  })
+})
+
+// A known key with no value is an incomplete operator (BR-070-2): flagged,
+// never a literal search and never a match-all.
+describe('isInvalidToken with an empty value', () => {
+  const ctx: MatchContext = {
+    tagNamesById: new Map(),
+    folderName: 'work',
+    ancestorFolderNames: new Set(['work']),
+    ancestorFolderIds: new Set(),
+  }
+  const b: MatchableBookmark = {
+    data: { title: 'anything', url: 'https://example.com/a', description: 'note', tagIds: new Set() },
+  }
+
+  for (const key of ['tag', 'folder', 'under', 'url', 'note', 'created', 'property', 'match']) {
+    it(`flags ${key}: with no value, and matches nothing`, () => {
+      const token: QueryToken = { kind: 'operator', key, value: '', neg: false }
+      expect(isInvalidToken(token)).toBe(true)
+      // The substring operators would otherwise test `includes('')` — true of
+      // every bookmark, which is the silent match-all BR-070-2 forbids.
+      expect(matchesTokens(b, [token], ctx)).toBe(false)
+      expect(matchesTokens(b, [{ ...token, neg: true }], ctx)).toBe(false)
+    })
+  }
+})
+
+// `today` belongs to the day the match runs, not the day the query compiled.
+describe('compileQuery and relative dates', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const ctx: MatchContext = {
+    tagNamesById: new Map(),
+    folderName: null,
+    ancestorFolderNames: new Set(),
+    ancestorFolderIds: new Set(),
+  }
+  const createdAt = (d: Date): MatchableBookmark => ({
+    data: { title: 'x', url: null, description: null, tagIds: new Set() },
+    entityInfo: { timestampErstellt: d },
+  })
+
+  it('re-resolves `today` once the calendar day turns', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 8, 2, 23, 59))
+    const compiled = compileQuery(tokenize('created:today'))
+    const justAfterMidnight = createdAt(new Date(2026, 8, 3, 0, 30))
+    expect(compiled.matches(justAfterMidnight, ctx)).toBe(false) // still the 2nd
+
+    vi.setSystemTime(new Date(2026, 8, 3, 0, 31))
+    // Same compiled query, new day: the bookmark created at 00:30 is "today".
+    expect(compiled.matches(justAfterMidnight, ctx)).toBe(true)
+    expect(compiled.matches(createdAt(new Date(2026, 8, 2, 12, 0)), ctx)).toBe(false)
+  })
+
+  it('leaves an absolute date pinned across midnight', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 8, 2, 23, 59))
+    const compiled = compileQuery(tokenize('created:2026-09-02'))
+    const onTheSecond = createdAt(new Date(2026, 8, 2, 12, 0))
+    expect(compiled.matches(onTheSecond, ctx)).toBe(true)
+    vi.setSystemTime(new Date(2026, 8, 3, 0, 31))
+    expect(compiled.matches(onTheSecond, ctx)).toBe(true)
   })
 })

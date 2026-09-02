@@ -139,6 +139,7 @@ Which of the two remedies applies is decided by **quoting**, because the colon i
 | `Bug:123`, `localhost:5173/x`, `https://example.com/a`, `mailto:a@b` | **Free text** | An unquoted unknown key is a search term that happens to contain a colon. Voiding the query would make ordinary searches unusable, and a bare absolute URL is a free-text term, never an operator. |
 | `bogus:"x y"` | **Invalid syntax (A2)** | Quoting a value is deliberate operator shape; nobody types it meaning a literal string, so it earns the flag. |
 | `url:???`, `created:banana`, `property:=draft` | **Invalid syntax (A2)** | A *known* operator whose value does not parse is genuinely malformed. |
+| `url:`, `folder:`, `match:` (no value) | **Invalid syntax (A2)** | A known key with nothing after the colon is an operator the user has not finished typing. The two alternatives are both silent: searching for the literal text `folder:`, or testing `includes('')` — true of every bookmark. An unknown bare key (`bogus:`) stays free text, like any other unknown key. |
 
 Consequence: a known operator keeps its meaning even when the value looks URL-shaped — `note://internal` searches notes for `//internal`, and `folder:"//shared"` survives a `stringifyTokens` → `tokenize` round trip.
 

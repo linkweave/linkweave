@@ -12,7 +12,7 @@
 
 import { normalizeUrl, parseAbsoluteUrl } from './url'
 import { isKnownOperator } from './searchOperators'
-import { matchesCreated, parseCreatedValue } from './searchQueryCreated'
+import { matchesCreated, type ParsedCreated, parseCreatedValue } from './searchQueryCreated'
 import { matchesPropertyToken, parsePropertyValue, type PropertyDef } from './searchQueryProperty'
 // Re-export the operator-specific helpers so existing callers
 // (`@/lib/searchQuery`) keep working — each grammar lives in its own file
@@ -110,7 +110,7 @@ export function buildAncestorSets(
 // tokenizer) working. The output token never re-quotes — `stringifyTokens`
 // always emits double-quoted form.
 const TOKEN_RE =
-  /(-)?(?:#"((?:[^"\\]|\\.)*)"|#'([^']*)'|#([\w-]+)|([a-z]+):"((?:[^"\\]|\\.)*)"|([a-z]+):'([^']*)'|([a-z]+):(\S+)|"((?:[^"\\]|\\.)*)"|'([^']*)'|(\S+))/gi
+  /(-)?(?:#"((?:[^"\\]|\\.)*)"|#'([^']*)'|#([\w-]+)|([a-z]+):"((?:[^"\\]|\\.)*)"|([a-z]+):'([^']*)'|([a-z]+):(\S*)|"((?:[^"\\]|\\.)*)"|'([^']*)'|(\S+))/gi
 
 // Inside the double-quoted form a `\` escapes the next character, so a value
 // may carry a literal `"` (common in pasted URLs). Inverse of `quoteIfNeeded`;
@@ -166,6 +166,11 @@ export function tokenize(query: string): QueryToken[] {
       // rather than a silent literal search. Known keys also stay operators,
       // which is what keeps `note://internal` a note search (and keeps
       // `folder:"//shared"` round-tripping through `stringifyTokens`).
+      //
+      // The value may be empty: `folder:` is an operator the user has not
+      // finished typing, and it is flagged as such (`isInvalidToken`). Reading
+      // it as the literal text "folder:" instead would search for a string
+      // nobody means, with no hint that the operator never took effect.
       if (!isKnownOperator(opKey)) {
         tokens.push({ kind: 'text', value: `${opKey}:${opVal}`, neg })
       } else {
@@ -299,10 +304,31 @@ type Predicate = (b: MatchableBookmark, ctx: MatchContext) => boolean
 // bar and the results can never disagree.
 const NEVER: Predicate = () => false
 
+// `today` is relative to the day the match runs, not the day the query was
+// compiled — a tab left open past midnight must not keep filtering on
+// yesterday. Only the *day* is re-resolved, and only once the calendar day has
+// actually turned, so the parse still happens once per query. (The list has to
+// re-evaluate for the rollover to be visible; this makes it correct when it
+// does, rather than pinning the compile-time day forever.)
+const RELATIVE_VALUE_RE = /today/i
+
+function nextLocalMidnight(): number {
+  const d = new Date()
+  d.setHours(24, 0, 0, 0)
+  return d.getTime()
+}
+
 function prepareCreated(value: string): Predicate {
-  const parsed = parseCreatedValue(value)
-  if (!parsed) return NEVER
+  const initial = parseCreatedValue(value)
+  if (!initial) return NEVER
+  let parsed: ParsedCreated = initial
+  const relative = RELATIVE_VALUE_RE.test(value)
+  let staleAfter = relative ? nextLocalMidnight() : Number.POSITIVE_INFINITY
   return (b) => {
+    if (Date.now() >= staleAfter) {
+      parsed = parseCreatedValue(value) ?? parsed
+      staleAfter = nextLocalMidnight()
+    }
     const createdAt = b.entityInfo?.timestampErstellt
     if (!createdAt) return false // a bookmark with no timestamp can't satisfy a date filter
     return matchesCreated(createdAt instanceof Date ? createdAt : new Date(createdAt), parsed)
@@ -477,6 +503,11 @@ export function isInvalidToken(t: QueryToken): boolean {
   if (t.kind !== 'operator') return false
   const key = t.key.toLowerCase()
   if (!isKnownOperator(key)) return true
+  // A known key with no value is an incomplete operator. Flagging it beats
+  // both alternatives: matching the literal text `folder:`, or testing
+  // `includes('')` — which is true of every bookmark, the silent match-all
+  // BR-070-2 exists to prevent.
+  if (t.value === '') return true
   if (key === 'url') return parseAbsoluteUrl(t.value) === null
   if (key === 'created') return parseCreatedValue(t.value) === null
   if (key === 'property') return parsePropertyValue(t.value) === null

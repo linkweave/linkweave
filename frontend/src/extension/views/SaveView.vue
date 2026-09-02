@@ -4,7 +4,7 @@ import FolderSelectLw from '@/components/ui/FolderSelectLw.vue'
 import { useDuplicateCheck } from '@/composables/useDuplicateCheck'
 import { useTagSuggestions } from '@/composables/useTagSuggestions'
 import { preventImplicitSubmit } from '@/lib/implicitSubmit'
-import { ensureUrlProtocol } from '@/lib/url'
+import { ensureUrlProtocol, parseAbsoluteUrl } from '@/lib/url'
 import { computed, ref, watch } from 'vue'
 import TagSelect from '../components/TagSelect.vue'
 import { useExtensionStore } from '../stores/extension'
@@ -102,6 +102,12 @@ function onUrlBlur() {
 
 async function save() {
   if (!collectionId.value || !title.value.trim() || !effectiveUrl.value.trim()) return
+  // Mirrors the backend's URL parse: rejects values like `https://two words`
+  // that `URI.create` blows up on (URISyntaxException), before they reach the API.
+  if (!parseAbsoluteUrl(effectiveUrl.value)) {
+    error.value = 'Please enter a valid URL.'
+    return
+  }
   saving.value = true
   error.value = null
   try {

@@ -8,7 +8,10 @@
 //   today                 today
 //   today-N[dwy]?         N days/weeks/years ago; `d` is the default unit
 //
-// `today` resolves at match time so a long-lived tab eventually rolls over.
+// `today` is resolved against the `now` passed to `parseCreatedValue`, which
+// defaults to the current time. The matcher re-resolves a relative value once
+// the calendar day turns (see `prepareCreated`), so a long-lived tab does not
+// keep filtering on the day the query was typed.
 // Unparseable values fall back to `null` from `parseCreatedValue`; the matcher
 // then treats the token as invalid syntax — flagged in the search bar and
 // matched as false — so a typo can never silently return the unfiltered list.

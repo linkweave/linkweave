@@ -219,7 +219,8 @@ test.describe('FR-072 Search Autocomplete', () => {
     page,
   }) => {
     // ARRANGE — `match:` is prefix-discoverable, so the dropdown has to be able
-    // to finish the token: a bare `match:` is invalid syntax (UC-070 A2/BR-081).
+    // to finish the token: an operator with no value yet, or a half-typed mode,
+    // is invalid syntax (UC-070 A2/BR-081).
     const input = headerInput(page)
     await input.click()
 
@@ -230,12 +231,14 @@ test.describe('FR-072 Search Autocomplete', () => {
 
     // ACT — …and the bare operator offers the closed set of modes.
     await input.fill('match:')
-    // ASSERT
+    // ASSERT — the operator is incomplete, so it is flagged while it stands.
     await expect(dropdown(page)).toBeVisible()
     await expect(items(page).filter({ hasText: 'and' })).toBeVisible()
     await expect(items(page).filter({ hasText: 'or' })).toBeVisible()
+    await expect(input).toHaveClass(/border-destructive/)
+    await expect(input).toHaveAttribute('aria-invalid', 'true')
 
-    // ACT — a half-typed mode is a real operator token, so it is flagged…
+    // ACT — so is a half-typed mode.
     await input.fill('match:o')
     // ASSERT
     await expect(input).toHaveClass(/border-destructive/)

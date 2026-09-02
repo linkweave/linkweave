@@ -35,6 +35,15 @@ describe('bookmarkSaveSchema', () => {
     expect(() => bookmarkSaveSchema(t).parse({ ...valid, url: 'not-a-url' })).toThrow()
   })
 
+  it('should reject url with spaces in the authority', () => {
+    // Chromium's `new URL` percent-encodes these into the host and zod's
+    // `.url()` would accept them — the backend's `URI.create` throws.
+    // Must be rejected regardless of the JS runtime (UC: bookmark url guard).
+    expect(() =>
+      bookmarkSaveSchema(t).parse({ ...valid, url: 'https://eSAD - Application BS - PROD' }),
+    ).toThrow()
+  })
+
   it('should reject url without http/https', () => {
     expect(() => bookmarkSaveSchema(t).parse({ ...valid, url: 'ftp://example.com' })).toThrow()
   })
