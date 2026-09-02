@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './ai-tagging-update-json';
 export * from './api-key-create-json';
 export * from './api-key-json';
 export * from './api-key-list-json';
@@ -65,6 +66,8 @@ export * from './saved-search-save-json';
 export * from './sort-direction';
 export * from './sort-field';
 export * from './suggest-tags-json';
+export * from './suggested-tags-result-json';
+export * from './suggestion-status-json';
 export * from './tag-json';
 export * from './tag-list-json';
 export * from './tag-save-json';

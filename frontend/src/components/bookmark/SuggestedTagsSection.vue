@@ -8,7 +8,7 @@ import { compileCustomRules, suggestAllTagNames } from '@/lib/tag-suggester'
 import { useAutoTagRuleStore } from '@/stores/autoTagRule'
 import { useNotificationStore } from '@/stores/notification'
 import { useTagStore } from '@/stores/tag'
-import { Check, Cloud, RefreshCw, ShieldCheck, Sparkles, Zap } from '@lucide/vue'
+import { Check, Cloud, CloudOff, Loader, RefreshCw, ShieldCheck, Sparkles, Zap } from '@lucide/vue'
 import { computed, ref, toRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -42,8 +42,17 @@ const titleRef = toRef(props, 'title')
 const descriptionRef = toRef(props, 'description')
 const collectionIdRef = toRef(props, 'collectionId')
 
-const { aiState, aiSuggestions, provider, warmUp, regenerate, retrieve, markHandled, reset } =
-  useAiTagSuggestions({
+const {
+  aiState,
+  aiSuggestions,
+  provider,
+  aiEnabled,
+  warmUp,
+  regenerate,
+  retrieve,
+  markHandled,
+  reset,
+} = useAiTagSuggestions({
     collectionId: collectionIdRef,
     title: titleRef,
     url: urlRef,
@@ -127,6 +136,20 @@ const hasAnySuggestion = computed(
   () => groups.value.rules.length > 0 || groups.value.ai.length > 0,
 )
 
+/**
+ * With AI on, the section always renders — it owns the idle "Suggest tags with
+ * AI" affordance and the collapsed pill.
+ *
+ * With AI off (UC-112 BR-112-7) it has only rule suggestions to offer, so it
+ * renders only when there are some and the user has not dismissed them. Without
+ * the `collapsed` clause, dismissing would fall through to the panel and undo
+ * itself; without the rules clause, a URL no rule matches would leave a header
+ * and a footnote wrapped around nothing.
+ */
+const sectionVisible = computed(
+  () => aiEnabled.value || (aiState.value !== 'collapsed' && groups.value.rules.length > 0),
+)
+
 // --- Accept / dismiss state ---
 const applying = ref(false)
 const justApplied = ref(false)
@@ -195,7 +218,7 @@ function onRetrieve() {
 </script>
 
 <template>
-  <div data-testid="suggested-tags-section" class="ai-suggest">
+  <div v-if="sectionVisible" data-testid="suggested-tags-section" class="ai-suggest">
     <!-- Collapsed: slim retrieve pill -->
     <button
       v-if="aiState === 'collapsed'"
@@ -218,7 +241,7 @@ function onRetrieve() {
           {{ t('bookmark.suggestedTags') }}
           <span v-if="selectedCount > 0" class="ai-count">{{ selectedCount }}</span>
         </span>
-        <span v-if="providerLabel" class="ai-privacy">
+        <span v-if="aiEnabled && providerLabel" class="ai-privacy">
           <ShieldCheck v-if="provider?.onDevice" :size="12" />
           <Cloud v-else :size="12" />
           {{ providerLabel }}
@@ -248,8 +271,15 @@ function onRetrieve() {
         </div>
       </div>
 
-      <!-- AI suggestions -->
-      <div class="ai-group">
+      <!--
+        AI suggestions. Absent entirely when the feature is off for this
+        collection or this installation (UC-112 BR-112-7) — no heading, no
+        placeholder, no explanation. There is nothing to retry and nothing to
+        wait for, and a standing notice about a feature someone deliberately
+        switched off is clutter in a dialog people pass through all day. Rule
+        suggestions above are untouched.
+      -->
+      <div v-if="aiEnabled" class="ai-group" data-testid="ai-suggestions-group">
         <div class="ai-group-head">
           <span class="ai-group-label ai-group-label--ai">{{ t('bookmark.aiSuggestionsGroup') }}</span>
           <button
@@ -291,7 +321,7 @@ function onRetrieve() {
           <p class="ai-idle-hint">{{ t('bookmark.aiHint') }}</p>
         </div>
 
-        <!-- empty -->
+        <!-- empty: the model answered and had nothing to propose -->
         <div v-else-if="aiState === 'empty'" class="ai-empty" data-testid="ai-empty">
           <span>{{ t('bookmark.aiEmpty') }}</span>
           <button
@@ -303,6 +333,39 @@ function onRetrieve() {
             <RefreshCw :size="11" />
             {{ t('bookmark.retry') }}
           </button>
+        </div>
+
+        <!--
+          Unavailable: the model never answered (UC-108 BR-108-5). Deliberately
+          not the empty state — the two used to look identical, so a stalled
+          model read as one with no ideas and the user kept re-typing at it. One
+          quiet line, no error dialog, and a retry the user has to choose: an
+          automatic one would just re-queue work onto a service already known to
+          be struggling.
+        -->
+        <div v-else-if="aiState === 'unavailable'" class="ai-degraded" data-testid="ai-unavailable">
+          <span class="ai-degraded-line">
+            <CloudOff :size="12" aria-hidden="true" />
+            {{ t('bookmark.aiUnavailable') }}
+          </span>
+          <span class="ai-degraded-hint">{{ t('bookmark.aiUnavailableHint') }}</span>
+          <button
+            type="button"
+            class="ai-regen"
+            data-testid="ai-retry-unavailable"
+            @click="regenerate"
+          >
+            <RefreshCw :size="11" />
+            {{ t('bookmark.retry') }}
+          </button>
+        </div>
+
+        <!-- Preparing: a model download is running; the feature returns by itself. -->
+        <div v-else-if="aiState === 'preparing'" class="ai-degraded" data-testid="ai-preparing">
+          <span class="ai-degraded-line">
+            <Loader :size="12" aria-hidden="true" />
+            {{ t('bookmark.aiPreparing') }}
+          </span>
         </div>
 
         <!-- ok: chips -->
@@ -326,7 +389,7 @@ function onRetrieve() {
         </div>
       </div>
 
-      <p class="ai-foot-note">{{ t('bookmark.aiFootnote') }}</p>
+      <p v-if="aiEnabled" class="ai-foot-note">{{ t('bookmark.aiFootnote') }}</p>
 
       <footer v-if="hasAnySuggestion" class="ai-foot">
         <button type="button" class="ai-dismiss" data-testid="dismiss-suggestions-btn" @click="dismiss">
@@ -580,6 +643,29 @@ function onRetrieve() {
   margin-top: 6px;
   font-size: 12px;
   color: var(--color-muted-foreground);
+}
+
+/*
+ * Degraded states read as quieter than the empty state, not louder: nothing the
+ * user did caused this and there is nothing they must do about it.
+ */
+.ai-degraded {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--color-muted-foreground);
+}
+.ai-degraded-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.ai-degraded-hint {
+  font-size: 11px;
+  opacity: 0.85;
 }
 
 .ai-foot-note {

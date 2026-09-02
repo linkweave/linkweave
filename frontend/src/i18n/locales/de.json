@@ -25,7 +25,11 @@
     "sectionProperties": "Eigenschaften",
     "sectionPropertiesHint": "Wo definierte Eigenschaften in der UI erscheinen. Auf diesem Gerät gespeichert.",
     "localPersistedHint": "Diese Einstellungen werden lokal auf diesem Gerät gespeichert.",
-    "openSettings": "Sammlungseinstellungen"
+    "openSettings": "Sammlungseinstellungen",
+    "sectionAiTagging": "KI-TAG-VORSCHLÄGE",
+    "aiTaggingToggle": "Tags per KI vorschlagen",
+    "aiTaggingToggleDesc": "Das Modell schlägt Tags aus den vorhandenen Tags dieser Sammlung vor.",
+    "aiTaggingHint": "Gilt für alle Nutzer dieser Sammlung. Wenn deaktiviert, werden keine Lesezeichen-Texte aus dieser Sammlung an das Modell gesendet. Deine Tag-Regeln und manuelle Tags bleiben unberührt."
   },
   "property": {
     "badgesToggle": "Badges auf Karten anzeigen",
@@ -383,6 +387,9 @@
     "suggestWithAi": "Tags mit KI vorschlagen",
     "aiHint": "Lass das lokale Modell Tags aus deiner Sammlung vorschlagen.",
     "aiEmpty": "Keine eindeutigen Treffer.",
+    "aiUnavailable": "Tag-Vorschläge sind derzeit nicht verfügbar.",
+    "aiUnavailableHint": "Deine Regeln und manuellen Tags funktionieren weiterhin.",
+    "aiPreparing": "Modell wird vorbereitet – Vorschläge erscheinen in Kürze.",
     "aiGenerating": "Vorschläge werden generiert…",
     "retrieveSuggestions": "Tags vorschlagen",
     "aiFootnote": "Es werden nur vorhandene Sammlungs-Tags vorgeschlagen – nichts Neues wird erstellt. Deine manuellen Tags bleiben erhalten.",

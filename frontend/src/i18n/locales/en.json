@@ -25,7 +25,11 @@
     "sectionProperties": "Properties",
     "sectionPropertiesHint": "Where defined properties appear in the UI. Persisted on this device.",
     "localPersistedHint": "These preferences are saved locally on this device.",
-    "openSettings": "Collection settings"
+    "openSettings": "Collection settings",
+    "sectionAiTagging": "AI TAG SUGGESTIONS",
+    "aiTaggingToggle": "Suggest tags with AI",
+    "aiTaggingToggleDesc": "Let the model propose tags from this collection's existing tags.",
+    "aiTaggingHint": "Applies to everyone using this collection. When off, no bookmark text from this collection is sent to the model. Your tag rules and manual tagging are unaffected."
   },
   "property": {
     "badgesToggle": "Show badges on cards",
@@ -383,6 +387,9 @@
     "suggestWithAi": "Suggest tags with AI",
     "aiHint": "Let the on-device model propose tags from your collection.",
     "aiEmpty": "No confident matches.",
+    "aiUnavailable": "Tag suggestions are unavailable right now.",
+    "aiUnavailableHint": "Your rules and manual tags still work as usual.",
+    "aiPreparing": "Preparing the model — suggestions will appear shortly.",
     "aiGenerating": "Generating suggestions…",
     "retrieveSuggestions": "Suggest tags",
     "aiFootnote": "Only existing collection tags are suggested — nothing new is created. Your manual tags are kept.",

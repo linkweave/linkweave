@@ -41,6 +41,12 @@ public class CollectionBuilder {
     }
 
     @NonNull
+    public CollectionBuilder withAiTaggingEnabled(boolean enabled) {
+        collection.setAiTaggingEnabled(enabled);
+        return this;
+    }
+
+    @NonNull
     public CollectionBuilder withBrowserFetchAllowlist(String browserFetchAllowlist) {
         collection.setBrowserFetchAllowlist(browserFetchAllowlist);
         return this;

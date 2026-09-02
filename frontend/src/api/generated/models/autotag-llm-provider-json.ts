@@ -37,6 +37,24 @@ export interface AutotagLLMProviderJson {
      * @memberof AutotagLLMProviderJson
      */
     onDevice: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof AutotagLLMProviderJson
+     */
+    enabled: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof AutotagLLMProviderJson
+     */
+    autoFire: boolean;
+    /**
+     * 
+     * @type {number}
+     * @memberof AutotagLLMProviderJson
+     */
+    suggestTimeoutMs: number;
 }
 
 /**
@@ -46,6 +64,9 @@ export function instanceOfAutotagLLMProviderJson(value: object): value is Autota
     if (!('provider' in value) || value['provider'] === undefined) return false;
     if (!('model' in value) || value['model'] === undefined) return false;
     if (!('onDevice' in value) || value['onDevice'] === undefined) return false;
+    if (!('enabled' in value) || value['enabled'] === undefined) return false;
+    if (!('autoFire' in value) || value['autoFire'] === undefined) return false;
+    if (!('suggestTimeoutMs' in value) || value['suggestTimeoutMs'] === undefined) return false;
     return true;
 }
 
@@ -62,6 +83,9 @@ export function AutotagLLMProviderJsonFromJSONTyped(json: any, ignoreDiscriminat
         'provider': json['provider'],
         'model': json['model'],
         'onDevice': json['onDevice'],
+        'enabled': json['enabled'],
+        'autoFire': json['autoFire'],
+        'suggestTimeoutMs': json['suggestTimeoutMs'],
     };
 }
 
@@ -79,6 +103,9 @@ export function AutotagLLMProviderJsonToJSONTyped(value?: AutotagLLMProviderJson
         'provider': value['provider'],
         'model': value['model'],
         'onDevice': value['onDevice'],
+        'enabled': value['enabled'],
+        'autoFire': value['autoFire'],
+        'suggestTimeoutMs': value['suggestTimeoutMs'],
     };
 }
 

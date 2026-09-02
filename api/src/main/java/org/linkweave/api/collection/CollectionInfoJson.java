@@ -23,6 +23,8 @@ public class CollectionInfoJson {
     @NotNull @NonNull String name;
     @Nullable String browserFetchAllowlist;
     @Schema(required = true) boolean screenshotEnabled;
+    /** Per-collection opt-out for LLM tag suggestions (UC-112); true unless a member turned it off. */
+    @Schema(required = true) boolean aiTaggingEnabled;
     @NotNull @NonNull List<BookmarkJson> bookmarks;
     @NotNull @NonNull List<TagJson> tags;
     @NotNull @NonNull List<FolderJson> folders;
@@ -34,6 +36,7 @@ public class CollectionInfoJson {
         @NotNull @NonNull String name,
         @Nullable String browserFetchAllowlist,
         boolean screenshotEnabled,
+        boolean aiTaggingEnabled,
         @NonNull List<BookmarkJson> bookmarks,
         @NonNull List<FolderJson> folders,
         @NonNull List<TagJson> tags,
@@ -44,6 +47,7 @@ public class CollectionInfoJson {
         this.name = name;
         this.browserFetchAllowlist = browserFetchAllowlist;
         this.screenshotEnabled = screenshotEnabled;
+        this.aiTaggingEnabled = aiTaggingEnabled;
         this.folders = folders;
         this.bookmarks = bookmarks;
         this.tags = tags;

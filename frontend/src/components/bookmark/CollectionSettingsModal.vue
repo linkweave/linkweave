@@ -109,6 +109,29 @@ watch(
   { immediate: true },
 )
 
+// --- AI tag suggestions (UC-112 / FR-105) ------------------------------------
+// A backend collection property like `screenshotEnabled`, but changeable by any
+// member with access rather than owner-or-admin (BR-112-5), so it lives on the
+// Display tab that every member can reach rather than the owner-only Preview
+// tab. Turning it off is a withdrawal of consent for the collection's contents
+// to be sent to a model; anyone whose bookmarks are in it can make that call.
+const aiTaggingEnabled = ref(true)
+watch(
+  () => collectionStore.collectionInfo?.aiTaggingEnabled,
+  (v) => {
+    aiTaggingEnabled.value = v ?? true
+  },
+  { immediate: true },
+)
+
+async function onToggleAiTagging(value: boolean) {
+  const id = collectionStore.currentCollectionId
+  if (!id) return
+  aiTaggingEnabled.value = value // optimistic
+  const ok = await collectionStore.updateAiTagging(id, value)
+  if (!ok) aiTaggingEnabled.value = !value // revert on failure
+}
+
 async function onToggleScreenshot(value: boolean) {
   const id = collectionStore.currentCollectionId
   const info = collectionStore.collectionInfo
@@ -488,6 +511,33 @@ function optionsPreview(allowedValues: string | undefined): string {
         </div>
         <p class="text-xs text-muted-foreground mt-2">
           {{ t('collectionSettings.localPersistedHint') }}
+        </p>
+      </section>
+
+      <section>
+        <div
+          class="text-[11px] font-semibold uppercase tracking-[.06em] text-muted-foreground mb-2"
+        >
+          {{ t('collectionSettings.sectionAiTagging') }}
+        </div>
+        <div
+          class="flex items-center justify-between gap-3 px-2.5 py-2 rounded-md bg-secondary/60"
+        >
+          <div class="min-w-0">
+            <div class="text-sm font-medium">{{ t('collectionSettings.aiTaggingToggle') }}</div>
+            <div class="text-xs text-muted-foreground mt-0.5">
+              {{ t('collectionSettings.aiTaggingToggleDesc') }}
+            </div>
+          </div>
+          <SwitchLw
+            :model-value="aiTaggingEnabled"
+            :aria-label="t('collectionSettings.aiTaggingToggle')"
+            data-testid="toggle-ai-tagging"
+            @update:model-value="onToggleAiTagging"
+          />
+        </div>
+        <p class="text-xs text-muted-foreground mt-2">
+          {{ t('collectionSettings.aiTaggingHint') }}
         </p>
       </section>
     </div>

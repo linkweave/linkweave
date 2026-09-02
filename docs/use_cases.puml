@@ -130,7 +130,8 @@ rectangle "LinkWeave Bookmark Manager" {
     rectangle "Auto-Tagging" {
         usecase "UC-045\nAuto-Tag Bookmark\nby URL Pattern" as UC045 <<implemented>>
         usecase "UC-097\nAuto-Tag Bookmark\nwith Local LLM" as UC097 <<implemented>>
-        usecase "UC-108\nDegrade Gracefully When\nTag Model Stalls" as UC108
+        usecase "UC-108\nDegrade Gracefully When\nTag Model Stalls" as UC108 <<implemented>>
+        usecase "UC-112\nDisable AI Tag Suggestions\nper Collection" as UC112 <<implemented>>
     }
 
     rectangle "Favicons" {
@@ -439,6 +440,8 @@ end note
 user --> UC108
 operator --> UC108
 UC108 ..> UC097 : <<extend>>
+user --> UC112
+UC112 ..> UC097 : <<extend>>
 
 user --> UC109
 operator --> UC109

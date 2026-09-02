@@ -25,7 +25,11 @@
     "sectionProperties": "Propriétés",
     "sectionPropertiesHint": "Où les propriétés définies apparaissent dans lʼinterface. Conservé sur cet appareil.",
     "localPersistedHint": "Ces préférences sont enregistrées localement sur cet appareil.",
-    "openSettings": "Paramètres de la collection"
+    "openSettings": "Paramètres de la collection",
+    "sectionAiTagging": "SUGGESTIONS DE TAGS IA",
+    "aiTaggingToggle": "Suggérer des tags avec l'IA",
+    "aiTaggingToggleDesc": "Le modèle propose des tags parmi ceux déjà présents dans cette collection.",
+    "aiTaggingHint": "S'applique à tous les utilisateurs de cette collection. Une fois désactivé, aucun texte de favori de cette collection n'est envoyé au modèle. Vos règles de tags et vos tags manuels ne sont pas affectés."
   },
   "property": {
     "badgesToggle": "Afficher les badges sur les cartes",
@@ -383,6 +387,9 @@
     "suggestWithAi": "Suggérer des tags avec l'IA",
     "aiHint": "Laissez le modèle local proposer des tags de votre collection.",
     "aiEmpty": "Aucune correspondance fiable.",
+    "aiUnavailable": "Les suggestions de tags sont indisponibles pour le moment.",
+    "aiUnavailableHint": "Vos règles et vos tags manuels fonctionnent normalement.",
+    "aiPreparing": "Préparation du modèle — les suggestions arriveront sous peu.",
     "aiGenerating": "Génération des suggestions…",
     "retrieveSuggestions": "Suggérer des tags",
     "aiFootnote": "Seuls les tags existants de la collection sont suggérés — rien de nouveau n'est créé. Vos tags manuels sont conservés.",

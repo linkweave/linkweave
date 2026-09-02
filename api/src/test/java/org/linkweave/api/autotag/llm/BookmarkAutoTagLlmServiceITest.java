@@ -18,6 +18,9 @@ import org.junit.jupiter.api.Test;
 @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
 class BookmarkAutoTagLlmServiceITest {
 
+    /** Concurrency scope (UC-108 BR-108-9); not under test here. */
+    private static final String SCOPE = "user-1:collection-1";
+
     @Inject
     BookmarkAutoTagLlmService service;
 
@@ -42,13 +45,16 @@ class BookmarkAutoTagLlmServiceITest {
         // Model returns two valid tags (reversed order) plus a hallucinated one.
         fake.namesToReturn = List.of("databases", "not-a-real-tag", "rust");
 
-        List<Tag> result = service.suggestTags(
-            collection.getId(), "Async Rust patterns", "https://example.com/rust", "blog post");
+        SuggestionResult result = service.suggestTags(
+            collection.getId(), "Async Rust patterns", "https://example.com/rust", "blog post", SCOPE);
 
-        Assertions.assertThat(result)
+        Assertions.assertThat(result.tags())
             .as("only existing tags, in the model's order, hallucinated name dropped")
             .extracting(Tag::getName)
             .containsExactly("databases", "rust");
+        Assertions.assertThat(result.outcome())
+            .as("a model that answered with usable tags reports OK")
+            .isEqualTo(SuggestionOutcome.OK);
         Assertions.assertThat(fake.lastVocabulary)
             .as("the full collection vocabulary is offered to the model")
             .containsExactlyInAnyOrder("rust", "databases", "career");
@@ -59,10 +65,13 @@ class BookmarkAutoTagLlmServiceITest {
         Collection collection = fixtureService.createTestCollection();
         fake.namesToReturn = List.of("rust");
 
-        List<Tag> result = service.suggestTags(
-            collection.getId(), "Title", "https://example.com", null);
+        SuggestionResult result = service.suggestTags(
+            collection.getId(), "Title", "https://example.com", null, SCOPE);
 
-        Assertions.assertThat(result).isEmpty();
+        Assertions.assertThat(result.tags()).isEmpty();
+        Assertions.assertThat(result.outcome())
+            .as("nothing to choose from is EMPTY, not a degraded feature (BR-108-5)")
+            .isEqualTo(SuggestionOutcome.EMPTY);
         Assertions.assertThat(fake.suggestCalled)
             .as("no vocabulary → no model call")
             .isFalse();
@@ -70,7 +79,7 @@ class BookmarkAutoTagLlmServiceITest {
 
     @Test
     void shouldReturnActiveProviderAndPreloadModelOnWarmUp() throws InterruptedException {
-        AutotagLLMProviderJson info = service.warmUp();
+        AutotagLLMProviderJson info = service.warmUp(true);
 
         Assertions.assertThat(info.getProvider()).isEqualTo("ollama");
         Assertions.assertThat(info.getModel()).isEqualTo("gemma2:2b");

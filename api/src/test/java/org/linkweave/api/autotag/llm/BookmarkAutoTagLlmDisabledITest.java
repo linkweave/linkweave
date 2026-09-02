@@ -25,6 +25,9 @@ import org.junit.jupiter.api.Test;
 @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
 class BookmarkAutoTagLlmDisabledITest {
 
+    /** Concurrency scope (UC-108 BR-108-9); not under test here. */
+    private static final String SCOPE = "user-1:collection-1";
+
     @Inject
     BookmarkAutoTagLlmService service;
 
@@ -45,10 +48,13 @@ class BookmarkAutoTagLlmDisabledITest {
         fixtureService.persistTag(b -> b.withCollection(collection).withName("rust"));
         fake.namesToReturn = List.of("rust");
 
-        List<Tag> result = service.suggestTags(
-            collection.getId(), "Async Rust", "https://example.com/rust", null);
+        SuggestionResult result = service.suggestTags(
+            collection.getId(), "Async Rust", "https://example.com/rust", null, SCOPE);
 
-        Assertions.assertThat(result).isEmpty();
+        Assertions.assertThat(result.tags()).isEmpty();
+        Assertions.assertThat(result.outcome())
+            .as("a switched-off feature says so rather than looking like an empty answer")
+            .isEqualTo(SuggestionOutcome.DISABLED);
         Assertions.assertThat(fake.suggestCalled)
             .as("disabled feature must not call the model")
             .isFalse();
@@ -56,7 +62,7 @@ class BookmarkAutoTagLlmDisabledITest {
 
     @Test
     void shouldNotWarmUpWhenFeatureDisabled() {
-        service.warmUp();
+        service.warmUp(true);
 
         Assertions.assertThat(fake.warmUpCalled).isFalse();
     }

@@ -81,6 +81,12 @@ export interface CollectionInfoJson {
     screenshotEnabled: boolean;
     /**
      * 
+     * @type {boolean}
+     * @memberof CollectionInfoJson
+     */
+    aiTaggingEnabled: boolean;
+    /**
+     * 
      * @type {Array<BookmarkJson>}
      * @memberof CollectionInfoJson
      */
@@ -118,6 +124,7 @@ export function instanceOfCollectionInfoJson(value: object): value is Collection
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('screenshotEnabled' in value) || value['screenshotEnabled'] === undefined) return false;
+    if (!('aiTaggingEnabled' in value) || value['aiTaggingEnabled'] === undefined) return false;
     if (!('bookmarks' in value) || value['bookmarks'] === undefined) return false;
     if (!('tags' in value) || value['tags'] === undefined) return false;
     if (!('folders' in value) || value['folders'] === undefined) return false;
@@ -140,6 +147,7 @@ export function CollectionInfoJsonFromJSONTyped(json: any, ignoreDiscriminator: 
         'name': json['name'],
         'browserFetchAllowlist': json['browserFetchAllowlist'] == null ? undefined : json['browserFetchAllowlist'],
         'screenshotEnabled': json['screenshotEnabled'],
+        'aiTaggingEnabled': json['aiTaggingEnabled'],
         'bookmarks': ((json['bookmarks'] as Array<any>).map(BookmarkJsonFromJSON)),
         'tags': ((json['tags'] as Array<any>).map(TagJsonFromJSON)),
         'folders': ((json['folders'] as Array<any>).map(FolderJsonFromJSON)),
@@ -163,6 +171,7 @@ export function CollectionInfoJsonToJSONTyped(value?: CollectionInfoJson | null,
         'name': value['name'],
         'browserFetchAllowlist': value['browserFetchAllowlist'],
         'screenshotEnabled': value['screenshotEnabled'],
+        'aiTaggingEnabled': value['aiTaggingEnabled'],
         'bookmarks': ((value['bookmarks'] as Array<any>).map(BookmarkJsonToJSON)),
         'tags': ((value['tags'] as Array<any>).map(TagJsonToJSON)),
         'folders': ((value['folders'] as Array<any>).map(FolderJsonToJSON)),

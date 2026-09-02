@@ -35,4 +35,38 @@ public class AutotagLLMProviderJson {
     /** True for local Ollama (data stays on the host); false for a hosted provider. */
     @Schema(required = true)
     boolean onDevice;
+
+    /**
+     * Whether AI tag suggestions run at all here (UC-112 BR-112-7).
+     *
+     * <p>False when the operator has switched the feature off (FR-096) or a member
+     * has switched it off for this collection (FR-105) — the client is told the
+     * answer, not which of the two produced it. When false the dialog renders no
+     * AI group at all: there is nothing to retry and nothing to wait for, so a
+     * placeholder would be clutter in a dialog the user passes through constantly.
+     */
+    @Schema(required = true)
+    boolean enabled;
+
+    /**
+     * Whether the client should request suggestions automatically as the user
+     * types, or only when they ask (UC-108 BR-108-7).
+     *
+     * <p>Server-side because it is an operator decision, not a user preference:
+     * it was a hard-coded {@code AUTO_FIRE} constant in the frontend, so a host
+     * too small to run the model at interactive speed had no way to keep the
+     * feature on demand short of shipping a patched bundle. The dialog already
+     * calls warm-up on open, so this rides along on a response it was fetching
+     * anyway.
+     */
+    @Schema(required = true)
+    boolean autoFire;
+
+    /**
+     * The interactive budget in milliseconds (BR-108-1). The client aborts its
+     * own request on the same budget, so a server-side hang cannot leave the
+     * dialog spinning after the server has already given up.
+     */
+    @Schema(required = true)
+    int suggestTimeoutMs;
 }
