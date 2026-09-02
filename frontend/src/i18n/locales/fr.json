@@ -431,11 +431,14 @@
     "clear": "Effacer la recherche",
     "filters": "Filtres",
     "clearAll": "Tout effacer",
+    "invalidTokenHint": "Jeton invalide — aucun résultat. Opérateurs connus : {operators}",
+    "searchAnywhere": "Rechercher « {value} » partout",
     "autocomplete": {
       "tags": "Tags",
       "folders": "Dossiers",
       "properties": "Propriétés",
       "operators": "Opérateurs",
+      "exactUrl": "URL exacte",
       "propValues": "Valeurs de « {key} »",
       "noMatches": "Aucune correspondance",
       "hintNav": "↑↓",
@@ -445,9 +448,15 @@
       "opTag": "filtrer par tag (aussi #)",
       "opFolder": "filtrer par nom de dossier",
       "opUnder": "filtrer par dossier et ses sous-dossiers",
+      "opUrl": "filtrer par URL exacte",
+      "opUrlConvert": "correspondre exactement à cette URL",
       "opProperty": "filtrer par valeur de propriété",
       "or": "ou",
-      "negate": "exclure"
+      "negate": "exclure",
+      "opMatch": "combiner les termes libres avec OU",
+      "matchModes": "Modes de combinaison",
+      "opMatchAnd": "tous les termes libres sont requis (défaut)",
+      "opMatchOr": "un seul terme libre suffit"
     }
   },
   "collectionSearch": {

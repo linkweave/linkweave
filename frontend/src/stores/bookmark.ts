@@ -12,7 +12,6 @@ import {
   buildAncestorSets,
   EMPTY_ANCESTORS,
   type MatchContext,
-  matchesTokens,
 } from '@/lib/searchQuery'
 import { useCollectionStore } from '@/stores/collection'
 import { useFolderStore } from '@/stores/folder'
@@ -56,7 +55,14 @@ export const useBookmarkStore = defineStore('bookmark', () => {
     // `folderStore.selectFolder` and `tagStore.toggleTag`); the token filter
     // below handles them via `under:` and `#tag`.
     const tokens = searchQueryStore.queryTokens
-    if (tokens.length > 0) {
+    const query = searchQueryStore.compiledQuery
+    if (query.invalid) {
+      // Invalid syntax matches nothing regardless of negation (BR-070-2), and
+      // the answer does not vary per bookmark — skip the pass rather than ask
+      // the same question once per bookmark. `query.matches` enforces this on
+      // its own, so this is purely an optimisation.
+      result = []
+    } else if (tokens.length > 0) {
       const tagNamesById = new Map(tagStore.tags.map((t) => [t.id, t.data.name.toLowerCase()]))
       const folderNamesById = new Map(
         folderStore.folders.map((f) => [f.id, f.data.name.toLowerCase()]),
@@ -93,7 +99,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
           ancestorFolderIds: anc.ids,
           propertyDefsByName,
         }
-        return matchesTokens(b, tokens, ctx)
+        return query.matches(b, ctx)
       })
     }
 

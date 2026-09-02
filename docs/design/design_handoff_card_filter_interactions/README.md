@@ -34,7 +34,6 @@ The following UC-070 operators are **NOT** part of this handoff and should be le
 
 - `property:value` operator
 - `created:`, `created:>`, `created:<` (date operators per BR-084 / BR-085)
-- `match:OR` logic switching (BR-081)
 - Autocomplete dropdown (alternative flow A1, BR-083)
 - Invalid-operator syntax tooltips (alternative flow A2)
 - Sidebar filter combination (alternative flow A4) — sidebar tag click should still produce the same `#tag` token in the query, but no special "sidebar mode" is needed.
@@ -457,5 +456,5 @@ A reviewer should verify all of the following:
 ## Open questions / follow-ups
 
 - Tag color readability still depends on the user's color choice for the dot. The outline-style chip (current design) sidesteps the text-on-tag-color contrast issue we discussed, but the dot itself can still be low-contrast on the card. Consider a future iteration that constrains `ColorInputCl` to a curated palette.
-- The `match:OR` operator (UC-070 BR-081) changes how free-text terms combine. Confirm with PM whether to ship the OR-mode UI control or wait for autocomplete (A1) to land first.
+- ~~The `match:OR` operator (UC-070 BR-081) changes how free-text terms combine.~~ Shipped: `match:or` / `match:and` are parsed, matched and rendered as a filter pill. No dedicated OR-mode UI control was built — the token is typed (and prefix-discoverable in the autocomplete). Revisit if a control is wanted.
 - Autocomplete (A1, BR-083) is the next big slice. The tokenizer in this handoff is structured so the autocomplete UI can read `queryTokens.value` plus the input cursor position to suggest completions.

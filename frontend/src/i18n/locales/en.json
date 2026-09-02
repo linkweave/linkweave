@@ -431,11 +431,14 @@
     "clear": "Clear search",
     "filters": "Filters",
     "clearAll": "Clear all",
+    "invalidTokenHint": "Invalid token — it matches nothing. Known operators: {operators}",
+    "searchAnywhere": "Search anywhere for \"{value}\"",
     "autocomplete": {
       "tags": "Tags",
       "folders": "Folders",
       "properties": "Properties",
       "operators": "Operators",
+      "exactUrl": "Exact URL",
       "propValues": "\"{key}\" values",
       "noMatches": "No matches",
       "hintNav": "↑↓",
@@ -445,9 +448,15 @@
       "opTag": "filter by tag (also #)",
       "opFolder": "filter by folder name",
       "opUnder": "filter by folder and its subfolders",
+      "opUrl": "filter by exact URL",
+      "opUrlConvert": "match exactly this URL",
       "opProperty": "filter by property value",
       "or": "or",
-      "negate": "negate"
+      "negate": "negate",
+      "opMatch": "combine free-text terms with OR",
+      "matchModes": "Match modes",
+      "opMatchAnd": "require every free-text term (default)",
+      "opMatchOr": "any free-text term is enough"
     }
   },
   "collectionSearch": {

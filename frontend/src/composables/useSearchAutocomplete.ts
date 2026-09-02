@@ -3,9 +3,19 @@ import { useTagStore } from '@/stores/tag'
 import { useFolderStore } from '@/stores/folder'
 import { usePropertyStore } from '@/stores/property'
 import { useBookmarkStore } from '@/stores/bookmark'
+import { MATCH_MODES } from '@/lib/searchQuery'
+import { isAbsoluteUrl } from '@/lib/url'
 import { OPS, tokenAtCursor } from './searchAutocompleteToken'
 
-export type AcMode = 'tag' | 'folder' | 'under' | 'prop-key' | 'prop-val' | 'operator'
+export type AcMode =
+  | 'tag'
+  | 'folder'
+  | 'under'
+  | 'prop-key'
+  | 'prop-val'
+  | 'match-val'
+  | 'operator'
+  | 'url'
 
 export interface AcItem {
   key: string
@@ -158,9 +168,56 @@ export function useSearchAutocomplete() {
       return { mode: 'prop-val', label: propKey, items, range }
     }
 
+    // ── match: → the two modes. `match:` is prefix-discoverable, so the
+    // dropdown has to be able to finish the job: the modes are a closed set of
+    // two (BR-081), and a half-typed one (`match:o`) is invalid syntax (A2)
+    // until it is completed.
+    if (ctl.startsWith('match:')) {
+      const filter = colonToken.slice('match:'.length).toLowerCase()
+      const items: AcItem[] = MATCH_MODES.filter((m) => !filter || m.startsWith(filter)).map(
+        (m) => ({
+          key: m,
+          label: m,
+          insert: `match:${m}`,
+          type: 'match-val' as const,
+          hint: m === 'or' ? 'opMatchOr' : 'opMatchAnd',
+          filter,
+        }),
+      )
+      return { mode: 'match-val', label: 'matchModes', items, range }
+    }
+
+    // ── Absolute URL under the cursor → offer the exact-URL conversion
+    // (UC-070 A6). The offer is never applied automatically: the pasted
+    // URL keeps its substring semantics until the user opts in. The full
+    // token (range slice) is offered — `token` alone would truncate at the
+    // caret when the cursor sits inside the URL.
+    const fullToken = query.slice(range[0], range[1])
+    if (isAbsoluteUrl(fullToken)) {
+      return {
+        mode: 'url' as const,
+        label: 'exactUrl',
+        items: [
+          {
+            key: 'url-exact',
+            label: fullToken,
+            insert: `url:${fullToken}`,
+            type: 'url' as const,
+            hint: 'opUrlConvert',
+            filter: '',
+          },
+        ],
+        range,
+      }
+    }
+
     // ── Operator discovery: "fo", "ta", "prop" …
+    // The fully-typed key is offered too. Keys with a value list never reach
+    // here — `folder` normalizes to `folder:` and its own branch above answers
+    // first — so this only matters for the ones without one: typing `url` in
+    // full used to make the dropdown vanish instead of offering `url:`.
     if (token.length >= 2 && !token.includes(':')) {
-      const matched = OPS.filter((op) => op.trigger.startsWith(tl) && tl !== op.trigger)
+      const matched = OPS.filter((op) => op.trigger.startsWith(tl))
       if (matched.length) {
         return {
           mode: 'operator',

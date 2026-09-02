@@ -5,6 +5,7 @@ import { useEffectiveLayout } from '@/composables/useEffectiveLayout'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useNotificationStore } from '@/stores/notification'
+import { stringifyTokens } from '@/lib/searchQuery'
 import BookmarkCard from './BookmarkCard.vue'
 import BookmarkGroupedLayout from './BookmarkGroupedLayout.vue'
 import BookmarkDialog from './BookmarkDialog.vue'
@@ -63,6 +64,35 @@ const renderItems = computed<RenderItem[]>(() => {
   return items
 })
 
+// UC-070 A7: when an exact `url:` query matches nothing, offer the substring
+// interpretation of the same value as a one-click fallback so a near-miss
+// (different query string, trailing path segment) stays findable.
+//
+// Suppressed when any token is invalid syntax: an empty list caused by a
+// broken query is not a near-miss, and offering "search anywhere" beside a
+// red invalid-syntax flag tells the user two contradictory things about the
+// same query. Every scheme works — after BR-070-2 an unknown key such as
+// `mailto` re-tokenizes as free text, so the fallback is no longer limited to
+// the `scheme://` shape.
+const urlFallbackValue = computed(() => {
+  if (searchQueryStore.hasInvalidTokens) return null
+  for (const tok of searchQueryStore.queryTokens) {
+    if (tok.kind === 'operator' && tok.key === 'url' && !tok.neg) return tok.value
+  }
+  return null
+})
+
+function applyUrlFallback() {
+  const value = urlFallbackValue.value
+  if (!value) return
+  const tokens = searchQueryStore.queryTokens.map((tok) =>
+    tok.kind === 'operator' && tok.key === 'url' && !tok.neg && tok.value === value
+      ? { kind: 'text' as const, value: tok.value, neg: false }
+      : tok,
+  )
+  searchQueryStore.setSearchQuery(stringifyTokens(tokens))
+}
+
 const editingBookmark = ref<BookmarkJson | null>(null)
 const showEditDialog = ref(false)
 const movingBookmark = ref<BookmarkJson | null>(null)
@@ -118,10 +148,19 @@ async function confirmDelete() {
     <p class="text-muted-foreground">{{ t('bookmarkList.loading') }}</p>
   </div>
 
-  <div v-else-if="bookmarkStore.filteredBookmarks.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
+  <div v-else-if="bookmarkStore.filteredBookmarks.length === 0" class="flex flex-col items-center justify-center gap-2 py-12 text-center">
     <p class="text-muted-foreground">
       {{ searchQueryStore.queryTokens.length > 0 ? t('bookmarkList.emptyNoResults') : t('bookmarkList.empty') }}
     </p>
+    <button
+      v-if="urlFallbackValue"
+      type="button"
+      data-testid="url-search-anywhere"
+      class="text-sm text-primary underline-offset-2 hover:underline"
+      @click="applyUrlFallback"
+    >
+      {{ t('search.searchAnywhere', { value: urlFallbackValue }) }}
+    </button>
   </div>
 
   <!-- TransitionGroup animates batch/single removals out (UC-074: grid

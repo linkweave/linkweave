@@ -1,122 +1,89 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
+// A plain search input: value, placeholder, clear button, ⌘K / `/` focus
+// shortcut. It knows no query grammar — the UC-070 bookmark grammar lives in
+// `components/bookmark/BookmarkSearchBar.vue`, which drives this one through
+// `caret` / `keydown` / `blur` and renders its dropdown into the `overlay`
+// slot. Keeping the two apart is what lets `CollectionManageView` filter
+// collection names by substring without inheriting bookmark autocomplete.
+import { ref, computed, onMounted, onUnmounted, useId } from 'vue'
 import { Search, X } from '@lucide/vue'
-import SearchAutocompleteDropdown from './SearchAutocompleteDropdown.vue'
-import { useSearchAutocomplete, type AcResult, type AcItem } from '@/composables/useSearchAutocomplete'
+import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(defineProps<{
   modelValue: string
   placeholder?: string
   variant?: 'default' | 'header'
+  /**
+   * Paint the input destructive — "something in here is wrong", at the source.
+   * What counts as wrong is the caller's business; this component only shows it.
+   */
+  invalid?: boolean
+  /**
+   * Why the value is invalid. Colour alone is not a signal a screen-reader or
+   * colour-blind user receives, so this is announced politely and wired to the
+   * input through `aria-describedby` whenever `invalid` is set.
+   */
+  invalidMessage?: string
 }>(), {
   placeholder: 'Search...',
   variant: 'default',
+  invalid: false,
+  invalidMessage: '',
 })
+
+const { t } = useI18n()
+
+const messageId = useId()
+const describedBy = computed(() =>
+  props.invalid && props.invalidMessage ? messageId : undefined,
+)
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
+  /**
+   * The value and caret position, whenever either may have moved — everything
+   * an overlay needs to follow the token under the cursor.
+   */
+  caret: [value: string, cursor: number]
+  keydown: [event: KeyboardEvent]
+  blur: []
 }>()
 
 const inputRef = ref<HTMLInputElement | null>(null)
 
-// ── Autocomplete ──────────────────────────────────────────────────────────
-const { parseQueryForAutoCompl } = useSearchAutocomplete()
-const acResult = ref<AcResult | null>(null)
-const acIdx = ref(0)
-const acMouseDown = ref(false)
-
-function refreshAc(val: string, pos?: number) {
-  const c = pos ?? inputRef.value?.selectionStart ?? val.length
-  const r = parseQueryForAutoCompl(val, c)
-  acResult.value = r && r.items.length > 0 ? r : null
-  acIdx.value = 0
+function caretPos(): number {
+  return inputRef.value?.selectionStart ?? props.modelValue.length
 }
 
 function onInput(e: Event) {
   const target = e.target as HTMLInputElement
   emit('update:modelValue', target.value)
-  refreshAc(target.value, target.selectionStart ?? undefined)
+  emit('caret', target.value, target.selectionStart ?? target.value.length)
 }
 
 function onClick() {
-  refreshAc(props.modelValue, inputRef.value?.selectionStart ?? undefined)
+  emit('caret', props.modelValue, caretPos())
 }
 
-// Caret-moving keys re-evaluate suggestions for the token the cursor lands on,
-// so arrowing back into an operator token reopens the dropdown (parity with
-// clicking into it). Handled on keyup, after the browser has moved the caret.
-// ArrowUp/ArrowDown are excluded — when the dropdown is open they navigate the
-// list (and are preventDefault-ed in onAcKeyDown, so the caret never moves).
+// Caret-moving keys re-report the position, so arrowing back into a token
+// reopens whatever the overlay shows for it (parity with clicking into it).
+// Handled on keyup, after the browser has moved the caret. ArrowUp/ArrowDown
+// are excluded — an open dropdown navigates its list with them (and
+// preventDefault-s in its `keydown` handler, so the caret never moves).
 const CARET_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'Home', 'End'])
 function onKeyUp(e: KeyboardEvent) {
-  if (CARET_KEYS.has(e.key)) {
-    refreshAc(props.modelValue, inputRef.value?.selectionStart ?? undefined)
-  }
+  if (CARET_KEYS.has(e.key)) emit('caret', props.modelValue, caretPos())
 }
 
-function onBlur() {
-  // Selecting a suggestion blurs the input before the click lands. `acMouseDown`
-  // (set in onAcMouseDown) tells us the blur was caused by pressing inside the
-  // dropdown, so we keep it open until the click runs. We deliberately avoid
-  // `@mousedown.prevent` on the dropdown — preventDefault on a synthesized
-  // mousedown can swallow the follow-up click on some touch browsers.
-  if (!acMouseDown.value) acResult.value = null
+/**
+ * Focus the input, optionally placing the caret. Exposed for overlays that
+ * rewrite the value and must put the cursor where the user will type next.
+ */
+function focusAt(pos?: number) {
+  inputRef.value?.focus()
+  if (pos !== undefined) inputRef.value?.setSelectionRange(pos, pos)
 }
-
-function onAcKeyDown(e: KeyboardEvent) {
-  if (!acResult.value) return
-  const n = acResult.value.items.length
-  if (e.key === 'ArrowDown') {
-    e.preventDefault()
-    acIdx.value = Math.min(acIdx.value + 1, n - 1)
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault()
-    acIdx.value = Math.max(acIdx.value - 1, 0)
-  } else if ((e.key === 'Enter' || e.key === 'Tab') && n > 0) {
-    const item = acResult.value.items[acIdx.value]
-    if (item) {
-      e.preventDefault()
-      commit(item)
-    }
-  } else if (e.key === 'Escape') {
-    e.preventDefault()
-    acResult.value = null
-  }
-}
-
-function commit(item: AcItem) {
-  if (!acResult.value) return
-  const [s, e] = acResult.value.range
-  const q = props.modelValue
-  // No trailing space for property:key= — the user types the value next.
-  const suffix = item.insert.endsWith('=') ? '' : ' '
-  const tail = q.slice(e).replace(/^\s+/, '')
-  const newQuery = q.slice(0, s) + item.insert + suffix + tail
-  const newCursor = s + item.insert.length + suffix.length
-
-  emit('update:modelValue', newQuery)
-  acResult.value = null
-
-  nextTick(() => {
-    inputRef.value?.focus()
-    inputRef.value?.setSelectionRange(newCursor, newCursor)
-    // Chain off `newQuery` (the value we just emitted), not props.modelValue:
-    // this is a controlled input, so the displayed value is whatever we emit,
-    // and the follow-up suggestions must align with the cursor we just set.
-    const follow = parseQueryForAutoCompl(newQuery, newCursor)
-    if (follow && follow.items.length > 0) {
-      acResult.value = follow
-      acIdx.value = 0
-    }
-  })
-}
-
-function onAcMouseDown() {
-  acMouseDown.value = true
-  setTimeout(() => {
-    acMouseDown.value = false
-  }, 200)
-}
+defineExpose({ focusAt })
 
 const shortcutKeys = computed(() => {
   if (navigator.userAgent.includes('Mac')) return ['⌘', 'K']
@@ -138,7 +105,12 @@ function handleShortcut(e: KeyboardEvent) {
 
 function clear() {
   emit('update:modelValue', '')
-  inputRef.value?.focus()
+  // Report the emptied value too: an overlay reading the token under the
+  // cursor must close rather than hang over a field it no longer describes.
+  // Clicking a button does not blur the input in every browser, so the blur
+  // handler cannot be relied on here.
+  emit('caret', '', 0)
+  focusAt()
 }
 
 onMounted(() => {
@@ -160,16 +132,22 @@ onUnmounted(() => {
       :value="props.modelValue"
       :placeholder="props.placeholder"
       data-search-input
+      :aria-invalid="props.invalid ? 'true' : undefined"
+      :aria-describedby="describedBy"
       :class="[
-        'flex w-full rounded-md border bg-secondary pl-10 pr-20 py-1 text-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+        'flex w-full rounded-md border bg-secondary pl-10 pr-20 py-1 text-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1',
         props.variant === 'header' ? 'h-9' : 'h-10',
-        props.modelValue ? 'border-primary/30 bg-primary/5' : 'border-border',
+        props.modelValue && props.invalid
+          ? 'border-destructive/40 bg-destructive/5 focus-visible:ring-destructive/50'
+          : props.modelValue
+            ? 'border-primary/30 bg-primary/5 focus-visible:ring-ring'
+            : 'border-border focus-visible:ring-ring',
       ]"
       @input="onInput"
-      @keydown="onAcKeyDown"
+      @keydown="emit('keydown', $event)"
       @keyup="onKeyUp"
       @click="onClick"
-      @blur="onBlur"
+      @blur="emit('blur')"
     />
     <kbd
       v-if="!props.modelValue"
@@ -187,20 +165,28 @@ onUnmounted(() => {
         >
       </template>
     </kbd>
+    <!-- An icon-only control needs a name: without one it reads as "button". -->
     <button
       v-if="props.modelValue"
+      type="button"
+      data-testid="search-clear"
+      :aria-label="t('search.clear')"
       class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
       @click="clear"
     >
       <X class="h-4 w-4" />
     </button>
 
-    <SearchAutocompleteDropdown
-      v-if="acResult"
-      :result="acResult"
-      :active-idx="acIdx"
-      @select="commit"
-      @mousedown="onAcMouseDown"
-    />
+    <!-- The invalid state reaches assistive tech here: `aria-invalid` marks the
+         field, and this politely-announced message says what is wrong. It is
+         visually hidden because the sighted equivalent is the destructive
+         border plus whatever the caller renders elsewhere. -->
+    <p v-if="describedBy" :id="messageId" class="sr-only" role="status">
+      {{ props.invalidMessage }}
+    </p>
+
+    <!-- Rendered inside the positioned container so an overlay can anchor to
+         the input with plain `absolute top-full`. -->
+    <slot name="overlay" />
   </div>
 </template>

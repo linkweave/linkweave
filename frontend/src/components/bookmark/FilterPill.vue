@@ -1,8 +1,21 @@
 <script setup lang="ts">
-import { parsePropertyValue, type QueryToken } from '@/lib/searchQuery'
+import { isInvalidToken, parsePropertyValue, type QueryToken } from '@/lib/searchQuery'
+import { KNOWN_OPERATORS_HINT } from '@/lib/searchOperators'
 import { useFolderStore } from '@/stores/folder'
 import { useTagStore } from '@/stores/tag'
-import { Box, Calendar, Folder, FolderTree, Hash, Minus, X } from '@lucide/vue'
+import {
+  Box,
+  Calendar,
+  Combine,
+  Folder,
+  FolderTree,
+  Hash,
+  Link2,
+  Minus,
+  TriangleAlert,
+  X,
+} from '@lucide/vue'
+import { useI18n } from 'vue-i18n'
 import { type Component, computed } from 'vue'
 
 const props = defineProps<{
@@ -13,6 +26,7 @@ defineEmits<{
   remove: []
 }>()
 
+const { t } = useI18n()
 const tagStore = useTagStore()
 const folderStore = useFolderStore()
 
@@ -28,8 +42,10 @@ interface PillVariant {
 const OPERATOR_VARIANTS: Record<string, { icon: Component; label: string }> = {
   folder: { icon: Folder, label: 'folder:' },
   under: { icon: FolderTree, label: 'under:' },
+  url: { icon: Link2, label: 'url:' },
   created: { icon: Calendar, label: 'created:' },
   property: { icon: Box, label: 'property:' },
+  match: { icon: Combine, label: 'match:' },
 }
 
 // `under:` tokens carry a folder id (from click paths) or a name (from typed
@@ -84,7 +100,30 @@ const tagColor = computed(() => {
   return tag?.data.color
 })
 
+// UC-070 A2: a token with an unknown operator key or an unparseable value is
+// invalid syntax — it matches nothing, and its pill says so in the filter
+// strip (destructive tint + warning icon + syntax-help tooltip), right next
+// to the result count it explains.
+const invalid = computed(() => isInvalidToken(props.token))
+
+// A `url:` value can run to hundreds of characters. The pill truncates it so
+// one pasted URL can't stretch the filter strip sideways on a narrow viewport,
+// and the full value moves into the tooltip — which the invalid-syntax help
+// takes over when the token is broken.
+const TOOLTIP_FROM_LENGTH = 40
+
+const pillTitle = computed(() => {
+  if (invalid.value) return t('search.invalidTokenHint', { operators: KNOWN_OPERATORS_HINT })
+  const display = pillVariant.value.display
+  return display.length > TOOLTIP_FROM_LENGTH ? display : undefined
+})
+
 const variantClass = computed(() => {
+  if (invalid.value) {
+    // Invalid syntax: destructive tint without strike-through — the token
+    // isn't "excluded", it's broken (and matches nothing).
+    return 'bg-destructive/10 text-destructive border-destructive/40'
+  }
   if (props.token.neg) {
     return 'bg-destructive/10 text-destructive border-destructive/40 line-through decoration-destructive/60'
   }
@@ -122,14 +161,19 @@ const iconStyle = computed<Record<string, string> | undefined>(() => {
     :data-token-key="token.kind === 'operator' ? token.key : ''"
     :data-token-value="token.value"
     :data-token-neg="token.neg ? 'true' : 'false'"
-    class="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full text-xs border transition-colors"
-    :class="variantClass"
+    :data-invalid="invalid ? 'true' : 'false'"
+    :title="pillTitle"
+    class="inline-flex max-w-full items-center gap-1 pl-2 pr-1 py-0.5 rounded-full text-xs border transition-colors"
+    :class="[variantClass, invalid ? 'cursor-help' : '']"
     :style="tagColor ? { '--tag-color': tagColor } : undefined"
   >
     <Minus v-if="token.neg" class="h-3 w-3 shrink-0" />
+    <!-- The warning icon replaces the operator icon on an invalid token — one
+         leading glyph, unambiguous meaning. -->
+    <TriangleAlert v-if="invalid" class="h-3 w-3 shrink-0" />
     <component
       :is="pillVariant.icon"
-      v-if="pillVariant.icon"
+      v-else-if="pillVariant.icon"
       class="h-3 w-3 shrink-0"
       :style="iconStyle"
     />
@@ -142,9 +186,11 @@ const iconStyle = computed<Record<string, string> | undefined>(() => {
     <span v-if="pillVariant.operatorSymbol" class="text-muted-foreground/70 mx-0.5">{{
       pillVariant.operatorSymbol
     }}</span>
-    <span :class="{ 'font-mono': token.kind === 'operator' && token.key === 'property' }">{{
-      token.kind === 'text' ? `"${pillVariant.display}"` : pillVariant.display
-    }}</span>
+    <span
+      class="max-w-[18rem] truncate"
+      :class="{ 'font-mono': token.kind === 'operator' && token.key === 'property' }"
+      >{{ token.kind === 'text' ? `"${pillVariant.display}"` : pillVariant.display }}</span
+    >
     <button
       type="button"
       data-testid="filter-pill-remove"

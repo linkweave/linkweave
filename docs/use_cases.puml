@@ -87,7 +87,6 @@ rectangle "LinkWeave Bookmark Manager" {
         usecase "UC-071\nSave Search Query" as UC071 <<implemented>>
         usecase "UC-072\nUse Smart Collection" as UC072 <<implemented>>
         usecase "UC-046\nMulti-Term Search\nBookmarks" as UC046 <<implemented>>
-        usecase "UC-107\nSearch Bookmarks\nby Exact URL" as UC107
     }
 
     rectangle "Batch Operations" {
@@ -154,6 +153,7 @@ rectangle "LinkWeave Bookmark Manager" {
         usecase "UC-092\nEnforce Module\nBoundaries" as UC092 <<implemented>>
         usecase "UC-095\nExplore SQLite WAL\n& Turso Multi-Writer" as UC095
         usecase "UC-109\nSurvive SQLite\nLock Contention" as UC109
+        usecase "UC-111\nGate Builds on\nCRAP Metrics" as UC111
     }
 
     rectangle "Offline Mode" {
@@ -272,18 +272,6 @@ user --> UC071
 user --> UC072
 
 UC070 ..> UC071 : <<extend>>
-user --> UC107
-UC107 ..> UC070 : <<extend>>
-UC107 ..> UC053 : <<extend>>
-
-note right of UC107
-  Exact URL via `url:` operator,
-  normalized like duplicate
-  detection (UC-096 BR-080).
-  A pasted URL is free text —
-  unknown operators must never
-  match everything.
-end note
 UC071 ..> UC072 : <<extend>>
 
 ' Batch Operations
@@ -310,6 +298,7 @@ developer --> UC036
 developer --> UC056
 developer --> UC092
 developer --> UC095
+developer --> UC111
 
 ' Offline Mode
 user --> UC047

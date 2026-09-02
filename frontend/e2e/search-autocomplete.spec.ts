@@ -215,6 +215,42 @@ test.describe('FR-072 Search Autocomplete', () => {
     await expect(items(page).filter({ hasText: 'under:' })).toBeVisible()
   })
 
+  test('match: offers its two modes and completing one clears the invalid flag', async ({
+    page,
+  }) => {
+    // ARRANGE — `match:` is prefix-discoverable, so the dropdown has to be able
+    // to finish the token: an operator with no value yet, or a half-typed mode,
+    // is invalid syntax (UC-070 A2/BR-081).
+    const input = headerInput(page)
+    await input.click()
+
+    // ACT
+    await input.fill('ma')
+    // ASSERT — discovery offers the key…
+    await expect(items(page).filter({ hasText: 'match:' })).toBeVisible()
+
+    // ACT — …and the bare operator offers the closed set of modes.
+    await input.fill('match:')
+    // ASSERT — the operator is incomplete, so it is flagged while it stands.
+    await expect(dropdown(page)).toBeVisible()
+    await expect(items(page).filter({ hasText: 'and' })).toBeVisible()
+    await expect(items(page).filter({ hasText: 'or' })).toBeVisible()
+    await expect(input).toHaveClass(/border-destructive/)
+    await expect(input).toHaveAttribute('aria-invalid', 'true')
+
+    // ACT — so is a half-typed mode.
+    await input.fill('match:o')
+    // ASSERT
+    await expect(input).toHaveClass(/border-destructive/)
+    await expect(items(page).filter({ hasText: 'or' })).toBeVisible()
+
+    // ACT — …and picking the suggestion completes it.
+    await items(page).filter({ hasText: 'or' }).first().click()
+    // ASSERT
+    await expect(input).toHaveValue('match:or ')
+    await expect(input).not.toHaveClass(/border-destructive/)
+  })
+
   test('ArrowDown moves the active selection', async ({ page }) => {
     const input = headerInput(page)
     await input.click()
@@ -278,6 +314,22 @@ test.describe('FR-072 Search Autocomplete', () => {
     await page.keyboard.press('Escape')
     await expect(dropdown(page)).not.toBeVisible()
     await expect(input).toHaveValue('#quar')
+  })
+
+  test('the clear button closes the dropdown', async ({ page }) => {
+    // ARRANGE — an open dropdown over a non-empty field.
+    const input = headerInput(page)
+    await input.click()
+    await input.fill('#')
+    await expect(dropdown(page)).toBeVisible()
+
+    // ACT — the ✕ empties the field. Clicking a button does not blur the input
+    // in every browser, so the dropdown must be closed by the clear itself.
+    await page.locator('header [data-testid="search-clear"]').click()
+
+    // ASSERT
+    await expect(input).toHaveValue('')
+    await expect(dropdown(page)).toHaveCount(0)
   })
 
   test('clicking outside the dropdown closes it', async ({ page }) => {

@@ -1,0 +1,360 @@
+import { expect, test, type Browser, type Page } from './fixtures'
+import { api, type Created } from './helpers/api'
+import {
+  deleteTestUserCleanup,
+  loginViaApi,
+  registerAndCaptureStorageState,
+  type StorageState,
+  type TestUser,
+} from './models/TestUser'
+
+// E2E coverage for the exact-URL search operator (`url:`, UC-070).
+//
+// The world is a set of near-identical URLs (mixed-case host, trailing slash,
+// deeper path, tracking parameter, shuffled query) plus one unrelated
+// bookmark, seeded over HTTP. Each test then exercises one flow through the
+// header search bar: substring paste, exact match, negation, invalid-syntax
+// flagging, the autocomplete conversion, the saved-search round-trip, and
+// the empty-result substring fallback.
+
+test.describe.configure({ mode: 'serial' })
+
+const ts = Date.now()
+
+const titleExact = `Exact A ${ts}`
+const titleSubPath = `Sub Path ${ts}`
+const titleTracked = `Tracked ${ts}`
+const titleSorted = `Sorted Query ${ts}`
+const titleUnrelated = `Unrelated ${ts}`
+const titleDeep = `Deep Page ${ts}`
+const titleMailto = `Contact Mail ${ts}`
+// A colon in ordinary text is the BR-070-2 regression case: this title must
+// stay findable by typing it verbatim, colon and all.
+const titleColon = `Bug:${ts} regression`
+
+let user: TestUser
+let storageState: StorageState
+let collectionId: string
+
+async function seedWorld(browser: Browser): Promise<void> {
+  const ctx = await browser.newContext({ ignoreHTTPSErrors: true })
+  try {
+    await loginViaApi(ctx.request, user)
+    const bookmarks: Array<{ title: string; url: string }> = [
+      { title: titleExact, url: 'https://Example.com/a/' },
+      { title: titleSubPath, url: 'https://example.com/a/b' },
+      { title: titleTracked, url: 'https://example.com/a?utm_source=x' },
+      { title: titleSorted, url: 'https://example.com/a?a=1&b=2' },
+      { title: titleUnrelated, url: 'https://other.example.org/z' },
+      { title: titleDeep, url: 'https://example.com/deep/page' },
+      // The UI only creates http/https bookmarks (zod httpUrlSchema), but the
+      // API accepts any non-blank URL — non-hierarchical schemes are storable
+      // and must be exactly searchable.
+      { title: titleMailto, url: 'mailto:dev@example.com' },
+      { title: titleColon, url: `https://example.com/issues/${ts}` },
+    ]
+    for (const bm of bookmarks) {
+      await api<Created>(ctx.request, 'POST', '/api/bookmarks', {
+        collectionId,
+        title: bm.title,
+        url: bm.url,
+      })
+    }
+  } finally {
+    await ctx.close()
+  }
+}
+
+async function gotoCollection(page: Page) {
+  await page.goto(`/collections/${collectionId}`)
+  await expect(page).toHaveURL(new RegExp(`/collections/${collectionId}`))
+  await expect(page.getByTestId(/^bookmark-card-/).first()).toBeVisible()
+}
+
+const headerInput = (page: Page) => page.locator('header [data-search-input]')
+const dropdown = (page: Page) => page.getByTestId('search-autocomplete')
+
+// Card order depends on the collection's sort settings — compare as sorted
+// sets so the assertions stay about *which* bookmarks match, not their order.
+function visibleCardTitles(page: Page) {
+  return page
+    .locator('[data-bookmark-title]')
+    .evaluateAll((els) =>
+      els.map((el) => el.getAttribute('data-bookmark-title') ?? '').sort(),
+    )
+}
+
+function sorted(titles: string[]): string[] {
+  return [...titles].sort()
+}
+
+async function search(page: Page, query: string) {
+  const input = headerInput(page)
+  await input.click()
+  await input.fill(query)
+}
+
+test.describe('Exact-URL Search (url: operator)', () => {
+  test.beforeAll(async ({ browser }) => {
+    ;({ user, storageState, collectionId } = await registerAndCaptureStorageState(
+      browser,
+      'urlsearch',
+    ))
+    await seedWorld(browser)
+  })
+
+  test.use({ storageState: async ({}, use) => { await use(storageState) } })
+
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 })
+    await gotoCollection(page)
+  })
+
+  test('pasting a URL filters by substring and never returns everything', async ({
+    page,
+  }) => {
+    // ACT
+    await search(page, 'https://example.com/a')
+    // ASSERT — substring matches: exact (lowercased), deeper path, tracking
+    // param, and shuffled query; the unrelated bookmark is filtered out.
+    await expect.poll(() => visibleCardTitles(page)).toEqual(
+      sorted([titleExact, titleSubPath, titleTracked, titleSorted]),
+    )
+  })
+
+  test('url: matches exactly, through the normalization contract', async ({ page }) => {
+    // ACT
+    await search(page, 'url:https://example.com/a ')
+    // ASSERT — the stored mixed-case/trailing-slash URL matches; deeper path
+    // and tracking-parameter variants do not.
+    await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleExact]))
+    // …and per UC-070 steps 5–6 the operator is rendered as a token pill
+    // with the result count shown.
+    const pill = page.locator('[data-testid="filter-pill"][data-token-key="url"]')
+    await expect(pill).toBeVisible()
+    await expect(pill).toHaveAttribute('data-token-value', 'https://example.com/a')
+    await expect(page.getByTestId('filter-strip')).toContainText('1 result')
+  })
+
+  test('url: sorts query parameters before comparing', async ({ page }) => {
+    // ACT
+    await search(page, 'url:https://example.com/a?b=2&a=1 ')
+    // ASSERT
+    await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleSorted]))
+  })
+
+  test('-url: returns the complement of the exact match', async ({ page }) => {
+    // ACT
+    await search(page, '-url:https://example.com/a ')
+    // ASSERT — everything except the exact match remains.
+    await expect.poll(() => visibleCardTitles(page)).toEqual(
+      sorted([
+        titleSubPath,
+        titleTracked,
+        titleSorted,
+        titleUnrelated,
+        titleDeep,
+        titleMailto,
+        titleColon,
+      ]),
+    )
+  })
+
+  test('url: matches non-hierarchical schemes stored via the API (mailto:)', async ({ page }) => {
+    // ACT
+    await search(page, 'url:mailto:dev@example.com ')
+    // ASSERT — exactly the mailto bookmark; nothing else.
+    await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleMailto]))
+  })
+
+  test('an unquoted unknown key is free text, so a colon in a search term still works', async ({
+    page,
+  }) => {
+    // ACT — the whole point of BR-070-2: `Bug:123` is a search term, not an
+    // operator, and must find the bookmark whose title contains it verbatim.
+    await search(page, `Bug:${ts} `)
+    // ASSERT
+    await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleColon]))
+    // …with no invalid-syntax cue anywhere: it is ordinary text.
+    await expect(page.locator('[data-testid="filter-pill"][data-invalid="true"]')).toHaveCount(0)
+    await expect(headerInput(page)).not.toHaveClass(/border-destructive/)
+
+    // An unknown key that matches nothing is an empty result, not an error…
+    await search(page, 'bogus:value ')
+    await expect.poll(() => visibleCardTitles(page)).toEqual([])
+    await expect(page.locator('[data-testid="filter-pill"][data-invalid="true"]')).toHaveCount(0)
+
+    // …and negating free text excludes rather than voiding the query.
+    await search(page, '-bogus:x ')
+    await expect
+      .poll(() => visibleCardTitles(page))
+      .toEqual(
+        sorted([
+          titleExact,
+          titleSubPath,
+          titleTracked,
+          titleSorted,
+          titleUnrelated,
+          titleDeep,
+          titleMailto,
+          titleColon,
+        ]),
+      )
+  })
+
+  test('a quoted unknown key and an unparseable known value are flagged invalid', async ({
+    page,
+  }) => {
+    // ACT — quoting is deliberate operator shape, so it earns the A2 flag.
+    await search(page, 'bogus:"x y" ')
+    // ASSERT — empty result, never the unfiltered list…
+    await expect.poll(() => visibleCardTitles(page)).toEqual([])
+    // …and the invalid token is flagged: destructive pill in the filter strip
+    // (the input border turns destructive as the at-the-source cue).
+    const flag = page.locator('[data-testid="filter-pill"][data-invalid="true"]')
+    await expect(flag).toBeVisible()
+    await expect(flag).toContainText('bogus:x y')
+    await expect(headerInput(page)).toHaveClass(/border-destructive/)
+
+    // Negation must not flip an invalid token back to match-all.
+    await search(page, '-bogus:"x y" ')
+    await expect.poll(() => visibleCardTitles(page)).toEqual([])
+    await expect(flag).toBeVisible()
+
+    // Unparseable values of known operators are invalid too — never a silent
+    // unfiltered list.
+    await search(page, 'created:banana ')
+    await expect.poll(() => visibleCardTitles(page)).toEqual([])
+    await expect(flag).toContainText('created:banana')
+
+    // The state is not colour-only: the input is marked invalid and points at
+    // a message naming the known operators, so a screen reader is told why the
+    // list is empty.
+    const input = headerInput(page)
+    await expect(input).toHaveAttribute('aria-invalid', 'true')
+    const describedBy = await input.getAttribute('aria-describedby')
+    expect(describedBy).toBeTruthy()
+    await expect(page.locator(`#${describedBy}`)).toContainText('property:')
+
+    // Cleared once the query is valid again.
+    await search(page, 'created:2026-05-16 ')
+    await expect(input).not.toHaveAttribute('aria-invalid', 'true')
+  })
+
+  test('an unparseable url: value matches nothing and is flagged invalid', async ({
+    page,
+  }) => {
+    // ACT
+    await search(page, 'url:??? ')
+    // ASSERT — invalid syntax filters to nothing (AND-combined with any other
+    // tokens), never to everything, and the token is flagged as an invalid
+    // pill in the filter strip.
+    await expect.poll(() => visibleCardTitles(page)).toEqual([])
+    const flag = page.locator('[data-testid="filter-pill"][data-invalid="true"]')
+    await expect(flag).toBeVisible()
+    await expect(flag).toContainText('url:???')
+
+    // A value with a malformed authority (space inside the host) passes the
+    // bare-token prefix check but must still be flagged — the flag and the
+    // matcher agree.
+    await search(page, 'url:"https://two words"')
+    await expect.poll(() => visibleCardTitles(page)).toEqual([])
+    await expect(flag).toContainText('url:https://two words')
+
+    // A broken query is not a near-miss: the substring fallback must stay away
+    // so the empty state never contradicts the invalid-syntax flag.
+    await expect(page.getByTestId('url-search-anywhere')).toHaveCount(0)
+  })
+
+  test('pasting a URL offers the url: conversion; accepting it finds the bookmark', async ({
+    page,
+  }) => {
+    // ARRANGE — paste (fill) the stored mixed-case URL.
+    await search(page, 'https://Example.com/a/')
+    // ASSERT (pre-acceptance) — the conversion is offered but NOT
+    // applied: the query still runs with substring semantics. The pasted
+    // value (trailing slash included) is a substring of the exact bookmark
+    // and the deeper path, but not of the ?query variants.
+    await expect(dropdown(page)).toBeVisible()
+    await expect(page.getByTestId('ac-item').filter({ hasText: 'url:' })).toBeVisible()
+    await expect(headerInput(page)).toHaveValue('https://Example.com/a/')
+    await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleExact, titleSubPath]))
+    // ACT — accept the offered exact-URL conversion.
+    await page.keyboard.press('Enter')
+    // ASSERT
+    await expect(headerInput(page)).toHaveValue('url:https://Example.com/a/ ')
+    await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleExact]))
+  })
+
+  test('copy URL from a bookmark → paste → convert → finds exactly that bookmark', async ({
+    page,
+    context,
+  }) => {
+    // ARRANGE — copy the bookmark's URL via the row menu (UC-106).
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+    const card = page.getByTestId(/^bookmark-card-/).filter({ hasText: titleExact })
+    await card.getByTestId('bookmark-menu-button').click()
+    await page.getByTestId('bookmark-menu-copy-url').click()
+    await expect
+      .poll(() => page.evaluate(() => navigator.clipboard.readText()))
+      .toBe('https://Example.com/a/')
+
+    // ACT — paste into the search bar and accept the url: conversion.
+    const input = headerInput(page)
+    await input.click()
+    await input.press('ControlOrMeta+v')
+    await expect(input).toHaveValue('https://Example.com/a/')
+    await expect(dropdown(page)).toBeVisible()
+    await page.keyboard.press('Enter')
+
+    // ASSERT — exactly the bookmark the URL was copied from.
+    await expect(input).toHaveValue('url:https://Example.com/a/ ')
+    await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleExact]))
+  })
+
+  test('a url: query survives save → reload → re-run with the same result set', async ({
+    page,
+  }) => {
+    const name = `url-exact-${ts}`
+    const query = 'url:https://example.com/a?b=2&a=1'
+
+    // ARRANGE — run the query and save it (UC-071).
+    await search(page, query)
+    await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleSorted]))
+    await page.getByTestId('saved-search-save-trigger').click()
+    const popover = page.getByTestId('saved-search-popover')
+    await expect(popover).toBeVisible()
+    await page.getByTestId('saved-search-name-input').fill(name)
+    await page.getByTestId('saved-search-submit').click()
+    await expect(popover).toBeHidden()
+    await expect(page.getByTestId(`smart-collection-row-${name}`)).toHaveAttribute(
+      'data-active',
+      'true',
+    )
+
+    // ACT — clear, reload the app, and re-run the saved query.
+    await headerInput(page).fill('')
+    await expect.poll(() => visibleCardTitles(page)).not.toEqual(sorted([titleSorted]))
+    await page.reload()
+    await expect(page.getByTestId(/^bookmark-card-/).first()).toBeVisible()
+    await page.getByTestId(`smart-collection-row-${name}`).click()
+
+    // ASSERT — identical query and identical result set.
+    await expect(headerInput(page)).toHaveValue(query)
+    await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleSorted]))
+  })
+
+  test('an empty exact-URL result offers the substring fallback', async ({ page }) => {
+    // ARRANGE — `…/deep` is no bookmark's exact URL, but it is a substring of
+    // the stored `…/deep/page`.
+    await search(page, 'url:https://example.com/deep ')
+    await expect.poll(() => visibleCardTitles(page)).toEqual([])
+    // ACT — one-click fallback to the substring interpretation.
+    await page.getByTestId('url-search-anywhere').click()
+    // ASSERT
+    await expect(headerInput(page)).toHaveValue('https://example.com/deep')
+    await expect.poll(() => visibleCardTitles(page)).toEqual(sorted([titleDeep]))
+  })
+
+  test.afterAll(({ browser }) => deleteTestUserCleanup(browser, () => user))
+})

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { Search, X } from '@lucide/vue'
-import ButtonLw from './ButtonLw.vue'
-import SearchBar from './SearchBar.vue'
+import { ButtonLw } from '@/components/ui'
+import BookmarkSearchBar from './BookmarkSearchBar.vue'
 import { useSearchQueryStore } from '@/stores/searchQuery'
 import { useI18n } from 'vue-i18n'
 
@@ -59,11 +59,7 @@ onUnmounted(() => {
     <div v-if="open" class="fixed inset-0 z-[70] sm:hidden">
       <div class="absolute inset-0 bg-background/40" data-testid="mobile-search-backdrop" @click="open = false" />
       <div ref="overlayPanelRef" data-testid="mobile-search-panel" class="relative bg-card border-b border-border p-3 flex items-center gap-2">
-        <SearchBar
-          v-model="searchQueryStore.searchQuery"
-          :placeholder="t('search.placeholder')"
-          class="flex-1"
-        />
+        <BookmarkSearchBar :placeholder="t('search.placeholder')" class="flex-1" />
         <ButtonLw variant="ghost" size="icon" :aria-label="t('common.cancel')" @click="open = false">
           <X class="h-5 w-5" />
         </ButtonLw>
