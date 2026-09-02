@@ -53,6 +53,7 @@ public class CollectionInfoMapper {
             collection.getName(),
             collection.getBrowserFetchAllowlist(),
             collection.isScreenshotEnabled(),
+            collection.isAiTaggingEnabled(),
             bookmarks.stream()
                 .map(b -> BookmarkMapper.toJson(b, propsByBookmark.getOrDefault(b.getId(), List.of())))
                 .toList(),
@@ -97,6 +98,7 @@ public class CollectionInfoMapper {
             collection.getName(),
             collection.getBrowserFetchAllowlist(),
             collection.isScreenshotEnabled(),
+            collection.isAiTaggingEnabled(),
             bookmarks.stream().map(BookmarkMapper::toJson).toList(),
             folders.stream().map(FolderMapper::toJson).toList(),
             tags.stream().map(TagMapper::toJson).toList(),

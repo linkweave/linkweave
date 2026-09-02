@@ -1,6 +1,7 @@
 package org.linkweave.api.autotag;
 
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import io.quarkus.security.Authenticated;
 import io.smallrye.faulttolerance.api.RateLimit;
@@ -17,12 +18,14 @@ import lombok.RequiredArgsConstructor;
 import org.linkweave.api.autotag.json.AutotagLLMProviderJson;
 import org.linkweave.api.autotag.json.SuggestTagsJson;
 import org.linkweave.api.autotag.json.SuggestedTagsResultJson;
+import org.linkweave.api.autotag.json.SuggestionStatusJson;
 import org.linkweave.api.autotag.llm.BookmarkAutoTagLlmService;
 import org.linkweave.api.autotag.llm.SuggestionResult;
 import org.linkweave.api.bookmark.Bookmark;
 import org.linkweave.api.bookmark.BookmarkService;
 import org.linkweave.api.bookmark.TagMapper;
 import org.linkweave.api.collection.Collection;
+import org.linkweave.api.collection.CollectionService;
 import org.linkweave.api.shared.auth.AuthorizationService;
 import org.linkweave.api.shared.user.CurrentUserService;
 import org.linkweave.api.types.id.ID;
@@ -65,6 +68,7 @@ public class BookmarkAutoTagResource {
     private final BookmarkService bookmarkService;
     private final AuthorizationService authorizationService;
     private final CurrentUserService currentUserService;
+    private final CollectionService collectionService;
 
     @POST
     @Path("/bookmarks/{bookmarkId}/suggest-tags")
@@ -79,6 +83,9 @@ public class BookmarkAutoTagResource {
         ID<Collection> owningCollectionId = bookmarkService.getBookmarkCollectionId(bookmarkId);
         authorizationService.requireCollectionAccess(owningCollectionId);
         authorizationService.requireSameCollection(owningCollectionId, collectionId);
+        if (!collectionService.isAiTaggingEnabled(owningCollectionId)) {
+            return disabledForCollection();
+        }
         return toJson(autoTagLlmService.suggestTagsForBookmark(bookmarkId, scopeOf(owningCollectionId)));
     }
 
@@ -94,6 +101,9 @@ public class BookmarkAutoTagResource {
         @NotNull @Valid @NonNull SuggestTagsJson json
     ) {
         authorizationService.requireCollectionAccess(collectionId);
+        if (!collectionService.isAiTaggingEnabled(collectionId)) {
+            return disabledForCollection();
+        }
         return toJson(autoTagLlmService.suggestTags(
             collectionId, json.getTitle(), json.getUrl(), json.getDescription(),
             scopeOf(collectionId)));
@@ -120,7 +130,20 @@ public class BookmarkAutoTagResource {
     @NonNull
     public AutotagLLMProviderJson warmUp(@PathParam("collectionId") @NonNull ID<Collection> collectionId) {
         authorizationService.requireCollectionAccess(collectionId);
-        return autoTagLlmService.warmUp();
+        // Gating warm-up matters as much as gating the suggestion calls (UC-112
+        // BR-112-3): the dialog calls this on every open, so an opted-out
+        // collection would otherwise still be loading the model onto the host --
+        // no bookmark text would leave, but the work would still be done.
+        return autoTagLlmService.warmUp(collectionService.isAiTaggingEnabled(collectionId));
+    }
+
+    /**
+     * The answer for a collection that has opted out (UC-112 BR-112-3/BR-112-7).
+     * Reuses the status UC-108 already defined for a switched-off feature, so a
+     * caller that skips warm-up is still refused on the endpoint it calls.
+     */
+    private static @NonNull SuggestedTagsResultJson disabledForCollection() {
+        return new SuggestedTagsResultJson(List.of(), SuggestionStatusJson.DISABLED);
     }
 
     /**

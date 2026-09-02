@@ -42,8 +42,17 @@ const titleRef = toRef(props, 'title')
 const descriptionRef = toRef(props, 'description')
 const collectionIdRef = toRef(props, 'collectionId')
 
-const { aiState, aiSuggestions, provider, warmUp, regenerate, retrieve, markHandled, reset } =
-  useAiTagSuggestions({
+const {
+  aiState,
+  aiSuggestions,
+  provider,
+  aiEnabled,
+  warmUp,
+  regenerate,
+  retrieve,
+  markHandled,
+  reset,
+} = useAiTagSuggestions({
     collectionId: collectionIdRef,
     title: titleRef,
     url: urlRef,
@@ -127,6 +136,20 @@ const hasAnySuggestion = computed(
   () => groups.value.rules.length > 0 || groups.value.ai.length > 0,
 )
 
+/**
+ * With AI on, the section always renders — it owns the idle "Suggest tags with
+ * AI" affordance and the collapsed pill.
+ *
+ * With AI off (UC-112 BR-112-7) it has only rule suggestions to offer, so it
+ * renders only when there are some and the user has not dismissed them. Without
+ * the `collapsed` clause, dismissing would fall through to the panel and undo
+ * itself; without the rules clause, a URL no rule matches would leave a header
+ * and a footnote wrapped around nothing.
+ */
+const sectionVisible = computed(
+  () => aiEnabled.value || (aiState.value !== 'collapsed' && groups.value.rules.length > 0),
+)
+
 // --- Accept / dismiss state ---
 const applying = ref(false)
 const justApplied = ref(false)
@@ -195,7 +218,7 @@ function onRetrieve() {
 </script>
 
 <template>
-  <div data-testid="suggested-tags-section" class="ai-suggest">
+  <div v-if="sectionVisible" data-testid="suggested-tags-section" class="ai-suggest">
     <!-- Collapsed: slim retrieve pill -->
     <button
       v-if="aiState === 'collapsed'"
@@ -218,7 +241,7 @@ function onRetrieve() {
           {{ t('bookmark.suggestedTags') }}
           <span v-if="selectedCount > 0" class="ai-count">{{ selectedCount }}</span>
         </span>
-        <span v-if="providerLabel" class="ai-privacy">
+        <span v-if="aiEnabled && providerLabel" class="ai-privacy">
           <ShieldCheck v-if="provider?.onDevice" :size="12" />
           <Cloud v-else :size="12" />
           {{ providerLabel }}
@@ -248,8 +271,15 @@ function onRetrieve() {
         </div>
       </div>
 
-      <!-- AI suggestions -->
-      <div class="ai-group">
+      <!--
+        AI suggestions. Absent entirely when the feature is off for this
+        collection or this installation (UC-112 BR-112-7) — no heading, no
+        placeholder, no explanation. There is nothing to retry and nothing to
+        wait for, and a standing notice about a feature someone deliberately
+        switched off is clutter in a dialog people pass through all day. Rule
+        suggestions above are untouched.
+      -->
+      <div v-if="aiEnabled" class="ai-group" data-testid="ai-suggestions-group">
         <div class="ai-group-head">
           <span class="ai-group-label ai-group-label--ai">{{ t('bookmark.aiSuggestionsGroup') }}</span>
           <button
@@ -359,7 +389,7 @@ function onRetrieve() {
         </div>
       </div>
 
-      <p class="ai-foot-note">{{ t('bookmark.aiFootnote') }}</p>
+      <p v-if="aiEnabled" class="ai-foot-note">{{ t('bookmark.aiFootnote') }}</p>
 
       <footer v-if="hasAnySuggestion" class="ai-foot">
         <button type="button" class="ai-dismiss" data-testid="dismiss-suggestions-btn" @click="dismiss">

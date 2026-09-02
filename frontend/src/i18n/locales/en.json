@@ -25,7 +25,11 @@
     "sectionProperties": "Properties",
     "sectionPropertiesHint": "Where defined properties appear in the UI. Persisted on this device.",
     "localPersistedHint": "These preferences are saved locally on this device.",
-    "openSettings": "Collection settings"
+    "openSettings": "Collection settings",
+    "sectionAiTagging": "AI TAG SUGGESTIONS",
+    "aiTaggingToggle": "Suggest tags with AI",
+    "aiTaggingToggleDesc": "Let the model propose tags from this collection's existing tags.",
+    "aiTaggingHint": "Applies to everyone using this collection. When off, no bookmark text from this collection is sent to the model. Your tag rules and manual tagging are unaffected."
   },
   "property": {
     "badgesToggle": "Show badges on cards",

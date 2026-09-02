@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  AiTaggingUpdateJson,
   CollectionCreateJson,
   CollectionInfoJson,
   CollectionMemberJson,
@@ -27,6 +28,8 @@ import type {
   CollectionUpdateJson,
 } from '../models/index';
 import {
+    AiTaggingUpdateJsonFromJSON,
+    AiTaggingUpdateJsonToJSON,
     CollectionCreateJsonFromJSON,
     CollectionCreateJsonToJSON,
     CollectionInfoJsonFromJSON,
@@ -48,6 +51,11 @@ import {
     CollectionUpdateJsonFromJSON,
     CollectionUpdateJsonToJSON,
 } from '../models/index';
+
+export interface CollectionResourceApiApiCollectionsIdAiTaggingPutRequest {
+    id: string;
+    aiTaggingUpdateJson: AiTaggingUpdateJson;
+}
 
 export interface CollectionResourceApiApiCollectionsIdDefaultPutRequest {
     id: string;
@@ -143,6 +151,60 @@ export class CollectionResourceApi extends runtime.BaseAPI {
     async apiCollectionsGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CollectionSummaryListJson> {
         const response = await this.apiCollectionsGetRaw(initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Creates request options for apiCollectionsIdAiTaggingPut without sending the request
+     */
+    async apiCollectionsIdAiTaggingPutRequestOpts(requestParameters: CollectionResourceApiApiCollectionsIdAiTaggingPutRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiCollectionsIdAiTaggingPut().'
+            );
+        }
+
+        if (requestParameters['aiTaggingUpdateJson'] == null) {
+            throw new runtime.RequiredError(
+                'aiTaggingUpdateJson',
+                'Required parameter "aiTaggingUpdateJson" was null or undefined when calling apiCollectionsIdAiTaggingPut().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/collections/{id}/ai-tagging`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        return {
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AiTaggingUpdateJsonToJSON(requestParameters['aiTaggingUpdateJson']),
+        };
+    }
+
+    /**
+     * Update Ai Tagging
+     */
+    async apiCollectionsIdAiTaggingPutRaw(requestParameters: CollectionResourceApiApiCollectionsIdAiTaggingPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.apiCollectionsIdAiTaggingPutRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Update Ai Tagging
+     */
+    async apiCollectionsIdAiTaggingPut(requestParameters: CollectionResourceApiApiCollectionsIdAiTaggingPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiCollectionsIdAiTaggingPutRaw(requestParameters, initOverrides);
     }
 
     /**

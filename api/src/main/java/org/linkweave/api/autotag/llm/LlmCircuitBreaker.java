@@ -84,6 +84,9 @@ public class LlmCircuitBreaker {
     /** Gives each admission an identity; see {@link Admission}. */
     private final AtomicLong admissionSeq = new AtomicLong();
 
+    /** Serialises the map+semaphore pairs so the cap cannot drift upward. */
+    private final Object permitLock = new Object();
+
     /** Coarse model health, used only to decide whether a transition needs a log line. */
     private enum Health { HEALTHY, DEGRADED }
 
@@ -164,15 +167,17 @@ public class LlmCircuitBreaker {
         }
         Admission granted = new Admission(
             true, SuggestionOutcome.OK, probe, scope, admissionSeq.incrementAndGet());
-        if (inFlightByScope.put(scope, granted) != null) {
-            // The scope already held a permit; this call inherits it. The
-            // superseded call will find itself no longer current on release and
-            // will not hand the permit back, so the chain still owns exactly one.
-            return granted;
-        }
-        if (!inFlight.tryAcquire()) {
-            inFlightByScope.remove(scope, granted);
-            return Admission.rejected(SuggestionOutcome.OVERLOADED);
+        synchronized (permitLock) {
+            if (inFlightByScope.put(scope, granted) != null) {
+                // The scope already held a permit; this call inherits it. The
+                // superseded call will find itself no longer current on release and
+                // will not hand the permit back, so the chain still owns exactly one.
+                return granted;
+            }
+            if (!inFlight.tryAcquire()) {
+                inFlightByScope.remove(scope, granted);
+                return Admission.rejected(SuggestionOutcome.OVERLOADED);
+            }
         }
         return granted;
     }
@@ -190,8 +195,10 @@ public class LlmCircuitBreaker {
             return;
         }
         String scope = admission.scope();
-        if (scope == null || inFlightByScope.remove(scope, admission)) {
-            inFlight.release();
+        synchronized (permitLock) {
+            if (scope == null || inFlightByScope.remove(scope, admission)) {
+                inFlight.release();
+            }
         }
     }
 

@@ -62,7 +62,7 @@ class BookmarkAutoTagLlmDisabledITest {
 
     @Test
     void shouldNotWarmUpWhenFeatureDisabled() {
-        service.warmUp();
+        service.warmUp(true);
 
         Assertions.assertThat(fake.warmUpCalled).isFalse();
     }

@@ -37,6 +37,18 @@ public class AutotagLLMProviderJson {
     boolean onDevice;
 
     /**
+     * Whether AI tag suggestions run at all here (UC-112 BR-112-7).
+     *
+     * <p>False when the operator has switched the feature off (FR-096) or a member
+     * has switched it off for this collection (FR-105) — the client is told the
+     * answer, not which of the two produced it. When false the dialog renders no
+     * AI group at all: there is nothing to retry and nothing to wait for, so a
+     * placeholder would be clutter in a dialog the user passes through constantly.
+     */
+    @Schema(required = true)
+    boolean enabled;
+
+    /**
      * Whether the client should request suggestions automatically as the user
      * types, or only when they ask (UC-108 BR-108-7).
      *

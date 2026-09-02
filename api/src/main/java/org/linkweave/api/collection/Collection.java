@@ -49,6 +49,18 @@ public class Collection extends AbstractEntity<Collection> {
     @Column(nullable = false)
     private boolean screenshotEnabled;
 
+    /**
+     * Whether LLM tag suggestions (FR-095) run for this collection (UC-112).
+     *
+     * <p>Defaults to {@code true}, unlike {@link #screenshotEnabled}: auto-tagging
+     * is already live everywhere, so this is an opt-out, not an opt-in. The field
+     * initialiser matters as much as the column default — Hibernate writes an
+     * explicit value on insert, so a collection created through code would be
+     * persisted as {@code false} and never see the DDL default.
+     */
+    @Column(nullable = false)
+    private boolean aiTaggingEnabled = true;
+
     public Collection(@NotBlank String name, @NonNull User owner) {
         this.name = name;
         this.owner = owner;

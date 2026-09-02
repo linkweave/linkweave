@@ -109,9 +109,42 @@ test.describe('Auto-Tag Bookmark by URL Pattern', () => {
     const dialog = await openAddBookmarkDialog(page, collectionId)
 
     await dialog.locator('#create-bookmark-url').fill('https://www.example.com')
-    // Section reserves space (always rendered) but contains no chips when no rule matches.
+    // No rule matches, so there are no rule chips and nothing to accept. The AI
+    // group may still be present -- it is the collection's AI setting that
+    // governs that (UC-112), not whether a rule happened to match.
     await expect(dialog.locator('[data-testid^="suggested-tag-"]')).toHaveCount(0)
     await expect(dialog.getByTestId('accept-suggestions-btn')).toHaveCount(0)
+
+    await dialog.getByRole('button', { name: /cancel/i }).click()
+    await expect(dialog).not.toBeVisible()
+  })
+
+  test('hides the AI group entirely when the collection has opted out', async ({ page, request }) => {
+    // ARRANGE — a collection of its own, so toggling the setting cannot affect
+    // the other tests in this serial file. UC-112 BR-112-5: any member with
+    // access may flip it, so the owning user's own session can.
+    const optedOutId = await createCollectionViaApi(request, `Auto-Tag OptOut ${ts}`)
+    await createAutoTagRuleViaApi(request, optedOutId, 'dev\\.', 'dev')
+
+    const withAi = await openAddBookmarkDialog(page, optedOutId)
+    await withAi.locator('#create-bookmark-url').fill('https://dev.example.com')
+    await expect(withAi.getByTestId('ai-suggestions-group'))
+      .toBeVisible()
+    await withAi.getByRole('button', { name: /cancel/i }).click()
+
+    // ACT
+    const resp = await request.put(`${BASE}/collections/${optedOutId}/ai-tagging`, {
+      data: { enabled: false },
+    })
+    expect(resp.ok(), `toggle failed: ${resp.status()}`).toBeTruthy()
+
+    // ASSERT — the AI group is gone entirely (BR-112-7): no heading, no
+    // placeholder, no "unavailable" note. Rule suggestions are untouched.
+    const dialog = await openAddBookmarkDialog(page, optedOutId)
+    await dialog.locator('#create-bookmark-url').fill('https://dev.example.com')
+    await expect(dialog.getByTestId('suggested-tag-dev')).toBeVisible()
+    await expect(dialog.getByTestId('ai-suggestions-group')).toHaveCount(0)
+    await expect(dialog.getByTestId('ai-suggest-btn')).toHaveCount(0)
 
     await dialog.getByRole('button', { name: /cancel/i }).click()
     await expect(dialog).not.toBeVisible()

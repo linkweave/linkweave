@@ -37,6 +37,7 @@ const fakeCollectionInfo: CollectionInfoJson = {
   id: 'col-1',
   name: 'Default',
   screenshotEnabled: false,
+  aiTaggingEnabled: true,
   bookmarks: [],
   tags: [],
   folders: [],

@@ -194,6 +194,31 @@ export const useCollectionStore = defineStore('collection', () => {
     }
   }
 
+  /**
+   * Turns AI tag suggestions on or off for one collection (UC-112 / FR-105).
+   *
+   * <p>Its own endpoint rather than a field on `updateCollection`: that request is
+   * owner-or-admin because it also carries the name and fetch allowlist, while
+   * this setting is changeable by any member with access.
+   */
+  async function updateAiTagging(collectionId: string, enabled: boolean): Promise<boolean> {
+    try {
+      await collectionApi.apiCollectionsIdAiTaggingPut({
+        id: collectionId,
+        aiTaggingUpdateJson: { enabled },
+      })
+      if (currentCollectionId.value === collectionId) {
+        await fetchCollectionInfo(collectionId)
+      }
+      return true
+    } catch (err) {
+      console.error('Failed to update AI tagging setting:', err)
+      const notification = useNotificationStore()
+      notification.handleApiError(err, 'Failed to update AI tagging setting')
+      return false
+    }
+  }
+
   async function deleteCollection(collectionId: string): Promise<boolean> {
     try {
       await collectionApi.apiCollectionsIdDelete({ id: collectionId })
@@ -350,6 +375,7 @@ export const useCollectionStore = defineStore('collection', () => {
     setDefaultCollection,
     createCollection,
     updateCollection,
+    updateAiTagging,
     deleteCollection,
     switchCollection,
     fetchMembers,

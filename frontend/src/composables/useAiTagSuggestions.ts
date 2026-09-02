@@ -1,4 +1,4 @@
-import { onBeforeUnmount, ref, watch, type Ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch, type Ref } from 'vue'
 import { config } from '@/api'
 import {
   BookmarkAutoTagResourceApi,
@@ -107,6 +107,15 @@ export function useAiTagSuggestions(opts: UseAiTagSuggestionsOptions) {
    * (or a connection that dies quietly) would otherwise leave the dialog
    * spinning indefinitely, so the client keeps its own clock.
    */
+  /**
+   * Whether AI suggestions run here at all (UC-112 BR-112-7). Sourced from the
+   * warm-up response — the server's answer, combining the operator's flag with
+   * the collection's — so `null` means "not known yet" and is deliberately not
+   * treated as enabled: an affordance that appears and then vanishes is worse
+   * than one that appears a beat late.
+   */
+  const aiEnabled = computed(() => provider.value?.enabled === true)
+
   function abortBudgetMs(): number {
     const serverBudget = provider.value?.suggestTimeoutMs
     return serverBudget && serverBudget > 0 ? serverBudget + 2_000 : FALLBACK_ABORT_MS
@@ -116,6 +125,9 @@ export function useAiTagSuggestions(opts: UseAiTagSuggestionsOptions) {
     const u = url.value?.trim()
     const cid = collectionId.value
     if (!u || !cid) return
+    // The server refuses anyway (BR-112-4); not asking keeps a switched-off
+    // collection from generating request noise at all.
+    if (!aiEnabled.value) return
 
     abort?.abort()
     const controller = new AbortController()
@@ -238,5 +250,15 @@ export function useAiTagSuggestions(opts: UseAiTagSuggestionsOptions) {
     abort?.abort()
   })
 
-  return { aiState, aiSuggestions, provider, warmUp, regenerate, retrieve, markHandled, reset }
+  return {
+    aiState,
+    aiSuggestions,
+    provider,
+    aiEnabled,
+    warmUp,
+    regenerate,
+    retrieve,
+    markHandled,
+    reset,
+  }
 }

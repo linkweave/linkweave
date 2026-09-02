@@ -103,6 +103,30 @@ public class CollectionService {
         );
     }
 
+    /**
+     * Turns LLM tag suggestions on or off for one collection (UC-112 FR-105).
+     *
+     * <p>Separate from {@link #updateCollection} because the authorization
+     * differs: that one is owner-or-admin, this is any member (BR-112-5).
+     * Authorization itself is the resource's job, per the layering rules.
+     */
+    public void updateAiTagging(@NonNull ID<Collection> collectionId, boolean enabled) {
+        Collection collection = collectionRepo.getById(collectionId);
+        collection.setAiTaggingEnabled(enabled);
+        collectionRepo.persistAndFlush(collection);
+    }
+
+    /**
+     * Whether the collection allows LLM tag suggestions (UC-112 BR-112-3).
+     *
+     * <p>Reads through {@code getById}, so an unknown collection throws rather
+     * than answering "enabled" — the fail-closed direction BR-112-6 requires,
+     * since failing open here would send content a member asked to be withheld.
+     */
+    public boolean isAiTaggingEnabled(@NonNull ID<Collection> collectionId) {
+        return collectionRepo.getById(collectionId).isAiTaggingEnabled();
+    }
+
     @NonNull
     public CollectionSummaryJson updateCollection(
         @NonNull ID<Collection> collectionId,

@@ -79,7 +79,7 @@ class BookmarkAutoTagLlmServiceITest {
 
     @Test
     void shouldReturnActiveProviderAndPreloadModelOnWarmUp() throws InterruptedException {
-        AutotagLLMProviderJson info = service.warmUp();
+        AutotagLLMProviderJson info = service.warmUp(true);
 
         Assertions.assertThat(info.getProvider()).isEqualTo("ollama");
         Assertions.assertThat(info.getModel()).isEqualTo("gemma2:2b");

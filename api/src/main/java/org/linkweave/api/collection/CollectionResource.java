@@ -90,6 +90,28 @@ public class CollectionResource {
             currentUser, callerRole);
     }
 
+    /**
+     * Per-collection AI-tagging toggle (UC-112 FR-105).
+     *
+     * <p>Its own endpoint, and its own authorization: any member with access may
+     * change it (BR-112-5), where {@link #updateCollection} above is
+     * owner-or-admin because it also carries the name and the fetch allowlist.
+     * Turning the feature off withdraws consent for the collection's contents to
+     * be sent to a model, which anyone whose bookmarks are in it should be able to
+     * do without waiting for an owner; the choice costs nothing and reverses
+     * instantly.
+     */
+    @PUT
+    @Path("{id}/ai-tagging")
+    @Authenticated
+    public void updateAiTagging(
+        @PathParam("id") ID<Collection> id,
+        @Valid AiTaggingUpdateJson json
+    ) {
+        authorizationService.requireCollectionAccess(id);
+        collectionService.updateAiTagging(id, json.isEnabled());
+    }
+
     @DELETE
     @Path("{id}")
     @Authenticated

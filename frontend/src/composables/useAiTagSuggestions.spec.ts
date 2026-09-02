@@ -28,8 +28,15 @@ function result(status: SuggestionStatusJson, tagList: unknown[] = []): Suggeste
   return { tagList, status } as SuggestedTagsResultJson
 }
 
-function provider(autoFire: boolean, suggestTimeoutMs = 8000) {
-  return { provider: 'ollama', model: 'gemma2:2b', onDevice: true, autoFire, suggestTimeoutMs }
+function provider(autoFire: boolean, suggestTimeoutMs = 8000, enabled = true) {
+  return {
+    provider: 'ollama',
+    model: 'gemma2:2b',
+    onDevice: true,
+    enabled,
+    autoFire,
+    suggestTimeoutMs,
+  }
 }
 
 /**
@@ -179,6 +186,8 @@ describe('useAiTagSuggestions', () => {
     // ARRANGE
     suggestSpy.mockRejectedValue(new Error('network down'))
     const ctx = mountComposable()
+    ctx.api().warmUp()
+    await vi.advanceTimersByTimeAsync(0)
     await fillContent(ctx)
 
     // ACT
@@ -214,6 +223,37 @@ describe('useAiTagSuggestions', () => {
     expect(signal?.aborted).toBe(true)
   })
 
+  it('makes no model call at all when the collection has opted out', async () => {
+    // ARRANGE — UC-112 BR-112-3/BR-112-4. The server refuses anyway; not asking
+    // keeps a switched-off collection from generating request noise.
+    warmUpSpy.mockResolvedValue(provider(true, 8000, false))
+    suggestSpy.mockResolvedValue(result(SuggestionStatusJson.Ok, [{ id: 't-1' }]))
+    const ctx = mountComposable()
+    ctx.api().warmUp()
+    await vi.advanceTimersByTimeAsync(0)
+
+    // ACT — typing, and then asking explicitly.
+    await typeBookmark(ctx)
+    ctx.api().retrieve()
+    await vi.advanceTimersByTimeAsync(0)
+
+    // ASSERT
+    expect(suggestSpy).not.toHaveBeenCalled()
+    expect(ctx.api().aiEnabled.value).toBe(false)
+  })
+
+  it('reports the feature as off until warm-up says otherwise', async () => {
+    // ARRANGE — an affordance that appears and then vanishes is worse than one
+    // that appears a beat late, so "not known yet" renders as off.
+    warmUpSpy.mockReturnValue(new Promise(() => {}))
+    const ctx = mountComposable()
+    ctx.api().warmUp()
+    await vi.advanceTimersByTimeAsync(0)
+
+    // ASSERT
+    expect(ctx.api().aiEnabled.value).toBe(false)
+  })
+
   it('aborts an in-flight request when the dialog closes', async () => {
     // ARRANGE — A6: the save must not wait on a suggestion still in the air.
     let signal: AbortSignal | undefined
@@ -222,6 +262,8 @@ describe('useAiTagSuggestions', () => {
       return new Promise(() => {})
     })
     const ctx = mountComposable()
+    ctx.api().warmUp()
+    await vi.advanceTimersByTimeAsync(0)
     await fillContent(ctx)
     ctx.api().retrieve()
     await vi.advanceTimersByTimeAsync(0)

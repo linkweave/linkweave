@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './ai-tagging-update-json';
 export * from './api-key-create-json';
 export * from './api-key-json';
 export * from './api-key-list-json';

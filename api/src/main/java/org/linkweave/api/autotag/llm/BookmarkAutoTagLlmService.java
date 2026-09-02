@@ -149,8 +149,8 @@ public class BookmarkAutoTagLlmService {
      * The provider info is config-derived, so it's returned immediately. Never
      * throws.
      */
-    public @NonNull AutotagLLMProviderJson warmUp() {
-        if (configService.isAutotagLlmEnabled()) {
+    public @NonNull AutotagLLMProviderJson warmUp(boolean collectionEnabled) {
+        if (collectionEnabled && configService.isAutotagLlmEnabled()) {
             managedExecutor.execute(() -> {
                 try {
                     llmTaggingClient.warmUp();
@@ -159,11 +159,17 @@ public class BookmarkAutoTagLlmService {
                 }
             });
         }
-        return providerInfo();
+        return providerInfo(collectionEnabled);
     }
 
-    /** Active provider descriptor, derived purely from config (no model call). */
-    private @NonNull AutotagLLMProviderJson providerInfo() {
+    /**
+     * Active provider descriptor, derived purely from config (no model call).
+     *
+     * <p>{@code enabled} is the conjunction of the operator's flag and the
+     * collection's (UC-112 BR-112-1) — the two are in series, and the client only
+     * ever needs to know the answer, not which of the two said no.
+     */
+    private @NonNull AutotagLLMProviderJson providerInfo(boolean collectionEnabled) {
         boolean openAi = configService.isAutotagProviderOpenAi();
         String model = openAi
             ? configService.getAutotagOpenAiModel()
@@ -172,6 +178,7 @@ public class BookmarkAutoTagLlmService {
             openAi ? "openai" : "ollama",
             model,
             !openAi,
+            collectionEnabled && configService.isAutotagLlmEnabled(),
             configService.isAutotagAutoFire(),
             configService.getAutotagSuggestTimeoutMs());
     }

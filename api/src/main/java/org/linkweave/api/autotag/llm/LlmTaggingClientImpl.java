@@ -223,6 +223,9 @@ public class LlmTaggingClientImpl implements LlmTaggingClient {
     private void handleCallFailure(
         @NonNull String operation, @NonNull LlmFailure failure, @NonNull RuntimeException cause) {
         LOG.debug("Ollama {} failed ({}): {}", operation, failure, cause.getMessage());
+        if (config.isAutotagProviderOpenAi()) {
+            return;
+        }
         if (!failure.warrantsPull()) {
             return;
         }
