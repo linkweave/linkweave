@@ -74,8 +74,9 @@ public class LlmTaggingClientImpl implements LlmTaggingClient {
     private final AtomicLong pullBackoffMs = new AtomicLong(0);
 
     @Override
-    public @NonNull Result suggest(@NonNull List<String> vocabulary, @NonNull String bookmarkContent) {
-        LlmCircuitBreaker.Admission admission = circuitBreaker.tryAcquire();
+    public @NonNull Result suggest(
+        @NonNull List<String> vocabulary, @NonNull String bookmarkContent, @NonNull String scope) {
+        LlmCircuitBreaker.Admission admission = circuitBreaker.tryAcquire(scope);
         if (!admission.admitted()) {
             circuitBreaker.countOutcome(admission.outcome());
             LOG.debug("Skipping model call: {}", admission.outcome());

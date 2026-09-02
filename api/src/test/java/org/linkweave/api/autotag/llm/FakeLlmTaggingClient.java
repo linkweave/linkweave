@@ -20,6 +20,7 @@ public class FakeLlmTaggingClient extends LlmTaggingClientImpl {
 
     public volatile List<String> namesToReturn = List.of();
     public volatile @Nullable List<String> lastVocabulary = null;
+    public volatile @Nullable String lastScope = null;
     public final AtomicBoolean suggestCalled = new AtomicBoolean(false);
     public final AtomicBoolean warmUpCalled = new AtomicBoolean(false);
 
@@ -42,6 +43,7 @@ public class FakeLlmTaggingClient extends LlmTaggingClientImpl {
     public void reset() {
         namesToReturn = List.of();
         lastVocabulary = null;
+        lastScope = null;
         outcomeToReturn = null;
         stallUntil = null;
         inFlight.set(0);
@@ -50,9 +52,11 @@ public class FakeLlmTaggingClient extends LlmTaggingClientImpl {
     }
 
     @Override
-    public @NonNull Result suggest(@NonNull List<String> vocabulary, @NonNull String bookmarkContent) {
+    public @NonNull Result suggest(
+        @NonNull List<String> vocabulary, @NonNull String bookmarkContent, @NonNull String scope) {
         suggestCalled.set(true);
         lastVocabulary = vocabulary;
+        lastScope = scope;
         CountDownLatch stall = stallUntil;
         if (stall != null) {
             inFlight.incrementAndGet();

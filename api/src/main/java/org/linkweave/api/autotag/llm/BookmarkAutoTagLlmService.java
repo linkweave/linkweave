@@ -61,7 +61,8 @@ public class BookmarkAutoTagLlmService {
      * text to classify. Keeping the entity access here (service layer) rather
      * than in the resource respects the layering rules.
      */
-    public @NonNull SuggestionResult suggestTagsForBookmark(@NonNull ID<Bookmark> bookmarkId) {
+    public @NonNull SuggestionResult suggestTagsForBookmark(
+        @NonNull ID<Bookmark> bookmarkId, @NonNull String scope) {
         if (!configService.isAutotagLlmEnabled()) {
             return SuggestionResult.none(SuggestionOutcome.DISABLED);
         }
@@ -71,7 +72,8 @@ public class BookmarkAutoTagLlmService {
             bookmark.getCollectionId(),
             bookmark.getTitle(),
             url.toString(),
-            bookmark.getDescription());
+            bookmark.getDescription(),
+            scope);
     }
 
     /**
@@ -84,7 +86,8 @@ public class BookmarkAutoTagLlmService {
         @NonNull ID<Collection> collectionId,
         @Nullable String title,
         @Nullable String url,
-        @Nullable String description
+        @Nullable String description,
+        @NonNull String scope
     ) {
         if (!configService.isAutotagLlmEnabled()) {
             return SuggestionResult.none(SuggestionOutcome.DISABLED);
@@ -110,7 +113,8 @@ public class BookmarkAutoTagLlmService {
 
         LlmTaggingClient.Result result;
         try {
-            result = llmTaggingClient.suggest(existingTags, buildContent(title, url, description));
+            result = llmTaggingClient.suggest(
+                existingTags, buildContent(title, url, description), scope);
         } catch (RuntimeException e) {
             // The client is expected to report degradation as an outcome rather
             // than throw, but a fake or a future provider might not; best-effort

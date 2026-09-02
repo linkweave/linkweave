@@ -12,6 +12,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
+import org.assertj.core.api.Assertions;
 import org.linkweave.api.autotag.llm.FakeLlmTaggingClient;
 import org.linkweave.api.autotag.llm.LlmTaggingClient;
 import org.linkweave.api.benutzer.UserRepo;
@@ -38,6 +39,34 @@ class BookmarkAutoTagResourceITest {
     void installFake() {
         fake.reset();
         QuarkusMock.installMockForType(fake, LlmTaggingClient.class);
+    }
+
+    @Test
+    @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
+    void shouldScopeConcurrencyPermitsToTheUserAndCollection() {
+        // ARRANGE
+        Collection collection = fixtureService.createTestCollection();
+        fixtureService.persistTag(b -> b.withCollection(collection).withName("rust"));
+
+        // ACT
+        given()
+            .contentType(ContentType.JSON)
+            .body("""
+                {"title":"Async Rust","url":"https://example.com/rust"}
+                """)
+            .post("/collections/{cid}/autotag/suggest-tags", collection.getId().getUUID())
+            // ASSERT
+            .then()
+            .statusCode(200);
+
+        // The concurrency cap counts users-in-a-collection, not requests (UC-108
+        // BR-108-9), so the scope has to carry both. Asserted here rather than in
+        // the unit test because the resource is the only layer that knows who is
+        // calling, and a scope that dropped the user would silently make one
+        // typist able to supersede another's suggestions in a shared collection.
+        Assertions.assertThat(fake.lastScope)
+            .as("the concurrency scope identifies the caller and the collection")
+            .contains(collection.getId().getUUID().toString());
     }
 
     @Test

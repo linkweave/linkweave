@@ -24,9 +24,15 @@ public interface LlmTaggingClient {
      * outcome of this call, not an exception, so the reason travels in the
      * {@link Result} where the caller can pass it to the user (UC-108 BR-108-5)
      * instead of having to guess from an empty list.
+     *
+     * @param scope who this call is for — one user in one collection. Used only
+     *     for the concurrency cap: a newer call for the same scope takes over the
+     *     older one's slot rather than claiming a second (UC-108 BR-108-9), so a
+     *     user typing quickly cannot crowd out other users.
      */
     @NonNull
-    Result suggest(@NonNull List<String> vocabulary, @NonNull String bookmarkContent);
+    Result suggest(
+        @NonNull List<String> vocabulary, @NonNull String bookmarkContent, @NonNull String scope);
 
     /** Preloads the model so a subsequent {@link #suggest} call isn't cold (no-op for hosted providers). */
     void warmUp();

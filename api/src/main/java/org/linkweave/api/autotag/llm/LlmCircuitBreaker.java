@@ -1,6 +1,7 @@
 package org.linkweave.api.autotag.llm;
 
 import java.time.Duration;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.linkweave.api.shared.config.ConfigService;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Keeps a stalled tag-suggestion model from costing anything (UC-108 BR-108-4,
@@ -27,10 +29,14 @@ import org.jspecify.annotations.NonNull;
  *       model is left alone for a cooldown. When the cooldown expires exactly one
  *       caller is admitted as a probe; success closes the circuit and resets the
  *       cooldown, failure re-opens it with the cooldown doubled up to its ceiling.</li>
- *   <li><b>Concurrency cap</b> — at most {@code max-concurrent} calls are in
- *       flight. Overflow is rejected immediately rather than queued, because a
- *       queue in front of a slow model is just a slower way to occupy the worker
- *       pool that also serves bookmark reads and writes.</li>
+ *   <li><b>Concurrency cap</b> — at most {@code max-concurrent} <em>scopes</em>
+ *       are in flight. Overflow is rejected immediately rather than queued,
+ *       because a queue in front of a slow model is just a slower way to occupy
+ *       the worker pool that also serves bookmark reads and writes.</li>
+ *   <li><b>Newest-wins supersede</b> — a permit belongs to a scope (one user in
+ *       one collection), not to a call. A newer call for a scope that already has
+ *       one takes the permit over rather than taking a second, so a user typing
+ *       quickly cannot hold several.</li>
  *   <li><b>Transition logging</b> — health changes log once at WARN/INFO, not once
  *       per call. The 2026-08-28 incident produced eight identical warnings for
  *       what was a single sustained outage, which told the operator how many
@@ -72,6 +78,12 @@ public class LlmCircuitBreaker {
 
     private Semaphore inFlight;
 
+    /** The admission that currently owns each scope's permit (BR-108-9, newest wins). */
+    private final ConcurrentHashMap<String, Admission> inFlightByScope = new ConcurrentHashMap<>();
+
+    /** Gives each admission an identity; see {@link Admission}. */
+    private final AtomicLong admissionSeq = new AtomicLong();
+
     /** Coarse model health, used only to decide whether a transition needs a log line. */
     private enum Health { HEALTHY, DEGRADED }
 
@@ -86,15 +98,23 @@ public class LlmCircuitBreaker {
      * A permit to call the model, or the reason not to. Released with
      * {@link #release} in a finally block; {@link #rejected} permits carry no
      * resource and releasing them is a no-op, so callers need no special case.
+     *
+     * <p>{@code seq} exists to give each admission an identity. Records compare
+     * by value, and the supersede bookkeeping has to distinguish "this exact
+     * admission is still the current one for its scope" from "another admission
+     * that happens to look identical" — without it, an older call could release a
+     * permit its successor owns.
      */
-    public record Admission(boolean admitted, @NonNull SuggestionOutcome outcome, boolean probe) {
-
-        static @NonNull Admission granted(boolean probe) {
-            return new Admission(true, SuggestionOutcome.OK, probe);
-        }
+    public record Admission(
+        boolean admitted,
+        @NonNull SuggestionOutcome outcome,
+        boolean probe,
+        @Nullable String scope,
+        long seq
+    ) {
 
         static @NonNull Admission rejected(@NonNull SuggestionOutcome outcome) {
-            return new Admission(false, outcome, false);
+            return new Admission(false, outcome, false, null, 0);
         }
     }
 
@@ -103,8 +123,22 @@ public class LlmCircuitBreaker {
      * either grants a permit immediately or refuses immediately, which is the
      * whole point of BR-108-9 — a suggestion request must not wait behind another
      * suggestion request.
+     *
+     * <p>{@code scope} identifies who the call is for — one user in one
+     * collection. A second call for a scope that already holds a permit
+     * <em>takes over</em> that permit instead of taking another, so the cap counts
+     * concurrent users rather than concurrent calls.
+     *
+     * <p>This matters because a client-side abort does not stop the server. When
+     * the user keeps typing, the browser drops its previous request, but the
+     * worker thread stays in the blocking model read until the budget expires — so
+     * without supersede a single fast typist could hold every permit with work
+     * nobody is waiting for any more. Superseding does not cancel the older call
+     * (a thread parked in a synchronous HTTP read cannot be reclaimed); it only
+     * stops that call from being counted twice. Truly cancelling it would require
+     * the model call to be reactive end to end.
      */
-    public @NonNull Admission tryAcquire() {
+    public @NonNull Admission tryAcquire(@NonNull String scope) {
         long now = System.currentTimeMillis();
         long openUntil = openUntilEpochMs.get();
         boolean probe = false;
@@ -128,15 +162,35 @@ public class LlmCircuitBreaker {
             probeInFlightUntilEpochMs.set(probeWindowEnd);
             probe = true;
         }
+        Admission granted = new Admission(
+            true, SuggestionOutcome.OK, probe, scope, admissionSeq.incrementAndGet());
+        if (inFlightByScope.put(scope, granted) != null) {
+            // The scope already held a permit; this call inherits it. The
+            // superseded call will find itself no longer current on release and
+            // will not hand the permit back, so the chain still owns exactly one.
+            return granted;
+        }
         if (!inFlight.tryAcquire()) {
+            inFlightByScope.remove(scope, granted);
             return Admission.rejected(SuggestionOutcome.OVERLOADED);
         }
-        return Admission.granted(probe);
+        return granted;
     }
 
-    /** Returns the permit taken by {@link #tryAcquire}. Safe to call for refusals. */
+    /**
+     * Returns the permit taken by {@link #tryAcquire}. Safe to call for refusals.
+     *
+     * <p>Only the admission that is still current for its scope owns the permit.
+     * A superseded call reaching here has already handed ownership to its
+     * successor, so it must not release — doing so would let the cap drift upward
+     * by one permit every time a user re-typed.
+     */
     public void release(@NonNull Admission admission) {
-        if (admission.admitted()) {
+        if (!admission.admitted()) {
+            return;
+        }
+        String scope = admission.scope();
+        if (scope == null || inFlightByScope.remove(scope, admission)) {
             inFlight.release();
         }
     }

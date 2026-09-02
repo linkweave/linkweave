@@ -41,6 +41,9 @@ import org.linkweave.api.shared.config.ConfigService;
  */
 class LlmTaggingClientImplTest {
 
+    /** Concurrency scope; irrelevant to these tests, which never run calls in parallel. */
+    private static final String SCOPE = "user-1:collection-1";
+
     @Test
     void shouldRunPullOffRequestThreadAndFastFailWhileCold() throws Exception {
         // ARRANGE
@@ -50,7 +53,7 @@ class LlmTaggingClientImplTest {
 
         // ACT — the cold suggest returns immediately and schedules the (blocking)
         // pull on the executor, so the request thread is never pinned.
-        LlmTaggingClient.Result firstCold = client.suggest(List.of("rust"), "content");
+        LlmTaggingClient.Result firstCold = client.suggest(List.of("rust"), "content", SCOPE);
 
         // ASSERT
         Assertions.assertThat(firstCold.tagNames())
@@ -65,7 +68,7 @@ class LlmTaggingClientImplTest {
 
         // A concurrent caller, while the pull is still downloading, also fast-fails
         // and never invokes the model.
-        Assertions.assertThat(client.suggest(List.of("rust"), "content").tagNames()).isEmpty();
+        Assertions.assertThat(client.suggest(List.of("rust"), "content", SCOPE).tagNames()).isEmpty();
         Assertions.assertThat(chat.count.get())
             .as("the model must not be invoked while cold")
             .isZero();
@@ -87,13 +90,13 @@ class LlmTaggingClientImplTest {
         LlmTaggingClientImpl client = newClient(pullClient(pull), chatClient(chat));
 
         // ACT — the first cold suggest schedules the pull; wait until the model is warm.
-        Assertions.assertThat(client.suggest(List.of("rust"), "content").tagNames()).isEmpty();
+        Assertions.assertThat(client.suggest(List.of("rust"), "content", SCOPE).tagNames()).isEmpty();
         Assertions.assertThat(awaitServed(client)).containsExactly("rust");
 
         // Once warm, every suggestion is served directly without re-pulling.
         int chatBefore = chat.count.get();
-        client.suggest(List.of("rust"), "content");
-        client.suggest(List.of("rust"), "content");
+        client.suggest(List.of("rust"), "content", SCOPE);
+        client.suggest(List.of("rust"), "content", SCOPE);
 
         // ASSERT
         Assertions.assertThat(chat.count.get())
@@ -119,7 +122,7 @@ class LlmTaggingClientImplTest {
         chat.failure = () -> new RuntimeException(
             "The timeout period of 8000ms has been exceeded while executing POST /api/chat "
             + "for server ollama:11434");
-        LlmTaggingClient.Result result = client.suggest(List.of("rust"), "content");
+        LlmTaggingClient.Result result = client.suggest(List.of("rust"), "content", SCOPE);
 
         // ASSERT
         Assertions.assertThat(result.outcome())
@@ -143,7 +146,7 @@ class LlmTaggingClientImplTest {
         // ACT — the Ollama container is down.
         chat.failure = () -> new RuntimeException(
             new java.net.ConnectException("Connection refused"));
-        LlmTaggingClient.Result result = client.suggest(List.of("rust"), "content");
+        LlmTaggingClient.Result result = client.suggest(List.of("rust"), "content", SCOPE);
 
         // ASSERT
         Assertions.assertThat(result.outcome()).isEqualTo(SuggestionOutcome.UNAVAILABLE);
@@ -168,7 +171,7 @@ class LlmTaggingClientImplTest {
             Response.status(Response.Status.NOT_FOUND)
                 .entity("{\"error\":\"model 'gemma2:2b' not found, try pulling it first\"}")
                 .build());
-        client.suggest(List.of("rust"), "content");
+        client.suggest(List.of("rust"), "content", SCOPE);
 
         // ASSERT — this, and only this, re-arms the pull, so once the model is back
         // the next suggestion serves again rather than failing until a restart.
@@ -189,7 +192,7 @@ class LlmTaggingClientImplTest {
         LlmTaggingClientImpl client = newOpenAiClient(openAi, Optional.of("test-key"), "glm-4.6");
 
         // ACT
-        LlmTaggingClient.Result result = client.suggest(List.of("rust", "databases", "career"), "Async Rust blog");
+        LlmTaggingClient.Result result = client.suggest(List.of("rust", "databases", "career"), "Async Rust blog", SCOPE);
 
         // ASSERT
         Assertions.assertThat(result.tagNames())
@@ -217,7 +220,7 @@ class LlmTaggingClientImplTest {
         LlmTaggingClientImpl client = newOpenAiClient(openAi, Optional.empty(), "glm-4.6");
 
         // ACT
-        LlmTaggingClient.Result result = client.suggest(List.of("rust"), "content");
+        LlmTaggingClient.Result result = client.suggest(List.of("rust"), "content", SCOPE);
 
         // ASSERT
         Assertions.assertThat(result.tagNames())
@@ -252,7 +255,7 @@ class LlmTaggingClientImplTest {
     private static List<String> awaitServed(LlmTaggingClientImpl client) throws InterruptedException {
         long deadline = System.nanoTime() + SECONDS.toNanos(5);
         while (System.nanoTime() < deadline) {
-            List<String> served = client.suggest(List.of("rust"), "content").tagNames();
+            List<String> served = client.suggest(List.of("rust"), "content", SCOPE).tagNames();
             if (!served.isEmpty()) {
                 return served;
             }
@@ -363,7 +366,7 @@ class LlmTaggingClientImplTest {
     private static void assertEmptyFor(
         OpenAiState openAi, LlmTaggingClientImpl client, OpenAiClient.ChatCompletionResponse response) {
         openAi.response = response;
-        Assertions.assertThat(client.suggest(List.of("rust"), "content").tagNames())
+        Assertions.assertThat(client.suggest(List.of("rust"), "content", SCOPE).tagNames())
             .as("a degenerate hosted response yields an empty list")
             .isEmpty();
     }

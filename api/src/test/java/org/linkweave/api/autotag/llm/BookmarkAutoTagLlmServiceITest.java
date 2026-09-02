@@ -18,6 +18,9 @@ import org.junit.jupiter.api.Test;
 @TestSecurity(user = "test@example.com", roles = {"BOOKMARK_READ"})
 class BookmarkAutoTagLlmServiceITest {
 
+    /** Concurrency scope (UC-108 BR-108-9); not under test here. */
+    private static final String SCOPE = "user-1:collection-1";
+
     @Inject
     BookmarkAutoTagLlmService service;
 
@@ -43,7 +46,7 @@ class BookmarkAutoTagLlmServiceITest {
         fake.namesToReturn = List.of("databases", "not-a-real-tag", "rust");
 
         SuggestionResult result = service.suggestTags(
-            collection.getId(), "Async Rust patterns", "https://example.com/rust", "blog post");
+            collection.getId(), "Async Rust patterns", "https://example.com/rust", "blog post", SCOPE);
 
         Assertions.assertThat(result.tags())
             .as("only existing tags, in the model's order, hallucinated name dropped")
@@ -63,7 +66,7 @@ class BookmarkAutoTagLlmServiceITest {
         fake.namesToReturn = List.of("rust");
 
         SuggestionResult result = service.suggestTags(
-            collection.getId(), "Title", "https://example.com", null);
+            collection.getId(), "Title", "https://example.com", null, SCOPE);
 
         Assertions.assertThat(result.tags()).isEmpty();
         Assertions.assertThat(result.outcome())

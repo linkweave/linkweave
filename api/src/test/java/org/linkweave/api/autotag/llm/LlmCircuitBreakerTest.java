@@ -15,6 +15,10 @@ import org.linkweave.api.shared.config.ConfigService;
  */
 class LlmCircuitBreakerTest {
 
+    private static final String ALICE = "alice:collection-1";
+    private static final String BOB = "bob:collection-1";
+    private static final String CAROL = "carol:collection-1";
+
     @Test
     void shouldOpenAfterThresholdAndRefuseFurtherCallsWithoutContactingTheModel() {
         // ARRANGE
@@ -23,13 +27,13 @@ class LlmCircuitBreakerTest {
         // ACT — two failures are not yet enough; the third opens the circuit.
         failOnce(breaker, LlmFailure.TIMEOUT);
         failOnce(breaker, LlmFailure.TIMEOUT);
-        Assertions.assertThat(breaker.tryAcquire().admitted())
+        Assertions.assertThat(releasing(breaker, ALICE).admitted())
             .as("below the threshold the model is still tried")
             .isTrue();
         failOnce(breaker, LlmFailure.TIMEOUT);
 
         // ASSERT
-        LlmCircuitBreaker.Admission refused = breaker.tryAcquire();
+        LlmCircuitBreaker.Admission refused = breaker.tryAcquire(ALICE);
         Assertions.assertThat(refused.admitted())
             .as("once open, no further call reaches the model")
             .isFalse();
@@ -60,8 +64,8 @@ class LlmCircuitBreakerTest {
         Thread.sleep(120);
 
         // ACT
-        LlmCircuitBreaker.Admission probe = breaker.tryAcquire();
-        LlmCircuitBreaker.Admission secondCaller = breaker.tryAcquire();
+        LlmCircuitBreaker.Admission probe = breaker.tryAcquire(ALICE);
+        LlmCircuitBreaker.Admission secondCaller = breaker.tryAcquire(BOB);
 
         // ASSERT
         Assertions.assertThat(probe.admitted()).isTrue();
@@ -77,7 +81,7 @@ class LlmCircuitBreakerTest {
         Assertions.assertThat(breaker.isOpen())
             .as("a successful probe closes the circuit")
             .isFalse();
-        Assertions.assertThat(breaker.tryAcquire().admitted()).isTrue();
+        Assertions.assertThat(releasing(breaker, BOB).admitted()).isTrue();
     }
 
     @Test
@@ -88,7 +92,7 @@ class LlmCircuitBreakerTest {
         Thread.sleep(120);
 
         // ACT — the probe goes out and fails, so the model is still not well.
-        LlmCircuitBreaker.Admission probe = breaker.tryAcquire();
+        LlmCircuitBreaker.Admission probe = breaker.tryAcquire(ALICE);
         Assertions.assertThat(probe.probe()).isTrue();
         breaker.release(probe);
         breaker.recordFailure(LlmFailure.TIMEOUT);
@@ -107,10 +111,10 @@ class LlmCircuitBreakerTest {
         // ARRANGE
         LlmCircuitBreaker breaker = newBreaker(3, Duration.ofSeconds(30), 2);
 
-        // ACT — take both permits and ask for a third.
-        LlmCircuitBreaker.Admission first = breaker.tryAcquire();
-        LlmCircuitBreaker.Admission second = breaker.tryAcquire();
-        LlmCircuitBreaker.Admission overflow = breaker.tryAcquire();
+        // ACT — three different users; the first two take the permits.
+        LlmCircuitBreaker.Admission first = breaker.tryAcquire(ALICE);
+        LlmCircuitBreaker.Admission second = breaker.tryAcquire(BOB);
+        LlmCircuitBreaker.Admission overflow = breaker.tryAcquire(CAROL);
 
         // ASSERT
         Assertions.assertThat(first.admitted()).isTrue();
@@ -122,7 +126,7 @@ class LlmCircuitBreakerTest {
 
         // Releasing a permit frees the next caller.
         breaker.release(first);
-        Assertions.assertThat(breaker.tryAcquire().admitted()).isTrue();
+        Assertions.assertThat(breaker.tryAcquire(CAROL).admitted()).isTrue();
     }
 
     @Test
@@ -142,12 +146,69 @@ class LlmCircuitBreakerTest {
         Assertions.assertThat(breaker.isOpen()).isFalse();
     }
 
+    @Test
+    void shouldLetANewerCallForTheSameUserTakeOverInsteadOfTakingASecondPermit() {
+        // ARRANGE — one permit in total, so a second one being taken would show up
+        // immediately as a refusal for somebody else.
+        LlmCircuitBreaker breaker = newBreaker(3, Duration.ofSeconds(30), 1);
+
+        // ACT — the user types, the browser abandons the first request and issues a
+        // second. The server cannot reclaim the first call's thread, so both are
+        // running; only the newer one is still wanted.
+        LlmCircuitBreaker.Admission abandoned = breaker.tryAcquire(ALICE);
+        LlmCircuitBreaker.Admission wanted = breaker.tryAcquire(ALICE);
+
+        // ASSERT
+        Assertions.assertThat(abandoned.admitted()).isTrue();
+        Assertions.assertThat(wanted.admitted())
+            .as("the newest call for a scope always gets in — it inherits the slot")
+            .isTrue();
+
+        // The abandoned call finishing must not hand back a permit its successor
+        // owns; if it did, the cap would drift upward on every keystroke.
+        breaker.release(abandoned);
+        Assertions.assertThat(breaker.tryAcquire(BOB).admitted())
+            .as("the scope still holds the only permit until its newest call finishes")
+            .isFalse();
+
+        breaker.release(wanted);
+        Assertions.assertThat(breaker.tryAcquire(BOB).admitted())
+            .as("releasing the newest call frees the permit for another user")
+            .isTrue();
+    }
+
+    @Test
+    void shouldNotLetOneFastTypistCrowdOutOtherUsers() {
+        // ARRANGE — a cap of two, and one user who keeps re-typing.
+        LlmCircuitBreaker breaker = newBreaker(3, Duration.ofSeconds(30), 2);
+
+        // ACT
+        breaker.tryAcquire(ALICE);
+        breaker.tryAcquire(ALICE);
+        breaker.tryAcquire(ALICE);
+
+        // ASSERT — the cap counts concurrent users, not concurrent requests, so
+        // Alice holds exactly one slot no matter how fast she types.
+        Assertions.assertThat(breaker.tryAcquire(BOB).admitted())
+            .as("a second user still gets in")
+            .isTrue();
+        Assertions.assertThat(breaker.tryAcquire(CAROL).admitted())
+            .as("and the third is refused because the cap is two, not because of Alice")
+            .isFalse();
+    }
+
     // --- helpers ---
 
     private static void failOnce(LlmCircuitBreaker breaker, LlmFailure failure) {
-        LlmCircuitBreaker.Admission admission = breaker.tryAcquire();
-        breaker.release(admission);
+        breaker.release(breaker.tryAcquire(ALICE));
         breaker.recordFailure(failure);
+    }
+
+    /** Acquires and immediately releases, so the assertion does not leak a permit. */
+    private static LlmCircuitBreaker.Admission releasing(LlmCircuitBreaker breaker, String scope) {
+        LlmCircuitBreaker.Admission admission = breaker.tryAcquire(scope);
+        breaker.release(admission);
+        return admission;
     }
 
     private static LlmCircuitBreaker newBreaker(int threshold, Duration cooldown, int maxConcurrent) {

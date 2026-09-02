@@ -24,6 +24,7 @@ import org.linkweave.api.bookmark.BookmarkService;
 import org.linkweave.api.bookmark.TagMapper;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.shared.auth.AuthorizationService;
+import org.linkweave.api.shared.user.CurrentUserService;
 import org.linkweave.api.types.id.ID;
 import org.linkweave.infrastructure.ratelimit.RateLimitConst;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
@@ -63,6 +64,7 @@ public class BookmarkAutoTagResource {
     private final BookmarkAutoTagLlmService autoTagLlmService;
     private final BookmarkService bookmarkService;
     private final AuthorizationService authorizationService;
+    private final CurrentUserService currentUserService;
 
     @POST
     @Path("/bookmarks/{bookmarkId}/suggest-tags")
@@ -77,7 +79,7 @@ public class BookmarkAutoTagResource {
         ID<Collection> owningCollectionId = bookmarkService.getBookmarkCollectionId(bookmarkId);
         authorizationService.requireCollectionAccess(owningCollectionId);
         authorizationService.requireSameCollection(owningCollectionId, collectionId);
-        return toJson(autoTagLlmService.suggestTagsForBookmark(bookmarkId));
+        return toJson(autoTagLlmService.suggestTagsForBookmark(bookmarkId, scopeOf(owningCollectionId)));
     }
 
     @POST
@@ -93,7 +95,8 @@ public class BookmarkAutoTagResource {
     ) {
         authorizationService.requireCollectionAccess(collectionId);
         return toJson(autoTagLlmService.suggestTags(
-            collectionId, json.getTitle(), json.getUrl(), json.getDescription()));
+            collectionId, json.getTitle(), json.getUrl(), json.getDescription(),
+            scopeOf(collectionId)));
     }
 
     /**
@@ -118,6 +121,17 @@ public class BookmarkAutoTagResource {
     public AutotagLLMProviderJson warmUp(@PathParam("collectionId") @NonNull ID<Collection> collectionId) {
         authorizationService.requireCollectionAccess(collectionId);
         return autoTagLlmService.warmUp();
+    }
+
+    /**
+     * Identifies the dialog this call is for, so the concurrency cap counts users
+     * rather than keystrokes (UC-108 BR-108-9). One user editing in one collection
+     * is one scope: when they keep typing, the newer request takes over the older
+     * one's slot instead of claiming a second, because the browser has already
+     * abandoned the older one.
+     */
+    private @NonNull String scopeOf(@NonNull ID<Collection> collectionId) {
+        return currentUserService.currentUserID() + ":" + collectionId;
     }
 
     /** Entity -> DTO mapping stays in the resource layer, per the layering rules. */

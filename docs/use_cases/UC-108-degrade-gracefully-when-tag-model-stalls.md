@@ -178,7 +178,7 @@ Implemented 2026-09-02.
 | BR-108-6 (pull limits) | Single in-flight pull, exponential backoff (`linkweave.autotag.pull.min-interval`), pull read-timeout cut from 30 min to 10. |
 | BR-108-7 (auto-fire) | `linkweave.autotag.auto-fire`, reported on the warm-up response; the frontend's hard-coded `AUTO_FIRE` constant is gone. |
 | BR-108-8 (log once + metric) | `LlmCircuitBreaker.logTransition`; `linkweave.autotag.suggestions{provider,model,outcome}`. |
-| BR-108-9 (concurrency) | Semaphore in `LlmCircuitBreaker`; overflow answers `OVERLOADED` immediately. |
+| BR-108-9 (concurrency) | Semaphore in `LlmCircuitBreaker`; overflow answers `OVERLOADED` immediately. A permit belongs to a *scope* — one user in one collection — rather than to a request, so the cap counts concurrent editors, not keystrokes. See below. |
 
 ### The defect behind BR-108-3
 
@@ -199,6 +199,37 @@ where a large share of UC-109's `SQLITE_BUSY` pressure came from.
 `BookmarkAutoTagStallITest` reproduces it with a two-connection pool and four
 hung suggestions; it fails with `Unable to acquire JDBC Connection [Sorry,
 acquisition timeout!]` against the pre-fix resource.
+
+### Newest-wins within a scope (BR-108-9)
+
+A client-side abort does not stop the server. When the user keeps typing, the
+browser drops its previous suggestion request, but the worker thread stays in the
+blocking model read until the budget expires — so a naive per-request cap let a
+single fast typist hold several permits with work nobody was waiting for any
+more.
+
+Permits are therefore keyed by scope (`<userId>:<collectionId>`, built in the
+resource, the only layer that knows who is calling). A newer call for a scope
+that already holds a permit *takes it over* instead of claiming a second; the
+superseded call finds itself no longer current when it finishes and does not hand
+the permit back, so the chain owns exactly one throughout. Eviction across
+different scopes is deliberately not done — cancelling one user's live request to
+serve another's would be arbitrary.
+
+This does not *cancel* the superseded call: a thread parked in a synchronous HTTP
+read cannot be reclaimed, and `Thread.interrupt()` is not honoured by the
+Vert.x-backed REST client. True cancellation would need the model call to be
+reactive end to end — `OllamaClient.chat` returning `Uni`, and a non-blocking
+suggestion endpoint, which is supported (the project uses
+`quarkus-rest-client-jackson`, the reactive client) but is a real refactor in an
+otherwise blocking JDBC/Hibernate path. It is worth doing only if the cap is
+observed to bite; `linkweave.autotag.suggestions{outcome="overloaded"}` is the
+signal to watch.
+
+The default cap was raised from 2 to 6 at the same time. Two was sized while the
+worst case was still a drained JDBC pool; with BR-108-3 fixed, the only resource
+at stake is the worker pool (~200 threads), and these endpoints already carry a
+60/min per-caller rate limit.
 
 ## Notes / Future Considerations
 

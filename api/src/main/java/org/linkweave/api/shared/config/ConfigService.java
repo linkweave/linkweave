@@ -269,8 +269,10 @@ public class ConfigService {
 
     // BR-108-9: ceiling on concurrent in-flight model calls. Requests beyond the
     // cap answer "unavailable" immediately rather than queueing, so a slow model
-    // can never occupy the worker pool that serves bookmark reads and writes.
-    @ConfigProperty(name = "linkweave.autotag.max-concurrent", defaultValue = "2")
+    // can never occupy the worker pool that serves bookmark reads and writes. A
+    // permit belongs to a user-in-a-collection, not to a request, so this counts
+    // concurrent editors rather than keystrokes.
+    @ConfigProperty(name = "linkweave.autotag.max-concurrent", defaultValue = "6")
     int autotagMaxConcurrent;
 
     // BR-108-6: minimum interval between model pulls, doubling up to the ceiling
