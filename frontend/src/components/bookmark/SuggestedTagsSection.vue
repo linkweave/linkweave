@@ -8,7 +8,7 @@ import { compileCustomRules, suggestAllTagNames } from '@/lib/tag-suggester'
 import { useAutoTagRuleStore } from '@/stores/autoTagRule'
 import { useNotificationStore } from '@/stores/notification'
 import { useTagStore } from '@/stores/tag'
-import { Check, Cloud, RefreshCw, ShieldCheck, Sparkles, Zap } from '@lucide/vue'
+import { Check, Cloud, CloudOff, Loader, RefreshCw, ShieldCheck, Sparkles, Zap } from '@lucide/vue'
 import { computed, ref, toRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -291,7 +291,7 @@ function onRetrieve() {
           <p class="ai-idle-hint">{{ t('bookmark.aiHint') }}</p>
         </div>
 
-        <!-- empty -->
+        <!-- empty: the model answered and had nothing to propose -->
         <div v-else-if="aiState === 'empty'" class="ai-empty" data-testid="ai-empty">
           <span>{{ t('bookmark.aiEmpty') }}</span>
           <button
@@ -303,6 +303,39 @@ function onRetrieve() {
             <RefreshCw :size="11" />
             {{ t('bookmark.retry') }}
           </button>
+        </div>
+
+        <!--
+          Unavailable: the model never answered (UC-108 BR-108-5). Deliberately
+          not the empty state — the two used to look identical, so a stalled
+          model read as one with no ideas and the user kept re-typing at it. One
+          quiet line, no error dialog, and a retry the user has to choose: an
+          automatic one would just re-queue work onto a service already known to
+          be struggling.
+        -->
+        <div v-else-if="aiState === 'unavailable'" class="ai-degraded" data-testid="ai-unavailable">
+          <span class="ai-degraded-line">
+            <CloudOff :size="12" aria-hidden="true" />
+            {{ t('bookmark.aiUnavailable') }}
+          </span>
+          <span class="ai-degraded-hint">{{ t('bookmark.aiUnavailableHint') }}</span>
+          <button
+            type="button"
+            class="ai-regen"
+            data-testid="ai-retry-unavailable"
+            @click="regenerate"
+          >
+            <RefreshCw :size="11" />
+            {{ t('bookmark.retry') }}
+          </button>
+        </div>
+
+        <!-- Preparing: a model download is running; the feature returns by itself. -->
+        <div v-else-if="aiState === 'preparing'" class="ai-degraded" data-testid="ai-preparing">
+          <span class="ai-degraded-line">
+            <Loader :size="12" aria-hidden="true" />
+            {{ t('bookmark.aiPreparing') }}
+          </span>
         </div>
 
         <!-- ok: chips -->
@@ -580,6 +613,29 @@ function onRetrieve() {
   margin-top: 6px;
   font-size: 12px;
   color: var(--color-muted-foreground);
+}
+
+/*
+ * Degraded states read as quieter than the empty state, not louder: nothing the
+ * user did caused this and there is nothing they must do about it.
+ */
+.ai-degraded {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--color-muted-foreground);
+}
+.ai-degraded-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.ai-degraded-hint {
+  font-size: 11px;
+  opacity: 0.85;
 }
 
 .ai-foot-note {

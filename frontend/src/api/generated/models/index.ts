@@ -65,6 +65,8 @@ export * from './saved-search-save-json';
 export * from './sort-direction';
 export * from './sort-field';
 export * from './suggest-tags-json';
+export * from './suggested-tags-result-json';
+export * from './suggestion-status-json';
 export * from './tag-json';
 export * from './tag-list-json';
 export * from './tag-save-json';

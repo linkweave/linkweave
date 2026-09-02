@@ -238,6 +238,50 @@ public class ConfigService {
     @ConfigProperty(name = "linkweave.autotag.openai.api-key")
     Optional<String> autotagOpenAiApiKey;
 
+    // --- Degradation controls (UC-108) ---
+
+    // BR-108-1: the interactive budget. A suggestion fires while the user waits
+    // in the bookmark dialog, so it gets a small multiple of the 700ms debounce
+    // rather than a network default. Feeds
+    // quarkus.rest-client.ollama.read-timeout and is echoed to the client so the
+    // browser aborts on the same budget. Milliseconds, to stay in the same unit
+    // as the REST Client read-timeout it feeds.
+    @ConfigProperty(name = "linkweave.autotag.suggest-timeout-ms", defaultValue = "8000")
+    int autotagSuggestTimeoutMs;
+
+    // BR-108-7: whether suggestions fire automatically as the user types, or
+    // only when they click "Suggest tags with AI". Hosts too small to serve the
+    // model at interactive speed turn this off instead of losing the feature.
+    @ConfigProperty(name = "linkweave.autotag.auto-fire", defaultValue = "true")
+    boolean autotagAutoFire;
+
+    // BR-108-4: consecutive failures that open the circuit, and the cooldown
+    // before a single probe is let through. The cooldown doubles on each failed
+    // probe up to the ceiling.
+    @ConfigProperty(name = "linkweave.autotag.circuit.failure-threshold", defaultValue = "3")
+    int autotagCircuitFailureThreshold;
+
+    @ConfigProperty(name = "linkweave.autotag.circuit.cooldown", defaultValue = "30s")
+    Duration autotagCircuitCooldown;
+
+    @ConfigProperty(name = "linkweave.autotag.circuit.cooldown-max", defaultValue = "10m")
+    Duration autotagCircuitCooldownMax;
+
+    // BR-108-9: ceiling on concurrent in-flight model calls. Requests beyond the
+    // cap answer "unavailable" immediately rather than queueing, so a slow model
+    // can never occupy the worker pool that serves bookmark reads and writes.
+    @ConfigProperty(name = "linkweave.autotag.max-concurrent", defaultValue = "2")
+    int autotagMaxConcurrent;
+
+    // BR-108-6: minimum interval between model pulls, doubling up to the ceiling
+    // after each failure. Guards against the re-pull feedback loop where a
+    // timeout triggers a download that makes the next timeout more likely.
+    @ConfigProperty(name = "linkweave.autotag.pull.min-interval", defaultValue = "5m")
+    Duration autotagPullMinInterval;
+
+    @ConfigProperty(name = "linkweave.autotag.pull.min-interval-max", defaultValue = "1h")
+    Duration autotagPullMinIntervalMax;
+
     /** True when the hosted OpenAI-compatible provider is selected. */
     public boolean isAutotagProviderOpenAi() {
         return "openai".equalsIgnoreCase(autotagProvider);

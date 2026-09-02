@@ -17,15 +17,15 @@ import * as runtime from '../runtime';
 import type {
   AutotagLLMProviderJson,
   SuggestTagsJson,
-  TagListJson,
+  SuggestedTagsResultJson,
 } from '../models/index';
 import {
     AutotagLLMProviderJsonFromJSON,
     AutotagLLMProviderJsonToJSON,
     SuggestTagsJsonFromJSON,
     SuggestTagsJsonToJSON,
-    TagListJsonFromJSON,
-    TagListJsonToJSON,
+    SuggestedTagsResultJsonFromJSON,
+    SuggestedTagsResultJsonToJSON,
 } from '../models/index';
 
 export interface BookmarkAutoTagResourceApiApiCollectionsCollectionIdAutotagBookmarksBookmarkIdSuggestTagsPostRequest {
@@ -85,17 +85,17 @@ export class BookmarkAutoTagResourceApi extends runtime.BaseAPI {
     /**
      * Suggest For Bookmark
      */
-    async apiCollectionsCollectionIdAutotagBookmarksBookmarkIdSuggestTagsPostRaw(requestParameters: BookmarkAutoTagResourceApiApiCollectionsCollectionIdAutotagBookmarksBookmarkIdSuggestTagsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TagListJson>> {
+    async apiCollectionsCollectionIdAutotagBookmarksBookmarkIdSuggestTagsPostRaw(requestParameters: BookmarkAutoTagResourceApiApiCollectionsCollectionIdAutotagBookmarksBookmarkIdSuggestTagsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SuggestedTagsResultJson>> {
         const requestOptions = await this.apiCollectionsCollectionIdAutotagBookmarksBookmarkIdSuggestTagsPostRequestOpts(requestParameters);
         const response = await this.request(requestOptions, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => TagListJsonFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => SuggestedTagsResultJsonFromJSON(jsonValue));
     }
 
     /**
      * Suggest For Bookmark
      */
-    async apiCollectionsCollectionIdAutotagBookmarksBookmarkIdSuggestTagsPost(requestParameters: BookmarkAutoTagResourceApiApiCollectionsCollectionIdAutotagBookmarksBookmarkIdSuggestTagsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TagListJson> {
+    async apiCollectionsCollectionIdAutotagBookmarksBookmarkIdSuggestTagsPost(requestParameters: BookmarkAutoTagResourceApiApiCollectionsCollectionIdAutotagBookmarksBookmarkIdSuggestTagsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SuggestedTagsResultJson> {
         const response = await this.apiCollectionsCollectionIdAutotagBookmarksBookmarkIdSuggestTagsPostRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -140,17 +140,17 @@ export class BookmarkAutoTagResourceApi extends runtime.BaseAPI {
     /**
      * Suggest For Text
      */
-    async apiCollectionsCollectionIdAutotagSuggestTagsPostRaw(requestParameters: BookmarkAutoTagResourceApiApiCollectionsCollectionIdAutotagSuggestTagsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TagListJson>> {
+    async apiCollectionsCollectionIdAutotagSuggestTagsPostRaw(requestParameters: BookmarkAutoTagResourceApiApiCollectionsCollectionIdAutotagSuggestTagsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SuggestedTagsResultJson>> {
         const requestOptions = await this.apiCollectionsCollectionIdAutotagSuggestTagsPostRequestOpts(requestParameters);
         const response = await this.request(requestOptions, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => TagListJsonFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => SuggestedTagsResultJsonFromJSON(jsonValue));
     }
 
     /**
      * Suggest For Text
      */
-    async apiCollectionsCollectionIdAutotagSuggestTagsPost(requestParameters: BookmarkAutoTagResourceApiApiCollectionsCollectionIdAutotagSuggestTagsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TagListJson> {
+    async apiCollectionsCollectionIdAutotagSuggestTagsPost(requestParameters: BookmarkAutoTagResourceApiApiCollectionsCollectionIdAutotagSuggestTagsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SuggestedTagsResultJson> {
         const response = await this.apiCollectionsCollectionIdAutotagSuggestTagsPostRaw(requestParameters, initOverrides);
         return await response.value();
     }

@@ -22,8 +22,10 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>{@link #chat} is the constrained-tagging call — the {@code format} field
  * carries a JSON Schema whose {@code enum} pins the output to the collection's
- * existing tags. {@link #generate} with no prompt is the warm-up that preloads
- * the model so the first real {@code chat} isn't cold.
+ * existing tags. It runs while the user waits in the bookmark dialog, so its
+ * read-timeout is the interactive budget (UC-108 BR-108-1). Preloading the model
+ * is deliberately <em>not</em> here: that lives on {@link OllamaWarmUpClient},
+ * which may wait out a cold start because it runs off the request path.
  */
 @RegisterRestClient(configKey = "ollama")
 @Path("/api")
@@ -35,13 +37,6 @@ public interface OllamaClient {
     @Produces(MediaType.APPLICATION_JSON)
     @NonNull
     ChatResponse chat(@NonNull ChatRequest request);
-
-    @POST
-    @Path("/generate")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @NonNull
-    GenerateResponse generate(@NonNull GenerateRequest request);
 
     record ChatRequest(
         @NonNull String model,
@@ -60,12 +55,4 @@ public interface OllamaClient {
     /** Ollama returns extra fields (model, created_at, timing stats); ignore them. */
     @JsonIgnoreProperties(ignoreUnknown = true)
     record ChatResponse(@Nullable Message message, boolean done) {}
-
-    record GenerateRequest(
-        @NonNull String model,
-        @JsonProperty("keep_alive") @NonNull String keepAlive
-    ) {}
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    record GenerateResponse(boolean done) {}
 }

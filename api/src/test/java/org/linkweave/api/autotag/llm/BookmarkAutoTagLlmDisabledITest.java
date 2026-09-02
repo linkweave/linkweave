@@ -45,10 +45,13 @@ class BookmarkAutoTagLlmDisabledITest {
         fixtureService.persistTag(b -> b.withCollection(collection).withName("rust"));
         fake.namesToReturn = List.of("rust");
 
-        List<Tag> result = service.suggestTags(
+        SuggestionResult result = service.suggestTags(
             collection.getId(), "Async Rust", "https://example.com/rust", null);
 
-        Assertions.assertThat(result).isEmpty();
+        Assertions.assertThat(result.tags()).isEmpty();
+        Assertions.assertThat(result.outcome())
+            .as("a switched-off feature says so rather than looking like an empty answer")
+            .isEqualTo(SuggestionOutcome.DISABLED);
         Assertions.assertThat(fake.suggestCalled)
             .as("disabled feature must not call the model")
             .isFalse();

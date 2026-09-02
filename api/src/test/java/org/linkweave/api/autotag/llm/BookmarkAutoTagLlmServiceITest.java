@@ -42,13 +42,16 @@ class BookmarkAutoTagLlmServiceITest {
         // Model returns two valid tags (reversed order) plus a hallucinated one.
         fake.namesToReturn = List.of("databases", "not-a-real-tag", "rust");
 
-        List<Tag> result = service.suggestTags(
+        SuggestionResult result = service.suggestTags(
             collection.getId(), "Async Rust patterns", "https://example.com/rust", "blog post");
 
-        Assertions.assertThat(result)
+        Assertions.assertThat(result.tags())
             .as("only existing tags, in the model's order, hallucinated name dropped")
             .extracting(Tag::getName)
             .containsExactly("databases", "rust");
+        Assertions.assertThat(result.outcome())
+            .as("a model that answered with usable tags reports OK")
+            .isEqualTo(SuggestionOutcome.OK);
         Assertions.assertThat(fake.lastVocabulary)
             .as("the full collection vocabulary is offered to the model")
             .containsExactlyInAnyOrder("rust", "databases", "career");
@@ -59,10 +62,13 @@ class BookmarkAutoTagLlmServiceITest {
         Collection collection = fixtureService.createTestCollection();
         fake.namesToReturn = List.of("rust");
 
-        List<Tag> result = service.suggestTags(
+        SuggestionResult result = service.suggestTags(
             collection.getId(), "Title", "https://example.com", null);
 
-        Assertions.assertThat(result).isEmpty();
+        Assertions.assertThat(result.tags()).isEmpty();
+        Assertions.assertThat(result.outcome())
+            .as("nothing to choose from is EMPTY, not a degraded feature (BR-108-5)")
+            .isEqualTo(SuggestionOutcome.EMPTY);
         Assertions.assertThat(fake.suggestCalled)
             .as("no vocabulary → no model call")
             .isFalse();

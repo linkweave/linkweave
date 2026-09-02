@@ -33,12 +33,17 @@ import org.jspecify.annotations.Nullable;
  * caller (per the layering rules in CLAUDE.md).
  *
  * <p>Non-transactional ({@link NoTransactionService}): the model call blocks for
- * seconds (a cold-start Ollama load, or a hosted round-trip), so running it
- * inside the resource's transaction would pin a DB connection for that whole
- * time. With {@code NOT_SUPPORTED} the caller's transaction is suspended across
- * the HTTP call; the short DB reads (vocabulary, bookmark) run without one, and
- * {@code bookmarkService}/{@code tagRepo} are read just like the screenshot
- * capture job reads its repos.
+ * seconds (a cold-start Ollama load, or a hosted round-trip), and a DB connection
+ * held across it is a connection the rest of the application cannot have.
+ *
+ * <p>{@code NOT_SUPPORTED} here is necessary but was not sufficient, which is
+ * worth spelling out because the gap caused a production incident. Suspending a
+ * transaction does not return its connection to the pool — Agroal keeps it
+ * enlisted until the transaction completes — so while {@code BookmarkAutoTagResource}
+ * still carried {@code @Transactional(REQUIRED)} from its stereotype, its
+ * authorization read acquired a connection that stayed checked out for the whole
+ * model call. The fix is on the resource (UC-108 BR-108-3); this annotation keeps
+ * the service from re-introducing the problem from below.
  */
 @NoTransactionService
 @RequiredArgsConstructor
@@ -56,9 +61,9 @@ public class BookmarkAutoTagLlmService {
      * text to classify. Keeping the entity access here (service layer) rather
      * than in the resource respects the layering rules.
      */
-    public @NonNull List<Tag> suggestTagsForBookmark(@NonNull ID<Bookmark> bookmarkId) {
+    public @NonNull SuggestionResult suggestTagsForBookmark(@NonNull ID<Bookmark> bookmarkId) {
         if (!configService.isAutotagLlmEnabled()) {
-            return List.of();
+            return SuggestionResult.none(SuggestionOutcome.DISABLED);
         }
         Bookmark bookmark = bookmarkService.getBookmark(bookmarkId);
         URL url = bookmark.getUrl();
@@ -75,18 +80,20 @@ public class BookmarkAutoTagLlmService {
      * disabled (FR-096 fallback to rules), the collection has no tags, or the
      * model is unavailable — never throws (best-effort, BR-077).
      */
-    public @NonNull List<Tag> suggestTags(
+    public @NonNull SuggestionResult suggestTags(
         @NonNull ID<Collection> collectionId,
         @Nullable String title,
         @Nullable String url,
         @Nullable String description
     ) {
         if (!configService.isAutotagLlmEnabled()) {
-            return List.of();
+            return SuggestionResult.none(SuggestionOutcome.DISABLED);
         }
         List<Tag> vocabulary = tagRepo.findByCollection(collectionId);
         if (vocabulary.isEmpty()) {
-            return List.of();
+            // Nothing to choose from. Reported as EMPTY rather than UNAVAILABLE:
+            // the feature is working, this collection just has no tags yet.
+            return SuggestionResult.none(SuggestionOutcome.EMPTY);
         }
 
         // De-dup by name (the unique constraint makes collisions unlikely, but be
@@ -101,22 +108,33 @@ public class BookmarkAutoTagLlmService {
             existingTags = existingTags.subList(0, maxVocabSize);
         }
 
-        List<String> chosenByLLM;
+        LlmTaggingClient.Result result;
         try {
-            chosenByLLM = llmTaggingClient.suggest(existingTags, buildContent(title, url, description));
+            result = llmTaggingClient.suggest(existingTags, buildContent(title, url, description));
         } catch (RuntimeException e) {
+            // The client is expected to report degradation as an outcome rather
+            // than throw, but a fake or a future provider might not; best-effort
+            // (BR-077) means the dialog still gets an answer either way.
             LOG.debug("LLM tag suggestion failed for collection {}: {}", collectionId, e.getMessage());
-            return List.of();
+            return SuggestionResult.none(SuggestionOutcome.UNAVAILABLE);
         }
 
         // Re-validate against the vocabulary and map names -> Tag, de-duped,
         // order preserved. Drops anything the model returned that isn't a real
         // tag (belt-and-suspenders against a model ignoring the schema).
-        return chosenByLLM.stream()
+        List<Tag> tags = result.tagNames().stream()
             .distinct()
             .map(byName::get)
             .filter(Objects::nonNull)
             .toList();
+
+        // A model that answered but whose every pick was filtered out is EMPTY,
+        // not OK — otherwise the dialog claims a successful suggestion and shows
+        // nothing.
+        SuggestionOutcome outcome = result.outcome() == SuggestionOutcome.OK && tags.isEmpty()
+            ? SuggestionOutcome.EMPTY
+            : result.outcome();
+        return SuggestionResult.of(tags, outcome);
     }
 
     /**
@@ -146,7 +164,12 @@ public class BookmarkAutoTagLlmService {
         String model = openAi
             ? configService.getAutotagOpenAiModel()
             : configService.getAutotagModel();
-        return new AutotagLLMProviderJson(openAi ? "openai" : "ollama", model, !openAi);
+        return new AutotagLLMProviderJson(
+            openAi ? "openai" : "ollama",
+            model,
+            !openAi,
+            configService.isAutotagAutoFire(),
+            configService.getAutotagSuggestTimeoutMs());
     }
     @NonNull
     private static  String buildContent(
