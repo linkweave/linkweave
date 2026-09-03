@@ -5,7 +5,6 @@ import { useFolderStore } from '@/stores/folder'
 import type { BookmarkJson, FolderJson } from '@/api/generated'
 import { Folder, FolderOpen } from '@lucide/vue'
 import { DRAG_TYPE_BOOKMARK, isDraggingBookmark } from '@/composables/useDragState'
-import { useDndAutoScroll } from '@/composables/useDndAutoScroll'
 import { useDndMove } from '@/composables/useDndMove'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import GroupedBookmarkRow from './GroupedBookmarkRow.vue'
@@ -15,13 +14,9 @@ const folderStore = useFolderStore()
 const { moveBookmarkWithUndo } = useDndMove()
 const isTouch = useMediaQuery('(hover: none) and (pointer: coarse)')
 
-// Each card body scrolls independently; during a drag the section under the
-// pointer auto-scrolls so reorder targets outside its viewport are reachable
-// (UC-103). One capture listener on the grid root serves every card.
-const gridRoot = ref<HTMLElement | null>(null)
-useDndAutoScroll(gridRoot, (event) =>
-  event.target instanceof Element ? event.target.closest<HTMLElement>('[data-group-scroll]') : null,
-)
+// Cards are content-sized, so nothing inside them scrolls and there is no
+// per-card auto-scroll to install here: the drag scrolls the main content pane,
+// which MainLayout already drives with useDndAutoScroll (UC-103).
 
 const props = defineProps<{
   bookmarks: BookmarkJson[]
@@ -160,15 +155,20 @@ async function onHeaderDrop(event: DragEvent, group: GroupCard) {
 </script>
 
 <template>
-  <div ref="gridRoot" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+  <!-- Masonry: multi-column flow packs content-sized cards without the ragged
+       bottom edge a grid row leaves behind (UC-110 S1). Cards read top-to-bottom
+       within a column, then on to the next, still in manual folder order
+       (BR-200). `break-inside-avoid` keeps a card whole in one column. -->
+  <div data-testid="grouped-masonry" class="columns-1 md:columns-2 lg:columns-3 gap-4">
     <div
       v-for="group in groups"
       :key="group.rootFolder?.id ?? 'unfiled'"
-      class="rounded-lg border border-border bg-card overflow-hidden flex flex-col"
+      data-testid="grouped-card"
+      class="mb-4 break-inside-avoid rounded-lg border border-border bg-card overflow-hidden"
     >
       <!-- Card header (drop target) -->
       <div
-        class="px-4 py-3 border-b border-border bg-muted/30 flex items-center gap-2 shrink-0 transition-colors"
+        class="px-4 py-3 border-b border-border bg-muted/30 flex items-center gap-2 transition-colors"
         :class="
           dragOverCardId === cardKey(group)
             ? 'bg-primary/15 border-primary/40 ring-2 ring-primary/40 ring-inset'
@@ -192,7 +192,7 @@ async function onHeaderDrop(event: DragEvent, group: GroupCard) {
       </div>
 
       <!-- Sections -->
-      <div data-group-scroll class="p-2 overflow-y-auto max-h-96">
+      <div class="p-2">
         <template
           v-for="(section, sectionIndex) in group.sections"
           :key="section.folder?.id ?? 'unfiled-' + sectionIndex"
