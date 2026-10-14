@@ -40,11 +40,15 @@ export default defineConfig({
   // with -Dquarkus.profile=dev, so the raised %dev caps that make local
   // parallelism safe are in force there too.
   //
-  // A percentage rather than a count, because the runner's size is not ours to
-  // know: 50% of logical cores leaves room for Vite, Quarkus and Chromium on
-  // the same box, and collapses to one worker on a 2-core runner — so this can
-  // never be slower than the serial behaviour it replaces.
-  workers: process.env.CI ? '50%' : 3,
+  // Three on CI as well, deliberately matching local rather than deriving from
+  // the core count. The runner has 8 cores, so a percentage would give 4 — but
+  // 3 is the only level this suite has ever been validated at, and parallelism
+  // here is not free: the specs all register users through the form-auth path,
+  // and AuthResource is one of the few resources WITHOUT @RetryOnSqliteBusy,
+  // while UC-109's incident log shows `authenticate` failing with SQLITE_BUSY
+  // under write contention. Raise this only with evidence from repeated runs,
+  // and prefer sharding across jobs once 3 is not enough.
+  workers: 3,
   reporter: 'html',
   use: {
     baseURL,

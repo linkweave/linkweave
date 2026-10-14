@@ -125,12 +125,27 @@ jobs:
         working-directory: api
         # Dev profile keeps the relaxed register rate-limit and auto-creates
         # the SQLite DB. quarkus:dev is overkill (hot reload, dev-ui); the
+        #
+        # The screenshot capture job is off because the %test profile that
+        # normally disables it is not active here. It runs `every = 30s`, so it
+        # fires ~16 times during a run, and it cannot do anything useful in CI
+        # anyway — nothing listens on screenshot.service-url — so each tick
+        # scans Bookmark, fails, and writes, competing for the single SQLite
+        # file with the parallel Playwright workers. UC-109 records this job as
+        # one of the writers in a real SQLITE_BUSY incident, so turning it off
+        # removes a contention source rather than tolerating it.
+        #
+        # Only this job matters: both cache-cleanup jobs are `0 0 3 ? * SUN`
+        # and never fire during a run. And the two e2e specs that mention
+        # screenshots only set the per-collection `screenshotEnabled` flag,
+        # which the capture job does not gate.
         # built fast-jar is faster to launch.
         run: |
           java \
             -Dquarkus.profile=dev \
             -Dquarkus.http.host=0.0.0.0 \
             -Dquarkus.oidc.enabled=false \
+            -Dlinkweave.screenshot.capture-job.enabled=false \
             -jar target/quarkus-app/quarkus-run.jar \
             > ../api-stdout.log 2>&1 &
           echo $! > ../api.pid
