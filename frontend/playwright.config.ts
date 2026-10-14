@@ -20,7 +20,7 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  // Three workers by default for local runs: ~45s vs ~103s serial.
+  // Three workers by default for local runs.
   //
   // This was previously flaky, and the cause was not CPU or SQLite: SmallRye
   // @RateLimit buckets are process-wide, so parallel workers drained the
@@ -30,8 +30,27 @@ export default defineConfig({
   // and three workers has been green since.
   //
   // On a heavily loaded machine, fall back to `--workers=1` — three Chromiums
-  // still need real CPU. CI pins workers=1 for cross-browser reproducibility.
-  workers: process.env.CI ? 1 : 3,
+  // still need real CPU.
+  //
+  // CI used to pin workers=1 "for cross-browser reproducibility", but the
+  // workflow runs a single project (`--project=chromium`), so there was no
+  // cross-browser run to keep reproducible. Serialising 242 tests cost ~16min
+  // and put the job past its own timeout on three of ten runs — the ceiling
+  // was failing runs in which every test had passed. CI also starts the API
+  // with -Dquarkus.profile=dev, so the raised %dev caps that make local
+  // parallelism safe are in force there too.
+  //
+  // Three on CI as well, deliberately matching local rather than deriving from
+  // the core count. The runner has 8 cores, so a percentage would give 4 — but
+  // 3 is the only level this suite has ever been validated at, and parallelism
+  // here is not free: the specs all register users through the form-auth path,
+  // and AuthResource is one of the few resources WITHOUT @RetryOnSqliteBusy —
+  // the gap NFR-030/BR-109-3 already requires closing, whose incident log
+  // shows `authenticate` failing with SQLITE_BUSY under write contention.
+  // Until that lands, TestUser.ts's 5-attempt retries are what keep this
+  // green. Raise this only with evidence from repeated runs, and prefer
+  // sharding across jobs once 3 is not enough.
+  workers: 3,
   reporter: 'html',
   use: {
     baseURL,

@@ -25,7 +25,15 @@ concurrency:
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Headroom, not a target. Serialised, the suite needed ~18-19min and three
+    # of ten runs were killed at 20:05-20:15 — the ceiling was failing runs in
+    # which everything passed (the killed run had 242/242 e2e and 574/574 unit
+    # green, and its coverage artifact already uploaded). With `workers: 3` in
+    # playwright.config.ts the job measures ~10min across four runs, so this is
+    # roughly three times what it needs; 30 is here so a slow runner reports
+    # results instead of being cut off one step from the finish line. A hang is
+    # still bounded.
+    timeout-minutes: 30
     env:
       # Form-login cookie encryption key. Tests don't care about the value, but
       # Quarkus refuses to boot without one.
@@ -48,6 +56,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+
+      - name: Runner capacity
+        # Nothing derives from these numbers: playwright.config.ts fixes
+        # `workers: 3` on purpose. They are recorded because that constant can
+        # only be justified against the box it runs on — 3 of 8 cores leaves
+        # room for Vite, Quarkus and the browsers — and because when a run is
+        # unexpectedly slow this is the first thing worth knowing and nothing
+        # else in the log reveals it. Anyone revisiting the worker count needs
+        # this to do it with evidence rather than a guess.
+        run: |
+          echo "cores:  $(nproc)"
+          echo "memory: $(free -h 2>/dev/null | awk '/^Mem:/{print $2" total, "$7" available"}')"
+          echo "disk:   $(df -h / | awk 'NR==2{print $4" free"}')"
 
       - name: Disable unreachable PPAs
         # The runner image ships with a git-core PPA that this network can't
@@ -110,11 +131,29 @@ jobs:
         # Dev profile keeps the relaxed register rate-limit and auto-creates
         # the SQLite DB. quarkus:dev is overkill (hot reload, dev-ui); the
         # built fast-jar is faster to launch.
+        #
+        # The screenshot capture job is off because the %test profile that
+        # normally disables it is not active here. It runs `every = 30s` — ~16
+        # ticks during a parallel run, and ~37 back when the suite was
+        # serialised — and it cannot do anything useful in CI anyway, because
+        # nothing listens on screenshot.service-url. So each tick scans
+        # Bookmark, fails, and writes, competing for the single SQLite file
+        # with the Playwright workers. Worse, issue #67: captureNow() holds its
+        # transaction open across a blocking 15s sidecar call, ten per batch.
+        # UC-109 records this job as one of the writers in a real SQLITE_BUSY
+        # incident, so turning it off removes a contention source rather than
+        # tolerating it.
+        #
+        # Only this job matters: both cache-cleanup jobs are `0 0 3 ? * SUN`
+        # and never fire during a run. And the two e2e specs that mention
+        # screenshots only set the per-collection `screenshotEnabled` flag,
+        # which the capture job does not gate.
         run: |
           java \
             -Dquarkus.profile=dev \
             -Dquarkus.http.host=0.0.0.0 \
             -Dquarkus.oidc.enabled=false \
+            -Dlinkweave.screenshot.capture-job.enabled=false \
             -jar target/quarkus-app/quarkus-run.jar \
             > ../api-stdout.log 2>&1 &
           echo $! > ../api.pid
@@ -203,6 +242,7 @@ jobs:
         with:
           name: playwright-report
           path: frontend/playwright-report
+          if-no-files-found: warn
           retention-days: 14
 
       - name: Upload combined coverage report
@@ -215,12 +255,21 @@ jobs:
           # head SHA — that matches the commit that was actually pushed.
           name: combined-coverage-report-${{ github.event.pull_request.head.sha || github.sha }}
           path: frontend/coverage-combined
+          if-no-files-found: warn
           retention-days: 14
 
-      - name: Upload API log on failure
-        if: failure()
+      - name: Upload API log
+        # Always, not just on failure. The e2e harness retries registration,
+        # login and /auth/me up to 5 times (TestUser.ts), so an auth-path 5xx
+        # is absorbed and the run still reports green — a green run was observed
+        # logging `fetch /auth/me -> 500, retrying (attempt 1/5)`. Without the
+        # API's own log there is no way to tell whether that was SQLITE_BUSY on
+        # the unprotected AuthResource path (see UC-109) or something else, and
+        # the evidence is gone by the time anyone asks.
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: api-stdout
           path: api-stdout.log
+          if-no-files-found: warn
           retention-days: 14
