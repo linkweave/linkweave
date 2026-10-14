@@ -25,7 +25,14 @@ concurrency:
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Headroom, not a target. The suite needs ~18-19min when serialised, and
+    # three of ten runs were killed at 20:05-20:15 — the ceiling was failing
+    # runs in which everything passed (the killed run had 242/242 e2e and
+    # 574/574 unit green, and its coverage artifact already uploaded). With
+    # workers=50% in playwright.config.ts the job should land well under this;
+    # 30 is here so a slow runner reports results instead of being cut off one
+    # step from the finish line. A hang is still bounded.
+    timeout-minutes: 30
     env:
       # Form-login cookie encryption key. Tests don't care about the value, but
       # Quarkus refuses to boot without one.
@@ -48,6 +55,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+
+      - name: Runner capacity
+        # playwright.config.ts derives its worker count from the core count, so
+        # record it: when a run is unexpectedly slow this is the first thing
+        # worth knowing, and nothing else in the log reveals it.
+        run: |
+          echo "cores:  $(nproc)"
+          echo "memory: $(free -h 2>/dev/null | awk '/^Mem:/{print $2" total, "$7" available"}')"
+          echo "disk:   $(df -h / | awk 'NR==2{print $4" free"}')"
 
       - name: Disable unreachable PPAs
         # The runner image ships with a git-core PPA that this network can't

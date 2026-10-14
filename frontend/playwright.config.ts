@@ -20,7 +20,7 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  // Three workers by default for local runs: ~45s vs ~103s serial.
+  // Three workers by default for local runs.
   //
   // This was previously flaky, and the cause was not CPU or SQLite: SmallRye
   // @RateLimit buckets are process-wide, so parallel workers drained the
@@ -30,8 +30,21 @@ export default defineConfig({
   // and three workers has been green since.
   //
   // On a heavily loaded machine, fall back to `--workers=1` — three Chromiums
-  // still need real CPU. CI pins workers=1 for cross-browser reproducibility.
-  workers: process.env.CI ? 1 : 3,
+  // still need real CPU.
+  //
+  // CI used to pin workers=1 "for cross-browser reproducibility", but the
+  // workflow runs a single project (`--project=chromium`), so there was no
+  // cross-browser run to keep reproducible. Serialising 242 tests cost ~16min
+  // and put the job past its own timeout on three of ten runs — the ceiling
+  // was failing runs in which every test had passed. CI also starts the API
+  // with -Dquarkus.profile=dev, so the raised %dev caps that make local
+  // parallelism safe are in force there too.
+  //
+  // A percentage rather than a count, because the runner's size is not ours to
+  // know: 50% of logical cores leaves room for Vite, Quarkus and Chromium on
+  // the same box, and collapses to one worker on a 2-core runner — so this can
+  // never be slower than the serial behaviour it replaces.
+  workers: process.env.CI ? '50%' : 3,
   reporter: 'html',
   use: {
     baseURL,
