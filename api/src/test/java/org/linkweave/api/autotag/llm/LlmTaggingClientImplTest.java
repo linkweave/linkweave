@@ -5,6 +5,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import java.lang.reflect.Proxy;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -182,6 +183,61 @@ class LlmTaggingClientImplTest {
             .isEqualTo(2);
     }
 
+    /**
+     * An unbounded {@code tags} array is what let one bookmark take auto-tagging
+     * down: the grammar never forces the closing bracket, so a model at
+     * temperature 0 that starts repeating tags generates until the context is
+     * full. That reaches the caller as a read timeout, and three of those open
+     * the breaker (BR-108-4). Measured over 61 real bookmarks before the bound,
+     * gemma2:2b timed out on 10 and repeated tags on 38 of the rest.
+     */
+    @Test
+    void shouldBoundTheOllamaResponseSchemaToPreventRunawayGeneration() throws Exception {
+        // ARRANGE
+        ChatState chat = new ChatState();
+        LlmTaggingClientImpl client = newClient(pullClient(new PullState(false)), chatClient(chat));
+        Assertions.assertThat(awaitServed(client)).containsExactly("rust");
+
+        // ACT
+        client.suggest(List.of("rust", "databases", "career"), "Async Rust blog", SCOPE);
+
+        // ASSERT
+        Assertions.assertThat(tagsSchemaOf(chat.lastRequest))
+            .as("the array is bounded, and pinned to the vocabulary")
+            .containsEntry("uniqueItems", true)
+            .containsEntry("maxItems", 3)
+            .containsEntry("items", Map.of(
+                "type", "string", "enum", List.of("rust", "databases", "career")));
+    }
+
+    /**
+     * The enum is the only place the vocabulary belongs on this path. Listing it
+     * in the prompt as well, which {@link LlmTaggingClientImpl#suggestViaOpenAi}
+     * has to do because its provider may ignore the schema, measurably hurt:
+     * telling the model how much of the list is on offer makes it use more of it.
+     */
+    @Test
+    void shouldKeepTheOllamaPromptFreeOfTheVocabulary() throws Exception {
+        // ARRANGE
+        ChatState chat = new ChatState();
+        LlmTaggingClientImpl client = newClient(pullClient(new PullState(false)), chatClient(chat));
+        Assertions.assertThat(awaitServed(client)).containsExactly("rust");
+
+        // ACT
+        client.suggest(List.of("rust", "databases", "career"), "Async Rust blog", SCOPE);
+
+        // ASSERT
+        List<OllamaClient.Message> messages = chat.lastRequest.messages();
+        Assertions.assertThat(messages).hasSize(2);
+        Assertions.assertThat(messages.get(0).role()).isEqualTo("system");
+        Assertions.assertThat(messages.get(0).content())
+            .as("the vocabulary is carried by the schema enum, not by the prompt")
+            .doesNotContain("databases", "career", "Allowed tags");
+        Assertions.assertThat(messages.get(1).content())
+            .as("the bookmark itself stays in the user message")
+            .isEqualTo("Async Rust blog");
+    }
+
     @Test
     void shouldReturnTagsFromHostedProviderWithBearerHeaderAndPrompt() {
         // ARRANGE
@@ -248,6 +304,14 @@ class LlmTaggingClientImplTest {
     }
 
     // --- helpers ---
+
+    /** Digs the {@code tags} sub-schema out of the request's untyped `format`. */
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> tagsSchemaOf(OllamaClient.ChatRequest request) {
+        Map<String, Object> format = (Map<String, Object>) request.format();
+        Map<String, Object> properties = (Map<String, Object>) format.get("properties");
+        return (Map<String, Object>) properties.get("tags");
+    }
 
     /**
      * Polls {@code suggest} until the background pull has made the model resident.
@@ -327,6 +391,11 @@ class LlmTaggingClientImplTest {
             }
 
             @Override
+            public int getAutotagMaxTags() {
+                return 3;
+            }
+
+            @Override
             public int getAutotagSuggestTimeoutMs() {
                 return 8000;
             }
@@ -401,6 +470,7 @@ class LlmTaggingClientImplTest {
                     throw failure.get();
                 }
                 state.count.incrementAndGet();
+                state.lastRequest = (OllamaClient.ChatRequest) args[0];
                 return new OllamaClient.ChatResponse(
                     new OllamaClient.Message("assistant", "{\"tags\":[\"rust\"]}"), true);
             });
@@ -444,6 +514,7 @@ class LlmTaggingClientImplTest {
     private static final class ChatState {
         final AtomicInteger count = new AtomicInteger();
         volatile Supplier<RuntimeException> failure = null;
+        volatile OllamaClient.ChatRequest lastRequest;
     }
 
     private static final class OpenAiState {

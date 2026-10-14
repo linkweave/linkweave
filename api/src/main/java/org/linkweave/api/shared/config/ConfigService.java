@@ -229,6 +229,20 @@ public class ConfigService {
     @ConfigProperty(name = "linkweave.autotag.max-vocab", defaultValue = "0")
     int autotagMaxVocab;
 
+    // Ceiling on how many tags the model may return, enforced by maxItems in the
+    // response schema. This is not cosmetic: an unbounded array lets a model at
+    // temperature 0 repeat tags until it fills the context instead of closing the
+    // array, which costs the whole interactive budget. Any finite value prevents
+    // that, so the exact number only trades precision against recall.
+    //
+    // The best value tracks how many tags a collection's bookmarks actually
+    // carry, so it is a per-deployment choice rather than a constant: measured
+    // across four labelled collections, 3 won where bookmarks averaged 1.7-2.0
+    // tags and 2 won at 1.25. Our own collections sit near 1.8. Lower this for a
+    // collection whose bookmarks usually need a single tag.
+    @ConfigProperty(name = "linkweave.autotag.max-tags", defaultValue = "3")
+    int autotagMaxTags;
+
     // OpenAI-compatible hosted provider (used when provider = openai). The base
     // URL is set via quarkus.rest-client.openai-autotag.url. The API key is a
     // secret — source it from an env var, never commit it.
