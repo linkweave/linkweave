@@ -250,7 +250,7 @@ public class LlmTaggingClientImpl implements LlmTaggingClient {
             List.of(
                 new OllamaClient.Message("system", SYSTEM_PROMPT),
                 new OllamaClient.Message("user", bookmarkContent)),
-            ollamaConstrainedFormat(vocabulary),
+            ollamaConstrainedFormat(vocabulary, config.getAutotagMaxTags()),
             new OllamaClient.Options(0.0),
             false,
             config.getAutotagKeepAlive());
@@ -265,13 +265,44 @@ public class LlmTaggingClientImpl implements LlmTaggingClient {
         return Result.of(parseTags(response.message().content()));
     }
 
-    /** JSON Schema pinning {@code tags} to the allowed enum — Ollama honors this strictly. */
-    private static @NonNull Map<String, Object> ollamaConstrainedFormat(@NonNull List<String> vocabulary) {
+    /**
+     * JSON Schema pinning {@code tags} to the allowed enum — Ollama honors this
+     * strictly.
+     *
+     * <p>{@code maxItems} is load-bearing, not tidiness. Without a bound the
+     * grammar accepts an arbitrarily long array, so a model at temperature 0 that
+     * starts repeating tags never has to emit the closing bracket and generates
+     * until it exhausts the context window. The caller sees that as a read
+     * timeout, and three in a row open the circuit breaker (BR-108-4), which is
+     * how one runaway bookmark takes auto-tagging down for the whole cooldown.
+     * Measured on two separate collections, the unbounded schema hung on 16% and
+     * 26% of real bookmarks respectively; bounded, on none.
+     *
+     * <p>The bound also carries most of the precision: gemma2:2b fills whatever
+     * ceiling it is given, and no bookmark in either collection legitimately
+     * carries more than three tags.
+     *
+     * <p>{@code uniqueItems} is declared intent only — Ollama does not currently
+     * enforce it, and duplicates still arrive. They are harmless because
+     * {@link org.linkweave.api.autotag.llm.BookmarkAutoTagLlmService} de-dupes,
+     * but they do consume slots against {@code maxItems}.
+     *
+     * <p>Deliberately <em>not</em> done here: naming the vocabulary in the
+     * prompt, the way {@link #suggestViaOpenAi} must because its provider may
+     * ignore the schema. Tried and measured, it tells the model how much of the
+     * list is available and it duly uses more of it, costing precision on both
+     * collections (f1 0.850 to 0.698 on one, 0.653 to 0.537 on the other). The
+     * enum alone is the better instruction here.
+     */
+    private static @NonNull Map<String, Object> ollamaConstrainedFormat(
+        @NonNull List<String> vocabulary, int maxTags) {
         return Map.of(
             "type", "object",
             "properties", Map.of(
                 "tags", Map.of(
                     "type", "array",
+                    "uniqueItems", true,
+                    "maxItems", maxTags,
                     "items", Map.of(
                         "type", "string",
                         "enum", vocabulary))),
