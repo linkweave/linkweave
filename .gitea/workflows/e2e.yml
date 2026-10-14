@@ -248,8 +248,15 @@ jobs:
           path: frontend/coverage-combined
           retention-days: 14
 
-      - name: Upload API log on failure
-        if: failure()
+      - name: Upload API log
+        # Always, not just on failure. The e2e harness retries registration,
+        # login and /auth/me up to 5 times (TestUser.ts), so an auth-path 5xx
+        # is absorbed and the run still reports green — a green run was observed
+        # logging `fetch /auth/me -> 500, retrying (attempt 1/5)`. Without the
+        # API's own log there is no way to tell whether that was SQLITE_BUSY on
+        # the unprotected AuthResource path (see UC-109) or something else, and
+        # the evidence is gone by the time anyone asks.
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: api-stdout
