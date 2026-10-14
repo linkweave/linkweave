@@ -44,10 +44,12 @@ export default defineConfig({
   // the core count. The runner has 8 cores, so a percentage would give 4 — but
   // 3 is the only level this suite has ever been validated at, and parallelism
   // here is not free: the specs all register users through the form-auth path,
-  // and AuthResource is one of the few resources WITHOUT @RetryOnSqliteBusy,
-  // while UC-109's incident log shows `authenticate` failing with SQLITE_BUSY
-  // under write contention. Raise this only with evidence from repeated runs,
-  // and prefer sharding across jobs once 3 is not enough.
+  // and AuthResource is one of the few resources WITHOUT @RetryOnSqliteBusy —
+  // the gap NFR-030/BR-109-3 already requires closing, whose incident log
+  // shows `authenticate` failing with SQLITE_BUSY under write contention.
+  // Until that lands, TestUser.ts's 5-attempt retries are what keep this
+  // green. Raise this only with evidence from repeated runs, and prefer
+  // sharding across jobs once 3 is not enough.
   workers: 3,
   reporter: 'html',
   use: {
