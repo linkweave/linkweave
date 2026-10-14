@@ -3,6 +3,8 @@ package org.linkweave.api.shared.archunit;
 import java.util.Collection;
 
 import org.linkweave.api.sentry.SentryTunnelResource;
+import org.linkweave.infrastructure.db.NotRetryableOnSqliteBusy;
+import org.linkweave.infrastructure.db.RetryOnSqliteBusy;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaAnnotation;
@@ -170,6 +172,41 @@ class JaxResourceTest {
             .should()
             .beAnnotatedWith(RateLimit.class)
             .because("we need to protect ourself from possible attacks");
+
+        rule.check(ArchConst.APP_CLASSES);
+    }
+
+    /**
+     * BR-109-2: contention coverage is enforced, not remembered.
+     *
+     * <p>Every resource must take a position on {@code SQLITE_BUSY}, because the only way to know
+     * whether re-executing an endpoint is safe is to look at what it does besides write to the
+     * database. Inference was tried and rejected: being
+     * {@code @Transactional(TxType.NOT_SUPPORTED)} looks like a reason to exempt a resource, but
+     * {@code AuthResource} is exactly that and still needs the boundary — the services it calls
+     * each open their own transaction, so a retry re-runs them on a fresh WAL snapshot. A rule
+     * that guessed would have exempted the one path whose failure takes down every request
+     * (BR-109-3).</p>
+     *
+     * <p>So the rule is deliberately blunt, like {@link #enforce_rate_limit_on_all_methods()}:
+     * declare {@code @RetryOnSqliteBusy}, or declare {@code @NotRetryableOnSqliteBusy} and say
+     * why. A new resource cannot be added without that decision being made.</p>
+     */
+    @Test
+    void enforce_sqlite_busy_retry_boundary_on_all_resources() {
+
+        var rule = classes()
+            .that()
+            .areAnnotatedWith(JaxResource.class)
+            .should()
+            .beAnnotatedWith(RetryOnSqliteBusy.class)
+            .orShould()
+            .beAnnotatedWith(NotRetryableOnSqliteBusy.class)
+            .because("lock contention on the single SQLite file (C-003) is a normal operating "
+                + "state, so every resource must either retry on it or document why retrying "
+                + "would be incorrect — annotate with @RetryOnSqliteBusy, or with "
+                + "@NotRetryableOnSqliteBusy(because = \"...\") when re-execution would repeat a "
+                + "side effect a rollback cannot undo");
 
         rule.check(ArchConst.APP_CLASSES);
     }

@@ -10,8 +10,6 @@ import jakarta.transaction.Status;
 import jakarta.transaction.TransactionManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.sqlite.SQLiteErrorCode;
-import org.sqlite.SQLiteException;
 
 /**
  * Retries the intercepted invocation when it failed with {@code SQLITE_BUSY} (see
@@ -49,7 +47,7 @@ public class SqliteBusyRetryInterceptor {
             try {
                 return ctx.proceed();
             } catch (Exception e) {
-                if (attempt >= attempts || !isSqliteBusy(e)) {
+                if (attempt >= attempts || !SqliteBusy.isBusy(e)) {
                     throw e;
                 }
                 LOG.debug("SQLITE_BUSY on {}#{}, retrying (attempt {} of {})",
@@ -93,28 +91,4 @@ public class SqliteBusyRetryInterceptor {
         }
     }
 
-    static boolean isSqliteBusy(Throwable failure) {
-        for (Throwable t = failure; t != null; t = t.getCause() == t ? null : t.getCause()) {
-            if (t instanceof SQLiteException sqlite && isBusyCode(sqlite.getResultCode())) {
-                return true;
-            }
-            for (Throwable suppressed : t.getSuppressed()) {
-                if (isSqliteBusy(suppressed)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Matches any BUSY flavor. Per the SQLite result-code convention
-     * (https://sqlite.org/rescode.html), the least significant 8 bits of an extended result code
-     * are its primary result code — e.g. {@code SQLITE_BUSY_SNAPSHOT} = 517 = {@code (2 << 8) | 5}
-     * extends {@code SQLITE_BUSY} = 5. Masking keeps this future-proof for busy variants this
-     * driver version does not know yet.
-     */
-    static boolean isBusyCode(SQLiteErrorCode resultCode) {
-        return (resultCode.code & 0xff) == SQLiteErrorCode.SQLITE_BUSY.code;
-    }
 }

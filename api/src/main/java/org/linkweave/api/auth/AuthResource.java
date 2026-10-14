@@ -29,6 +29,7 @@ import org.linkweave.api.shared.user.CurrentUserService;
 import org.linkweave.api.shared.user.User;
 import org.linkweave.infrastructure.ratelimit.RateLimitConst;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
+import org.linkweave.infrastructure.db.RetryOnSqliteBusy;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 @RateLimit(value = RateLimitConst.STANDARD_PER_MINUTE, window = 1, windowUnit = ChronoUnit.MINUTES)
@@ -37,6 +38,9 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 @Path("/auth")
 @Authenticated
 @Slf4j
+// BR-109-3: the identity read runs in front of every request, so contention here fails
+// everything at once. Registration and the /auth/me lookup are pure database work.
+@RetryOnSqliteBusy
 public class AuthResource {
 
     private final SecurityIdentity identity;

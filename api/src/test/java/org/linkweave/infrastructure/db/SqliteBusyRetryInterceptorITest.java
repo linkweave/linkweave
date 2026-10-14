@@ -88,10 +88,10 @@ class SqliteBusyRetryInterceptorITest {
 
     @Test
     void shouldMatchOnlyBusyPrimaryResultCodes() {
-        assertTrue(SqliteBusyRetryInterceptor.isBusyCode(SQLiteErrorCode.SQLITE_BUSY));
-        assertTrue(SqliteBusyRetryInterceptor.isBusyCode(SQLiteErrorCode.SQLITE_BUSY_SNAPSHOT));
-        assertFalse(SqliteBusyRetryInterceptor.isBusyCode(SQLiteErrorCode.SQLITE_LOCKED),
+        assertTrue(SqliteBusy.isBusyCode(SQLiteErrorCode.SQLITE_BUSY));
+        assertTrue(SqliteBusy.isBusyCode(SQLiteErrorCode.SQLITE_BUSY_SNAPSHOT));
+        assertFalse(SqliteBusy.isBusyCode(SQLiteErrorCode.SQLITE_LOCKED),
             "SQLITE_LOCKED (6) is a different primary code and must not be retried");
-        assertFalse(SqliteBusyRetryInterceptor.isBusyCode(SQLiteErrorCode.SQLITE_CONSTRAINT));
+        assertFalse(SqliteBusy.isBusyCode(SQLiteErrorCode.SQLITE_CONSTRAINT));
     }
 }

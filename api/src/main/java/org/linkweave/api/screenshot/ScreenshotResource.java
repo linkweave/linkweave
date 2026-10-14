@@ -15,6 +15,7 @@ import org.linkweave.api.bookmark.Bookmark;
 import org.linkweave.api.bookmark.BookmarkService;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.shared.auth.AuthorizationService;
+import org.linkweave.infrastructure.db.NotRetryableOnSqliteBusy;
 import org.linkweave.infrastructure.ratelimit.RateLimitConst;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 
@@ -23,6 +24,7 @@ import org.linkweave.infrastructure.stereotypes.JaxResource;
 @RequiredArgsConstructor
 @Authenticated
 @Path("/collections/{collectionId}/bookmarks/{bookmarkId}/screenshot")
+@NotRetryableOnSqliteBusy(because = "refreshScreenshot() drives ScreenshotService.captureNow(), which performs a blocking call to the screenshot sidecar (and, per issue #67, holds its transaction open across it). Re-running the resource would re-issue that capture; the rollback only undoes the database half.")
 public class ScreenshotResource {
 
     private final ScreenshotService screenshotService;

@@ -19,6 +19,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import io.smallrye.faulttolerance.api.RateLimit;
+import org.linkweave.infrastructure.db.NotRetryableOnSqliteBusy;
 import org.linkweave.infrastructure.ratelimit.RateLimitConst;
 import org.linkweave.infrastructure.stereotypes.JaxDTO;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
@@ -37,6 +38,7 @@ import org.jspecify.annotations.Nullable;
 @RequiredArgsConstructor
 @Path("/dev/time-travel")
 @PermitAll
+@NotRetryableOnSqliteBusy(because = "moves the test clock via ClockProvider; no entity is read or written, and it is excluded from the prod build.")
 public class TimeTravelResource {
 
     private final ClockProvider clockProvider;

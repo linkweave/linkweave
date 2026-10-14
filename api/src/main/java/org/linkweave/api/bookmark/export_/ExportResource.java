@@ -21,6 +21,7 @@ import org.linkweave.api.bookmark.BookmarkService;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.shared.auth.AuthorizationService;
 import io.smallrye.faulttolerance.api.RateLimit;
+import org.linkweave.infrastructure.db.RetryOnSqliteBusy;
 import org.linkweave.infrastructure.ratelimit.RateLimitConst;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
@@ -30,6 +31,9 @@ import org.jspecify.annotations.NonNull;
 @RequiredArgsConstructor
 @Authenticated
 @Path("/collections/{collectionId}/export")
+// Pure database reads assembled into a download; a rollback leaves nothing behind, so the
+// whole export is safe to re-run on a fresh snapshot.
+@RetryOnSqliteBusy
 public class ExportResource {
 
     private final BookmarkExportService bookmarkExportService;

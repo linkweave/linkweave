@@ -29,6 +29,7 @@ import org.linkweave.api.collection.CollectionService;
 import org.linkweave.api.shared.auth.AuthorizationService;
 import org.linkweave.api.shared.user.CurrentUserService;
 import org.linkweave.api.types.id.ID;
+import org.linkweave.infrastructure.db.NotRetryableOnSqliteBusy;
 import org.linkweave.infrastructure.ratelimit.RateLimitConst;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 import org.jspecify.annotations.NonNull;
@@ -62,6 +63,7 @@ import org.jspecify.annotations.NonNull;
 @RequiredArgsConstructor
 @Authenticated
 @Path("/collections/{collectionId}/autotag")
+@NotRetryableOnSqliteBusy(because = "every suggestion invokes the tag model — a local Ollama call, or a billed third-party API when linkweave.autotag.provider=openai. Re-running the resource would spend that again, and the interactive budget (BR-108-1) has no room for it.")
 public class BookmarkAutoTagResource {
 
     private final BookmarkAutoTagLlmService autoTagLlmService;

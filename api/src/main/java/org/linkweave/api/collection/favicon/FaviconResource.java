@@ -14,6 +14,7 @@ import org.linkweave.api.bookmark.BookmarkService;
 import org.linkweave.api.collection.Collection;
 import org.linkweave.api.shared.auth.AuthorizationService;
 import io.smallrye.faulttolerance.api.RateLimit;
+import org.linkweave.infrastructure.db.NotRetryableOnSqliteBusy;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 
 // SmallRye @RateLimit is a per-method global bucket (not per-user / per-IP), so
@@ -23,6 +24,7 @@ import org.linkweave.infrastructure.stereotypes.JaxResource;
 @RequiredArgsConstructor
 @Authenticated
 @Path("/collections/{collectionId}/bookmarks/{bookmarkId}/favicon")
+@NotRetryableOnSqliteBusy(because = "refresh() re-fetches the remote favicon. Retrying would repeat an outbound request to a third-party host, which a rollback cannot undo.")
 public class FaviconResource {
 
     private final FaviconService faviconService;
