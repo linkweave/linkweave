@@ -7,11 +7,11 @@ import org.sqlite.SQLiteException;
 /**
  * Recognises {@code SQLITE_BUSY} inside whatever a layer happened to throw.
  *
- * <p>Lives apart from {@link SqliteBusyRetryInterceptor} because two different decisions depend on
- * the same question. The interceptor asks it to decide whether to re-run the work; the request
- * boundary asks it to decide whether the failure is transient and therefore a 503 rather than a
+ * <p>Lives apart from {@link SqliteBusyRetryInterceptor} because three decisions now depend on the
+ * same question. The interceptor and {@link SqliteBusyRetries} ask it whether to re-run the work;
+ * the request boundary asks it whether the failure is transient and therefore a 503 rather than a
  * 500 (BR-109-1). Those run at opposite ends of a request and must never disagree, so the
- * predicate is shared rather than duplicated.</p>
+ * predicate is shared rather than duplicated.
  */
 @UtilityClass
 public class SqliteBusy {
@@ -46,7 +46,7 @@ public class SqliteBusy {
      * extends {@code SQLITE_BUSY} = 5. Masking keeps this future-proof for busy variants this
      * driver version does not know yet.
      */
-    public static boolean isBusyCode(SQLiteErrorCode resultCode) {
+    static boolean isBusyCode(SQLiteErrorCode resultCode) {
         return (resultCode.code & 0xff) == SQLiteErrorCode.SQLITE_BUSY.code;
     }
 }

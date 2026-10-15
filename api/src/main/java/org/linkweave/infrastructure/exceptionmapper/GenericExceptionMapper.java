@@ -43,15 +43,12 @@ class GenericExceptionMapper implements ExceptionMapper<Exception> {
     @Override
     public Response toResponse(Exception exception) {
         // BR-109-1: lock contention on the single SQLite file is an expected transient condition,
-        // not an application crash. It must be classified before the generic handling below,
-        // because it arrives wrapped in whatever the layer that hit it throws — a
-        // PessimisticLockException from a read, a Hibernate JDBCException from a flush, or an
-        // Arjuna onePhaseCommit failure from the commit itself — so there is no single exception
-        // type a dedicated @Provider could bind to.
-        //
-        // This is also the only hook that covers contention raised *outside* a retry boundary,
-        // which includes the framework-owned identity lookup that runs in front of every request
-        // (BR-109-3). In the 2026-08-28 incident that path produced the HTTP 500 this prevents.
+        // not an application crash. It is classified here, in the catch-all, because it arrives
+        // wrapped in whatever the failing layer threw (see SqliteBusy) and there is no single
+        // exception type a dedicated @Provider could bind to. This is also the only hook that
+        // covers contention raised *outside* a retry boundary, including the framework-owned
+        // identity lookup in front of every request (BR-109-3) — the path that produced the HTTP
+        // 500 in the 2026-08-28 incident.
         if (SqliteBusy.isBusy(exception)) {
             return databaseBusyResponse(exception);
         }
@@ -63,8 +60,6 @@ class GenericExceptionMapper implements ExceptionMapper<Exception> {
         // cause of this we have to be quite specific which we want
         // https://github.com/quarkusio/quarkus/issues/4031
         LOG.error("unhandled generic exception: {}", exceptionId, exception);
-
-        var msg = tl.translate(failureMessage.getI18nMessage());
 
         final Throwable rootCause = ExceptionUtil.getRootCause(exception);
         if (rootCause instanceof ConstraintViolationException cve) {
@@ -86,8 +81,13 @@ class GenericExceptionMapper implements ExceptionMapper<Exception> {
 
         return Response.serverError()
             .type(MediaType.APPLICATION_JSON_TYPE)
-            .entity(new AppFailureErrorJson(exceptionId, msg))
+            .entity(translatedBody(failureMessage))
             .build();
+    }
+
+    private AppFailureErrorJson translatedBody(AppFailureMessage failureMessage) {
+        return new AppFailureErrorJson(failureMessage.getId(),
+            tl.translate(failureMessage.getI18nMessage()));
     }
 
     /**
@@ -95,7 +95,7 @@ class GenericExceptionMapper implements ExceptionMapper<Exception> {
      *
      * <p>Deliberately not {@code LOG.error(..., exception)}: the incident that motivated UC-109
      * was diagnosed from a wall of identical stack traces, which proved only that something had
-     * failed. The root-cause message plus the request path is what an operator can act on, and
+     * failed. The root-cause message plus the failure id is what an operator can act on, and
      * BR-109-6's counter — not the log — is where the rate belongs.</p>
      */
     private Response databaseBusyResponse(Exception exception) {
@@ -105,8 +105,7 @@ class GenericExceptionMapper implements ExceptionMapper<Exception> {
         return Response.status(Response.Status.SERVICE_UNAVAILABLE)
             .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_SECONDS)
             .type(MediaType.APPLICATION_JSON_TYPE)
-            .entity(new AppFailureErrorJson(failureMessage.getId(),
-                tl.translate(failureMessage.getI18nMessage())))
+            .entity(translatedBody(failureMessage))
             .build();
     }
 }

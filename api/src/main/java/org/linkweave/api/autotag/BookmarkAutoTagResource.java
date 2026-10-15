@@ -63,7 +63,9 @@ import org.jspecify.annotations.NonNull;
 @RequiredArgsConstructor
 @Authenticated
 @Path("/collections/{collectionId}/autotag")
-@NotRetryableOnSqliteBusy(because = "every suggestion invokes the tag model — a local Ollama call, or a billed third-party API when linkweave.autotag.provider=openai. Re-running the resource would spend that again, and the interactive budget (BR-108-1) has no room for it.")
+@NotRetryableOnSqliteBusy(because = "every suggestion invokes the tag model — a local Ollama call, "
+    + "or a billed third-party API when linkweave.autotag.provider=openai. Re-running the resource "
+    + "would spend that again, and the interactive budget (BR-108-1) has no room for it.")
 public class BookmarkAutoTagResource {
 
     private final BookmarkAutoTagLlmService autoTagLlmService;

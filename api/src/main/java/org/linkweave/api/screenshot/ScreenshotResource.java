@@ -24,7 +24,10 @@ import org.linkweave.infrastructure.stereotypes.JaxResource;
 @RequiredArgsConstructor
 @Authenticated
 @Path("/collections/{collectionId}/bookmarks/{bookmarkId}/screenshot")
-@NotRetryableOnSqliteBusy(because = "refreshScreenshot() drives ScreenshotService.captureNow(), which performs a blocking call to the screenshot sidecar (and, per issue #67, holds its transaction open across it). Re-running the resource would re-issue that capture; the rollback only undoes the database half.")
+@NotRetryableOnSqliteBusy(because = "refreshScreenshot() drives ScreenshotService.captureNow(), "
+    + "which performs a blocking call to the screenshot sidecar (and, per issue #67, holds its "
+    + "transaction open across it). Re-running the resource would re-issue that capture; the "
+    + "rollback only undoes the database half.")
 public class ScreenshotResource {
 
     private final ScreenshotService screenshotService;

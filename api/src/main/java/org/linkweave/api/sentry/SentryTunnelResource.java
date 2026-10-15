@@ -32,7 +32,8 @@ import org.jboss.logging.Logger;
 @Transactional(TxType.NOT_SUPPORTED)
 @RateLimit(value = 400, window = 1, windowUnit = ChronoUnit.MINUTES)
 @RequiredArgsConstructor
-@NotRetryableOnSqliteBusy(because = "forwards an envelope to Sentry over HTTP and touches no entity. Retrying would duplicate the upstream delivery.")
+@NotRetryableOnSqliteBusy(because = "forwards an envelope to Sentry over HTTP and touches no "
+    + "entity. Retrying would duplicate the upstream delivery.")
 public class SentryTunnelResource {
 
     private static final Logger LOG = Logger.getLogger(SentryTunnelResource.class);

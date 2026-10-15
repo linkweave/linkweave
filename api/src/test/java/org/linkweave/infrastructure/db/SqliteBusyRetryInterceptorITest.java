@@ -22,7 +22,7 @@ class SqliteBusyRetryInterceptorITest {
     @Test
     void shouldRetryUntilSuccessOnSqliteBusy() {
         // ARRANGE
-        probe.arm(2, BusyRetryProbe.busyFailure());
+        probe.arm(2, SqliteBusyFailures.onFlush());
         // ACT
         String result = probe.flaky();
         // ASSERT
@@ -33,7 +33,7 @@ class SqliteBusyRetryInterceptorITest {
     @Test
     void shouldGiveUpAfterConfiguredAttempts() {
         // ARRANGE
-        probe.arm(Integer.MAX_VALUE, BusyRetryProbe.busyFailure());
+        probe.arm(Integer.MAX_VALUE, SqliteBusyFailures.onFlush());
         // ACT
         RuntimeException thrown = assertThrows(RuntimeException.class, probe::flaky);
         // ASSERT
@@ -55,7 +55,7 @@ class SqliteBusyRetryInterceptorITest {
     @EnumSource(names = {"SQLITE_BUSY", "SQLITE_BUSY_RECOVERY", "SQLITE_BUSY_SNAPSHOT", "SQLITE_BUSY_TIMEOUT"})
     void shouldRetryAllBusyFlavors(SQLiteErrorCode busyCode) {
         // ARRANGE
-        probe.arm(1, BusyRetryProbe.busyFailure(busyCode));
+        probe.arm(1, SqliteBusyFailures.onFlush(busyCode));
         // ACT
         String result = probe.flaky();
         // ASSERT
@@ -66,7 +66,7 @@ class SqliteBusyRetryInterceptorITest {
     @Test
     void shouldDetectBusyAttachedAsSuppressedException() {
         // ARRANGE — Narayana attaches commit-time failures via addSuppressed rather than as cause
-        probe.arm(1, BusyRetryProbe.suppressedBusyFailure());
+        probe.arm(1, SqliteBusyFailures.suppressedByFailedRollback());
         // ACT
         String result = probe.flaky();
         // ASSERT
@@ -78,7 +78,7 @@ class SqliteBusyRetryInterceptorITest {
     void shouldNotRetryInsideCallerTransaction() {
         // ARRANGE — the caller's transaction is rolled back with the failure, so a retry of only
         // the annotated method could not restore it; the interceptor must pass through untouched
-        probe.arm(1, BusyRetryProbe.busyFailure());
+        probe.arm(1, SqliteBusyFailures.onFlush());
         // ACT
         assertThrows(RuntimeException.class,
             () -> QuarkusTransaction.requiringNew().run(probe::flaky));

@@ -2,7 +2,6 @@ package org.linkweave.infrastructure.db;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-
 import io.quarkus.security.identity.AuthenticationRequestContext;
 import io.quarkus.security.identity.IdentityProvider;
 import io.quarkus.security.identity.SecurityIdentity;

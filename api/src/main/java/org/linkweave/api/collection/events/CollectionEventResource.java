@@ -45,7 +45,9 @@ import org.jspecify.annotations.Nullable;
 @RequiredArgsConstructor
 @Authenticated
 @Path("/collections/{collectionId}/events")
-@NotRetryableOnSqliteBusy(because = "an SSE stream: the response is open for the life of the subscription, so there is no bounded invocation to re-execute. It is already @Transactional(NOT_SUPPORTED) and touches no entity.")
+@NotRetryableOnSqliteBusy(because = "an SSE stream: the response is open for the life of the "
+    + "subscription, so there is no bounded invocation to re-execute. It is already "
+    + "@Transactional(NOT_SUPPORTED) and touches no entity.")
 public class CollectionEventResource {
 
     /**

@@ -38,7 +38,8 @@ import org.jspecify.annotations.Nullable;
 @RequiredArgsConstructor
 @Path("/dev/time-travel")
 @PermitAll
-@NotRetryableOnSqliteBusy(because = "moves the test clock via ClockProvider; no entity is read or written, and it is excluded from the prod build.")
+@NotRetryableOnSqliteBusy(because = "moves the test clock via ClockProvider; no entity is read or "
+    + "written, and it is excluded from the prod build.")
 public class TimeTravelResource {
 
     private final ClockProvider clockProvider;

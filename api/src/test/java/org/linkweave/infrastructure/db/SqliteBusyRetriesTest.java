@@ -1,12 +1,9 @@
 package org.linkweave.infrastructure.db;
 
-import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.smallrye.mutiny.Uni;
-import jakarta.persistence.PessimisticLockException;
 import org.junit.jupiter.api.Test;
-import org.sqlite.SQLiteErrorCode;
 import org.sqlite.SQLiteException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,19 +12,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * The reactive half of the retry boundary (BR-109-3). The interceptor's own behaviour is covered by
  * {@code SqliteBusyRetryInterceptorITest}; this is the policy that applies where there is no method
- * to intercept, only a {@link Uni} that fails later.
+ * to intercept, only a {@link Uni} that fails later. Inputs come from {@link SqliteBusyFailures}.
  */
 class SqliteBusyRetriesTest {
-
-    private static SQLiteException busy() {
-        return new SQLiteException("database is locked", SQLiteErrorCode.SQLITE_BUSY_SNAPSHOT);
-    }
-
-    /** How contention actually arrives on a read: buried inside whatever JPA threw. */
-    private static Throwable busyWrappedAsJpaWould() {
-        return new PessimisticLockException("could not obtain lock",
-            new SQLException("wrapped", busy()));
-    }
 
     @Test
     void shouldRetryUntilTheBusyConditionClears() {
@@ -35,7 +22,7 @@ class SqliteBusyRetriesTest {
         AtomicInteger attempts = new AtomicInteger();
         Uni<String> flaky = Uni.createFrom().item(() -> {
             if (attempts.incrementAndGet() <= 2) {
-                throw new RuntimeException(busyWrappedAsJpaWould());
+                throw SqliteBusyFailures.onRead();
             }
             return "resolved";
         });
@@ -55,7 +42,7 @@ class SqliteBusyRetriesTest {
         AtomicInteger subscriptions = new AtomicInteger();
         Uni<String> alwaysBusy = Uni.createFrom().<String>emitter(e -> {
             subscriptions.incrementAndGet();
-            e.fail(new RuntimeException(busy()));
+            e.fail(SqliteBusyFailures.onRead());
         });
 
         assertThatThrownBy(() -> SqliteBusyRetries.retryWhileBusy(alwaysBusy).await().indefinitely())
@@ -71,7 +58,7 @@ class SqliteBusyRetriesTest {
         AtomicInteger attempts = new AtomicInteger();
         Uni<String> alwaysBusy = Uni.createFrom().item(() -> {
             attempts.incrementAndGet();
-            throw new RuntimeException(busy());
+            throw SqliteBusyFailures.onCommit();
         });
 
         assertThatThrownBy(() -> SqliteBusyRetries.retryWhileBusy(alwaysBusy).await().indefinitely())
