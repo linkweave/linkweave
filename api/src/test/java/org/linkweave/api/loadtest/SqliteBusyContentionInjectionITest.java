@@ -55,7 +55,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * </ul>
  *
  * <h2>Running it</h2>
- * Gated like the load test, because it reconfigures the datasource ({@code busy_timeout=0}) and
+ * Gated like the load test, because it reconfigures the datasource ({@code busy_timeout=1}) and
  * holds an exclusive lock on the shared test database:
  * <pre>
  * ./mvnw test -pl api -Dtest=SqliteBusyContentionInjectionITest -DLINKWEAVE_LOADTEST=true
@@ -176,7 +176,8 @@ class SqliteBusyContentionInjectionITest {
      * transaction only takes a RESERVED lock, which still lets other connections read — so it
      * could not block an identity lookup. In exclusive locking mode the connection keeps the
      * database-level lock from its first write until it is released, and every other connection
-     * gets {@code SQLITE_BUSY} immediately (the datasource runs with {@code busy_timeout=0}).</p>
+     * gets {@code SQLITE_BUSY} immediately (the datasource runs with {@code busy_timeout=1}, and
+     * {@link ContentionInjectionProfile} explains why not 0).</p>
      *
      * <p>The action only starts once the lock is confirmed held, so the test never measures a
      * request that raced ahead of the contention.</p>

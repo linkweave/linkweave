@@ -24,8 +24,10 @@ import org.linkweave.infrastructure.stereotypes.JaxResource;
 @RequiredArgsConstructor
 @Authenticated
 @Path("/collections/{collectionId}/bookmarks/{bookmarkId}/favicon")
-@NotRetryableOnSqliteBusy(because = "refresh() re-fetches the remote favicon. Retrying would "
-    + "repeat an outbound request to a third-party host, which a rollback cannot undo.")
+@NotRetryableOnSqliteBusy(because = "GET getFavicon() fetches the icon from a third-party host on "
+    + "a cache miss (FaviconService -> FaviconFetcherService.fetchFor) and writes the resulting "
+    + "cache entry, positive or negative, in the same transaction. Re-running it would repeat the "
+    + "outbound request, which a rollback cannot undo.")
 public class FaviconResource {
 
     private final FaviconService faviconService;
