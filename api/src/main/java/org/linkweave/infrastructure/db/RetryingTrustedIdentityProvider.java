@@ -41,16 +41,21 @@ public class RetryingTrustedIdentityProvider
     implements IdentityProvider<TrustedAuthenticationRequest> {
 
     /**
-     * Counts decorated lookups, so a test can prove this decorator is actually in the chain.
+     * Counts <em>subscriptions to the delegate</em>, so a test can prove two separate things that
+     * are otherwise invisible.
      *
-     * <p>Not diagnostics for their own sake. Whether CDI decoration reaches a bean that
-     * {@code quarkus-security-jpa} generates at build time is a property of the extension, not of
-     * this code, and the failure mode is silent: if ArC ever stops applying the decorator, every
-     * request authenticates exactly as before and the retry simply is not there. A behavioural
-     * test cannot see that without inducing real lock contention, so the wiring is asserted
-     * directly ({@code RetryingTrustedIdentityProviderITest}).</p>
+     * <p>First, that the decorator is in the chain at all. Whether CDI decoration reaches a bean
+     * that {@code quarkus-security-jpa} generates at build time is a property of the extension,
+     * not of this code, and the failure mode is silent: if ArC ever stops applying the decorator,
+     * every request authenticates exactly as before and the retry simply is not there.</p>
+     *
+     * <p>Second, that a retry actually re-runs the lookup. Note this counts subscriptions and not
+     * calls to {@link #authenticate}: {@code IdentityProviderManager} invokes the provider once,
+     * when it assembles the chain, so the method body runs a single time per authentication while
+     * the {@link Uni} beneath it is re-subscribed once per attempt. Counting method entries would
+     * report 1 no matter how many times the retry fired.</p>
      */
-    static final AtomicLong DECORATED_LOOKUPS = new AtomicLong();
+    static final AtomicLong DELEGATE_SUBSCRIPTIONS = new AtomicLong();
 
     private final IdentityProvider<TrustedAuthenticationRequest> delegate;
 
@@ -82,7 +87,8 @@ public class RetryingTrustedIdentityProvider
         TrustedAuthenticationRequest request,
         AuthenticationRequestContext context
     ) {
-        DECORATED_LOOKUPS.incrementAndGet();
-        return SqliteBusyRetries.retryWhileBusy(delegate.authenticate(request, context));
+        return SqliteBusyRetries.retryWhileBusy(
+            delegate.authenticate(request, context)
+                .onSubscription().invoke(ignored -> DELEGATE_SUBSCRIPTIONS.incrementAndGet()));
     }
 }

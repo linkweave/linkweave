@@ -40,9 +40,14 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 @Slf4j
 // BR-109-3: the identity read runs in front of every request, so contention here fails
 // everything at once rather than one save. Safe to re-execute: /me, /register, /settings and
-// /oidc-login are pure database work, and the only non-transactional effect on /logout and
-// DELETE /me is clearing the session cookie, which is idempotent — note that those two do it
-// *before* the commit, so a commit-time rollback can re-run it.
+// /oidc-login are pure database work. /logout and DELETE /me clear the session *before* the
+// commit, so a commit-time rollback does re-run that — which is harmless on both paths:
+// FormAuthenticationMechanism.logout only rewrites the response cookie, and OidcSession.logout
+// (quarkus-oidc 3.40.1, OidcSessionImpl -> OidcUtils.removeSessionCookie) sets Clear-Site-Data,
+// expires the cookie in the response, and hands any stored token state to the configured
+// TokenStateManager — which for the default, cookie-based manager has nothing to delete. A
+// server-side TokenStateManager would make the second call do real work; revisit this if one is
+// ever configured.
 @RetryOnSqliteBusy
 public class AuthResource {
 
