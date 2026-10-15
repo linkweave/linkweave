@@ -106,4 +106,37 @@ class SqliteBusyRetriesTest {
             .as("an exhausted retry must still be classified as contention, not as a crash")
             .isTrue();
     }
+
+    @Test
+    void shouldStopRetryingOnceTheWallClockBudgetIsSpent() {
+        // ARRANGE — an attempt that blocks before failing, which is what busy_timeout does in
+        // production: the driver waits on the lock and the retry policy hears nothing until it
+        // gives up. Counting attempts alone would multiply that wait by ATTEMPTS on the path in
+        // front of every request; the budget is what stops it.
+        AtomicInteger attempts = new AtomicInteger();
+        Uni<String> slowBusy = Uni.createFrom().item(() -> {
+            attempts.incrementAndGet();
+            sleep(SqliteBusyRetries.BUDGET.plusMillis(50));
+            throw SqliteBusyFailures.onRead();
+        });
+
+        // ACT
+        assertThatThrownBy(() -> SqliteBusyRetries.retryWhileBusy(slowBusy).await().indefinitely())
+            .hasRootCauseInstanceOf(SQLiteException.class);
+
+        // ASSERT
+        assertThat(attempts)
+            .as("once the budget is gone the failure must propagate immediately (BR-109-4), not "
+                + "be retried into another driver wait")
+            .hasValue(1);
+    }
+
+    private static void sleep(java.time.Duration duration) {
+        try {
+            Thread.sleep(duration.toMillis());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+    }
 }

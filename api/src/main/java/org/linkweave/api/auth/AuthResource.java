@@ -43,7 +43,8 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 // /oidc-login are pure database work. /logout and DELETE /me clear the session *before* the
 // commit, so a commit-time rollback does re-run that — which is harmless on both paths:
 // FormAuthenticationMechanism.logout only rewrites the response cookie, and OidcSession.logout
-// (quarkus-oidc 3.40.1, OidcSessionImpl -> OidcUtils.removeSessionCookie) sets Clear-Site-Data,
+// (quarkus-oidc 3.36.2, the version on the classpath; unchanged in 3.40.1, the LTS we will move
+// to -- OidcSessionImpl -> OidcUtils.removeSessionCookie) sets Clear-Site-Data,
 // expires the cookie in the response, and hands any stored token state to the configured
 // TokenStateManager — which for the default, cookie-based manager has nothing to delete. A
 // server-side TokenStateManager would make the second call do real work; revisit this if one is

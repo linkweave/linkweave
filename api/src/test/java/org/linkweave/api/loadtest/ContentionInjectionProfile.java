@@ -25,6 +25,8 @@ import io.quarkus.test.junit.QuarkusTestProfile;
  *       {@code locking_mode=EXCLUSIVE} needs exclusive access to the WAL index, which Agroal's
  *       idle pooled connections prevent. Rollback-journal is the mode in which a writer actually
  *       blocks readers on demand, which is what makes a failing identity lookup reproducible.
+ *       It runs against its own database file for that reason: journal mode persists in the file,
+ *       so sharing linkweave-test.db would leak this mode into the rest of the suite.
  *       In WAL the same failure arises from checkpointing or WAL recovery — attested by the
  *       incident log in UC-109, but not something a test can schedule. What is asserted here is
  *       what a request does <em>given</em> a BUSY read, which does not depend on the journal mode
@@ -43,7 +45,8 @@ public class ContentionInjectionProfile implements QuarkusTestProfile {
         config.put("MP_Fault_Tolerance_NonFallback_Enabled", "false");
         config.put("smallrye.faulttolerance.enabled", "false");
         config.put("quarkus.datasource.jdbc.url",
-            "jdbc:sqlite:linkweave-test.db?foreign_keys=on&busy_timeout=1&journal_mode=DELETE");
+            "jdbc:sqlite:linkweave-contention-test.db"
+                + "?foreign_keys=on&busy_timeout=1&journal_mode=DELETE");
         return config;
     }
 }

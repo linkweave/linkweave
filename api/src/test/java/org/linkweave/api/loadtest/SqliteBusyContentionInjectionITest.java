@@ -54,16 +54,23 @@ import static org.junit.jupiter.api.Assertions.fail;
  *       identity lookup through the HTTP authentication layer, which runs before JAX-RS.</li>
  * </ul>
  *
- * <h2>Running it</h2>
- * Gated like the load test, because it reconfigures the datasource ({@code busy_timeout=1}) and
- * holds an exclusive lock on the shared test database:
+ * <h2>What runs in CI</h2>
+ * The sustained-contention cases do, and deliberately so: they are the only automated proof that a
+ * contended request reaches the caller as 503 rather than 500, and for the identity lookup that
+ * answer travels from the Vert.x authentication layer into a JAX-RS exception mapper — framework
+ * routing that a Quarkus upgrade could quietly change while every other test here stayed green.
+ * They are deterministic (a lock is held for a fixed window, and the premise is asserted before
+ * each measurement) and they run against their own database file, so nothing leaks into the rest
+ * of the suite.
+ *
+ * <p>Only {@link #shouldSurviveBriefContentionOnTheIdentityLookup()} is gated, because it races a
+ * 25&nbsp;ms lock against a retry schedule and that is not a race to run on a shared CI box:
  * <pre>
  * ./mvnw test -pl api -Dtest=SqliteBusyContentionInjectionITest -DLINKWEAVE_LOADTEST=true
  * </pre>
  */
 @QuarkusTest
 @TestProfile(ContentionInjectionProfile.class)
-@EnabledIf("loadTestGateEnabled")
 class SqliteBusyContentionInjectionITest {
 
     static boolean loadTestGateEnabled() {
@@ -78,7 +85,8 @@ class SqliteBusyContentionInjectionITest {
 
     private static final int BRIEF_ITERATIONS = 20;
 
-    private static final String JDBC_URL = "jdbc:sqlite:linkweave-test.db";
+    /** Must name the same file as {@link ContentionInjectionProfile}, or nothing is contended. */
+    private static final String JDBC_URL = "jdbc:sqlite:linkweave-contention-test.db";
 
     @Inject
     DatabaseService databaseService;
@@ -116,6 +124,7 @@ class SqliteBusyContentionInjectionITest {
     }
 
     @Test
+    @EnabledIf("loadTestGateEnabled")
     void shouldSurviveBriefContentionOnTheIdentityLookup() {
         requireRealSessionAuth();
         Map<Integer, Integer> statuses = new LinkedHashMap<>();
@@ -142,6 +151,31 @@ class SqliteBusyContentionInjectionITest {
             Map.of(response.statusCode(), 1));
         assertEquals(503, response.statusCode(),
             "exhausted contention must be a retryable 503, not a crash: " + body(response));
+        assertNotNull(response.header("Retry-After"), "503 must tell the caller when to come back");
+    }
+
+    @Test
+    void shouldAnswer503WhenContentionOutlastsTheRetryBudgetOnAnApiKeyRequest() {
+        // ARRANGE — the CLI and extension authenticate this way, through our own
+        // ApiKeyIdentityProvider rather than the generated one, so it is a separate path with the
+        // same exposure: a lookup in front of every request.
+        requireRealSessionAuth();
+        String apiKey = authed()
+            .contentType(ContentType.JSON)
+            .body("{\"name\":\"ContentionKey\"}")
+            .post("/auth/api-keys")
+            .then().statusCode(201)
+            .extract().path("key");
+
+        // ACT
+        Response response = underExclusiveLock(SUSTAINED_HOLD_MS,
+            () -> RestAssured.given().header("X-API-Key", apiKey).get("/collections"));
+
+        // ASSERT
+        report("BR-109-1: API-key lookup, lock held " + SUSTAINED_HOLD_MS + "ms",
+            Map.of(response.statusCode(), 1));
+        assertEquals(503, response.statusCode(),
+            "API-key authentication must answer 503 under contention too: " + body(response));
         assertNotNull(response.header("Retry-After"), "503 must tell the caller when to come back");
     }
 
@@ -222,7 +256,7 @@ class SqliteBusyContentionInjectionITest {
             release.await(holdMillis, TimeUnit.MILLISECONDS);
             stmt.execute("ROLLBACK");
         } catch (SQLException | InterruptedException e) {
-            failure.set(e instanceof Exception ex ? ex : new IllegalStateException(e));
+            failure.set(e);
             locked.countDown();
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
