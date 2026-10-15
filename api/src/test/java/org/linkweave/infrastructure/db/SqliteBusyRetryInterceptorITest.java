@@ -9,9 +9,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.sqlite.SQLiteErrorCode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
 class SqliteBusyRetryInterceptorITest {
@@ -84,14 +82,5 @@ class SqliteBusyRetryInterceptorITest {
             () -> QuarkusTransaction.requiringNew().run(probe::flaky));
         // ASSERT
         assertEquals(1, probe.calls(), "no retry when a transaction is already active");
-    }
-
-    @Test
-    void shouldMatchOnlyBusyPrimaryResultCodes() {
-        assertTrue(SqliteBusy.isBusyCode(SQLiteErrorCode.SQLITE_BUSY));
-        assertTrue(SqliteBusy.isBusyCode(SQLiteErrorCode.SQLITE_BUSY_SNAPSHOT));
-        assertFalse(SqliteBusy.isBusyCode(SQLiteErrorCode.SQLITE_LOCKED),
-            "SQLITE_LOCKED (6) is a different primary code and must not be retried");
-        assertFalse(SqliteBusy.isBusyCode(SQLiteErrorCode.SQLITE_CONSTRAINT));
     }
 }

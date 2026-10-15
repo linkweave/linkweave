@@ -8,6 +8,7 @@ import org.sqlite.SQLiteException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 /**
  * The reactive half of the retry boundary (BR-109-3). The interceptor's own behaviour is covered by
@@ -85,5 +86,24 @@ class SqliteBusyRetriesTest {
             .hasMessageContaining("not contention");
 
         assertThat(attempts).hasValue(1);
+    }
+
+    @Test
+    void shouldLeaveAnExhaustedFailureStillRecognisableAsContention() {
+        // The request boundary classifies the very failure this method hands back, and Mutiny
+        // marks exhaustion by suppressing an IllegalStateException whose cause is that failure —
+        // so the graph it returns contains a cycle. Walking it recursively overflowed the stack
+        // inside SqliteBusy, and the caller got a 500 instead of the 503 the retry was supposed to
+        // lead to. Measured end to end in SqliteBusyContentionInjectionITest; pinned here.
+        Uni<String> alwaysBusy = Uni.createFrom().item(() -> {
+            throw SqliteBusyFailures.onRead();
+        });
+
+        Throwable exhausted = catchThrowable(
+            () -> SqliteBusyRetries.retryWhileBusy(alwaysBusy).await().indefinitely());
+
+        assertThat(SqliteBusy.isBusy(exhausted))
+            .as("an exhausted retry must still be classified as contention, not as a crash")
+            .isTrue();
     }
 }

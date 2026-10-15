@@ -1,5 +1,11 @@
 package org.linkweave.infrastructure.db;
 
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.IdentityHashMap;
+import java.util.Set;
+
 import lombok.experimental.UtilityClass;
 import org.sqlite.SQLiteErrorCode;
 import org.sqlite.SQLiteException;
@@ -19,21 +25,42 @@ public class SqliteBusy {
     /**
      * Whether this failure, or anything it wraps or suppresses, is a BUSY condition.
      *
-     * <p>The cause chain matters: contention surfaces as a {@code PessimisticLockException} from a
-     * read, a Hibernate {@code JDBCException} from a flush, or an Arjuna {@code onePhaseCommit}
-     * failure from the commit — the {@link SQLiteException} is always buried. Suppressed
-     * exceptions are searched too, because a failed rollback attaches the original failure there.
-     * Self-referencing causes are guarded against.</p>
+     * <p>Both links have to be followed. Contention surfaces as a {@code PessimisticLockException}
+     * from a read, a Hibernate {@code JDBCException} from a flush, or an Arjuna
+     * {@code onePhaseCommit} failure from the commit, so the {@link SQLiteException} is always
+     * buried in the cause chain; and a rollback that itself fails attaches the original failure as
+     * a <em>suppressed</em> exception rather than a cause.
+     *
+     * <p>Together those two links form a graph, not a chain, and it can contain cycles — which is
+     * not hypothetical: when Mutiny exhausts a retry it calls
+     * {@code failure.addSuppressed(new IllegalStateException("Retries exhausted: …", failure))},
+     * so the suppressed exception's cause is the failure that suppresses it. {@link SqliteBusyRetries}
+     * produces exactly that shape, and a recursive walk over it does not terminate — it cost a
+     * {@code StackOverflowError} at the request boundary, which turned a 503 back into the 500 this
+     * class exists to prevent. Hence the explicit worklist and the identity-based visited set:
+     * equality is deliberately reference identity, because distinct exceptions can be
+     * {@code equals} and must still each be examined.
      */
     public static boolean isBusy(Throwable failure) {
-        for (Throwable t = failure; t != null; t = t.getCause() == t ? null : t.getCause()) {
-            if (t instanceof SQLiteException sqlite && isBusyCode(sqlite.getResultCode())) {
+        if (failure == null) {
+            return false;
+        }
+        Set<Throwable> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+        Deque<Throwable> pending = new ArrayDeque<>();
+        pending.push(failure);
+        while (!pending.isEmpty()) {
+            Throwable current = pending.pop();
+            if (!seen.add(current)) {
+                continue;
+            }
+            if (current instanceof SQLiteException sqlite && isBusyCode(sqlite.getResultCode())) {
                 return true;
             }
-            for (Throwable suppressed : t.getSuppressed()) {
-                if (isBusy(suppressed)) {
-                    return true;
-                }
+            if (current.getCause() != null) {
+                pending.push(current.getCause());
+            }
+            for (Throwable suppressed : current.getSuppressed()) {
+                pending.push(suppressed);
             }
         }
         return false;
