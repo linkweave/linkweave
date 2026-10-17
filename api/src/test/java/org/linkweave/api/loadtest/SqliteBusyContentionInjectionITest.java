@@ -39,8 +39,8 @@ import static org.junit.jupiter.api.Assertions.fail;
  * and some fraction of requests lose the race. That is the right tool for measuring latency and
  * error rates, and the wrong one for proving a specific rule, because the interesting request is
  * whichever one happened to collide. This injects the lock instead, so every run exercises the same
- * path: a second connection takes the database in {@code locking_mode=EXCLUSIVE}, which blocks
- * every other connection — readers included — for a known window.
+ * path: a second connection opens a {@code BEGIN EXCLUSIVE} transaction, which blocks every other
+ * connection — readers included — for a known window.
  *
  * <h2>What each case claims</h2>
  * <ul>
@@ -220,12 +220,13 @@ class SqliteBusyContentionInjectionITest {
     /**
      * Runs {@code action} while a second connection holds the database exclusively.
      *
-     * <p>{@code locking_mode=EXCLUSIVE} is what makes this deterministic. An ordinary write
-     * transaction only takes a RESERVED lock, which still lets other connections read — so it
-     * could not block an identity lookup. In exclusive locking mode the connection keeps the
-     * database-level lock from its first write until it is released, and every other connection
-     * gets {@code SQLITE_BUSY} immediately (the datasource runs with {@code busy_timeout=1}, and
-     * {@link ContentionInjectionProfile} explains why not 0).</p>
+     * <p>{@code BEGIN EXCLUSIVE} is what makes this deterministic, and it is a transaction-scoped
+     * lock — not the {@code PRAGMA locking_mode} setting of the same name, which this test does not
+     * use. An ordinary write transaction takes its RESERVED lock lazily and still lets other
+     * connections read, so it could not block an identity lookup; {@code BEGIN EXCLUSIVE} takes the
+     * database-level EXCLUSIVE lock up front and holds it until the transaction ends, so every
+     * other connection gets {@code SQLITE_BUSY} immediately (the datasource runs with
+     * {@code busy_timeout=1}, and {@link ContentionInjectionProfile} explains why not 0).</p>
      *
      * <p>The action only starts once the lock is confirmed held, so the test never measures a
      * request that raced ahead of the contention.</p>

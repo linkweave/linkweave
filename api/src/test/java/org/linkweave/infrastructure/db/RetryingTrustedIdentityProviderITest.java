@@ -9,8 +9,6 @@ import io.restassured.http.ContentType;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManagerFactory;
-import org.hibernate.SessionFactory;
-import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,28 +34,17 @@ class RetryingTrustedIdentityProviderITest {
     @Inject
     EntityManagerFactory entityManagerFactory;
 
-    private boolean statisticsWereEnabled;
+    private HibernateStatisticsProbe statistics;
 
-    /**
-     * Turns Hibernate statistics on for this class only.
-     *
-     * <p>{@code quarkus.hibernate-orm.statistics} used to be set for the whole {@code %test}
-     * profile, which made every other integration test pay per-statement bookkeeping — and
-     * perturb the timings {@code SqliteWriteContentionLoadITest} measures — for the benefit of one
-     * assertion here. A {@code QuarkusTestProfile} would scope it but cost a second Quarkus boot,
-     * whereas the flag is plain runtime state on the shared {@code SessionFactory}, so this
-     * flips it and puts it back.</p>
-     */
     @BeforeEach
     void enableStatistics() {
-        Statistics statistics = hibernateStatistics();
-        statisticsWereEnabled = statistics.isStatisticsEnabled();
-        statistics.setStatisticsEnabled(true);
+        statistics = new HibernateStatisticsProbe(entityManagerFactory);
+        statistics.enable();
     }
 
     @AfterEach
     void restoreStatistics() {
-        hibernateStatistics().setStatisticsEnabled(statisticsWereEnabled);
+        statistics.restore();
     }
 
     @Test
@@ -110,17 +97,17 @@ class RetryingTrustedIdentityProviderITest {
         long before = RetryingTrustedIdentityProvider.DELEGATE_SUBSCRIPTIONS.get();
         Uni<SecurityIdentity> lookup = identityProviderManager.authenticate(
             new TrustedAuthenticationRequest("test@example.com"));
-        long statementsBefore = statements();
+        long statementsBefore = statistics.statements();
 
         // ACT — one Uni, two subscriptions, exactly as a retry does it
         SecurityIdentity first = lookup.await().indefinitely();
-        long statementsAfterFirst = statements();
+        long statementsAfterFirst = statistics.statements();
         SecurityIdentity second = lookup.await().indefinitely();
 
         // ASSERT
         assertThat(first.getPrincipal().getName()).isEqualTo("test@example.com");
         assertThat(second).isNotSameAs(first);
-        assertThat(statements() - statementsBefore)
+        assertThat(statistics.statements() - statementsBefore)
             .as("the second subscription must have gone back to the database; a new "
                 + "SecurityIdentity instance alone would not prove that, since an augmentor "
                 + "produces one too")
@@ -128,22 +115,5 @@ class RetryingTrustedIdentityProviderITest {
         assertThat(RetryingTrustedIdentityProvider.DELEGATE_SUBSCRIPTIONS.get() - before)
             .as("each subscription must reach the delegate through the decorator")
             .isEqualTo(2);
-    }
-
-    /**
-     * JDBC statements executed so far. Asserted to be enabled rather than assumed: with
-     * statistics off this counter stays at zero and every comparison above would pass vacuously.
-     */
-    private long statements() {
-        Statistics statistics = hibernateStatistics();
-        assertThat(statistics.isStatisticsEnabled())
-            .as("enableStatistics() must have switched Hibernate statistics on for this to "
-                + "measure anything")
-            .isTrue();
-        return statistics.getPrepareStatementCount();
-    }
-
-    private Statistics hibernateStatistics() {
-        return entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
     }
 }

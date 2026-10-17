@@ -55,6 +55,13 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 // happened, so those fail the build rather than the logout. Token revocation is the third way and
 // is not guarded, because in quarkus-oidc 3.36.2 it is not configuration: it means calling
 // OidcProviderClient#revokeAccessToken/revokeRefreshToken, which has to be added here.
+//
+// Note for whoever adds the next method: this annotation is class-level, so a new endpoint
+// inherits the retry boundary without being asked whether it can be re-executed. The ArchUnit rule
+// only checks that a resource takes a position, not that each method deserves the one it
+// inherited. Anything added here that is not pure database work -- an outbound call, a mail, a
+// file write, any non-idempotent side effect -- needs @RetryOnSqliteBusy(attempts = 1) on the
+// method, or a resource of its own.
 @RetryOnSqliteBusy
 public class AuthResource {
 

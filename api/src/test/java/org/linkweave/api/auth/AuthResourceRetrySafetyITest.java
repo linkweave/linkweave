@@ -52,6 +52,12 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
  * this resource — where this comment is. There is no {@code quarkus.oidc} revocation property to
  * guard, so do not go looking for one.
  *
+ * <p>What it cannot see: this runs against the test runtime's config view, so a key supplied only
+ * to production as an environment variable ({@code QUARKUS_OIDC_LOGOUT_PATH}) is invisible here.
+ * That is inherent to a test-time check. It covers the properties-file vectors, which is where
+ * this repository puts configuration, and it is not a substitute for reading the deployment's
+ * environment.
+ *
  * <p>If either assertion fails, the fix is not to delete it: it is to move the retry off the
  * methods that log out, or to prove the remote call is idempotent.
  */

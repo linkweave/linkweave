@@ -53,12 +53,19 @@ public class SqliteBusyRetries {
     static final int ATTEMPTS = 4;
 
     /**
-     * Ceiling on the total wall time retrying may add, counted from the first subscription.
+     * Point at which retrying stops, counted from the first subscription.
      *
      * <p>Half of NFR-002's 500&nbsp;ms request budget: this runs before a request does any of its
      * own work, so it cannot have all of it. It is above the full backoff schedule (~70&nbsp;ms)
      * on purpose — the budget is there to stop a <em>driver</em> wait from being multiplied, not to
      * cut the schedule short.</p>
+     *
+     * <p>It is a cut-off, not a hard ceiling, in two ways worth being honest about. It is tested
+     * when a failure arrives rather than before the next attempt is dispatched, so a failure at
+     * t=249&nbsp;ms still earns one more jittered delay and the policy can overshoot by up to
+     * {@link #MAX_BACKOFF}. And it bounds only what <em>this</em> policy adds: the attempt it
+     * allows can then block for a full {@code busy_timeout}. Both are deferred to BR-109-4, which
+     * is what makes the product of the two settings one explicit number.</p>
      */
     static final Duration BUDGET = Duration.ofMillis(250);
 
