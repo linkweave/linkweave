@@ -232,6 +232,13 @@ class JaxResourceTest {
      * <p>The rule is that a single contended call may spend at most half its bucket, so a second
      * caller is never locked out by the first. It is a cheap guard on an interaction that is
      * invisible in review and would otherwise be rediscovered from a production outage.</p>
+     *
+     * <p>It reads the annotations, which is the declared production sizing. SmallRye also lets a
+     * bucket be resized by configuration — {@code quarkus.fault-tolerance."<class>/<method>"
+     * .rate-limit.value}, which this repository uses to lift these two caps under {@code %test}
+     * and {@code %dev} — and a config override that <em>lowered</em> a production bucket would
+     * pass here. ArchUnit has no view of configuration, so that gap is stated rather than
+     * closed.</p>
      */
     @Test
     void retry_attempts_must_not_be_able_to_drain_a_rate_limit_bucket() {

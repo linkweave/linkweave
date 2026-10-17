@@ -16,6 +16,7 @@ import org.linkweave.api.auth.apikey.json.ApiKeyCreateJson;
 import org.linkweave.api.shared.user.CurrentUserService;
 import org.linkweave.api.shared.user.User;
 import org.linkweave.infrastructure.db.DbConst;
+import org.linkweave.infrastructure.db.SqliteBusy;
 import org.linkweave.infrastructure.errorhandling.AppValidationException;
 import org.linkweave.infrastructure.errorhandling.AppValidationMessage;
 import org.linkweave.infrastructure.security.SecureRandomProvider;
@@ -24,6 +25,8 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.quarkus.runtime.util.ExceptionUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -123,7 +126,18 @@ public class ApiKeyService {
         try {
             apiKeyRepo.updateLastUsedAt(apiKeyId);
         } catch (Exception e) {
-            log.warn("Failed to update last_used_at for API key {}", apiKeyId, e);
+            // Contention gets one line, like GenericExceptionMapper#databaseBusyResponse and for
+            // the same reason: this is the hottest write in the application — every CLI and
+            // extension request past the debounce window — so under the contention UC-109 is
+            // about, a stack trace per failure is the wall of identical traces that made the
+            // 2026-08-28 incident hard to read. Nothing is lost: the update is best-effort, and
+            // BR-109-6's counter is where the rate belongs.
+            if (SqliteBusy.isBusy(e)) {
+                log.warn("Skipped last_used_at for API key {} under lock contention: {}",
+                    apiKeyId, ExceptionUtil.getRootCause(e).getMessage());
+            } else {
+                log.warn("Failed to update last_used_at for API key {}", apiKeyId, e);
+            }
         }
     }
 
