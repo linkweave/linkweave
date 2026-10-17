@@ -80,8 +80,22 @@ class SqliteBusyContentionInjectionITest {
     /** Shorter than the identity lookup's retry budget (~70 ms), so retrying can win. */
     private static final long BRIEF_HOLD_MS = 25;
 
-    /** Longer than any retry budget in the application, so no amount of retrying can win. */
-    private static final long SUSTAINED_HOLD_MS = 2_000;
+    /**
+     * Longer than any retry budget in the application, so no amount of retrying can win.
+     *
+     * <p>The longest budget is {@code BookmarkResource}'s {@code @RetryOnSqliteBusy(attempts =
+     * 12)}: eleven delays that the interceptor's capped-exponential schedule stretches to at most
+     * 10+20+40+80+160+250&times;6 &asymp; 1.81&nbsp;s, so the final attempt can start that late.
+     * The margin, not the mean, is what matters here — a hold only a little longer than 1.81&nbsp;s
+     * lets a {@code Thread.sleep} that overshoots on a loaded CI box run the last attempt after the
+     * lock cleared, and the request would then <em>succeed</em> and fail the 503 assertion in the
+     * case this class calls deterministic.</p>
+     *
+     * <p>The headroom is free: {@code release.countDown()} in {@link #underExclusiveLock}'s
+     * {@code finally} drops the lock as soon as the action returns, so this is a ceiling on the
+     * hold and not a sleep the suite pays for.</p>
+     */
+    private static final long SUSTAINED_HOLD_MS = 10_000;
 
     private static final int BRIEF_ITERATIONS = 20;
 
