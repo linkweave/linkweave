@@ -125,13 +125,8 @@ public class ApiKeyService {
         try {
             apiKeyRepo.updateLastUsedAt(apiKeyId);
         } catch (Exception e) {
-            // Contention gets one line, like GenericExceptionMapper#databaseBusyResponse and for
-            // the same reason: this is the hottest write in the application — every CLI and
-            // extension request past the debounce window — so under the contention UC-109 is
-            // about, a stack trace per failure is the wall of identical traces that made the
-            // 2026-08-28 incident hard to read. Nothing is lost: the update is best-effort, and
-            // one line per occurrence still counts, which matters because BR-109-6's contention
-            // metric does not exist yet and the log is the only measurement there is.
+            // One line for contention, as in GenericExceptionMapper: this is the hottest write in
+            // the application, and the update is best-effort anyway.
             if (SqliteBusy.isBusy(e)) {
                 log.warn("Skipped last_used_at for API key {} under lock contention: {}",
                     apiKeyId, ExceptionUtils.getRootCauseMessage(e));

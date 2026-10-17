@@ -134,9 +134,7 @@ Identity lookup runs in front of every request, so contention there fails everyt
 
 The total time a user request may spend waiting on locks is one explicit, configured budget aligned with NFR-002 — not an accident of two independent settings that multiply. The driver's `busy_timeout` bounds a *single* attempt; the retry policy bounds the *number* of attempts; their product is what the user experiences, and that product is what must be configured and asserted. Today's combination (10 s × 12 attempts on the bookmark save path, plus backoff) allows a wait of well over a minute. The driver timeout must be reduced so that application-level retry with jitter does the waiting, and the product must be bounded to a few seconds at most, after which A1 applies.
 
-Time is not the only thing the attempt count multiplies. `@RetryOnSqliteBusy` is ordered outside the SmallRye Fault Tolerance interceptor — the retry binding sits at `PLATFORM_BEFORE + 150` and fault tolerance at `PLATFORM_AFTER + 10` — so every attempt re-enters `@RateLimit` and spends another permit from a bucket that is process-wide. Reordering is not available: moving inside fault tolerance would also move inside the transaction, which is the one thing the retry cannot do. So the attempt count is an amplification factor on a shared quota, and it has to be chosen as one.
-
-The acute case is a method with its own small bucket under a class-level retry, where the two numbers are declared in different places and nothing makes their product visible: `/auth/register` has 5 permits per minute, and at the class default of 5 attempts one contended registration would spend all five and shut registration for the rest of the minute. `JaxResourceTest.retry_attempts_must_not_be_able_to_drain_a_rate_limit_bucket` now enforces that a single contended call may spend at most half its bucket, so a second caller is never locked out by the first. That bounds the per-method blast radius; the process-wide budget this rule asks for is still open, because a bucket shared by every caller can still be drained by enough of them at once.
+Time is not the only thing the attempt count multiplies. `@RetryOnSqliteBusy` sits outside the SmallRye Fault Tolerance interceptor, so every attempt spends another `@RateLimit` permit from a process-wide bucket — and reordering is not available, because moving inside fault tolerance would also move inside the transaction. `/auth/register` is the acute case: 5 permits per minute, so at the class default of 5 attempts one contended registration would close registration for the rest of the minute. `JaxResourceTest.retry_attempts_must_not_be_able_to_drain_a_rate_limit_bucket` holds a single call to half its bucket; the process-wide budget is still open.
 
 ### BR-109-5: Background Jobs Yield to Interactive Work
 
@@ -158,7 +156,7 @@ The contention load test (`SqliteWriteContentionLoadITest`, the gate established
 
 A save that fails or is retried because of contention preserves the user's form input, retries once automatically, and only then asks the user to act. A transient database condition must not cost the user their typing.
 
-The client's retry budget has to be set knowing what BR-109-4 says about permits. Server-side retry already spends one `@RateLimit` permit per attempt, and `JaxResourceTest.retry_attempts_must_not_be_able_to_drain_a_rate_limit_bucket` bounds a single call to half its bucket — but it cannot see a client that retries. On the 5-permit endpoints (`/auth/register`, API-key creation) a caller retrying twice at two attempts each has spent four of the five, so the automatic retry here must be one attempt, and the client must honour `Retry-After` rather than retry immediately.
+The automatic retry must be a single attempt and must honour `Retry-After`: server-side retry already spends a permit per attempt (BR-109-4), and on the 5-permit endpoints a client that retries eagerly drains the bucket.
 
 ## Acceptance Criteria
 

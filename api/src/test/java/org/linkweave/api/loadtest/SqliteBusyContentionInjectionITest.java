@@ -82,29 +82,15 @@ class SqliteBusyContentionInjectionITest {
     private static final long BRIEF_HOLD_MS = 25;
 
     /**
-     * Longer than any retry budget in the application, so no amount of retrying can win.
-     *
-     * <p>The longest budget is {@code BookmarkResource}'s {@code @RetryOnSqliteBusy(attempts =
-     * 12)}: eleven delays that the interceptor's capped-exponential schedule stretches to at most
-     * 10+20+40+80+160+250&times;6 &asymp; 1.81&nbsp;s, so the final attempt can start that late.
-     * The margin, not the mean, is what matters here — a hold only a little longer than 1.81&nbsp;s
-     * lets a {@code Thread.sleep} that overshoots on a loaded CI box run the last attempt after the
-     * lock cleared, and the request would then <em>succeed</em> and fail the 503 assertion in the
-     * case this class calls deterministic.</p>
-     *
-     * <p>The headroom is free: {@code release.countDown()} in {@link #underExclusiveLock}'s
-     * {@code finally} drops the lock as soon as the action returns, so this is a ceiling on the
-     * hold and not a sleep the suite pays for.</p>
+     * Comfortably past the longest retry window in the application (12 attempts over ~1.8 s), so no
+     * amount of retrying can win. A ceiling, not a sleep: the lock drops as soon as the action
+     * returns, so the class still runs in a few seconds.
      */
     private static final long SUSTAINED_HOLD_MS = 10_000;
 
     private static final int BRIEF_ITERATIONS = 20;
 
-    /**
-     * Read from the profile rather than repeated, so the lock is always injected into the database
-     * the application is actually using. A copy that drifted would contend a file nobody reads, and
-     * every case here would go green for the wrong reason.
-     */
+    /** From the profile, so the lock always lands in the database the application is using. */
     private static final String JDBC_URL =
         ConfigProvider.getConfig().getValue("quarkus.datasource.jdbc.url", String.class);
 
@@ -226,13 +212,10 @@ class SqliteBusyContentionInjectionITest {
     /**
      * Runs {@code action} while a second connection holds the database exclusively.
      *
-     * <p>{@code BEGIN EXCLUSIVE} is what makes this deterministic, and it is a transaction-scoped
-     * lock — not the {@code PRAGMA locking_mode} setting of the same name, which this test does not
-     * use. An ordinary write transaction takes its RESERVED lock lazily and still lets other
-     * connections read, so it could not block an identity lookup; {@code BEGIN EXCLUSIVE} takes the
-     * database-level EXCLUSIVE lock up front and holds it until the transaction ends, so every
-     * other connection gets {@code SQLITE_BUSY} immediately (the datasource runs with
-     * {@code busy_timeout=1}, and {@link ContentionInjectionProfile} explains why not 0).</p>
+     * <p>{@code BEGIN EXCLUSIVE} is what makes this deterministic: an ordinary write transaction
+     * takes a RESERVED lock and still lets other connections read, so it could not block an
+     * identity lookup. {@link ContentionInjectionProfile} covers the journal mode and
+     * {@code busy_timeout} this relies on.</p>
      *
      * <p>The action only starts once the lock is confirmed held, so the test never measures a
      * request that raced ahead of the contention.</p>
@@ -291,8 +274,6 @@ class SqliteBusyContentionInjectionITest {
      * which is exactly what the first run of it did.
      */
     private void assertInjectedLockBlocksOtherConnections() {
-        // No busy_timeout appended: the profile's URL already carries busy_timeout=1, and
-        // appending a second copy of the same parameter was brittle for no benefit.
         try (Connection probe = DriverManager.getConnection(JDBC_URL);
              Statement stmt = probe.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT count(*) FROM User")) {

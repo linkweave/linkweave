@@ -46,22 +46,9 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 // (quarkus-oidc 3.36.2, the version on the classpath; unchanged in 3.40.1, the LTS we will move
 // to -- OidcSessionImpl -> OidcUtils.removeSessionCookie) sets Clear-Site-Data,
 // expires the cookie in the response, and hands any stored token state to the configured
-// TokenStateManager — which for the default, cookie-based manager has nothing to delete.
-//
-// Anything that makes that call do remote work breaks this, and two of the ways are silent --
-// they would not bring the author anywhere near this comment. RP-initiated, back-channel or
-// front-channel logout is pure configuration (quarkus.oidc.logout.*), and a TokenStateManager of
-// our own would be wired by CDI from anywhere. AuthResourceRetrySafetyITest asserts neither has
-// happened, so those fail the build rather than the logout. Token revocation is the third way and
-// is not guarded, because in quarkus-oidc 3.36.2 it is not configuration: it means calling
-// OidcProviderClient#revokeAccessToken/revokeRefreshToken, which has to be added here.
-//
-// Note for whoever adds the next method: this annotation is class-level, so a new endpoint
-// inherits the retry boundary without being asked whether it can be re-executed. The ArchUnit rule
-// only checks that a resource takes a position, not that each method deserves the one it
-// inherited. Anything added here that is not pure database work -- an outbound call, a mail, a
-// file write, any non-idempotent side effect -- needs @RetryOnSqliteBusy(attempts = 1) on the
-// method, or a resource of its own.
+// TokenStateManager — which for the default, cookie-based manager has nothing to delete. A
+// server-side TokenStateManager would make the second call do real work; revisit this if one is
+// ever configured.
 @RetryOnSqliteBusy
 public class AuthResource {
 
@@ -101,12 +88,8 @@ public class AuthResource {
     @Transactional(TxType.NOT_SUPPORTED)
     @PermitAll
     @RateLimit(value = 5, window = 1, windowUnit = ChronoUnit.MINUTES)
-    // Fewer attempts than the class, because this method has its own much smaller bucket and
-    // every attempt spends a permit from it (see SqliteBusyRetryInterceptor on the ordering that
-    // makes that true). At the class default of 5 one contended registration would spend all five
-    // permits and shut registration for the rest of the minute — turning contention into an
-    // outage for everyone instead of a retry for one caller. Two attempts still absorb the single
-    // collision that is by far the likeliest, and leave the bucket usable.
+    // Every retry attempt spends a permit, and this bucket holds five: at the class default one
+    // contended registration would close registration for the rest of the minute.
     @RetryOnSqliteBusy(attempts = 2)
     public Response register(@Valid RegistrationRequestJson request) {
         try {

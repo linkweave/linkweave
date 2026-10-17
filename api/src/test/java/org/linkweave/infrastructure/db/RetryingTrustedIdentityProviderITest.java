@@ -9,6 +9,8 @@ import io.restassured.http.ContentType;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManagerFactory;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,17 +36,21 @@ class RetryingTrustedIdentityProviderITest {
     @Inject
     EntityManagerFactory entityManagerFactory;
 
-    private HibernateStatisticsProbe statistics;
+    private boolean statisticsWereEnabled;
 
+    /**
+     * On for this class only. It used to be on for the whole {@code %test} profile, which made
+     * every other integration test pay per-statement bookkeeping for one assertion here.
+     */
     @BeforeEach
     void enableStatistics() {
-        statistics = new HibernateStatisticsProbe(entityManagerFactory);
-        statistics.enable();
+        statisticsWereEnabled = statistics().isStatisticsEnabled();
+        statistics().setStatisticsEnabled(true);
     }
 
     @AfterEach
     void restoreStatistics() {
-        statistics.restore();
+        statistics().setStatisticsEnabled(statisticsWereEnabled);
     }
 
     @Test
@@ -97,17 +103,17 @@ class RetryingTrustedIdentityProviderITest {
         long before = RetryingTrustedIdentityProvider.DELEGATE_SUBSCRIPTIONS.get();
         Uni<SecurityIdentity> lookup = identityProviderManager.authenticate(
             new TrustedAuthenticationRequest("test@example.com"));
-        long statementsBefore = statistics.statements();
+        long statementsBefore = statements();
 
         // ACT — one Uni, two subscriptions, exactly as a retry does it
         SecurityIdentity first = lookup.await().indefinitely();
-        long statementsAfterFirst = statistics.statements();
+        long statementsAfterFirst = statements();
         SecurityIdentity second = lookup.await().indefinitely();
 
         // ASSERT
         assertThat(first.getPrincipal().getName()).isEqualTo("test@example.com");
         assertThat(second).isNotSameAs(first);
-        assertThat(statistics.statements() - statementsBefore)
+        assertThat(statements() - statementsBefore)
             .as("the second subscription must have gone back to the database; a new "
                 + "SecurityIdentity instance alone would not prove that, since an augmentor "
                 + "produces one too")
@@ -115,5 +121,15 @@ class RetryingTrustedIdentityProviderITest {
         assertThat(RetryingTrustedIdentityProvider.DELEGATE_SUBSCRIPTIONS.get() - before)
             .as("each subscription must reach the delegate through the decorator")
             .isEqualTo(2);
+    }
+
+    /** Asserted enabled rather than assumed: off, the counter stays at zero and nothing is proven. */
+    private long statements() {
+        assertThat(statistics().isStatisticsEnabled()).isTrue();
+        return statistics().getPrepareStatementCount();
+    }
+
+    private Statistics statistics() {
+        return entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
     }
 }

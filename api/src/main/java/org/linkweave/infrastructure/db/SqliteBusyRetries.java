@@ -45,27 +45,17 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class SqliteBusyRetries {
 
-    /**
-     * Total attempts including the initial one — the same meaning as
-     * {@link RetryOnSqliteBusy#attempts()}, not the same value: this path is in front of every
-     * request and gets fewer attempts than any resource.
-     */
+    /** Total attempts including the initial one; fewer than any resource, being on every request. */
     static final int ATTEMPTS = 4;
 
     /**
-     * Point at which retrying stops, counted from the first subscription.
+     * Point at which retrying stops, counted from the first subscription. Half of NFR-002's
+     * 500&nbsp;ms request budget, since this runs before a request does any of its own work.
      *
-     * <p>Half of NFR-002's 500&nbsp;ms request budget: this runs before a request does any of its
-     * own work, so it cannot have all of it. It is above the full backoff schedule (~70&nbsp;ms)
-     * on purpose — the budget is there to stop a <em>driver</em> wait from being multiplied, not to
-     * cut the schedule short.</p>
-     *
-     * <p>It is a cut-off, not a hard ceiling, in two ways worth being honest about. It is tested
-     * when a failure arrives rather than before the next attempt is dispatched, so a failure at
-     * t=249&nbsp;ms still earns one more jittered delay and the policy can overshoot by up to
-     * {@link #MAX_BACKOFF}. And it bounds only what <em>this</em> policy adds: the attempt it
-     * allows can then block for a full {@code busy_timeout}. Both are deferred to BR-109-4, which
-     * is what makes the product of the two settings one explicit number.</p>
+     * <p>A cut-off rather than a hard ceiling: it is tested when a failure arrives, so the policy
+     * can overshoot by one backoff delay, and it bounds only what the policy itself adds — the
+     * attempt it allows can still block for a full {@code busy_timeout}. BR-109-4 is where the
+     * product of the two becomes one number.</p>
      */
     static final Duration BUDGET = Duration.ofMillis(250);
 

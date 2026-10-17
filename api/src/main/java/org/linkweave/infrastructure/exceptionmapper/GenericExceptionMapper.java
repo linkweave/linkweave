@@ -96,18 +96,10 @@ class GenericExceptionMapper implements ExceptionMapper<Exception> {
      * was diagnosed from a wall of identical stack traces, which proved only that something had
      * failed. The root-cause message plus the failure id is what an operator can act on.</p>
      *
-     * <p>The rate belongs in a counter rather than the log, but BR-109-6 is not implemented — there
-     * is no contention metric yet — so until it lands the only way to measure how often this fires
-     * is to count these lines. That is why there is one per occurrence and why it carries the
-     * thrown type: it has to be greppable, because for now it is the measurement.</p>
-     *
-     * <p>The thrown type is named alongside the cause, because contention arrives wrapped in
-     * whatever the failing layer threw and the root-cause text is the same {@code SQLITE_BUSY}
-     * message in every case. Without it an operator cannot tell a contended read
-     * ({@code PessimisticLockException}) from a contended flush ({@code JDBCException}) or a commit
-     * that could not complete ({@code RollbackException}) — which is the first thing that narrows
-     * the search. {@code getRootCauseMessage} supplies the inner type and renders a missing message
-     * on its own, so both ends of the chain are named.</p>
+     * <p>One line per occurrence, because BR-109-6's contention counter does not exist yet and
+     * counting these is the only measurement there is. It names the thrown type as well as the
+     * cause: contention arrives wrapped in whatever the failing layer threw, and the root-cause
+     * text is the same {@code SQLITE_BUSY} message every time.</p>
      */
     private Response databaseBusyResponse(Exception exception) {
         AppFailureMessage failureMessage = AppFailureMessage.databaseBusy();

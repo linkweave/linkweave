@@ -21,11 +21,9 @@ import io.quarkus.test.junit.QuarkusTestProfile;
  *   <li>{@code busy_timeout=0} does not mean "fail immediately" here — sqlite-jdbc treats it as
  *       unset and applies its own 3000&nbsp;ms default, so every contended request just waited
  *       three seconds and then succeeded.</li>
- *   <li>In WAL mode the lock cannot be injected at all, because WAL readers do not take the
- *       database lock — they read a snapshot — so a {@code BEGIN EXCLUSIVE} writer blocks other
- *       writers and leaves every read untouched, and the identity lookup is a read.
- *       Rollback-journal is the mode in which a writer actually blocks readers on demand, which is
- *       what makes a failing identity lookup reproducible.
+ *   <li>In WAL mode the lock cannot be injected at all: WAL readers take no database lock, so an
+ *       exclusive writer leaves every read untouched — and the identity lookup is a read.
+ *       Rollback-journal is the mode in which a writer actually blocks readers on demand.
  *       It runs against its own database file for that reason: journal mode persists in the file,
  *       so sharing linkweave-test.db would leak this mode into the rest of the suite.
  *       In WAL the same failure arises from checkpointing or WAL recovery — attested by the
