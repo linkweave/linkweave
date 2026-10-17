@@ -24,7 +24,7 @@ export interface GapDropTarget {
   centerY?: number
 }
 
-interface NestDropTarget {
+export interface NestDropTarget {
   kind: 'nest'
   folderId: string
 }

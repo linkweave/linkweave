@@ -21,6 +21,9 @@
       "src/api/generated/**"
     ]
   },
+  "rules": {
+    "private-type-leaks": "error"
+  },
   "boundaries": {
     "zones": [
       { "name": "stores", "patterns": ["src/stores/**"] },
