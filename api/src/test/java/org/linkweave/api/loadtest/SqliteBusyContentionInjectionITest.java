@@ -291,7 +291,9 @@ class SqliteBusyContentionInjectionITest {
      * which is exactly what the first run of it did.
      */
     private void assertInjectedLockBlocksOtherConnections() {
-        try (Connection probe = DriverManager.getConnection(JDBC_URL + "&busy_timeout=1");
+        // No busy_timeout appended: the profile's URL already carries busy_timeout=1, and
+        // appending a second copy of the same parameter was brittle for no benefit.
+        try (Connection probe = DriverManager.getConnection(JDBC_URL);
              Statement stmt = probe.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT count(*) FROM User")) {
             rs.next();

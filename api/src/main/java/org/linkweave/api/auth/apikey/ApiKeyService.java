@@ -6,7 +6,6 @@ import java.security.NoSuchAlgorithmException;
 import java.time.OffsetDateTime;
 import java.util.HexFormat;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,12 +21,11 @@ import org.linkweave.infrastructure.errorhandling.AppValidationException;
 import org.linkweave.infrastructure.errorhandling.AppValidationMessage;
 import org.linkweave.infrastructure.security.SecureRandomProvider;
 import org.linkweave.infrastructure.stereotypes.Service;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.quarkus.runtime.util.ExceptionUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -136,8 +134,7 @@ public class ApiKeyService {
             // metric does not exist yet and the log is the only measurement there is.
             if (SqliteBusy.isBusy(e)) {
                 log.warn("Skipped last_used_at for API key {} under lock contention: {}",
-                    apiKeyId,
-                    Objects.toString(ExceptionUtil.getRootCause(e).getMessage(), "<no message>"));
+                    apiKeyId, ExceptionUtils.getRootCauseMessage(e));
             } else {
                 log.warn("Failed to update last_used_at for API key {}", apiKeyId, e);
             }

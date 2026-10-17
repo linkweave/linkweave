@@ -1,7 +1,6 @@
 package org.linkweave.infrastructure.exceptionmapper;
 
 import java.sql.SQLException;
-import java.util.Objects;
 
 import org.linkweave.infrastructure.db.SqliteBusy;
 import org.linkweave.infrastructure.errorhandling.AppFailureMessage;
@@ -10,7 +9,6 @@ import org.linkweave.infrastructure.errorhandling.AppValidationMessage;
 import org.linkweave.infrastructure.errorhandling.json.AppFailureErrorJson;
 import org.linkweave.infrastructure.i18n.translations.TL;
 
-import io.quarkus.runtime.util.ExceptionUtil;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -62,7 +60,7 @@ class GenericExceptionMapper implements ExceptionMapper<Exception> {
         // https://github.com/quarkusio/quarkus/issues/4031
         LOG.error("unhandled generic exception: {}", exceptionId, exception);
 
-        final Throwable rootCause = ExceptionUtil.getRootCause(exception);
+        final Throwable rootCause = ExceptionUtils.getRootCause(exception);
         if (rootCause instanceof ConstraintViolationException cve) {
             return providers.getExceptionMapper(ConstraintViolationException.class).toResponse(cve);
         }
@@ -103,18 +101,20 @@ class GenericExceptionMapper implements ExceptionMapper<Exception> {
      * is to count these lines. That is why there is one per occurrence and why it carries the
      * thrown type: it has to be greppable, because for now it is the measurement.</p>
      *
-     * <p>The thrown type is named alongside it, because contention arrives wrapped in whatever the
-     * failing layer threw and the root-cause message is the same {@code SQLITE_BUSY} text in every
-     * case. Without it an operator cannot tell a contended read ({@code PessimisticLockException})
-     * from a contended flush ({@code JDBCException}) or a commit that could not complete
-     * ({@code RollbackException}) — which is the first thing that narrows the search.</p>
+     * <p>The thrown type is named alongside the cause, because contention arrives wrapped in
+     * whatever the failing layer threw and the root-cause text is the same {@code SQLITE_BUSY}
+     * message in every case. Without it an operator cannot tell a contended read
+     * ({@code PessimisticLockException}) from a contended flush ({@code JDBCException}) or a commit
+     * that could not complete ({@code RollbackException}) — which is the first thing that narrows
+     * the search. {@code getRootCauseMessage} supplies the inner type and renders a missing message
+     * on its own, so both ends of the chain are named.</p>
      */
     private Response databaseBusyResponse(Exception exception) {
         AppFailureMessage failureMessage = AppFailureMessage.databaseBusy();
         LOG.warn("SQLite lock contention reached the request boundary ({}): answering 503. "
                 + "Thrown as {}. Cause: {}",
             failureMessage.getId(), exception.getClass().getName(),
-            Objects.toString(ExceptionUtil.getRootCause(exception).getMessage(), "<no message>"));
+            ExceptionUtils.getRootCauseMessage(exception));
         return Response.status(Response.Status.SERVICE_UNAVAILABLE)
             .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_SECONDS)
             .type(MediaType.APPLICATION_JSON_TYPE)
