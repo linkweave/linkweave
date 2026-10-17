@@ -35,7 +35,10 @@ import jakarta.inject.Inject;
 @Decorator
 public class RetryingApiKeyIdentityProvider implements IdentityProvider<ApiKeyRequest> {
 
-    /** Delegate subscriptions, for the same reasons as {@code RetryingTrustedIdentityProvider}. */
+    /**
+     * Delegate subscriptions — test-only observability, for the same reasons as
+     * {@link RetryingTrustedIdentityProvider#DELEGATE_SUBSCRIPTIONS}.
+     */
     static final AtomicLong DELEGATE_SUBSCRIPTIONS = new AtomicLong();
 
     private final IdentityProvider<ApiKeyRequest> delegate;
@@ -49,6 +52,15 @@ public class RetryingApiKeyIdentityProvider implements IdentityProvider<ApiKeyRe
     @Override
     public Class<ApiKeyRequest> getRequestType() {
         return delegate.getRequestType();
+    }
+
+    /**
+     * Forwarded rather than inherited from the interface, for the reason given on
+     * {@link RetryingTrustedIdentityProvider#priority()}.
+     */
+    @Override
+    public int priority() {
+        return delegate.priority();
     }
 
     @Override

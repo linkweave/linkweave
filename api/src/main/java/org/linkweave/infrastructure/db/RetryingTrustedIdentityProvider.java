@@ -34,6 +34,13 @@ import jakarta.inject.Inject;
  * <p>Deliberately narrow. It adds retry and nothing else — no credential handling, no identity
  * construction, no role mapping — because this sits on the authentication path of every request
  * and the generated provider remains the only thing that decides who the caller is.
+ *
+ * <p>Narrow in scope, too: this covers the {@code TrustedAuthenticationRequest} that resolves a
+ * session cookie, not the {@code UsernamePasswordAuthenticationRequest} that
+ * {@code /j_security_check} issues once at login. That omission is deliberate — BR-109-3 is about
+ * the lookup that runs in front of <em>every</em> request, and contention at login costs one
+ * sign-in attempt rather than the whole session. A contended login is still classified (503 with
+ * {@code Retry-After}, BR-109-1); it is simply not retried for the caller.
  */
 @Priority(1)
 @Decorator
@@ -41,8 +48,8 @@ public class RetryingTrustedIdentityProvider
     implements IdentityProvider<TrustedAuthenticationRequest> {
 
     /**
-     * Counts <em>subscriptions to the delegate</em>, so a test can prove two separate things that
-     * are otherwise invisible.
+     * Test-only observability: production code never reads this. It counts <em>subscriptions to
+     * the delegate</em>, so a test can prove two separate things that are otherwise invisible.
      *
      * <p>First, that the decorator is in the chain at all. Whether CDI decoration reaches a bean
      * that {@code quarkus-security-jpa} generates at build time is a property of the extension,
@@ -80,6 +87,29 @@ public class RetryingTrustedIdentityProvider
     @Override
     public Class<TrustedAuthenticationRequest> getRequestType() {
         return delegate.getRequestType();
+    }
+
+    /**
+     * Forwarded even though {@link IdentityProvider} supplies a default, so that the decorator
+     * never answers for the delegate.
+     *
+     * <p>A decorator that inherits the default would discard an override the delegate makes, and
+     * this value is not inert: {@code QuarkusIdentityProviderManagerImpl.Builder#build()}
+     * (quarkus-security 3.36.2) sorts the providers registered for one request type by it,
+     * descending, and the first provider to return an identity wins. Dropping an override would
+     * therefore reorder authentication, silently.</p>
+     *
+     * <p>Nothing overrides it today — {@code JpaTrustedIdentityProvider} takes the interface
+     * default of {@code SYSTEM_FIRST + 1} (io.quarkus.security:quarkus-security 2.3.2, the version
+     * Quarkus 3.36.2 resolves) — so forwarding it now costs nothing, and it is one fewer way for
+     * the move to the 3.40 LTS to change behaviour without saying so. With this, all three methods
+     * of {@link IdentityProvider} are forwarded explicitly, which is what makes
+     * {@code RetryingIdentityProviderDecoratorTest} able to check the claim above rather than
+     * restate it.</p>
+     */
+    @Override
+    public int priority() {
+        return delegate.priority();
     }
 
     @Override
