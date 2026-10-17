@@ -74,6 +74,12 @@ public class SqliteBusy {
      * driver version does not know yet.
      */
     static boolean isBusyCode(SQLiteErrorCode resultCode) {
+        // Not null-guarded, and deliberately so: this is called from GenericExceptionMapper's
+        // catch-all, where an NPE would turn the 503 this exists to produce back into a 500, so
+        // the question is worth settling rather than guessing. SQLiteException cannot hold a null
+        // result code -- its only constructor reads resultCode.code to build the SQLState before
+        // it assigns the field (sqlite-jdbc on the classpath, verified against the bytecode), so a
+        // null would fail at construction and never reach this predicate.
         return (resultCode.code & 0xff) == SQLiteErrorCode.SQLITE_BUSY.code;
     }
 }

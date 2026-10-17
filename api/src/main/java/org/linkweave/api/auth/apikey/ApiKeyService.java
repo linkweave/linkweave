@@ -6,6 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.OffsetDateTime;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -135,7 +136,8 @@ public class ApiKeyService {
             // metric does not exist yet and the log is the only measurement there is.
             if (SqliteBusy.isBusy(e)) {
                 log.warn("Skipped last_used_at for API key {} under lock contention: {}",
-                    apiKeyId, ExceptionUtil.getRootCause(e).getMessage());
+                    apiKeyId,
+                    Objects.toString(ExceptionUtil.getRootCause(e).getMessage(), "<no message>"));
             } else {
                 log.warn("Failed to update last_used_at for API key {}", apiKeyId, e);
             }
