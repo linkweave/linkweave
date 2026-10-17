@@ -22,6 +22,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.linkweave.infrastructure.db.DatabaseService;
 
@@ -99,8 +100,13 @@ class SqliteBusyContentionInjectionITest {
 
     private static final int BRIEF_ITERATIONS = 20;
 
-    /** Must name the same file as {@link ContentionInjectionProfile}, or nothing is contended. */
-    private static final String JDBC_URL = "jdbc:sqlite:linkweave-contention-test.db";
+    /**
+     * Read from the profile rather than repeated, so the lock is always injected into the database
+     * the application is actually using. A copy that drifted would contend a file nobody reads, and
+     * every case here would go green for the wrong reason.
+     */
+    private static final String JDBC_URL =
+        ConfigProvider.getConfig().getValue("quarkus.datasource.jdbc.url", String.class);
 
     @Inject
     DatabaseService databaseService;
@@ -285,7 +291,7 @@ class SqliteBusyContentionInjectionITest {
      * which is exactly what the first run of it did.
      */
     private void assertInjectedLockBlocksOtherConnections() {
-        try (Connection probe = DriverManager.getConnection(JDBC_URL + "?busy_timeout=1");
+        try (Connection probe = DriverManager.getConnection(JDBC_URL + "&busy_timeout=1");
              Statement stmt = probe.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT count(*) FROM User")) {
             rs.next();

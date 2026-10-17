@@ -96,8 +96,12 @@ class GenericExceptionMapper implements ExceptionMapper<Exception> {
      *
      * <p>Deliberately not {@code LOG.error(..., exception)}: the incident that motivated UC-109
      * was diagnosed from a wall of identical stack traces, which proved only that something had
-     * failed. The root-cause message plus the failure id is what an operator can act on, and
-     * BR-109-6's counter — not the log — is where the rate belongs.</p>
+     * failed. The root-cause message plus the failure id is what an operator can act on.</p>
+     *
+     * <p>The rate belongs in a counter rather than the log, but BR-109-6 is not implemented — there
+     * is no contention metric yet — so until it lands the only way to measure how often this fires
+     * is to count these lines. That is why there is one per occurrence and why it carries the
+     * thrown type: it has to be greppable, because for now it is the measurement.</p>
      *
      * <p>The thrown type is named alongside it, because contention arrives wrapped in whatever the
      * failing layer threw and the root-cause message is the same {@code SQLITE_BUSY} text in every

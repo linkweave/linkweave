@@ -158,6 +158,8 @@ The contention load test (`SqliteWriteContentionLoadITest`, the gate established
 
 A save that fails or is retried because of contention preserves the user's form input, retries once automatically, and only then asks the user to act. A transient database condition must not cost the user their typing.
 
+The client's retry budget has to be set knowing what BR-109-4 says about permits. Server-side retry already spends one `@RateLimit` permit per attempt, and `JaxResourceTest.retry_attempts_must_not_be_able_to_drain_a_rate_limit_bucket` bounds a single call to half its bucket — but it cannot see a client that retries. On the 5-permit endpoints (`/auth/register`, API-key creation) a caller retrying twice at two attempts each has spent four of the five, so the automatic retry here must be one attempt, and the client must honour `Retry-After` rather than retry immediately.
+
 ## Acceptance Criteria
 
 1. Under the extended load test (BR-109-8) — interactive writes plus running background jobs — every interactive request returns 2xx and the p99 stays within the configured contention budget.

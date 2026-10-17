@@ -131,7 +131,8 @@ public class ApiKeyService {
             // extension request past the debounce window — so under the contention UC-109 is
             // about, a stack trace per failure is the wall of identical traces that made the
             // 2026-08-28 incident hard to read. Nothing is lost: the update is best-effort, and
-            // BR-109-6's counter is where the rate belongs.
+            // one line per occurrence still counts, which matters because BR-109-6's contention
+            // metric does not exist yet and the log is the only measurement there is.
             if (SqliteBusy.isBusy(e)) {
                 log.warn("Skipped last_used_at for API key {} under lock contention: {}",
                     apiKeyId, ExceptionUtil.getRootCause(e).getMessage());
