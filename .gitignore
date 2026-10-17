@@ -32,6 +32,8 @@ docker-compose.override.yml
  ## test database
 api/linkweave.db
 api/linkweave-test.db
+api/linkweave-contention-test.db
+api/linkweave-contention-test.db-journal
 
 ### Build systems ###
 

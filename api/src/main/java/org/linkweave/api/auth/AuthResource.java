@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.linkweave.api.shared.user.CurrentUserService;
 import org.linkweave.api.shared.user.User;
+import org.linkweave.infrastructure.db.RetryOnSqliteBusy;
 import org.linkweave.infrastructure.ratelimit.RateLimitConst;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -37,6 +38,19 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 @Path("/auth")
 @Authenticated
 @Slf4j
+// BR-109-3: the identity read runs in front of every request, so contention here fails
+// everything at once rather than one save. Safe to re-execute: /me, /settings and /oidc-login are
+// pure database work in one transaction each. /register is not, and opts out on the method.
+// /logout and DELETE /me clear the session *after* the database work, so a retry re-runs that work
+// from scratch and the session-clearing only repeats on the response — harmless on both paths:
+// FormAuthenticationMechanism.logout only rewrites the response cookie, and OidcSession.logout
+// (quarkus-oidc 3.36.2, the version on the classpath; unchanged in 3.40.1, the LTS we will move
+// to -- OidcSessionImpl -> OidcUtils.removeSessionCookie) sets Clear-Site-Data,
+// expires the cookie in the response, and hands any stored token state to the configured
+// TokenStateManager — which for the default, cookie-based manager has nothing to delete. A
+// server-side TokenStateManager would make the second call do real work; revisit this if one is
+// ever configured.
+@RetryOnSqliteBusy
 public class AuthResource {
 
     private final SecurityIdentity identity;
@@ -75,6 +89,11 @@ public class AuthResource {
     @Transactional(TxType.NOT_SUPPORTED)
     @PermitAll
     @RateLimit(value = 5, window = 1, windowUnit = ChronoUnit.MINUTES)
+    // Not retryable, despite the class-level boundary: register() is NOT_SUPPORTED over two
+    // independent REQUIRES_NEW transactions, so a BUSY while provisioning settings leaves the user
+    // row committed. Re-running then finds it and answers "email already registered" for a
+    // registration that half-succeeded. Contention here is a 503 the caller retries.
+    @RetryOnSqliteBusy(attempts = 1)
     public Response register(@Valid RegistrationRequestJson request) {
         try {
             registrationService.register(

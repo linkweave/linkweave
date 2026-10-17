@@ -52,6 +52,8 @@ public class ApiKeyResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Authenticated
     @RateLimit(value = 5, window = 1, windowUnit = ChronoUnit.MINUTES)
+    // Same 5-permit bucket as AuthResource#register, and the same reason to retry less.
+    @RetryOnSqliteBusy(attempts = 2)
     public Response create(@NotNull @Valid @NonNull ApiKeyCreateJson json) {
         var result = apiKeyService.createApiKey(json);
         return Response.status(Response.Status.CREATED)

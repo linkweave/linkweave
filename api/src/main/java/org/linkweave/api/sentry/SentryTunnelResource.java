@@ -22,6 +22,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import org.linkweave.api.shared.config.ConfigService;
+import org.linkweave.infrastructure.db.NotRetryableOnSqliteBusy;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 import org.jboss.logging.Logger;
 
@@ -31,6 +32,8 @@ import org.jboss.logging.Logger;
 @Transactional(TxType.NOT_SUPPORTED)
 @RateLimit(value = 400, window = 1, windowUnit = ChronoUnit.MINUTES)
 @RequiredArgsConstructor
+@NotRetryableOnSqliteBusy(because = "forwards an envelope to Sentry over HTTP and touches no "
+    + "entity. Retrying would duplicate the upstream delivery.")
 public class SentryTunnelResource {
 
     private static final Logger LOG = Logger.getLogger(SentryTunnelResource.class);

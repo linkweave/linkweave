@@ -20,6 +20,7 @@ import org.linkweave.api.collection.Collection;
 import org.linkweave.api.collection.events.json.CollectionEventJson;
 import org.linkweave.api.shared.auth.AuthorizationService;
 import org.linkweave.api.types.id.ID;
+import org.linkweave.infrastructure.db.NotRetryableOnSqliteBusy;
 import org.linkweave.infrastructure.ratelimit.RateLimitConst;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 import org.linkweave.infrastructure.types.IgnoreForIdClassTest;
@@ -44,6 +45,9 @@ import org.jspecify.annotations.Nullable;
 @RequiredArgsConstructor
 @Authenticated
 @Path("/collections/{collectionId}/events")
+@NotRetryableOnSqliteBusy(because = "an SSE stream: the response is open for the life of the "
+    + "subscription, so there is no bounded invocation to re-execute. It is already "
+    + "@Transactional(NOT_SUPPORTED) and touches no entity.")
 public class CollectionEventResource {
 
     /**

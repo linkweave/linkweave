@@ -16,10 +16,12 @@ import org.linkweave.api.auth.apikey.json.ApiKeyCreateJson;
 import org.linkweave.api.shared.user.CurrentUserService;
 import org.linkweave.api.shared.user.User;
 import org.linkweave.infrastructure.db.DbConst;
+import org.linkweave.infrastructure.db.SqliteBusy;
 import org.linkweave.infrastructure.errorhandling.AppValidationException;
 import org.linkweave.infrastructure.errorhandling.AppValidationMessage;
 import org.linkweave.infrastructure.security.SecureRandomProvider;
 import org.linkweave.infrastructure.stereotypes.Service;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -123,7 +125,14 @@ public class ApiKeyService {
         try {
             apiKeyRepo.updateLastUsedAt(apiKeyId);
         } catch (Exception e) {
-            log.warn("Failed to update last_used_at for API key {}", apiKeyId, e);
+            // One line for contention, as in GenericExceptionMapper: this is the hottest write in
+            // the application, and the update is best-effort anyway.
+            if (SqliteBusy.isBusy(e)) {
+                log.warn("Skipped last_used_at for API key {} under lock contention: {}",
+                    apiKeyId, ExceptionUtils.getRootCauseMessage(e));
+            } else {
+                log.warn("Failed to update last_used_at for API key {}", apiKeyId, e);
+            }
         }
     }
 

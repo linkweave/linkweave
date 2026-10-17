@@ -58,6 +58,18 @@ public class AppFailureMessage {
         ));
     }
 
+    /**
+     * Lock contention on the single SQLite file (C-003) — a transient, self-clearing condition, not
+     * a crash. Answered with 503 and {@code Retry-After} rather than 500 (BR-109-1), so the client
+     * can tell "try again in a moment" from "this request will never work".
+     */
+    @NonNull
+    public static AppFailureMessage databaseBusy() {
+        return build(I18nMessage.of(
+            "AppFailure.DATABASE_BUSY"
+        ));
+    }
+
 
     @NonNull
     public static AppFailureMessage couldNotCreateEntity(@NonNull String entityName) {
