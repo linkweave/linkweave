@@ -11,6 +11,8 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,6 +35,30 @@ class RetryingTrustedIdentityProviderITest {
 
     @Inject
     EntityManagerFactory entityManagerFactory;
+
+    private boolean statisticsWereEnabled;
+
+    /**
+     * Turns Hibernate statistics on for this class only.
+     *
+     * <p>{@code quarkus.hibernate-orm.statistics} used to be set for the whole {@code %test}
+     * profile, which made every other integration test pay per-statement bookkeeping — and
+     * perturb the timings {@code SqliteWriteContentionLoadITest} measures — for the benefit of one
+     * assertion here. A {@code QuarkusTestProfile} would scope it but cost a second Quarkus boot,
+     * whereas the flag is plain runtime state on the shared {@code SessionFactory}, so this
+     * flips it and puts it back.</p>
+     */
+    @BeforeEach
+    void enableStatistics() {
+        Statistics statistics = hibernateStatistics();
+        statisticsWereEnabled = statistics.isStatisticsEnabled();
+        statistics.setStatisticsEnabled(true);
+    }
+
+    @AfterEach
+    void restoreStatistics() {
+        hibernateStatistics().setStatisticsEnabled(statisticsWereEnabled);
+    }
 
     @Test
     void shouldRouteTheTrustedIdentityLookupThroughTheRetryDecorator() {
@@ -109,11 +135,15 @@ class RetryingTrustedIdentityProviderITest {
      * statistics off this counter stays at zero and every comparison above would pass vacuously.
      */
     private long statements() {
-        Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        Statistics statistics = hibernateStatistics();
         assertThat(statistics.isStatisticsEnabled())
-            .as("quarkus.hibernate-orm.statistics must be on under %test for this to measure "
-                + "anything")
+            .as("enableStatistics() must have switched Hibernate statistics on for this to "
+                + "measure anything")
             .isTrue();
         return statistics.getPrepareStatementCount();
+    }
+
+    private Statistics hibernateStatistics() {
+        return entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
     }
 }
