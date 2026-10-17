@@ -30,7 +30,6 @@ function applyTheme(theme: Theme) {
 }
 
 export const useUiStore = defineStore('ui', () => {
-  const sidebarOpen = ref(false)
   const theme = ref<Theme>(loadTheme())
   const bookmarkLayout = ref<BookmarkLayout>(loadBookmarkLayout())
   const previewsEnabled = ref<boolean>(loadPreviewsEnabled())
@@ -48,10 +47,6 @@ export const useUiStore = defineStore('ui', () => {
     localStorage.setItem('previewsEnabled', String(previewsEnabled.value))
   })
 
-  const toggleSidebar = () => {
-    sidebarOpen.value = !sidebarOpen.value
-  }
-
   const setTheme = (newTheme: Theme) => {
     theme.value = newTheme
   }
@@ -60,23 +55,16 @@ export const useUiStore = defineStore('ui', () => {
     bookmarkLayout.value = layout
   }
 
-  const setPreviewsEnabled = (value: boolean) => {
-    previewsEnabled.value = value
-  }
-
   const togglePreviewsEnabled = () => {
     previewsEnabled.value = !previewsEnabled.value
   }
 
   return {
-    sidebarOpen,
     theme,
     bookmarkLayout,
     previewsEnabled,
-    toggleSidebar,
     setTheme,
     setBookmarkLayout,
-    setPreviewsEnabled,
     togglePreviewsEnabled,
   }
 })

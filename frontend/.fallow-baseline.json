@@ -24,7 +24,6 @@
     "unused-export:src/components/layout/index.ts:CollectionSwitcher",
     "unused-export:src/components/layout/index.ts:HeaderLw",
     "unused-export:src/components/layout/index.ts:SidebarLw",
-    "unused-export:src/components/ui/index.ts:LanguageSwitcherLw",
     "unused-export:src/components/ui/index.ts:SettingsDialog",
     "unused-export:src/lib/builtin-tag-rules.ts:BUILT_IN_RULES",
     "unused-export:src/lib/builtin-tag-rules.ts:parseHost",
@@ -110,22 +109,13 @@
     "unused-store-member:src/stores/searchQuery.ts:useSearchQueryStore:clearSearchQuery",
     "unused-store-member:src/stores/searchQuery.ts:useSearchQueryStore:isTagExcluded",
     "unused-store-member:src/stores/selection.ts:useSelectionStore:selectMode",
-    "unused-store-member:src/stores/tag.ts:useTagStore:loading",
-    "unused-store-member:src/stores/ui.ts:useUiStore:setPreviewsEnabled",
-    "unused-store-member:src/stores/ui.ts:useUiStore:sidebarOpen",
-    "unused-store-member:src/stores/ui.ts:useUiStore:toggleSidebar"
+    "unused-store-member:src/stores/tag.ts:useTagStore:loading"
   ],
   "unprovided_injects": [],
-  "unrendered_components": [
-    "unrendered-component:src/components/ui/LanguageSwitcherLw.vue:LanguageSwitcherLw"
-  ],
+  "unrendered_components": [],
   "unused_component_props": [],
   "absent_component_props": [],
-  "unused_component_emits": [
-    "unused-component-emit:src/components/collection/CreateCollectionDialog.vue:CreateCollectionDialog:created",
-    "unused-component-emit:src/components/collection/DeleteCollectionDialog.vue:DeleteCollectionDialog:deleted",
-    "unused-component-emit:src/components/collection/EditCollectionDialog.vue:EditCollectionDialog:saved"
-  ],
+  "unused_component_emits": [],
   "unused_component_inputs": [],
   "unused_component_outputs": [],
   "unused_svelte_events": [],
