@@ -45,7 +45,11 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class SqliteBusyRetries {
 
-    /** Total attempts including the initial one, matching {@link RetryOnSqliteBusy#attempts()}. */
+    /**
+     * Total attempts including the initial one — the same meaning as
+     * {@link RetryOnSqliteBusy#attempts()}, not the same value: this path is in front of every
+     * request and gets fewer attempts than any resource.
+     */
     static final int ATTEMPTS = 4;
 
     /**
