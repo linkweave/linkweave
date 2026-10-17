@@ -97,11 +97,19 @@ class GenericExceptionMapper implements ExceptionMapper<Exception> {
      * was diagnosed from a wall of identical stack traces, which proved only that something had
      * failed. The root-cause message plus the failure id is what an operator can act on, and
      * BR-109-6's counter — not the log — is where the rate belongs.</p>
+     *
+     * <p>The thrown type is named alongside it, because contention arrives wrapped in whatever the
+     * failing layer threw and the root-cause message is the same {@code SQLITE_BUSY} text in every
+     * case. Without it an operator cannot tell a contended read ({@code PessimisticLockException})
+     * from a contended flush ({@code JDBCException}) or a commit that could not complete
+     * ({@code RollbackException}) — which is the first thing that narrows the search.</p>
      */
     private Response databaseBusyResponse(Exception exception) {
         AppFailureMessage failureMessage = AppFailureMessage.databaseBusy();
-        LOG.warn("SQLite lock contention reached the request boundary ({}): answering 503. Cause: {}",
-            failureMessage.getId(), ExceptionUtil.getRootCause(exception).getMessage());
+        LOG.warn("SQLite lock contention reached the request boundary ({}): answering 503. "
+                + "Thrown as {}. Cause: {}",
+            failureMessage.getId(), exception.getClass().getName(),
+            ExceptionUtil.getRootCause(exception).getMessage());
         return Response.status(Response.Status.SERVICE_UNAVAILABLE)
             .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_SECONDS)
             .type(MediaType.APPLICATION_JSON_TYPE)
