@@ -1,6 +1,7 @@
 package org.linkweave.api.shared.archunit;
 
 import java.util.Collection;
+import java.util.OptionalInt;
 
 import org.linkweave.api.sentry.SentryTunnelResource;
 import org.linkweave.infrastructure.db.NotRetryableOnSqliteBusy;
@@ -9,6 +10,9 @@ import org.linkweave.infrastructure.stereotypes.JaxResource;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.lang.ArchCondition;
+import com.tngtech.archunit.lang.ConditionEvents;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
 import io.quarkus.security.Authenticated;
 import io.smallrye.faulttolerance.api.RateLimit;
 import io.smallrye.mutiny.Multi;
@@ -209,6 +213,75 @@ class JaxResourceTest {
                 + "side effect a rollback cannot undo");
 
         rule.check(ArchConst.APP_CLASSES);
+    }
+
+    /**
+     * BR-109-4: an attempt count is also an amplification factor on a rate-limit bucket.
+     *
+     * <p>{@code @RetryOnSqliteBusy} is ordered outside SmallRye Fault Tolerance, so every retry
+     * attempt re-enters {@code @RateLimit} and spends another permit from a bucket that is
+     * process-wide. The two are declared in different places — often one on the class and one on
+     * the method — so nothing makes the product visible at the point where either number is
+     * chosen. {@code AuthResource#register} is how that goes wrong: a 5-permit bucket under the
+     * class default of 5 attempts, where one contended registration shuts registration for the
+     * rest of the minute.</p>
+     *
+     * <p>The rule is that a single contended call may spend at most half its bucket, so a second
+     * caller is never locked out by the first. It is a cheap guard on an interaction that is
+     * invisible in review and would otherwise be rediscovered from a production outage.</p>
+     */
+    @Test
+    void retry_attempts_must_not_be_able_to_drain_a_rate_limit_bucket() {
+        var rule = methods()
+            .that()
+            .areDeclaredInClassesThat()
+            .areAnnotatedWith(JaxResource.class)
+            .and()
+            .arePublic()
+            .should(leaveHalfTheRateLimitBucketForOtherCallers())
+            .because("every @RetryOnSqliteBusy attempt spends a @RateLimit permit, so a method "
+                + "whose attempts exceed half its bucket turns lock contention into a lockout for "
+                + "everyone — lower attempts on the method, or raise the bucket");
+
+        rule.check(ArchConst.APP_CLASSES);
+    }
+
+    private static ArchCondition<JavaMethod> leaveHalfTheRateLimitBucketForOtherCallers() {
+        return new ArchCondition<>("leave at least half of its rate-limit bucket for other callers") {
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                int attempts = effectiveRetryAttempts(method);
+                if (attempts <= 1) {
+                    return;
+                }
+                OptionalInt bucket = effectiveRateLimit(method);
+                if (bucket.isEmpty()) {
+                    // enforce_rate_limit_on_all_methods owns that gap; nothing to divide here.
+                    return;
+                }
+                if (attempts * 2 > bucket.getAsInt()) {
+                    events.add(SimpleConditionEvent.violated(method, String.format(
+                        "%s may spend %d of its %d rate-limit permits on one contended call",
+                        method.getFullName(), attempts, bucket.getAsInt())));
+                }
+            }
+        };
+    }
+
+    /** Mirrors {@code SqliteBusyRetryInterceptor#resolveAttempts}: method wins, then class. */
+    private static int effectiveRetryAttempts(JavaMethod method) {
+        return method.tryGetAnnotationOfType(RetryOnSqliteBusy.class)
+            .or(() -> method.getOwner().tryGetAnnotationOfType(RetryOnSqliteBusy.class))
+            .map(retry -> Math.max(1, retry.attempts()))
+            .orElse(1);
+    }
+
+    /** A method-level {@code @RateLimit} replaces the class-level one, as in MicroProfile FT. */
+    private static OptionalInt effectiveRateLimit(JavaMethod method) {
+        return method.tryGetAnnotationOfType(RateLimit.class)
+            .or(() -> method.getOwner().tryGetAnnotationOfType(RateLimit.class))
+            .map(rateLimit -> OptionalInt.of(rateLimit.value()))
+            .orElseGet(OptionalInt::empty);
     }
 
     @Test

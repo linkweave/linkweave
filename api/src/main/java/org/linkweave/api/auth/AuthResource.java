@@ -88,6 +88,13 @@ public class AuthResource {
     @Transactional(TxType.NOT_SUPPORTED)
     @PermitAll
     @RateLimit(value = 5, window = 1, windowUnit = ChronoUnit.MINUTES)
+    // Fewer attempts than the class, because this method has its own much smaller bucket and
+    // every attempt spends a permit from it (see SqliteBusyRetryInterceptor on the ordering that
+    // makes that true). At the class default of 5 one contended registration would spend all five
+    // permits and shut registration for the rest of the minute — turning contention into an
+    // outage for everyone instead of a retry for one caller. Two attempts still absorb the single
+    // collision that is by far the likeliest, and leave the bucket usable.
+    @RetryOnSqliteBusy(attempts = 2)
     public Response register(@Valid RegistrationRequestJson request) {
         try {
             registrationService.register(
