@@ -39,9 +39,10 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 @Authenticated
 @Slf4j
 // BR-109-3: the identity read runs in front of every request, so contention here fails
-// everything at once rather than one save. Safe to re-execute: /me, /register, /settings and
-// /oidc-login are pure database work. /logout and DELETE /me clear the session *before* the
-// commit, so a commit-time rollback does re-run that — which is harmless on both paths:
+// everything at once rather than one save. Safe to re-execute: /me, /settings and /oidc-login are
+// pure database work in one transaction each. /register is not, and opts out on the method.
+// /logout and DELETE /me clear the session *after* the database work, so a retry re-runs that work
+// from scratch and the session-clearing only repeats on the response — harmless on both paths:
 // FormAuthenticationMechanism.logout only rewrites the response cookie, and OidcSession.logout
 // (quarkus-oidc 3.36.2, the version on the classpath; unchanged in 3.40.1, the LTS we will move
 // to -- OidcSessionImpl -> OidcUtils.removeSessionCookie) sets Clear-Site-Data,
@@ -88,9 +89,11 @@ public class AuthResource {
     @Transactional(TxType.NOT_SUPPORTED)
     @PermitAll
     @RateLimit(value = 5, window = 1, windowUnit = ChronoUnit.MINUTES)
-    // Every retry attempt spends a permit, and this bucket holds five: at the class default one
-    // contended registration would close registration for the rest of the minute.
-    @RetryOnSqliteBusy(attempts = 2)
+    // Not retryable, despite the class-level boundary: register() is NOT_SUPPORTED over two
+    // independent REQUIRES_NEW transactions, so a BUSY while provisioning settings leaves the user
+    // row committed. Re-running then finds it and answers "email already registered" for a
+    // registration that half-succeeded. Contention here is a 503 the caller retries.
+    @RetryOnSqliteBusy(attempts = 1)
     public Response register(@Valid RegistrationRequestJson request) {
         try {
             registrationService.register(
