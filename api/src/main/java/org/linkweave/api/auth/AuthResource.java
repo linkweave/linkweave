@@ -46,9 +46,13 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 // (quarkus-oidc 3.36.2, the version on the classpath; unchanged in 3.40.1, the LTS we will move
 // to -- OidcSessionImpl -> OidcUtils.removeSessionCookie) sets Clear-Site-Data,
 // expires the cookie in the response, and hands any stored token state to the configured
-// TokenStateManager — which for the default, cookie-based manager has nothing to delete. A
-// server-side TokenStateManager would make the second call do real work; revisit this if one is
-// ever configured.
+// TokenStateManager — which for the default, cookie-based manager has nothing to delete.
+//
+// All of which is a property of configuration, not of code: a server-side TokenStateManager,
+// RP-initiated or back-channel logout (quarkus.oidc.logout.*), or token revocation would each
+// make the second call do real upstream work, and nothing in a properties file would point the
+// author back at this comment. AuthResourceRetrySafetyITest asserts none of them is set, so the
+// assumption fails the build rather than the logout.
 @RetryOnSqliteBusy
 public class AuthResource {
 

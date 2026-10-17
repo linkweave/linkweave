@@ -1,5 +1,7 @@
 package org.linkweave.api.shared.archunit;
 
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.OptionalInt;
 
@@ -29,6 +31,7 @@ import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.linkweave.api.shared.archunit.ArchConst.Pattern.STARTS_WITH_LOWERCASE_FOLLOWED_BY_ALPHANUMERIC;
 import static org.linkweave.api.shared.archunit.ArchUtil.parameterAnnotations;
 import static org.linkweave.api.shared.archunit.LayeringTest.JSON_DTO;
@@ -266,6 +269,28 @@ class JaxResourceTest {
                 }
             }
         };
+    }
+
+    /**
+     * The rule above reads {@code @RetryOnSqliteBusy} by hand, because ArchUnit works on the static
+     * model while {@code SqliteBusyRetryInterceptor#resolveAttempts} works on an
+     * {@code InvocationContext} — the two cannot share a resolver. So instead of hoping they stay
+     * in step, this pins the annotation's surface: a new attribute that changes how many attempts
+     * are made fails here, and whoever adds it is pointed at both readers.
+     */
+    @Test
+    void retry_annotation_must_not_grow_an_attribute_the_rate_limit_rule_ignores() {
+        var attributes = Arrays.stream(RetryOnSqliteBusy.class.getDeclaredMethods())
+            .map(Method::getName)
+            .sorted()
+            .toList();
+
+        assertThat(attributes)
+            .as("retry_attempts_must_not_be_able_to_drain_a_rate_limit_bucket and "
+                + "SqliteBusyRetryInterceptor#resolveAttempts both read @RetryOnSqliteBusy "
+                + "attribute by attribute; a new one would be ignored by the rule rather than "
+                + "fail it, so teach both readers and then update this list")
+            .containsExactly("attempts");
     }
 
     /** Mirrors {@code SqliteBusyRetryInterceptor#resolveAttempts}: method wins, then class. */
