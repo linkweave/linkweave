@@ -34,8 +34,6 @@ async function initializeApp() {
       'dev-linkweave.dev',
       'linkweave.dev',
     ],
-    sendDefaultPii: true,
-    enableLogs: true,
   })
 
   app.use(createPinia())

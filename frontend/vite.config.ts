@@ -140,10 +140,20 @@ export default defineConfig(({ command }) => {
       sourcemap: 'hidden',
       rollupOptions: {
         output: {
-          manualChunks: {
-            vue: ['vue', 'vue-router', 'pinia', 'vue-i18n'],
-            validation: ['vee-validate', '@vee-validate/zod', 'zod'],
-            ui: ['radix-vue', '@lucide/vue'],
+          // Rollup 5 (via Vite 8) dropped the object form of manualChunks, so
+          // the same three groups are expressed as a function. Matching on the
+          // inner `node_modules/<pkg>/` segment keeps it correct under pnpm's
+          // nested layout, and the trailing separator stops `vue` swallowing
+          // `vue-router`. The scoped prefixes (@vue/*, @lucide/*) belong with
+          // their package, which the object form grouped implicitly.
+          manualChunks: (id) => {
+            if (!id.includes('node_modules')) return
+            const chunks: Record<string, RegExp> = {
+              vue: /[\\/]node_modules[\\/](?:vue|vue-router|pinia|vue-i18n|@vue)[\\/]/,
+              validation: /[\\/]node_modules[\\/](?:vee-validate|zod|@vee-validate)[\\/]/,
+              ui: /[\\/]node_modules[\\/](?:radix-vue|@lucide)[\\/]/,
+            }
+            return Object.keys(chunks).find((name) => chunks[name].test(id))
           },
         },
       },
