@@ -20,6 +20,15 @@ import lombok.extern.slf4j.Slf4j;
  * in a fresh transaction with a fresh WAL snapshot. As a guard, invocations that are already
  * inside a caller's transaction are never retried — the rollback discarded that caller's work,
  * and re-running only the inner method would not restore it.</p>
+ *
+ * <p>That ordering also puts this outside SmallRye Fault Tolerance ({@code PLATFORM_AFTER + 10}),
+ * so <b>every attempt re-enters {@code @RateLimit}</b> and spends another permit from a
+ * process-wide bucket. The attempt count is therefore an amplification factor on a shared quota as
+ * well as on time: a contended write can cost as many permits as it makes attempts, and a
+ * contention storm can answer unrelated traffic with 429s. Reordering it is not an option — moving
+ * inside fault tolerance would also move inside the transaction and defeat the retry entirely — so
+ * this is bounded by choosing {@code attempts} knowingly, and belongs to BR-109-4 along with the
+ * wall-clock budget.</p>
  */
 @Interceptor
 @RetryOnSqliteBusy
