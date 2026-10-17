@@ -48,11 +48,13 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 // expires the cookie in the response, and hands any stored token state to the configured
 // TokenStateManager — which for the default, cookie-based manager has nothing to delete.
 //
-// All of which is a property of configuration, not of code: a server-side TokenStateManager,
-// RP-initiated or back-channel logout (quarkus.oidc.logout.*), or token revocation would each
-// make the second call do real upstream work, and nothing in a properties file would point the
-// author back at this comment. AuthResourceRetrySafetyITest asserts none of them is set, so the
-// assumption fails the build rather than the logout.
+// Anything that makes that call do remote work breaks this, and two of the ways are silent --
+// they would not bring the author anywhere near this comment. RP-initiated, back-channel or
+// front-channel logout is pure configuration (quarkus.oidc.logout.*), and a TokenStateManager of
+// our own would be wired by CDI from anywhere. AuthResourceRetrySafetyITest asserts neither has
+// happened, so those fail the build rather than the logout. Token revocation is the third way and
+// is not guarded, because in quarkus-oidc 3.36.2 it is not configuration: it means calling
+// OidcProviderClient#revokeAccessToken/revokeRefreshToken, which has to be added here.
 @RetryOnSqliteBusy
 public class AuthResource {
 

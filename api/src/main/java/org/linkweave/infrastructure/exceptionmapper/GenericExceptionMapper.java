@@ -1,6 +1,7 @@
 package org.linkweave.infrastructure.exceptionmapper;
 
 import java.sql.SQLException;
+import java.util.Objects;
 
 import org.linkweave.infrastructure.db.SqliteBusy;
 import org.linkweave.infrastructure.errorhandling.AppFailureMessage;
@@ -109,7 +110,7 @@ class GenericExceptionMapper implements ExceptionMapper<Exception> {
         LOG.warn("SQLite lock contention reached the request boundary ({}): answering 503. "
                 + "Thrown as {}. Cause: {}",
             failureMessage.getId(), exception.getClass().getName(),
-            ExceptionUtil.getRootCause(exception).getMessage());
+            Objects.toString(ExceptionUtil.getRootCause(exception).getMessage(), "<no message>"));
         return Response.status(Response.Status.SERVICE_UNAVAILABLE)
             .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_SECONDS)
             .type(MediaType.APPLICATION_JSON_TYPE)

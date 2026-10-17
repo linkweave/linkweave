@@ -3,6 +3,8 @@ package org.linkweave.api.auth;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
+import org.linkweave.api.shared.archunit.ArchConst;
+import io.quarkus.oidc.TokenStateManager;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.config.ConfigValue;
 import io.smallrye.config.DefaultValuesConfigSource;
@@ -11,43 +13,52 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 /**
- * Pins the configuration that makes {@code AuthResource}'s class-level {@code @RetryOnSqliteBusy}
- * safe (BR-109-3).
+ * Pins the assumptions that make {@code AuthResource}'s class-level {@code @RetryOnSqliteBusy} safe
+ * on {@code /logout} and {@code DELETE /me} (BR-109-3).
  *
- * <p>{@code /logout} and {@code DELETE /me} clear the session <em>before</em> the commit, so a
- * commit-time rollback does re-run that work. The class comment argues this is harmless, and the
- * argument rests entirely on what {@code OidcSession.logout()} does: with the default cookie-based
- * {@code TokenStateManager} it only rewrites response headers, so a second call is a no-op.
+ * <p>Both methods clear the session <em>before</em> the commit, so a commit-time rollback does
+ * re-run that work. That is harmless only while {@code OidcSession.logout()} stays a rewrite of
+ * response headers: it sets {@code Clear-Site-Data}, expires the cookie, and hands any stored token
+ * state to the configured {@code TokenStateManager}, which for the default cookie-based one has
+ * nothing to delete. Make it do remote work and a retry repeats that call.
  *
- * <p>That is a property of configuration, not of code. Turn on RP-initiated or back-channel logout
- * ({@code quarkus.oidc.logout.*}) or token revocation and the same method starts making upstream
- * calls — at which point re-executing it stops being free and the class-level retry becomes
- * silently unsafe. Nothing in a properties file would point the author at that comment, so the
- * assumption is asserted here instead of trusted.
+ * <p>Two of the ways to do that are silent — they would not take the author anywhere near
+ * {@code AuthResource} — so they are asserted here:</p>
+ * <ul>
+ *   <li><b>RP-initiated, back-channel or front-channel logout</b>, which is pure configuration
+ *       under {@code quarkus.oidc.logout.*}. Matched by prefix, so a key this test's author did not
+ *       know about is still caught, and excluding values that come from
+ *       {@code DefaultValuesConfigSource}: Quarkus enumerates the whole logout surface whether it
+ *       is used or not, and a key carrying only its own default configures nothing.</li>
+ *   <li><b>A {@code TokenStateManager} of our own</b>, which would be wired by CDI from anywhere in
+ *       the codebase. Asserted statically rather than through {@code Arc}, because
+ *       {@code %test.quarkus.oidc.enabled=false} removes the OIDC beans and a resolution-based
+ *       check would pass by finding nothing.</li>
+ * </ul>
  *
- * <p>Matched by prefix rather than by an enumerated list of keys, so a key this test's author did
- * not know about is still caught. Defaults are excluded deliberately: Quarkus enumerates the whole
- * OIDC logout surface whether it is used or not, and a key that only carries its own default
- * (`logout-mode`, the back-channel token cache) configures nothing. What matters is whether
- * something in this repository or the environment has set one.
+ * <p>Token revocation is deliberately <em>not</em> covered, because in quarkus-oidc 3.36.2 it is
+ * not reachable by configuration: it means calling
+ * {@code OidcProviderClient#revokeAccessToken/revokeRefreshToken}, which would have to be added to
+ * this resource — where this comment is. There is no {@code quarkus.oidc} revocation property to
+ * guard, so do not go looking for one.
  *
- * <p>If this fails, the fix is not to delete the assertion: it is to move the retry off the methods
- * that log out, or to prove the remote call is idempotent.
+ * <p>If either assertion fails, the fix is not to delete it: it is to move the retry off the
+ * methods that log out, or to prove the remote call is idempotent.
  */
 @QuarkusTest
 class AuthResourceRetrySafetyITest {
 
     @Test
-    void shouldNotConfigureOidcLogoutOrRevocationWhileLogoutIsRetryable() {
+    void shouldNotConfigureRemoteLogoutWhileLogoutIsRetryable() {
         // ARRANGE
         SmallRyeConfig config = ConfigProvider.getConfig().unwrap(SmallRyeConfig.class);
 
         // ACT
         List<String> configured = StreamSupport.stream(config.getPropertyNames().spliterator(), false)
-            .filter(name -> name.startsWith("quarkus.oidc."))
-            .filter(name -> name.contains(".logout.") || name.contains(".revocation."))
+            .filter(name -> name.startsWith("quarkus.oidc.") && name.contains(".logout."))
             .filter(name -> isSetSomewhereOtherThanDefaults(config, name))
             .sorted()
             .toList();
@@ -55,9 +66,21 @@ class AuthResourceRetrySafetyITest {
         // ASSERT
         assertThat(configured)
             .as("AuthResource retries /logout and DELETE /me, which is only safe while "
-                + "OidcSession.logout() stays a response-header rewrite; these keys make it issue "
-                + "upstream calls, so re-execution would repeat them")
+                + "OidcSession.logout() stays a response-header rewrite; these keys make it call "
+                + "the provider, so a retry would repeat that call")
             .isEmpty();
+    }
+
+    @Test
+    void shouldNotReplaceTheCookieBasedTokenStateManagerWhileLogoutIsRetryable() {
+        var rule = noClasses()
+            .should()
+            .implement(TokenStateManager.class)
+            .because("the default cookie-based TokenStateManager has nothing to delete on logout, "
+                + "which is what makes AuthResource's retry of /logout and DELETE /me a no-op the "
+                + "second time; a server-side one would do real work per call");
+
+        rule.check(ArchConst.APP_CLASSES);
     }
 
     private boolean isSetSomewhereOtherThanDefaults(SmallRyeConfig config, String name) {
