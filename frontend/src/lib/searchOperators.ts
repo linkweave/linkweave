@@ -20,7 +20,7 @@
  * value suggestions behind the colon, which some discoverable operators have
  * (`folder:`, `property:`, `match:`) and others don't (`url:`).
  */
-interface DiscoverableOperatorDef {
+export interface DiscoverableOperatorDef {
   /** Operator key as parsed (lowercase; the `key` of `key:value`). */
   key: string
   discoverable: true
@@ -34,7 +34,7 @@ interface DiscoverableOperatorDef {
  * this way. Making one discoverable means adding a `hintKey` and its en/de/fr
  * strings — nothing else.
  */
-interface PlainOperatorDef {
+export interface PlainOperatorDef {
   key: string
   discoverable?: false
   hintKey?: never

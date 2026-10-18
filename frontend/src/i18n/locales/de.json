@@ -470,12 +470,6 @@
     "placeholder": "Sammlungen durchsuchen...",
     "noResults": "Keine Sammlungen entsprechen Ihrer Suche."
   },
-  "language": {
-    "en": "English",
-    "de": "Deutsch",
-    "fr": "Français",
-    "switch": "Sprache wechseln"
-  },
   "login": {
     "email": "E-Mail",
     "password": "Passwort",

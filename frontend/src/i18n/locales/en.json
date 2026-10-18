@@ -470,12 +470,6 @@
     "placeholder": "Search collections...",
     "noResults": "No collections match your search."
   },
-  "language": {
-    "en": "English",
-    "de": "Deutsch",
-    "fr": "Français",
-    "switch": "Switch language"
-  },
   "login": {
     "email": "Email",
     "password": "Password",

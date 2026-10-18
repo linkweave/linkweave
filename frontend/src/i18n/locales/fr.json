@@ -470,12 +470,6 @@
     "placeholder": "Rechercher des collections...",
     "noResults": "Aucune collection ne correspond à votre recherche."
   },
-  "language": {
-    "en": "English",
-    "de": "Deutsch",
-    "fr": "Français",
-    "switch": "Changer de langue"
-  },
   "login": {
     "email": "E-mail",
     "password": "Mot de passe",
