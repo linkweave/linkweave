@@ -61,7 +61,7 @@ public class ScreenshotService {
             // user-initiated refresh path.
             return false;
         }
-        Optional<ScreenshotFetcherService.FetchedScreenshot> fetched = fetcher.fetchFor(url);
+        Optional<ScreenshotCapturer.CapturedPage> fetched = fetcher.fetchFor(url);
         if (fetched.isPresent()) {
             cache.putSuccess(key, fetched.get().bytes(), fetched.get().contentType());
             writer.applyCapture(bookmarkId, appClock.offsetDateTime().now(), fetched.get().description());
