@@ -15,9 +15,8 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>Deliberately free of transport vocabulary. {@link ScreenshotSidecarClient}
  * speaks HTTP and returns {@code jakarta.ws.rs.core.Response} so the adapter can
- * read both the image bytes and the description header; that type used to travel
- * into the service layer, which meant anything wanting a screenshot had to know
- * the sidecar was reached over HTTP and had to drain a JAX-RS response itself.
+ * read both the image bytes and the description header. Nothing on this side of
+ * the seam needs to know that, or to drain a JAX-RS response.
  *
  * <p>Capture parameters — viewport, format, quality — are the implementation's
  * business rather than the caller's, for the same reason {@link

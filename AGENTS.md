@@ -65,6 +65,7 @@ All access checks are performed in the **Resource layer** using `AuthorizationSe
 - Use `@AllArgsConstructor` for entity classes to ensure all fields are initialized
 - For frontend changes, run `pnpm run check` (bundles `type-check` + `lint` + `analyze:deadcode`) before pushing. The **fallow dead-code gate** blocks CI on things `type-check`/`lint` do NOT catch — most commonly an **exported symbol with no external consumer** (un-export it, or it must be a real public API). For backend changes, compile with maven.
 - Use zod schemas to validate form input
+- **Comments describe the current state, not the change.** Never write refactor history into Javadoc or comments — "used to live here", "previously", "until this split", "no longer X". That belongs in the commit message and the MR description, which is where a reader goes looking for it. It matters most when the previous version was never on `main`: a comment about an intermediate state describes code that existed for nobody. Documenting *why* a constraint exists — including a production incident that caused it — is a different thing and stays.
 
 ## Custom Types
 

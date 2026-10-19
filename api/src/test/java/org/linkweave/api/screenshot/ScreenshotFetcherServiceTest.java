@@ -15,9 +15,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Policy tests. With capture behind {@link ScreenshotCapturer} these run against
- * a fake and need no sidecar, which is what makes the allowed-host path testable
- * here at all — previously the only assertable branches were the ones that
- * returned before the HTTP client was touched.
+ * a fake and need no sidecar, so the allowed-host path is assertable here and not
+ * only the branches that return before any call is made.
  *
  * <p>Hosts are IP literals rather than names so {@code InetAddress.getAllByName}
  * resolves them without a DNS lookup: these stay deterministic offline.

@@ -18,10 +18,7 @@ import org.jspecify.annotations.NonNull;
  * backend-fetch denylist, the scheme allowlist, and the private-host check that
  * keeps a bookmark URL from turning the backend into an SSRF proxy — and they
  * hold whatever the capture backend happens to be. Reaching the sidecar is
- * transport. While both lived here the class imported {@code jakarta.ws.rs}, so
- * the policy could only be exercised through branches that returned <em>before</em>
- * the HTTP client was touched; the allowed-host path was untestable without
- * standing up a sidecar.
+ * transport, and belongs to whichever class implements {@link ScreenshotCapturer}.
  */
 @NoTransactionService
 @Slf4j

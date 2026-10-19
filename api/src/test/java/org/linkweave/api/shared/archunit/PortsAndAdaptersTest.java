@@ -24,11 +24,10 @@ import static org.linkweave.api.shared.archunit.ArchConst.APP_CLASSES;
  * Ports &amp; adapters rules.
  *
  * <p>A {@link Port} is an interface the application defines for something it needs
- * from outside; the adapter that implements it is the only code allowed to know
- * which technology answers. These rules keep that seam from quietly closing again:
- * {@code ScreenshotFetcherService} used to handle {@code jakarta.ws.rs.core.Response}
- * itself, and nothing in the build noticed, because the layering rules classify by
- * name suffix and it was called {@code ...Service}.
+ * from outside. The adapter that implements it is the only code allowed to know
+ * which technology answers. The layering rules cannot express that on their own,
+ * because they classify by name suffix and stereotype: a class that imports a
+ * transport type is still a service if it is called {@code ...Service}.
  *
  * <p>Only outbound (driven) ports are covered. Inbound boundaries are the public
  * API of a service class and have no interface to annotate.
@@ -113,16 +112,22 @@ class PortsAndAdaptersTest {
     }
 
     /**
-     * {@code @RegisterRestClient} rather than the {@code jakarta.ws.rs} import,
-     * because a REST client can return plain records — {@code OllamaClient.chat}
-     * does — and then nothing in the caller names a transport type at all.
+     * Keyed on {@code @RegisterRestClient} rather than on a {@code jakarta.ws.rs}
+     * import, because a REST client can return plain records — {@code
+     * OllamaClient.chat} does — and then nothing in the caller names a transport
+     * type at all.
+     *
+     * <p>Scoped to the inside rather than to everything that is not an adapter. A
+     * health check, a JAX-RS provider and a forwarding endpoint all speak someone
+     * else's protocol legitimately without implementing a port, and none of them
+     * is the thing this seam protects.
      */
     @Test
-    void only_adapters_talk_to_rest_clients() {
-        ArchRule rule = noClasses().that(are(not(ADAPTER)))
+    void services_do_not_talk_to_rest_clients() {
+        ArchRule rule = noClasses().that(are(SERVICE))
             .should()
             .dependOnClassesThat(are(REST_CLIENT))
-            .because("reaching another system's protocol is the adapter's job");
+            .because("reaching another system's protocol belongs outside the application");
 
         rule.allowEmptyShould(true).check(APP_CLASSES);
     }
@@ -133,7 +138,7 @@ class PortsAndAdaptersTest {
             .should()
             .dependOnClassesThat()
             .resideInAPackage("jakarta.ws.rs..")
-            .because("this is exactly what ScreenshotFetcherService used to do");
+            .because("the application must not name a transport type");
 
         rule.allowEmptyShould(true).check(APP_CLASSES);
     }
