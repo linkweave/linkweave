@@ -115,6 +115,14 @@
             <version>1.4.1</version>
             <scope>test</scope>
         </dependency>
+        <!-- NFR-032: HTTP stub for adapter contract tests. Standalone shades Jetty,
+             which would otherwise clash with Quarkus' Vert.x stack. -->
+        <dependency>
+            <groupId>org.wiremock</groupId>
+            <artifactId>wiremock-standalone</artifactId>
+            <version>3.13.2</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.jspecify</groupId>
             <artifactId>jspecify</artifactId>
