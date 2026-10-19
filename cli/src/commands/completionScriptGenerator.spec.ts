@@ -193,7 +193,7 @@ describe('completionScript', () => {
 
     // ACT: no command line at all — fish arrays are 1-based, so a naive
     // index-based scan errors here.
-    const result = spawnSync('fish', ['-c', `source ${script}; __linkweave_values collections`], {
+    const result = spawnSync('fish', ['--no-config', '-c', `source ${script}; __linkweave_values collections`], {
       encoding: 'utf-8',
       env: stubEnv(),
     })
