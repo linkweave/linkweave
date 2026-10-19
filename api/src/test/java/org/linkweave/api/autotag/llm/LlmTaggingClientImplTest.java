@@ -335,6 +335,7 @@ class LlmTaggingClientImplTest {
         client.ollamaPullClient = pull;
         client.ollamaClient = chat;
         client.ollamaWarmUpClient = warmUpClient();
+        client.initProviders();
         return client;
     }
 
@@ -343,6 +344,7 @@ class LlmTaggingClientImplTest {
         LlmTaggingClientImpl client = new LlmTaggingClientImpl(
             config, new ObjectMapper(), ManagedExecutor.builder().build(), newBreaker(config));
         client.openAiClient = openAiClient(openAi);
+        client.initProviders();
         return client;
     }
 
