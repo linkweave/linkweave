@@ -15,12 +15,12 @@ import org.jspecify.annotations.Nullable;
 /**
  * How a model call failed (UC-108 BR-108-2).
  *
- * <p>The distinction exists because {@code LlmTaggingClientImpl} used to treat
- * every {@link RuntimeException} the same way: clear the "model is pulled" flag
- * and schedule {@code POST /api/pull}. A read timeout would therefore trigger a
- * 1.6 GB download — on a host already too loaded to answer in time, which makes
- * the next timeout more likely. That feedback loop is what filled the log on
- * 2026-08-28 with the same warning eight times over.
+ * <p>The distinction exists so that a failed call cannot be answered by
+ * clearing the "model is pulled" flag and scheduling {@code POST /api/pull}
+ * regardless of cause. Treating every {@link RuntimeException} alike makes a read
+ * timeout trigger a 1.6 GB download onto a host already too loaded to answer in
+ * time, which makes the next timeout more likely. That feedback loop filled the
+ * log on 2026-08-28 with the same warning eight times over.
  *
  * <p>Only {@link #MODEL_NOT_FOUND} — the model service explicitly answering that
  * the weights are absent — says anything about the weights. Everything else says

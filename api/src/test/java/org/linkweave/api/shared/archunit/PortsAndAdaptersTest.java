@@ -5,6 +5,7 @@ import java.util.List;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.lang.ArchRule;
+import jakarta.enterprise.inject.Produces;
 import org.linkweave.infrastructure.stereotypes.Port;
 import org.linkweave.api.shared.archunit.predicates.ClassPredicates;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
@@ -55,6 +56,15 @@ class PortsAndAdaptersTest {
     private static final DescribedPredicate<JavaClass> REST_CLIENT =
         annotatedWith(RegisterRestClient.class).forSubtype();
 
+    /**
+     * A CDI producer is a composition root. Naming concrete adapters is precisely
+     * its job, and somewhere has to do it — otherwise nothing could ever choose
+     * which adapter answers a port.
+     */
+    private static final DescribedPredicate<JavaClass> PRODUCER =
+        DescribedPredicate.describe("CDI producers",
+            clazz -> clazz.getMethods().stream().anyMatch(m -> m.isAnnotatedWith(Produces.class)));
+
     private static boolean implementsAPort(JavaClass clazz) {
         return clazz.getAllRawInterfaces().stream().anyMatch(i -> i.isAnnotatedWith(Port.class));
     }
@@ -103,10 +113,10 @@ class PortsAndAdaptersTest {
      */
     @Test
     void nothing_depends_on_a_concrete_adapter() {
-        ArchRule rule = noClasses().that(are(not(ADAPTER)))
+        ArchRule rule = noClasses().that(are(not(ADAPTER).and(not(PRODUCER))))
             .should()
             .dependOnClassesThat(are(ADAPTER))
-            .because("callers depend on the port; only the container knows which adapter answers");
+            .because("callers depend on the port, and only the composition root names an adapter");
 
         rule.allowEmptyShould(true).check(APP_CLASSES);
     }
