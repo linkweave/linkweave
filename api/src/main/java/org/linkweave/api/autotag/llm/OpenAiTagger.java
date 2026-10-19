@@ -66,6 +66,15 @@ class OpenAiTagger extends AbstractLlmTagger {
         return Result.of(parseTags(message.content()));
     }
 
+    /**
+     * There is no local state a failure could invalidate, so this only records
+     * what happened — under this provider's own name.
+     */
+    @Override
+    void onCallFailed(@NonNull LlmFailure failure, @NonNull RuntimeException cause) {
+        LOG.debug("OpenAI chat failed ({}): {}", failure, cause.getMessage());
+    }
+
     /** No-op: a hosted provider has no resident model to preload. */
     @Override
     public void warmUp() {
