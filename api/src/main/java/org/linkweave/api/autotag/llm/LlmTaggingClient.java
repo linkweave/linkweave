@@ -2,6 +2,7 @@ package org.linkweave.api.autotag.llm;
 
 import java.util.List;
 
+import org.linkweave.infrastructure.stereotypes.Port;
 import org.jspecify.annotations.NonNull;
 
 /**
@@ -14,6 +15,7 @@ import org.jspecify.annotations.NonNull;
  * from config by the implementation, not passed in, so the seam stays
  * provider-agnostic.
  */
+@Port
 public interface LlmTaggingClient {
 
     /**

@@ -3,6 +3,7 @@ package org.linkweave.api.screenshot;
 import java.net.URL;
 import java.util.Optional;
 
+import org.linkweave.infrastructure.stereotypes.Port;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import org.jspecify.annotations.Nullable;
  * from config: passing them through this seam would put the backend's vocabulary
  * straight back into the signature.
  */
+@Port
 public interface ScreenshotCapturer {
 
     /**
