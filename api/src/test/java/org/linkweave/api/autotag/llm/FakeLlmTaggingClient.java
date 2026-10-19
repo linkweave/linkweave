@@ -9,14 +9,13 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Test double for the LLM client. Extends {@link LlmTaggingClientImpl} (rather
- * than only implementing {@link LlmTaggingClient}) so it is assignable to the
- * resolved bean type and can be installed via
- * {@code QuarkusMock.installMockForType(fake, LlmTaggingClient.class)}. The
- * overrides never touch the REST clients, so the {@code null} super-constructor
- * args are harmless. Tests set {@link #namesToReturn} and inspect the call state.
+ * Test double for the LLM client, installed with
+ * {@code QuarkusMock.installMockForType(fake, LlmTaggingClient.class)}. The bean
+ * is produced as {@link LlmTaggingClient}, so implementing the interface is
+ * enough to be assignable to the resolved bean type. Tests set
+ * {@link #namesToReturn} and inspect the call state.
  */
-public class FakeLlmTaggingClient extends LlmTaggingClientImpl {
+public class FakeLlmTaggingClient implements LlmTaggingClient {
 
     public volatile List<String> namesToReturn = List.of();
     public volatile @Nullable List<String> lastVocabulary = null;
@@ -35,10 +34,6 @@ public class FakeLlmTaggingClient extends LlmTaggingClientImpl {
 
     /** Counts callers currently blocked inside {@link #suggest}. */
     public final AtomicInteger inFlight = new AtomicInteger(0);
-
-    public FakeLlmTaggingClient() {
-        super(null, null, null, null);
-    }
 
     public void reset() {
         namesToReturn = List.of();
