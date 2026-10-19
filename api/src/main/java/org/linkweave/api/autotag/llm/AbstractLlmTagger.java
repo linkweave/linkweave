@@ -17,13 +17,13 @@ import org.jspecify.annotations.Nullable;
  * what a failed call should cost — belongs to the subclass.
  *
  * <p>These adapters implement the port directly but are <em>not</em> CDI beans:
- * {@link LlmTaggingClientImpl} constructs them. That keeps exactly one bean for
+ * {@link LlmTaggerProducer} constructs them. That keeps exactly one bean for
  * {@link LlmTaggingClient}, so selecting a provider needs no qualifier, no
  * alternative and no programmatic lookup.
  *
  * <p>The {@code scope} argument of {@link #suggest} is ignored here. It exists
  * for the concurrency cap in {@link LlmCircuitBreaker}, which runs in
- * {@link LlmTaggingClientImpl} before any adapter is reached.
+ * {@link CircuitBreakingLlmTagger} before any adapter is reached.
  */
 @Slf4j
 abstract class AbstractLlmTagger implements LlmTaggingClient {
@@ -44,7 +44,7 @@ abstract class AbstractLlmTagger implements LlmTaggingClient {
      * it. Does nothing by default: for a hosted provider there is no local state
      * a failure could invalidate.
      *
-     * <p>Called by {@link LlmTaggingClientImpl}, which owns the classification
+     * <p>Called by {@link CircuitBreakingLlmTagger}, which owns the classification
      * because the circuit breaker needs the same answer.
      */
     void onCallFailed(@NonNull LlmFailure failure, @NonNull RuntimeException cause) {
