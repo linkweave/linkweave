@@ -110,12 +110,11 @@ class OllamaTagger extends AbstractLlmTagger {
      * Reacts to a failed model call.
      *
      * <p>The one rule that matters here (BR-108-2): only an explicit "model not
-     * installed" answer clears {@link #modelPulled} and schedules a pull. This
-     * previously ran after <em>any</em> {@link RuntimeException}, so a read
-     * timeout — which says the host is too loaded to answer, not that the weights
-     * are gone — queued a multi-gigabyte download onto that same host, making the
-     * next timeout likelier. That loop is the repeating warning in the 2026-08-28
-     * log.
+     * installed" answer clears {@link #modelPulled} and schedules a pull.
+     * Reacting to <em>any</em> {@link RuntimeException} queues a multi-gigabyte
+     * download onto a host that a read timeout says is already too loaded to
+     * answer, which makes the next timeout likelier. That loop is the repeating
+     * warning in the 2026-08-28 log.
      */
     private void reactToFailure(
         @NonNull String operation, @NonNull LlmFailure failure, @NonNull RuntimeException cause) {

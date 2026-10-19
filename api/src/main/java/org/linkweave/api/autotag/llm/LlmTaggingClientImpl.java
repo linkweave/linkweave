@@ -26,8 +26,8 @@ import org.jspecify.annotations.NonNull;
  * {@link OpenAiTagger}. Both implement {@link LlmTaggingClient} but are
  * constructed here rather than injected, which keeps exactly one CDI bean for
  * the port: selecting a provider needs no qualifier, no alternative and no
- * programmatic lookup. It also keeps Ollama's model-pull state out of the
- * hosted path entirely, where it was previously four unused fields.
+ * programmatic lookup. It also keeps each provider's own state — Ollama's model
+ * pull in particular — reachable only when that provider is selected.
  *
  * <p>Both paths return tag names verbatim from the model. Mapping back to
  * {@code Tag} entities and final re-validation against the vocabulary is the

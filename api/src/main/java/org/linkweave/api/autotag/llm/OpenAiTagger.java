@@ -14,9 +14,7 @@ import org.jspecify.annotations.NonNull;
  *
  * <p>Carries no model lifecycle at all. There is nothing to download, nothing
  * resident to keep warm and nothing a failed call could invalidate, which is
- * exactly what distinguishes this provider from {@link OllamaTagger} — and the
- * four fields of pull state this class does not need were, until this split,
- * sitting in the same class as the hosted path.
+ * exactly what distinguishes this provider from {@link OllamaTagger}.
  */
 @Slf4j
 class OpenAiTagger extends AbstractLlmTagger {
