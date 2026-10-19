@@ -57,6 +57,22 @@ class ScreenshotFetcherServiceTest {
     }
 
     @Test
+    void shouldSkipCaptureForDisallowedScheme() throws Exception {
+        // ARRANGE — a public host, so only the scheme guard can reject this one
+        RecordingCapturer capturer = new RecordingCapturer(Optional.empty());
+        ScreenshotFetcherService svc =
+            new ScreenshotFetcherService(configDenying("blocked.example"), capturer);
+
+        // ACT
+        Optional<ScreenshotCapturer.CapturedPage> result =
+            svc.fetchFor(URI.create("ftp://8.8.8.8/page").toURL());
+
+        // ASSERT
+        assertThat(result).isEmpty();
+        assertThat(capturer.calls).as("non-http scheme must not reach the capturer").isZero();
+    }
+
+    @Test
     void shouldReturnWhatTheCapturerProducedForAnAllowedHost() throws Exception {
         // ARRANGE
         ScreenshotCapturer.CapturedPage page = new ScreenshotCapturer.CapturedPage(

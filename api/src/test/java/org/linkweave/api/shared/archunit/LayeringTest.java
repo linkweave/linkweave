@@ -13,7 +13,6 @@ import org.linkweave.infrastructure.stereotypes.JaxMapper;
 import org.linkweave.infrastructure.stereotypes.JaxResource;
 import org.linkweave.infrastructure.stereotypes.NoTransactionService;
 import org.linkweave.infrastructure.stereotypes.Repository;
-import org.linkweave.infrastructure.stereotypes.Service;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
@@ -35,13 +34,14 @@ import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.sli
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.linkweave.api.shared.archunit.ArchConst.APP_CLASSES;
 import static org.linkweave.api.shared.archunit.ArchConst.APP_PACKAGE;
+import org.linkweave.api.shared.archunit.predicates.ClassPredicates;
+
 import static org.linkweave.api.shared.archunit.predicates.ClassPredicates.interfaceWithSuffix;
 
 @DisplayNameGeneration(ReplaceUnderscores.class)
 class LayeringTest {
-    public static final DescribedPredicate<JavaClass> SERVICE =
-        is(interfaceWithSuffix("Service")).or(is(metaAnnotatedWith(Service.class)).or(is(metaAnnotatedWith(
-            NoTransactionService.class))));
+    /** Canonical definition, shared with TransactionsTest and PortsAndAdaptersTest. */
+    public static final DescribedPredicate<JavaClass> SERVICE = ClassPredicates.service();
     public static final DescribedPredicate<JavaClass> UTIL =
         is(JavaClass.Predicates.simpleNameEndingWith("Util").or(is(interfaceWithSuffix("Util"))));
 

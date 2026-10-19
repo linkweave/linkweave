@@ -5,9 +5,8 @@ import java.util.List;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.lang.ArchRule;
-import org.linkweave.infrastructure.stereotypes.NoTransactionService;
 import org.linkweave.infrastructure.stereotypes.Port;
-import org.linkweave.infrastructure.stereotypes.Service;
+import org.linkweave.api.shared.archunit.predicates.ClassPredicates;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
@@ -15,7 +14,6 @@ import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.base.DescribedPredicate.not;
 import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.annotatedWith;
-import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.metaAnnotatedWith;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
@@ -53,9 +51,7 @@ class PortsAndAdaptersTest {
     private static final DescribedPredicate<JavaClass> ADAPTER =
         DescribedPredicate.describe("adapters", clazz -> !clazz.isInterface() && implementsAPort(clazz));
 
-    private static final DescribedPredicate<JavaClass> SERVICE =
-        metaAnnotatedWith(Service.class).<JavaClass>forSubtype()
-            .or(metaAnnotatedWith(NoTransactionService.class).forSubtype());
+    private static final DescribedPredicate<JavaClass> SERVICE = ClassPredicates.service();
 
     private static final DescribedPredicate<JavaClass> REST_CLIENT =
         annotatedWith(RegisterRestClient.class).forSubtype();
@@ -123,7 +119,7 @@ class PortsAndAdaptersTest {
      */
     @Test
     void only_adapters_talk_to_rest_clients() {
-        ArchRule rule = noClasses().that(are(SERVICE))
+        ArchRule rule = noClasses().that(are(not(ADAPTER)))
             .should()
             .dependOnClassesThat(are(REST_CLIENT))
             .because("reaching another system's protocol is the adapter's job");

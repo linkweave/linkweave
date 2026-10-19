@@ -17,9 +17,10 @@ import org.jspecify.annotations.NonNull;
  * the request body) on 2xx and {@code application/json} error objects on 4xx/5xx.
  * The 2xx response also carries the page's description (when found) in the
  * {@link #DESCRIPTION_HEADER} header as base64-encoded UTF-8. We return
- * {@link Response} rather than a typed body so the fetcher can read both the
- * bytes and that header, and so HTTP error statuses arrive as a status code to
- * inspect instead of a thrown exception.
+ * {@link Response} rather than a typed body so {@link SidecarScreenshotCapturer}
+ * — the only class that may see these types — can read both the bytes and that
+ * header, and so HTTP error statuses arrive as a status code to inspect instead
+ * of a thrown exception.
  */
 @RegisterRestClient(configKey = "screenshot-sidecar")
 @Path("/screenshot")
