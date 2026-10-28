@@ -368,6 +368,26 @@ describe('useCollectionEvents', () => {
     expect(FakeEventSource.live).toHaveLength(0)
   })
 
+  it('does not reopen a stream for a view that unmounted while the session was being checked', async () => {
+    // ARRANGE — the probe is still in flight when the view goes away
+    let answerProbe: (result: 'valid') => void = () => {}
+    vi.mocked(probeSession).mockReturnValue(new Promise((resolve) => { answerProbe = resolve }))
+    const view = mountWatching(ref('col-1'))
+    FakeEventSource.last.open()
+    FakeEventSource.last.fail()
+    await vi.advanceTimersByTimeAsync(MAX_RECONNECT_DELAY_ENOUGH)
+    view.unmount()
+    const openedBefore = FakeEventSource.instances.length
+
+    // ACT — the probe comes back valid after teardown
+    answerProbe('valid')
+    await vi.advanceTimersByTimeAsync(0)
+
+    // ASSERT — nothing owns a stream that nobody will close
+    expect(FakeEventSource.instances).toHaveLength(openedBefore)
+    expect(FakeEventSource.live).toHaveLength(0)
+  })
+
   it('gives up quietly after a bounded number of failed reconnects', async () => {
     // ARRANGE
     mountWatching(ref('col-1'))

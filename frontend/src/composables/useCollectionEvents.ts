@@ -98,6 +98,11 @@ export function useCollectionEvents(currentCollectionId: () => string | null) {
   let refetchTimer: ReturnType<typeof setTimeout> | null = null
   let attempt = 0
   let everConnected = false
+  // Bumped by close(). A reconnect scheduled under an older generation belongs to
+  // a view that has unmounted, switched collection, or gone offline since, so it
+  // must not open a stream. close() cannot cancel one whose timer has already
+  // fired and is waiting on the session probe.
+  let generation = 0
 
   function close() {
     source?.close()
@@ -105,6 +110,7 @@ export function useCollectionEvents(currentCollectionId: () => string | null) {
     subscribedTo = null
     everConnected = false
     attempt = 0
+    generation++
     if (reconnectTimer) clearTimeout(reconnectTimer)
     if (refetchTimer) clearTimeout(refetchTimer)
     reconnectTimer = null
@@ -204,9 +210,10 @@ export function useCollectionEvents(currentCollectionId: () => string | null) {
       if (attempt >= MAX_RECONNECT_ATTEMPTS) return // give up quietly (BR-206)
       const delay = reconnectDelay(attempt)
       attempt++
+      const owner = generation
       reconnectTimer = setTimeout(() => {
         reconnectTimer = null
-        void reconnect(collectionId)
+        void reconnect(collectionId, owner)
       }, delay)
     }
   }
@@ -218,13 +225,16 @@ export function useCollectionEvents(currentCollectionId: () => string | null) {
    * this check every retry fails the same way and the tab goes quiet while the
    * user stays on a page that can no longer load (UC-098 BR-098-3).
    */
-  async function reconnect(collectionId: string) {
-    if ((await probeSession()) === 'expired') {
+  async function reconnect(collectionId: string, owner: number) {
+    const session = await probeSession()
+    // The view was closed while we probed (unmounted, collection switched, or
+    // offline). Its replacement, if any, already owns the stream, so this one
+    // stops here, including an expiry: the next request will surface it.
+    if (owner !== generation) return
+    if (session === 'expired') {
       useAuthStore().handleSessionExpired()
       return
     }
-    // The world may have moved on while we probed: the collection changed, the
-    // browser went offline, or sync() already opened a fresh stream.
     if (source === null && currentCollectionId() === collectionId && !isOffline.value) {
       connect(collectionId)
     }
