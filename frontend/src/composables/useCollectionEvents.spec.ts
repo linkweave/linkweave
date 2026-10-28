@@ -368,6 +368,23 @@ describe('useCollectionEvents', () => {
     expect(FakeEventSource.live).toHaveLength(0)
   })
 
+  it('keeps retrying a stream when the session check cannot reach the server', async () => {
+    // ARRANGE — a network failure is not expiry (BR-098-1)
+    vi.mocked(probeSession).mockResolvedValue('unreachable')
+    const handleSessionExpired = vi.spyOn(useAuthStore(), 'handleSessionExpired').mockImplementation(() => {})
+    mountWatching(ref('col-1'))
+    FakeEventSource.last.open()
+    const openedBefore = FakeEventSource.instances.length
+
+    // ACT
+    FakeEventSource.last.fail()
+    await vi.advanceTimersByTimeAsync(MAX_RECONNECT_DELAY_ENOUGH)
+
+    // ASSERT — the user is not logged out, and the stream comes back
+    expect(handleSessionExpired).not.toHaveBeenCalled()
+    expect(FakeEventSource.instances).toHaveLength(openedBefore + 1)
+  })
+
   it('does not reopen a stream for a view that unmounted while the session was being checked', async () => {
     // ARRANGE — the probe is still in flight when the view goes away
     let answerProbe: (result: 'valid') => void = () => {}
