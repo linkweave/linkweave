@@ -14,13 +14,13 @@ const SESSION_PROBE_PATH = '/api/auth/me'
  */
 const PROBE_THROTTLE_MS = 60_000
 
-type SessionProbeResult = 'valid' | 'expired' | 'unreachable'
+export type SessionProbeResult = 'valid' | 'expired' | 'unreachable'
 
 /**
  * we use fetch here to probe if the session is still active. This is because in this case
  * we do want to avoid hitting the middleware and it's offline mode detection
  */
-async function probeSession(): Promise<SessionProbeResult> {
+export async function probeSession(): Promise<SessionProbeResult> {
   try {
     const res = await fetch(SESSION_PROBE_PATH, {
       credentials: 'include',

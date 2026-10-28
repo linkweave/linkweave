@@ -2,6 +2,8 @@ import { ChangeKind, type CollectionEventJson } from '@/api/generated'
 import { clientId } from '@/lib/client-id'
 import { isOffline } from '@/lib/network-status'
 import { bumpPreviewNonce, clearPreviewNonces } from '@/lib/preview-nonce'
+import { probeSession } from '@/lib/session-watch'
+import { useAuthStore } from '@/stores/auth'
 import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
 import { onUnmounted, watch } from 'vue'
@@ -204,8 +206,27 @@ export function useCollectionEvents(currentCollectionId: () => string | null) {
       attempt++
       reconnectTimer = setTimeout(() => {
         reconnectTimer = null
-        if (currentCollectionId() === collectionId && !isOffline.value) connect(collectionId)
+        void reconnect(collectionId)
       }, delay)
+    }
+  }
+
+  /**
+   * Checks the session before retrying a dropped stream. EventSource cannot send
+   * X-Requested-With, so an expired session is answered with a redirect to the
+   * identity provider rather than the 499 the rest of the API returns. Without
+   * this check every retry fails the same way and the tab goes quiet while the
+   * user stays on a page that can no longer load (UC-098 BR-098-3).
+   */
+  async function reconnect(collectionId: string) {
+    if ((await probeSession()) === 'expired') {
+      useAuthStore().handleSessionExpired()
+      return
+    }
+    // The world may have moved on while we probed: the collection changed, the
+    // browser went offline, or sync() already opened a fresh stream.
+    if (source === null && currentCollectionId() === collectionId && !isOffline.value) {
+      connect(collectionId)
     }
   }
 
