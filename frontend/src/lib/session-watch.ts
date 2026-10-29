@@ -14,17 +14,25 @@ const SESSION_PROBE_PATH = '/api/auth/me'
  */
 const PROBE_THROTTLE_MS = 60_000
 
-type SessionProbeResult = 'valid' | 'expired' | 'unreachable'
+const PROBE_TIMEOUT_MS = 10_000
+
+export type SessionProbeResult = 'valid' | 'expired' | 'unreachable'
 
 /**
  * we use fetch here to probe if the session is still active. This is because in this case
  * we do want to avoid hitting the middleware and it's offline mode detection
  */
-async function probeSession(): Promise<SessionProbeResult> {
+export async function probeSession(): Promise<SessionProbeResult> {
+  // A probe on a link that drops packets can hang for the browser's full
+  // connection timeout. Callers wait on it (the stream reconnect does), so past
+  // this it counts as unreachable instead.
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS)
   try {
     const res = await fetch(SESSION_PROBE_PATH, {
       credentials: 'include',
       cache: 'no-store',
+      signal: controller.signal,
       // Marks the probe as AJAX so an expired session yields a clean 499
       // instead of a 302 to the IDP (see api/client.ts).
       headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -34,6 +42,8 @@ async function probeSession(): Promise<SessionProbeResult> {
     return 'unreachable'
   } catch {
     return 'unreachable'
+  } finally {
+    clearTimeout(timeout)
   }
 }
 

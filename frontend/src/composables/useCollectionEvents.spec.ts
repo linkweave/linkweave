@@ -2,6 +2,8 @@
 import { ChangeKind, type CollectionEventJson } from '@/api/generated'
 import { setBrowserOffline } from '@/lib/network-status'
 import { previewNonceOf } from '@/lib/preview-nonce'
+import { probeSession } from '@/lib/session-watch'
+import { useAuthStore } from '@/stores/auth'
 import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
 import i18n from '@/i18n'
@@ -9,6 +11,11 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createApp, nextTick, ref } from 'vue'
 import { useCollectionEvents } from './useCollectionEvents'
+
+vi.mock('@/lib/session-watch', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/session-watch')>()),
+  probeSession: vi.fn(),
+}))
 
 // Mirrored from the composable (kept private there).
 const REFETCH_COALESCE_MS = 400
@@ -94,6 +101,7 @@ describe('useCollectionEvents', () => {
     vi.useFakeTimers()
     FakeEventSource.instances = []
     vi.stubGlobal('EventSource', FakeEventSource)
+    vi.mocked(probeSession).mockResolvedValue('valid')
     setActivePinia(createPinia())
     fetchCollectionInfo = vi.fn().mockResolvedValue(undefined)
     // Replace only the read path: the composable must go through the store
@@ -325,12 +333,12 @@ describe('useCollectionEvents', () => {
     expect(FakeEventSource.live).toHaveLength(1)
   })
 
-  it('refetches after a reconnect, because the gap is never replayed', () => {
+  it('refetches after a reconnect, because the gap is never replayed', async () => {
     // ARRANGE
     mountWatching(ref('col-1'))
     FakeEventSource.last.open()
     FakeEventSource.last.fail()
-    vi.advanceTimersByTime(MAX_RECONNECT_DELAY_ENOUGH)
+    await vi.advanceTimersByTimeAsync(MAX_RECONNECT_DELAY_ENOUGH)
 
     // ACT — the retried connection succeeds
     FakeEventSource.last.open()
@@ -341,14 +349,70 @@ describe('useCollectionEvents', () => {
     expect(fetchCollectionInfo).toHaveBeenCalledWith('col-1', { silent: true })
   })
 
-  it('gives up quietly after a bounded number of failed reconnects', () => {
+  it('sends a dropped stream with an expired session to login instead of retrying it', async () => {
+    // ARRANGE
+    vi.mocked(probeSession).mockResolvedValue('expired')
+    const handleSessionExpired = vi.spyOn(useAuthStore(), 'handleSessionExpired').mockImplementation(() => {})
+    mountWatching(ref('col-1'))
+    FakeEventSource.last.open()
+    const openedBefore = FakeEventSource.instances.length
+
+    // ACT
+    FakeEventSource.last.fail()
+    await vi.advanceTimersByTimeAsync(MAX_RECONNECT_DELAY_ENOUGH)
+
+    // ASSERT — the expiry goes through the one session pathway (UC-098 BR-098-3)
+    // and no further stream is opened against a dead session
+    expect(handleSessionExpired).toHaveBeenCalledOnce()
+    expect(FakeEventSource.instances).toHaveLength(openedBefore)
+    expect(FakeEventSource.live).toHaveLength(0)
+  })
+
+  it('keeps retrying a stream when the session check cannot reach the server', async () => {
+    // ARRANGE — a network failure is not expiry (BR-098-1)
+    vi.mocked(probeSession).mockResolvedValue('unreachable')
+    const handleSessionExpired = vi.spyOn(useAuthStore(), 'handleSessionExpired').mockImplementation(() => {})
+    mountWatching(ref('col-1'))
+    FakeEventSource.last.open()
+    const openedBefore = FakeEventSource.instances.length
+
+    // ACT
+    FakeEventSource.last.fail()
+    await vi.advanceTimersByTimeAsync(MAX_RECONNECT_DELAY_ENOUGH)
+
+    // ASSERT — the user is not logged out, and the stream comes back
+    expect(handleSessionExpired).not.toHaveBeenCalled()
+    expect(FakeEventSource.instances).toHaveLength(openedBefore + 1)
+  })
+
+  it('does not reopen a stream for a view that unmounted while the session was being checked', async () => {
+    // ARRANGE — the probe is still in flight when the view goes away
+    let answerProbe: (result: 'valid') => void = () => {}
+    vi.mocked(probeSession).mockReturnValue(new Promise((resolve) => { answerProbe = resolve }))
+    const view = mountWatching(ref('col-1'))
+    FakeEventSource.last.open()
+    FakeEventSource.last.fail()
+    await vi.advanceTimersByTimeAsync(MAX_RECONNECT_DELAY_ENOUGH)
+    view.unmount()
+    const openedBefore = FakeEventSource.instances.length
+
+    // ACT — the probe comes back valid after teardown
+    answerProbe('valid')
+    await vi.advanceTimersByTimeAsync(0)
+
+    // ASSERT — nothing owns a stream that nobody will close
+    expect(FakeEventSource.instances).toHaveLength(openedBefore)
+    expect(FakeEventSource.live).toHaveLength(0)
+  })
+
+  it('gives up quietly after a bounded number of failed reconnects', async () => {
     // ARRANGE
     mountWatching(ref('col-1'))
 
     // ACT — every attempt fails immediately
     for (let i = 0; i <= MAX_RECONNECT_ATTEMPTS + 2; i++) {
       FakeEventSource.last.fail()
-      vi.advanceTimersByTime(MAX_RECONNECT_DELAY_ENOUGH)
+      await vi.advanceTimersByTimeAsync(MAX_RECONNECT_DELAY_ENOUGH)
     }
 
     // ASSERT — BR-206/A4: bounded, and never an error the user has to dismiss

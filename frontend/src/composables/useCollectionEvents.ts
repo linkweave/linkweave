@@ -2,6 +2,8 @@ import { ChangeKind, type CollectionEventJson } from '@/api/generated'
 import { clientId } from '@/lib/client-id'
 import { isOffline } from '@/lib/network-status'
 import { bumpPreviewNonce, clearPreviewNonces } from '@/lib/preview-nonce'
+import { probeSession } from '@/lib/session-watch'
+import { useAuthStore } from '@/stores/auth'
 import { useCollectionStore } from '@/stores/collection'
 import { useNotificationStore } from '@/stores/notification'
 import { onUnmounted, watch } from 'vue'
@@ -96,6 +98,11 @@ export function useCollectionEvents(currentCollectionId: () => string | null) {
   let refetchTimer: ReturnType<typeof setTimeout> | null = null
   let attempt = 0
   let everConnected = false
+  // Bumped by close(). A reconnect scheduled under an older generation belongs to
+  // a view that has unmounted, switched collection, or gone offline since, so it
+  // must not open a stream. close() cannot cancel one whose timer has already
+  // fired and is waiting on the session probe.
+  let generation = 0
 
   function close() {
     source?.close()
@@ -103,6 +110,7 @@ export function useCollectionEvents(currentCollectionId: () => string | null) {
     subscribedTo = null
     everConnected = false
     attempt = 0
+    generation++
     if (reconnectTimer) clearTimeout(reconnectTimer)
     if (refetchTimer) clearTimeout(refetchTimer)
     reconnectTimer = null
@@ -202,10 +210,33 @@ export function useCollectionEvents(currentCollectionId: () => string | null) {
       if (attempt >= MAX_RECONNECT_ATTEMPTS) return // give up quietly (BR-206)
       const delay = reconnectDelay(attempt)
       attempt++
+      const owner = generation
       reconnectTimer = setTimeout(() => {
         reconnectTimer = null
-        if (currentCollectionId() === collectionId && !isOffline.value) connect(collectionId)
+        void reconnect(collectionId, owner)
       }, delay)
+    }
+  }
+
+  /**
+   * Checks the session before retrying a dropped stream. EventSource cannot send
+   * X-Requested-With, so an expired session is answered with a redirect to the
+   * identity provider rather than the 499 the rest of the API returns. Without
+   * this check every retry fails the same way and the tab goes quiet while the
+   * user stays on a page that can no longer load (UC-098 BR-098-3).
+   */
+  async function reconnect(collectionId: string, owner: number) {
+    const session = await probeSession()
+    // The view was closed while we probed (unmounted, collection switched, or
+    // offline). Its replacement, if any, already owns the stream, so this one
+    // stops here, including an expiry: the next request will surface it.
+    if (owner !== generation) return
+    if (session === 'expired') {
+      useAuthStore().handleSessionExpired()
+      return
+    }
+    if (source === null && currentCollectionId() === collectionId && !isOffline.value) {
+      connect(collectionId)
     }
   }
 

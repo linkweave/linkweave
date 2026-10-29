@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { installSessionExpiryWatch } from './session-watch'
+import { installSessionExpiryWatch, probeSession } from './session-watch'
 
 const fetchMock = vi.fn<typeof fetch>()
 vi.stubGlobal('fetch', fetchMock)
@@ -37,6 +37,23 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers()
+})
+
+describe('probeSession', () => {
+  it('should report a probe that never answers as unreachable', async () => {
+    // ARRANGE — packets are dropped: the request hangs until it is aborted
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    fetchMock.mockImplementation((_url, init) => new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))
+    }))
+    const result = probeSession()
+
+    // ACT — past the probe timeout
+    await vi.advanceTimersByTimeAsync(10_000)
+
+    // ASSERT — a stalled probe is neither expiry nor success; the caller retries
+    await expect(result).resolves.toBe('unreachable')
+  })
 })
 
 describe('session-watch', () => {

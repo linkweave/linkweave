@@ -20,6 +20,9 @@ token-usage-output.txt
 frontend/playwright-report/
 frontend/test-results/
 
+# Playwright MCP browser session logs and snapshots
+.playwright-mcp/
+
 
 ##### Common ignore settings ####
 
