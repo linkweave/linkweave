@@ -64,7 +64,7 @@ function goToManage() {
             v-for="col in collections"
             :key="col.id"
             :data-testid="`collection-item-${col.id}`"
-            class="flex items-center gap-2 w-full px-2 py-1.5 rounded text-xs cursor-pointer transition-colors"
+            class="flex items-center gap-2 w-full px-2 py-1.5 rounded text-xs text-left cursor-pointer transition-colors"
             :class="
               col.id === currentCollectionId
                 ? 'bg-primary/15 text-foreground'
@@ -76,7 +76,7 @@ function goToManage() {
               class="h-3.5 w-3.5 shrink-0"
               :class="col.id === currentCollectionId ? 'text-primary' : 'opacity-35'"
             />
-            <span class="flex-1 truncate">{{ col.name }}</span>
+            <span :data-testid="`collection-name-${col.id}`" class="flex-1 truncate">{{ col.name }}</span>
             <span
               v-if="col.isDefault"
               :data-testid="`collection-default-badge-${col.id}`"
