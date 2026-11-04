@@ -44,6 +44,21 @@ export class CollectionSwitcherPageObject {
     await expect(item).toBeVisible()
   }
 
+  /**
+   * Left edge (px) of each collection name's rendered text in the open dropdown.
+   * Measured on the text itself, not its span: the span stretches to fill the
+   * row, so only the text's own box shows where the name visibly starts.
+   */
+  async collectionNameTextLeftEdges(): Promise<number[]> {
+    return this.page.getByTestId(/^collection-name-/).evaluateAll((spans) =>
+      spans.map((span) => {
+        const range = document.createRange()
+        range.selectNodeContents(span)
+        return range.getBoundingClientRect().left
+      }),
+    )
+  }
+
   async expectDefaultBadgeVisible(collectionId: string) {
     await expect(this.page.getByTestId(`collection-default-badge-${collectionId}`)).toBeVisible()
   }
